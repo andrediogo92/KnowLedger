@@ -67,11 +67,12 @@ public final class StringUtil {
     return Base64.getEncoder().encodeToString(key.getEncoded());
   }
 
-  public static String getMerkleRoot(Transaction[] data) {
-    int count = data.length;
-   String previousTreeLayer[] = (String[]) Arrays.stream(data)
-                                                 .map(Transaction::getTransactionId)
-                                                 .toArray();
+  public static String getMerkleRoot(Transaction[] data, int size) {
+    int count = size;
+    String previousTreeLayer[] = new String[size];
+    for(int i=0; i< size; i++) {
+      previousTreeLayer[i] = data[i].getTransactionId();
+    }
     String treeLayer[] = previousTreeLayer;
     while(count > 1) {
       treeLayer = new String[treeLayer.length-1];
@@ -83,5 +84,9 @@ public final class StringUtil {
     }
     String merkleRoot = (treeLayer.length == 1) ? treeLayer[0] : "";
     return merkleRoot;
+  }
+
+  public static String getDifficultyString(int difficulty) {
+    return new String(new char[difficulty]).replace('\0', '0'); //Create a string with difficulty * "0"
   }
 }
