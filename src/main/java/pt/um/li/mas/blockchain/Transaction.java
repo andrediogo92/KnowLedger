@@ -1,6 +1,7 @@
 package pt.um.li.mas.blockchain;
 
 import pt.um.li.mas.blockchain.data.SensorData;
+import pt.um.li.mas.blockchain.stringutils.Crypter;
 import pt.um.li.mas.blockchain.stringutils.StringUtil;
 
 import java.security.PrivateKey;
@@ -10,7 +11,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Transaction {
-
+  private static Crypter crypter = StringUtil.getDefaultCrypter();
   private final String transactionId; // this is also the hash of the transaction.
   private final PublicKey publicKey; // Agent's pub key.
   private byte[] signature; // this is to identify unequivocally an agent.
@@ -56,7 +57,7 @@ public class Transaction {
   // This Calculates the transaction hash (which will be used as its Id)
   private String calculateHash() {
     //Increase the sequence to avoid 2 identical transactions having the same hash
-    return StringUtil.applySha256(
+    return crypter.applyHash(
         StringUtil.getStringFromKey(publicKey) +
         sd.toString() + sequence.incrementAndGet()
     );
