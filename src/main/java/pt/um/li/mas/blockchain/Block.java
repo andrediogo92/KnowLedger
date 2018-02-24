@@ -1,16 +1,19 @@
 package pt.um.li.mas.blockchain;
 
+import pt.um.li.mas.blockchain.data.MerkleTree;
+import pt.um.li.mas.blockchain.stringutils.Crypter;
 import pt.um.li.mas.blockchain.stringutils.StringUtil;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Block {
+  private static Crypter crypter = StringUtil.getDefaultCrypter();
     private static int MAX_BLOCK_SIZE=500;
     private String hash;
     private final Transaction data[];
     private final AtomicInteger cur = new AtomicInteger(0);
-    private String merkleRoot;
+    private MerkleTree merkleTree;
     private final String previousHash;
     private final String timeStamp;
     private long nonce;
@@ -22,23 +25,23 @@ public class Block {
         this.difficulty = difficulty;
         this.timeStamp = LocalDateTime.now().toString();
         this.previousHash = previousHash;
-        this.merkleRoot = null;
+        this.merkleTree = null;
         this.hash = null; //Making sure we do this after we set the other values.
     }
 
     public String calculateHash() {
-        String calculatedhash = StringUtil.applySha256(
+        String calculatedhash = crypter.applyHash(
                 previousHash +
                         Long.toHexString(nonce) +
                         timeStamp +
-                        merkleRoot
+                        merkleTree
         );
         return calculatedhash;
     }
 
     public void mineBlock() {
         String target = StringUtil.getDifficultyString(difficulty);
-        merkleRoot = StringUtil.getMerkleRoot(data, cur.get());
+        merkleTree = MerkleTree.buildMerkleTree(data, cur.get());
         while(!hash.substring( 0, difficulty).equals(target)) {
             nonce ++;
             hash = calculateHash();
@@ -49,8 +52,8 @@ public class Block {
   public boolean addTransaction(Transaction transaction) {
     //process transaction and check if valid, unless block is genesis block then ignore.
     if(transaction == null) return false;
-    if((previousHash != "0")) {
-      if((transaction.processTransaction() != true)) {
+    if((!previousHash.equals("0"))) {
+      if((!transaction.processTransaction())) {
         System.out.println("Transaction failed to process. Discarded.");
         return false;
       }
