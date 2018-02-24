@@ -68,9 +68,14 @@ public class Transaction {
     signature = StringUtil.applyECDSASig(privateKey,data);
   }
   //Verifies the data we signed hasnt been tampered with
-  public boolean verifiySignature() {
+  public boolean verifySignature() {
     String data = StringUtil.getStringFromKey(publicKey) + sd.toString();
     return StringUtil.verifyECDSASig(publicKey, data, signature);
+  }
+
+  //Returns true if new transaction could be created.
+  public boolean processTransaction() {
+    return verifySignature();
   }
 
   private class TransactionInput {}
