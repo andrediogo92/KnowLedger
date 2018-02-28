@@ -13,6 +13,13 @@ public final class StringUtil {
     return DEFAULTCRYPTER;
   }
 
+  //Ensure Bouncy Castle Crypto provider is present
+  static {
+    if (Security.getProvider("BC") == null) {
+      Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+    }
+  }
+
   //Applies ECDSA Signature and returns the result ( as bytes ).
   public static byte[] applyECDSASig(PrivateKey privateKey, String input) {
     Signature dsa;

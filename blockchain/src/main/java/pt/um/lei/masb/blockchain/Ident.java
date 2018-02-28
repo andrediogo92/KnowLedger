@@ -10,7 +10,15 @@ public class Ident {
     private PrivateKey privateKey;
     private PublicKey publicKey;
 
-    public Ident() {
+  //Ensure Bouncy Castle Crypto provider is present
+  static {
+    if (Security.getProvider("BC") == null) {
+      Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+    }
+  }
+
+
+  public Ident() {
         generateKeyPair();
     }
 
@@ -31,5 +39,11 @@ public class Ident {
         }
     }
 
+  public PrivateKey getPrivateKey() {
+    return privateKey;
+  }
 
+  public PublicKey getPublicKey() {
+    return publicKey;
+  }
 }
