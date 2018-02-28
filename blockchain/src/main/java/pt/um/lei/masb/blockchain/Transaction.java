@@ -27,7 +27,7 @@ public class Transaction {
   private static AtomicLong sequence = new AtomicLong(0);
 
   // Constructor:
-  public Transaction(PublicKey from, List<SensorData> sd,  ArrayList<TransactionInput> inputs) {
+  public Transaction(PublicKey from, List<SensorData> sd,  List<TransactionInput> inputs) {
     this.publicKey = from;
     this.sd = sd;
     this.inputs = inputs;
@@ -84,6 +84,4 @@ public class Transaction {
     return verifySignature();
   }
 
-  private class TransactionInput {}
-  private class TransactionOutput {}
 }
