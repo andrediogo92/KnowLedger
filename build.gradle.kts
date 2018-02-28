@@ -10,6 +10,13 @@ subprojects {
     group = "pt.um.lei.masb"
     version = "1.0-SNAPSHOT"
 
+    repositories {
+        mavenCentral()
+        jcenter()
+        // maven{url = URI("http://repo.spring.io/libs-snapshot") }
+        // maven{url = URI("http://repo.spring.io/milestone")}
+        maven{url = URI("http://jade.tilab.com/maven")}
+    }
 
     apply{
         plugin("java")
@@ -22,24 +29,20 @@ subprojects {
         targetCompatibility = "1.8"
     }
 
-    repositories {
-        mavenCentral()
-        jcenter()
-        maven{url = URI("http://repo.spring.io/libs-snapshot") }
-        maven{url = URI("http://repo.spring.io/milestone")}
-        maven{url = URI("http://jade.tilab.com/maven")}
-    }
+    val junitversion = "5.1.0"
 
     dependencies {
-        testCompile("junit", "junit", "4.12")
+        testCompile("org.junit.jupiter", "junit-jupiter-api", junitversion)
+        testRuntime("org.junit.jupiter", "junit-jupiter-params", junitversion)
     }
+
 }
 
 project(":blockchain") {
-    val vertxVersion = "3.5.1"
+    //val vertxVersion = "3.5.1"
 
     dependencies {
-        compile("io.vertx", "vertx-mongo-client", vertxVersion)
+        //compile("io.vertx", "vertx-mongo-client", vertxVersion)
         implementation("com.google.code.gson", "gson", "2.8.2")
         implementation("org.bouncycastle", "bcprov-jdk15on", "1.59")
     }
