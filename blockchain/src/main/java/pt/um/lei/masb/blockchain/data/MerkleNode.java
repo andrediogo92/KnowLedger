@@ -1,4 +1,4 @@
-package pt.um.li.mas.blockchain.data;
+package pt.um.lei.masb.blockchain.data;
 
 import java.util.Objects;
 

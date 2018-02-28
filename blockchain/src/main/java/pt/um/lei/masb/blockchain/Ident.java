@@ -1,4 +1,4 @@
-package pt.um.li.mas.blockchain;
+package pt.um.lei.masb.blockchain;
 
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;

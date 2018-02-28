@@ -1,8 +1,8 @@
-package pt.um.li.mas.blockchain;
+package pt.um.lei.masb.blockchain;
 
-import pt.um.li.mas.blockchain.data.MerkleTree;
-import pt.um.li.mas.blockchain.stringutils.Crypter;
-import pt.um.li.mas.blockchain.stringutils.StringUtil;
+import pt.um.lei.masb.blockchain.data.MerkleTree;
+import pt.um.lei.masb.blockchain.stringutils.Crypter;
+import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
 import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,13 +30,12 @@ public class Block {
     }
 
     public String calculateHash() {
-        String calculatedhash = crypter.applyHash(
-                previousHash +
-                        Long.toHexString(nonce) +
-                        timeStamp +
-                        merkleTree
-        );
-        return calculatedhash;
+      return crypter.applyHash(
+              previousHash +
+                      Long.toHexString(nonce) +
+                      timeStamp +
+                      merkleTree
+      );
     }
 
     public void mineBlock() {

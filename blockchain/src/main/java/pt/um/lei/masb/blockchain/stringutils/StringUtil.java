@@ -1,4 +1,4 @@
-package pt.um.li.mas.blockchain.stringutils;
+package pt.um.lei.masb.blockchain.stringutils;
 
 import java.security.*;
 import java.util.Base64;

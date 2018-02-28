@@ -1,8 +1,8 @@
-package pt.um.li.mas.blockchain.data;
+package pt.um.lei.masb.blockchain.data;
 
-import pt.um.li.mas.blockchain.Transaction;
-import pt.um.li.mas.blockchain.stringutils.Crypter;
-import pt.um.li.mas.blockchain.stringutils.StringUtil;
+import pt.um.lei.masb.blockchain.Transaction;
+import pt.um.lei.masb.blockchain.stringutils.Crypter;
+import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
 import java.util.HashMap;
 import java.util.Map;

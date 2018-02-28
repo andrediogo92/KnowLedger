@@ -1,8 +1,8 @@
-package pt.um.li.mas.blockchain;
+package pt.um.lei.masb.blockchain;
 
-import pt.um.li.mas.blockchain.data.SensorData;
-import pt.um.li.mas.blockchain.stringutils.Crypter;
-import pt.um.li.mas.blockchain.stringutils.StringUtil;
+import pt.um.lei.masb.blockchain.data.SensorData;
+import pt.um.lei.masb.blockchain.stringutils.StringUtil;
+import pt.um.lei.masb.blockchain.stringutils.Crypter;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -12,15 +12,19 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Transaction {
   private static Crypter crypter = StringUtil.getDefaultCrypter();
-  private final String transactionId; // this is also the hash of the transaction.
-  private final PublicKey publicKey; // Agent's pub key.
-  private byte[] signature; // this is to identify unequivocally an agent.
+  // this is also the hash of the transaction.
+  private final String transactionId;
+  // Agent's pub key.
+  private final PublicKey publicKey;
+  // this is to identify unequivocally an agent.
+  private byte[] signature;
   private final List<SensorData> sd;
 
   private final List<TransactionInput> inputs;
-  private final List<TransactionOutput> outputs = new ArrayList<TransactionOutput>();
+  private final List<TransactionOutput> outputs = new ArrayList<>();
 
-  private static AtomicLong sequence = new AtomicLong(0); // a rough count of how many transactions have been generated.
+  // a rough count of how many transactions have been generated.
+  private static AtomicLong sequence = new AtomicLong(0);
 
   // Constructor:
   public Transaction(PublicKey from, List<SensorData> sd,  ArrayList<TransactionInput> inputs) {
@@ -68,7 +72,8 @@ public class Transaction {
     String data = StringUtil.getStringFromKey(publicKey) + sd.toString();
     signature = StringUtil.applyECDSASig(privateKey,data);
   }
-  //Verifies the data we signed hasnt been tampered with
+
+  //Verifies the data we signed hasn't been tampered with.
   public boolean verifySignature() {
     String data = StringUtil.getStringFromKey(publicKey) + sd.toString();
     return StringUtil.verifyECDSASig(publicKey, data, signature);
