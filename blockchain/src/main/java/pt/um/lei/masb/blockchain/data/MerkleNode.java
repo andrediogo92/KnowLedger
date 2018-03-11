@@ -1,8 +1,10 @@
 package pt.um.lei.masb.blockchain.data;
 
+import pt.um.lei.masb.blockchain.Sizeable;
+
 import java.util.Objects;
 
-public final class MerkleNode {
+public final class MerkleNode implements Sizeable {
   private MerkleNode left;
   private MerkleNode right;
   private MerkleNode parent;
@@ -83,5 +85,10 @@ public final class MerkleNode {
            ", sibling=" + sibling +
            ", hash='" + hash + '\'' +
            '}';
+  }
+
+  @Override
+  public int getApproximateSize() {
+    return 512;
   }
 }

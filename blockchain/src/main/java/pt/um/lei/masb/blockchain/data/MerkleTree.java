@@ -1,5 +1,6 @@
 package pt.um.lei.masb.blockchain.data;
 
+import pt.um.lei.masb.blockchain.Sizeable;
 import pt.um.lei.masb.blockchain.Transaction;
 import pt.um.lei.masb.blockchain.stringutils.Crypter;
 import pt.um.lei.masb.blockchain.stringutils.StringUtil;
@@ -7,12 +8,12 @@ import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class MerkleTree {
+public final class MerkleTree implements Sizeable {
   private MerkleNode root;
   private Map<String, MerkleNode> trans;
   private static Crypter crypter = StringUtil.getDefaultCrypter();
 
-  public MerkleTree(int size) {
+  private MerkleTree(int size) {
     this.root = null;
     this.trans = new HashMap<>(size);
   }
@@ -21,15 +22,15 @@ public final class MerkleTree {
     return root;
   }
 
-  public void setRoot(MerkleNode root) {
+  private void setRoot(MerkleNode root) {
     this.root = root;
   }
 
-  public void addTransactionNode(MerkleNode t) {
+  private void addTransactionNode(MerkleNode t) {
     trans.put(t.getHash(), t);
   }
 
-  public MerkleNode getTransactionNode(String hash){
+  private MerkleNode getTransactionNode(String hash){
     if(hash != null && trans.containsKey(hash)) {
       return trans.get(hash);
     }
@@ -160,6 +161,11 @@ public final class MerkleTree {
     for (int i = 1; i < size; i += 2) {
       baseLayer[i].setSibling(baseLayer[i - 1]);
     }
+  }
+
+  @Override
+  public int getApproximateSize() {
+    return 1280 * trans.size();
   }
 }
 
