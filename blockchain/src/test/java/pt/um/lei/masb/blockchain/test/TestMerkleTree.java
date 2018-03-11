@@ -5,6 +5,8 @@ import pt.um.lei.masb.blockchain.Ident;
 import pt.um.lei.masb.blockchain.Transaction;
 import pt.um.lei.masb.blockchain.data.MerkleNode;
 import pt.um.lei.masb.blockchain.data.MerkleTree;
+import pt.um.lei.masb.blockchain.data.SensorData;
+import pt.um.lei.masb.blockchain.data.TemperatureData;
 import pt.um.lei.masb.blockchain.stringutils.Crypter;
 import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
@@ -20,14 +22,14 @@ public class TestMerkleTree {
   void testMerkleTreeBalanced() {
     Ident[] id = new Ident[] {new Ident(), new Ident()};
     Transaction ts[] = new Transaction[] {
-        new Transaction(id[0].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[1].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[0].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[1].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[0].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[1].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[0].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[1].getPublicKey(), new ArrayList<>(), new ArrayList<>())
+        new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>())
     };
     Crypter cp = StringUtil.getDefaultCrypter();
     MerkleTree tree = MerkleTree.buildMerkleTree(ts, ts.length);
@@ -44,12 +46,12 @@ public class TestMerkleTree {
   void testMerkleTreeUnbalanced() {
     Ident[] id = new Ident[] {new Ident(), new Ident()};
     Transaction ts[] = new Transaction[] {
-        new Transaction(id[0].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[1].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[0].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[1].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[0].getPublicKey(), new ArrayList<>(), new ArrayList<>()),
-        new Transaction(id[1].getPublicKey(), new ArrayList<>(), new ArrayList<>())
+        new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>()),
+        new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>())
     };
     Crypter cp = StringUtil.getDefaultCrypter();
     MerkleTree tree = MerkleTree.buildMerkleTree(ts, ts.length);
@@ -68,7 +70,7 @@ public class TestMerkleTree {
   void testMerkleTreeJustRoot() {
     Ident id = new Ident();
     Transaction ts[] = new Transaction[]{
-        new Transaction(id.getPublicKey(), new ArrayList<>(), new ArrayList<>())
+        new Transaction(id.getPublicKey(), new SensorData(new TemperatureData()), new ArrayList<>())
     };
     MerkleTree tree = MerkleTree.buildMerkleTree(ts, ts.length);
     Crypter cp = StringUtil.getDefaultCrypter();
