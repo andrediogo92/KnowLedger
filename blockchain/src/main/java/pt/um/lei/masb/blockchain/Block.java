@@ -5,6 +5,7 @@ import pt.um.lei.masb.blockchain.stringutils.Crypter;
 import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Block {
@@ -18,36 +19,63 @@ public class Block {
     private final String timeStamp;
     private long nonce;
     private final int difficulty;
+    private transient final String target;
 
     public Block(String previousHash, int difficulty ) {
         this.data = new Transaction[MAX_BLOCK_SIZE];
         this.nonce = 0;
         this.difficulty = difficulty;
+        this.target = StringUtil.getDifficultyString(difficulty);
         this.timeStamp = LocalDateTime.now().toString();
         this.previousHash = previousHash;
         this.merkleTree = null;
         this.hash = null; //Making sure we do this after we set the other values.
     }
 
-    public String calculateHash() {
-      return crypter.applyHash(
-              previousHash +
-                      Long.toHexString(nonce) +
-                      timeStamp +
-                      merkleTree
-      );
+  /**
+   * Hash is a SHA-256 calculated from previous hash, nonce, timestamp,
+   * {@link MerkleTree}'s root and each {@link Transaction}'s hash.
+   * @return The hash string.
+   */
+  public String calculateHash() {
+    StringBuilder sb = new StringBuilder();
+    sb.append(previousHash)
+      .append(Long.toHexString(nonce))
+      .append(timeStamp)
+      .append(merkleTree.getRoot());
+    for (Transaction d : data) {
+      sb.append(d.getTransactionId());
     }
+    return crypter.applyHash(sb.toString());
+  }
 
-    public void mineBlock() {
-        String target = StringUtil.getDifficultyString(difficulty);
-        merkleTree = MerkleTree.buildMerkleTree(data, cur.get());
-        while(!hash.substring( 0, difficulty).equals(target)) {
-            nonce ++;
-            hash = calculateHash();
+  /**
+   * Attempt one nonce calculation.
+   * @param invalidate Whether to invalidate the nonce and MerkleTree in case block has changed.
+   * @return Whether the block was successfully mined.
+   */
+  public boolean attemptMineBlock(boolean invalidate) {
+      boolean res = false;
+        if (invalidate) {
+          merkleTree = MerkleTree.buildMerkleTree(data, cur.get());
+          nonce = 0;
+        }
+        hash = calculateHash();
+        if(hash.substring( 0, difficulty).equals(target)) {
+          res = true;
+        } else {
+          nonce ++;
         }
         System.out.println("Block Mined!!! : " + hash);
+        return res;
     }
 
+  /**
+   * Add a single new transaction.
+   * Checks if the transaction is valid.
+   * @param transaction to add.
+   * @return whether transaction was valid.
+   */
   public boolean addTransaction(Transaction transaction) {
     //process transaction and check if valid, unless block is genesis block then ignore.
     if(transaction == null) return false;
