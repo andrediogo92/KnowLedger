@@ -1,10 +1,11 @@
 package pt.um.lei.masb.blockchain;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class BlockChain {
     private static final int INIT_SIZE = 1000;
-    private final ArrayList<Block> blockchain;
+    private final List<Block> blockchain;
 
     public BlockChain() {
         this.blockchain = new ArrayList<>(INIT_SIZE);
