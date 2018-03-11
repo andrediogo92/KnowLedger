@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Transaction {
+public class Transaction implements Sizeable {
   private static Crypter crypter = StringUtil.getDefaultCrypter();
   // this is also the hash of the transaction.
   private final String transactionId;
@@ -18,20 +18,25 @@ public class Transaction {
   private final PublicKey publicKey;
   // this is to identify unequivocally an agent.
   private byte[] signature;
-  private final List<SensorData> sd;
+  private final SensorData sd;
 
   private final List<TransactionInput> inputs;
   private final List<TransactionOutput> outputs = new ArrayList<>();
 
+  private transient int byteSize;
+
   // a rough count of how many transactions have been generated.
   private static AtomicLong sequence = new AtomicLong(0);
 
-  // Constructor:
-  public Transaction(PublicKey from, List<SensorData> sd,  List<TransactionInput> inputs) {
+
+  public Transaction(PublicKey from, SensorData sd,  List<TransactionInput> inputs) {
     this.publicKey = from;
     this.sd = sd;
     this.inputs = inputs;
     this.transactionId = calculateHash();
+    byteSize = 512 + sd.getApproximateSize()
+                   + (inputs.size() * new TransactionInput().getApproximateSize())
+                   + (outputs.size() * new TransactionOutput().getApproximateSize());
   }
 
   public String getTransactionId() {
@@ -46,7 +51,7 @@ public class Transaction {
     return signature;
   }
 
-  public List<SensorData> getSd() {
+  public SensorData getSensorData() {
     return sd;
   }
 
@@ -67,21 +72,36 @@ public class Transaction {
     );
   }
 
-  //Signs all the data we dont wish to be tampered with.
+  /**
+   * Signs the sensor data using the public key.
+   */
   public void generateSignature(PrivateKey privateKey) {
     String data = StringUtil.getStringFromKey(publicKey) + sd.toString();
     signature = StringUtil.applyECDSASig(privateKey,data);
   }
 
-  //Verifies the data we signed hasn't been tampered with.
+  /**
+   * Verifies the data we signed hasn't been tampered with.
+   * @return whether the data was signed with the corresponding private key.
+   */
   public boolean verifySignature() {
     String data = StringUtil.getStringFromKey(publicKey) + sd.toString();
     return StringUtil.verifyECDSASig(publicKey, data, signature);
   }
 
-  //Returns true if new transaction could be created.
+  /**
+   * @return whether the transaction is valid.
+   */
   public boolean processTransaction() {
     return verifySignature();
   }
 
+  /**
+   * Calculate the approximate size of the transaction.
+   * @return the size of the transaction in bytes.
+   */
+  @Override
+  public int getApproximateSize() {
+    return byteSize;
+  }
 }
