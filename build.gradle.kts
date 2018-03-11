@@ -43,7 +43,7 @@ project(":blockchain") {
 
     dependencies {
         //compile("io.vertx", "vertx-mongo-client", vertxVersion)
-        implementation("com.google.code.gson", "gson", "2.8.2")
+        compile("com.google.code.gson", "gson", "2.8.2")
         implementation("org.bouncycastle", "bcprov-jdk15on", "1.59")
     }
 }
@@ -52,6 +52,7 @@ project(":agent") {
     val jadeVersion = "4.5.0"
 
     dependencies {
+        compile("com.google.code.gson", "gson", "2.8.2")
         compile("com.tilab.jade", "jade", jadeVersion)
         compile("com.tilab.jade", "jade-misc", "2.8.0")
         compile("com.tilab.jade", "jade-xml-codec","1.11.0")
