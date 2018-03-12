@@ -1,5 +1,7 @@
 package pt.um.lei.masb.blockchain;
 
+import pt.um.lei.masb.blockchain.stringutils.StringUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,5 +82,22 @@ public class BlockChain {
                                         .equals(hash))
                          .findAny()
                          .orElse(null);
+    }
+
+    /**
+     * Add Block to blockchain if block is valid.
+     * @param b Block to add
+     * @return Whether block was successfully added.
+     */
+    public boolean addBlock(Block b) {
+        if(b.getPreviousHash().equals(blockchain.get(blockchain.size()-1).getHash())) {
+            if(b.getHash()
+                .substring( 0, b.getDifficulty())
+                .equals(StringUtil.getDifficultyString(b.getDifficulty()))) {
+
+                return blockchain.add(b);
+            }
+        }
+        return false;
     }
 }
