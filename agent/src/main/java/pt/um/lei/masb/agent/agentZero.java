@@ -28,7 +28,7 @@ public class agentZero extends Agent{
         Object[] args = getArguments();
         this.bc=(BlockChain) args[0];
 
-        ParallelBehaviour b= new ParallelBehaviour(this,ParallelBehaviour.WHEN_ANY) {
+        ParallelBehaviour b= new ParallelBehaviour(this,ParallelBehaviour.WHEN_ALL) {
             @Override
             public int onEnd() {
                 System.out.println("Session Closed");

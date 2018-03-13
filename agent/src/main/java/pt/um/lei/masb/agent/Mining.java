@@ -14,7 +14,10 @@ public class Mining extends Behaviour {
     @Override
     public void action() {
         System.out.println("Mining...");
-        bc.getLastBlock().attemptMineBlock(false,false);
+        boolean mining=true;
+        while(mining) {
+            mining=!bc.getLastBlock().attemptMineBlock(false, false);
+        }
         System.out.println("Finished mining");
     }
 

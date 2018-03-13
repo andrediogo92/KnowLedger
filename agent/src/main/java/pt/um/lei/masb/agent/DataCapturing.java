@@ -23,14 +23,15 @@ public class DataCapturing extends Behaviour {
     @Override
     public void action() {
         ArrayList<TransactionInput> l=new ArrayList<>();
-        Block bl=new Block("someHash",1000);
+        Block bl=new Block("someHash",1);
         NoiseData noise=new NoiseData();
+        myAgent.addBehaviour(new SoundCapturing(noise));
+
         SensorData sd=new SensorData(noise);
         Transaction t= new Transaction(pk,sd,l);
 
         bl.addTransaction(t);
         bc.addBlock(bl);
-        System.out.println("Added new data");
     }
 
 
