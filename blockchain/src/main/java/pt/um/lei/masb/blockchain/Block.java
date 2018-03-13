@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 
 
 public final class Block {
+  private static Block origin;
   private static int MAX_BLOCK_SIZE=500;
   private static int MAX_MEM = 2097152;
   private BlockHeader hd;
@@ -16,6 +17,14 @@ public final class Block {
   private int cur;
 
   private transient final String target;
+
+  static {
+    origin = new Block("0");
+  }
+
+  static Block getOrigin() {
+    return origin;
+   }
 
   private Block() {
     cur = -1;
@@ -30,6 +39,13 @@ public final class Block {
     this.target = StringUtil.getDifficultyString(difficulty);
   }
 
+  private Block(String s) {
+    data = null;
+    cur = -1;
+    target = "0";
+    hd = BlockHeader.getOrigin();
+  }
+
 
   /**
    * Attempt one nonce calculation.
@@ -38,6 +54,10 @@ public final class Block {
    * @return Whether the block was successfully mined.
    */
   public boolean attemptMineBlock(boolean invalidate, boolean time) {
+    //Can't mine origin block.
+    if(this == origin) {
+      return false;
+    }
     boolean res = false;
     if (invalidate && time) {
       int lastsize = hd.getMerkleTree().getApproximateSize();
