@@ -11,6 +11,8 @@ public class BlockChain {
 
     public BlockChain() {
         this.blockchain = new ArrayList<>(INIT_SIZE);
+        Block origin = Block.getOrigin();
+        blockchain.add(origin);
     }
 
     public boolean isChainValid() {

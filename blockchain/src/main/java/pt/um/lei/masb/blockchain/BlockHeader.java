@@ -4,10 +4,12 @@ import pt.um.lei.masb.blockchain.data.MerkleTree;
 import pt.um.lei.masb.blockchain.stringutils.Crypter;
 import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
+import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 public final class BlockHeader implements Sizeable {
+  private static BlockHeader origin;
   private static Crypter crypter = StringUtil.getDefaultCrypter();
   private String hash;
   private int byteSize;
@@ -16,6 +18,29 @@ public final class BlockHeader implements Sizeable {
   private String timeStamp;
   private int nonce;
   private final int difficulty;
+
+  static {
+    origin = new BlockHeader("0");
+  }
+
+  static BlockHeader getOrigin() {
+    return origin;
+  }
+
+  /**
+   * Origin block specialty constructor
+   * @param origin special string "0"
+   */
+  private BlockHeader(String origin) {
+    hash = origin;
+    byteSize = 752;
+    merkleTree = null;
+    previousHash = "";
+    timeStamp = ZonedDateTime.of(2018,3,13, 0,0,0,0,ZoneOffset.UTC)
+                             .toString();
+    nonce = 0;
+    difficulty = 0;
+  }
 
   BlockHeader(String previousHash, int difficulty) {
     this.nonce = 0;
@@ -31,7 +56,9 @@ public final class BlockHeader implements Sizeable {
     this.difficulty = -1;
   }
 
-  /**
+
+
+    /**
    * Hash is a SHA-256 calculated from previous hash, nonce, timestamp,
    * {@link MerkleTree}'s root and each {@link Transaction}'s hash.
    * @return The hash string.
