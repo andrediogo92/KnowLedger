@@ -39,7 +39,7 @@ public final class BlockHeader implements Sizeable {
     timeStamp = ZonedDateTime.of(2018,3,13, 0,0,0,0,ZoneOffset.UTC)
                              .toString();
     nonce = 0;
-    difficulty = 0;
+    difficulty = 1;
   }
 
   BlockHeader(String previousHash, int difficulty) {
