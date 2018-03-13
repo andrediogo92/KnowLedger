@@ -6,24 +6,28 @@ import pt.um.lei.masb.blockchain.BlockChain;
 public class Mining extends Behaviour {
 
     private BlockChain bc;
+    private boolean mining,init;
 
     public Mining(BlockChain bc){
         this.bc=bc;
+        mining=true;
+        init=true;
     }
 
     @Override
     public void action() {
-        System.out.println("Mining...");
-        boolean mining=true;
-        while(mining) {
-            mining=!bc.getLastBlock().attemptMineBlock(false, false);
+        //just for debugging
+        if (init){
+            System.out.println("Mining...");
+            init=false;
         }
-        System.out.println("Finished mining");
+        mining=!bc.getLastBlock().attemptMineBlock(false, false);
     }
 
 
     @Override
     public boolean done() {
-        return true;
+        if (!mining)System.out.println("Finished mining");
+        return mining==false;
     }
 }
