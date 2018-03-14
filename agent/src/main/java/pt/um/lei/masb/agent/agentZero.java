@@ -8,6 +8,8 @@ import pt.um.lei.masb.blockchain.Ident;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 public class agentZero extends Agent{
 
@@ -15,6 +17,7 @@ public class agentZero extends Agent{
     //sessionRewards could later be translated into user reward
     private double sessionRewards;
     private BlockChain bc;
+    private Queue<Block> bl;
     private PublicKey publicKey;
     private PrivateKey privateKey;
 
@@ -27,6 +30,7 @@ public class agentZero extends Agent{
 
         Object[] args = getArguments();
         this.bc=(BlockChain) args[0];
+        this.bl = new ArrayDeque<>(6);
 
         ParallelBehaviour b= new ParallelBehaviour(this,ParallelBehaviour.WHEN_ALL) {
             @Override
@@ -35,8 +39,8 @@ public class agentZero extends Agent{
                 return 0;
             }
         };
-        b.addSubBehaviour(new DataCapturing(bc,publicKey));
-        b.addSubBehaviour(new Mining(bc));
+        b.addSubBehaviour(new DataCapturing(bc,publicKey, bl));
+        b.addSubBehaviour(new Mining(bc, bl));
         addBehaviour(b);
     }
 

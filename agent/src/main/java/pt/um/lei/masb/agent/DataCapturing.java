@@ -1,6 +1,7 @@
 package pt.um.lei.masb.agent;
 
 import jade.core.behaviours.Behaviour;
+import jade.lang.acl.ACLMessage;
 import pt.um.lei.masb.blockchain.Block;
 import pt.um.lei.masb.blockchain.BlockChain;
 import pt.um.lei.masb.blockchain.Transaction;
@@ -11,29 +12,33 @@ import pt.um.lei.masb.blockchain.data.SensorData;
 import javax.sound.sampled.*;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.Queue;
 
 public class DataCapturing extends Behaviour {
 
     private BlockChain bc;
+    private Queue<Block> blockQueue;
     private PublicKey pk;
 
-    public DataCapturing(BlockChain bc, PublicKey pk) {
+    public DataCapturing(BlockChain bc, PublicKey pk, Queue<Block> blockQueue) {
         this.bc = bc;
         this.pk = pk;
+        this.blockQueue = blockQueue;
     }
 
     @Override
     public void action() {
         ArrayList<TransactionInput> l = new ArrayList<>();
-        Block bl = new Block("someHash", 100);
+        Block bl = new Block(bc.getLastBlock().getHash(), 5);
+
         NoiseData noise = new NoiseData();
         noise.setNoiseLevel(SoundCapturing());
+        System.out.println("noiseLevel " + noise.getNoiseLevel());
 
         SensorData sd = new SensorData(noise);
         Transaction t = new Transaction(pk, sd, l);
-
         bl.addTransaction(t);
-        bc.addBlock(bl);
+        blockQueue.add(bl);
     }
 
 
