@@ -71,11 +71,11 @@ public final class MerkleTree implements Sizeable {
    *
    * TODO: Unit test to check algorithm.
    * @param data Transactions in the block.
-   * @param size Actual number of transactions used in array.
-   * @return the corresponding MerkleTree or null if empty transactions.
+   * @param size Actual number of transactions used in array (negative numbers interpreted as 0).
+   * @return the corresponding MerkleTree or empty MerkleTree if empty transactions.
    */
   public static MerkleTree buildMerkleTree(Transaction[] data, int size) {
-    if(size!=0) {
+    if(size>0) {
 
       MerkleTree t = new MerkleTree(size);
       MerkleNode treeLayer[] = initTree(t, size, data);
@@ -103,7 +103,7 @@ public final class MerkleTree implements Sizeable {
       return t;
     }
     else {
-      return null;
+      return new MerkleTree(0);
     }
   }
 
