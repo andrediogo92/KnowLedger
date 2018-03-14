@@ -47,7 +47,7 @@ public final class BlockHeader implements Sizeable {
     this.difficulty = difficulty;
     this.timeStamp = ZonedDateTime.now(ZoneOffset.UTC).toString();
     this.previousHash = previousHash;
-    this.merkleTree = null;
+    this.merkleTree = MerkleTree.buildMerkleTree(null, 0);
     this.hash = null; //Making sure we do this after we set the other values.
     this.byteSize = 752;
   }

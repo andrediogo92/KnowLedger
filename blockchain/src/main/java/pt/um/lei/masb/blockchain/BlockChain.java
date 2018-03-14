@@ -4,13 +4,18 @@ import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 public class BlockChain {
     private static final int INIT_SIZE = 1000;
+    private static final int CACHE_SIZE = 40;
     private final List<Block> blockchain;
+    //private final List<Block> candidateBlocks;
 
     public BlockChain() {
         this.blockchain = new ArrayList<>(INIT_SIZE);
+    //    this.candidateBlocks = new ArrayList<>(CACHE_SIZE);
         Block origin = Block.getOrigin();
         blockchain.add(origin);
     }
@@ -45,6 +50,8 @@ public class BlockChain {
         }
         return true;
     }
+
+
 
     /**
      * @return The tail-end block of the blockchain.
@@ -102,4 +109,19 @@ public class BlockChain {
         }
         return false;
     }
+
+
+    /*
+    @Override
+    public void update(Observable o, Object arg) {
+        Block b = (Block) o;
+        candidateBlocks.stream()
+                       .filter(bl -> bl.getHash().equals(b.getHash()))
+                       .findAny()
+                       .ifPresent(ob -> {
+                           minedblocks.add(ob);
+                           blockchain.add(candidateBlocks.get(0))
+                       });
+    }
+    */
 }

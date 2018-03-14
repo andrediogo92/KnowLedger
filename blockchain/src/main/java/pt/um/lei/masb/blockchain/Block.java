@@ -5,9 +5,10 @@ import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Observable;
 
 
-public final class Block {
+public final class Block extends Observable {
   private static Block origin;
   private static int MAX_BLOCK_SIZE=500;
   private static int MAX_MEM = 2097152;
@@ -24,7 +25,7 @@ public final class Block {
 
   static Block getOrigin() {
     return origin;
-   }
+  }
 
   private Block() {
     cur = -1;
@@ -79,10 +80,10 @@ public final class Block {
     hd.updateHash();
     if(hd.getHash().substring( 0, hd.getDifficulty()).equals(target)) {
       res = true;
+      System.out.println("Block Mined!!! : " + hd.getHash());
     } else {
       hd.incNonce();
     }
-    System.out.println("Block Mined!!! : " + hd.getHash());
     return res;
   }
 
@@ -115,27 +116,27 @@ public final class Block {
     return true;
   }
 
-    public String getHash() {
-        return hd.getHash();
-    }
+  public String getHash() {
+    return hd.getHash();
+  }
 
-    public Transaction[] getData() {
-        return data;
-    }
+  public Transaction[] getData() {
+    return data;
+  }
 
-    public String getPreviousHash() {
-        return hd.getPreviousHash();
-    }
+  public String getPreviousHash() {
+    return hd.getPreviousHash();
+  }
 
-    public String getTimeStamp() {
-        return hd.getTimeStamp();
-    }
+  public String getTimeStamp() {
+    return hd.getTimeStamp();
+  }
 
-    public int getDifficulty() {
-        return hd.getDifficulty();
-    }
+  public int getDifficulty() {
+    return hd.getDifficulty();
+  }
 
-    public String calculateHash() {
-      return hd.calculateHash();
-    }
+  public String calculateHash() {
+    return hd.calculateHash();
+  }
 }
