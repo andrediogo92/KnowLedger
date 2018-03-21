@@ -15,7 +15,7 @@ public class BlockChain {
 
     public BlockChain() {
         this.blockchain = new ArrayList<>(INIT_SIZE);
-    //    this.candidateBlocks = new ArrayList<>(CACHE_SIZE);
+        //    this.candidateBlocks = new ArrayList<>(CACHE_SIZE);
         Block origin = Block.getOrigin();
         blockchain.add(origin);
     }
@@ -25,25 +25,25 @@ public class BlockChain {
         Block previousBlock;
 
         //loop through blockchain to check hashes:
-        for(int i=1; i < blockchain.size(); i++) {
+        for (int i = 1; i < blockchain.size(); i++) {
             currentBlock = blockchain.get(i);
-            previousBlock = blockchain.get(i-1);
+            previousBlock = blockchain.get(i - 1);
             String hashTarget = new String(new char[currentBlock.getDifficulty()]);
-            hashTarget = hashTarget.replace('\0','0');
+            hashTarget = hashTarget.replace('\0', '0');
 
             //compare registered hash and calculated hash:
-            if(!currentBlock.getHash().equals(currentBlock.calculateHash()) ){
+            if (!currentBlock.getHash().equals(currentBlock.calculateHash())) {
                 System.out.println("Current Hashes not equal");
                 return false;
             }
             //compare previous hash and registered previous hash
-            if(!previousBlock.getHash().equals(currentBlock.getPreviousHash()) ) {
+            if (!previousBlock.getHash().equals(currentBlock.getPreviousHash())) {
                 System.out.println("Previous Hashes not equal");
                 return false;
             }
-            if(!currentBlock.getHash()
-                            .substring(0, currentBlock.getDifficulty())
-                            .equals(hashTarget)) {
+            if (!currentBlock.getHash()
+                             .substring(0, currentBlock.getDifficulty())
+                             .equals(hashTarget)) {
                 System.out.println("Unmined block: " + i);
                 return false;
             }
@@ -52,12 +52,11 @@ public class BlockChain {
     }
 
 
-
     /**
      * @return The tail-end block of the blockchain.
      */
     public Block getLastBlock() {
-        return blockchain.get(blockchain.size()-1);
+        return blockchain.get(blockchain.size() - 1);
     }
 
     /**
@@ -82,6 +81,7 @@ public class BlockChain {
 
     /**
      * Will be refactored to candidate blocks and cached blocks eventually.
+     *
      * @param hash Hash of block.
      * @return The previous block to the one with the provided hash if exists, else null.
      */
@@ -95,14 +95,15 @@ public class BlockChain {
 
     /**
      * Add Block to blockchain if block is valid.
+     *
      * @param b Block to add
      * @return Whether block was successfully added.
      */
     public boolean addBlock(Block b) {
-        if(b.getPreviousHash().equals(blockchain.get(blockchain.size()-1).getHash())) {
-            if(b.getHash()
-                .substring( 0, b.getDifficulty())
-                .equals(StringUtil.getDifficultyString(b.getDifficulty()))) {
+        if (b.getPreviousHash().equals(blockchain.get(blockchain.size() - 1).getHash())) {
+            if (b.getHash()
+                 .substring(0, b.getDifficulty())
+                 .equals(StringUtil.getDifficultyString(b.getDifficulty()))) {
 
                 return blockchain.add(b);
             }

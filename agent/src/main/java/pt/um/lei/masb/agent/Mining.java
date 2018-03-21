@@ -35,7 +35,6 @@ public class Mining extends Behaviour {
             else {
                 mining = !block.attemptMineBlock(false, false);
             }
-            System.out.println("Mining...");
         }
         block = null;
     }

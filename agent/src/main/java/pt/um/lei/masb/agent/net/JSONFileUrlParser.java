@@ -16,24 +16,25 @@ import java.util.logging.Logger;
  * A parser for JSON files with an array of urls.
  */
 public class JSONFileUrlParser {
-  private String root;
-  private URL file;
-  private Collection<URL> apis;
-  private static final Logger LOGGER = Logger.getLogger("JSONFileUrlParser");
+    private static final Logger LOGGER = Logger.getLogger("JSONFileUrlParser");
+    private String root;
+    private URL file;
+    private Collection<URL> apis;
 
-  public JSONFileUrlParser(String file) {
-    root = file;
-    this.file = getClass().getResource(file);
-  }
-
-  public Collection<URL> parseFromJSON() {
-    Gson g = new Gson();
-    Type collection = new TypeToken<Collection<URL>>(){}.getType();
-    try {
-      return g.fromJson(new FileReader(file.getFile()), collection);
-    } catch (FileNotFoundException e) {
-     LOGGER.log(Level.SEVERE,e.getMessage());
+    public JSONFileUrlParser(String file) {
+        root = file;
+        this.file = getClass().getResource(file);
     }
-    return null;
-  }
+
+    public Collection<URL> parseFromJSON() {
+        Gson g = new Gson();
+        Type collection = new TypeToken<Collection<URL>>() {
+        }.getType();
+        try {
+            return g.fromJson(new FileReader(file.getFile()), collection);
+        } catch (FileNotFoundException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage());
+        }
+        return null;
+    }
 }

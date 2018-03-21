@@ -7,24 +7,25 @@ import java.util.logging.Logger;
 
 public class Ident {
     private static Logger LOGGER = Logger.getLogger("Ident");
+
+    //Ensure Bouncy Castle Crypto provider is present
+    static {
+        if (Security.getProvider("BC") == null) {
+            Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+        }
+    }
+
     private PrivateKey privateKey;
     private PublicKey publicKey;
 
-  //Ensure Bouncy Castle Crypto provider is present
-  static {
-    if (Security.getProvider("BC") == null) {
-      Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-    }
-  }
 
-
-  public Ident() {
+    public Ident() {
         generateKeyPair();
     }
 
     private void generateKeyPair() {
         try {
-            KeyPairGenerator keygen = KeyPairGenerator.getInstance("ECDSA","BC");
+            KeyPairGenerator keygen = KeyPairGenerator.getInstance("ECDSA", "BC");
             SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
             ECGenParameterSpec ecSpec = new ECGenParameterSpec("prime192v1");
             // Initialize the key generator and generate a KeyPair
@@ -39,11 +40,11 @@ public class Ident {
         }
     }
 
-  public PrivateKey getPrivateKey() {
-    return privateKey;
-  }
+    public PrivateKey getPrivateKey() {
+        return privateKey;
+    }
 
-  public PublicKey getPublicKey() {
-    return publicKey;
-  }
+    public PublicKey getPublicKey() {
+        return publicKey;
+    }
 }
