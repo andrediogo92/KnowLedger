@@ -25,9 +25,9 @@ public class Ident {
 
     private void generateKeyPair() {
         try {
-            KeyPairGenerator keygen = KeyPairGenerator.getInstance("ECDSA", "BC");
-            SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
-            ECGenParameterSpec ecSpec = new ECGenParameterSpec("prime192v1");
+            var keygen = KeyPairGenerator.getInstance("ECDSA", "BC");
+            var random = SecureRandom.getInstance("SHA1PRNG");
+            var ecSpec = new ECGenParameterSpec("prime192v1");
             // Initialize the key generator and generate a KeyPair
             keygen.initialize(ecSpec, random);   //256 bytes provides an acceptable security level
             KeyPair keyPair = keygen.generateKeyPair();

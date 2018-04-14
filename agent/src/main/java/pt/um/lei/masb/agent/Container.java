@@ -26,7 +26,7 @@ public class Container {
     this.rt = Runtime.instance();
 
     // Create a Profile, where the launch arguments are stored
-    Profile profile = new ProfileImpl();
+    var profile = new ProfileImpl();
     profile.setParameter(Profile.CONTAINER_NAME, containerName);
     profile.setParameter(Profile.MAIN_HOST, host);
     profile.setParameter(Profile.MAIN_PORT, port);
@@ -41,7 +41,7 @@ public class Container {
     this.rt = Runtime.instance();
 
     // Create a Profile, where the launch arguments are stored
-    Profile prof = new ProfileImpl();
+    var prof = new ProfileImpl();
     prof.setParameter(Profile.CONTAINER_NAME, containerName);
     prof.setParameter(Profile.MAIN_HOST, host);
     prof.setParameter(Profile.MAIN_PORT, port);
@@ -57,7 +57,7 @@ public class Container {
   public void startAEInPlatform(String name, String classpath,BlockChain bc) {
 
     try {
-      AgentController ac = container.createNewAgent(name, classpath, new Object[]{bc});
+      var ac = container.createNewAgent(name, classpath, new Object[]{bc});
       ac.start();
     } catch (Exception e) {
       e.printStackTrace();
@@ -66,8 +66,8 @@ public class Container {
 
   public static void main(String[] args) throws InterruptedException {
 
-    Container a = new Container();
-    BlockChain bc=new BlockChain();
+    var a = new Container();
+    var bc=new BlockChain();
 
     a.initMainContainerInPlatform("localhost", "9888", "Container");
 

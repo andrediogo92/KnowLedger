@@ -23,7 +23,7 @@ public class agentZero extends Agent{
 
     @Override
     protected void setup() {
-        Ident i = new Ident();
+        var i = new Ident();
         publicKey=i.getPublicKey();
         privateKey=i.getPrivateKey();
         sessionRewards=0;
@@ -32,7 +32,7 @@ public class agentZero extends Agent{
         this.bc=(BlockChain) args[0];
         this.bl = new ArrayDeque<>(6);
 
-        ParallelBehaviour b= new ParallelBehaviour(this,ParallelBehaviour.WHEN_ALL) {
+        var b= new ParallelBehaviour(this,ParallelBehaviour.WHEN_ALL) {
             @Override
             public int onEnd() {
                 System.out.println("Session Closed");

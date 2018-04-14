@@ -29,14 +29,14 @@ public class DataCapturing extends Behaviour {
     @Override
     public void action() {
         ArrayList<TransactionInput> l = new ArrayList<>();
-        Block bl = new Block(bc.getLastBlock().getHash(), 5);
+        var bl = new Block(bc.getLastBlock().getHash(), 5);
 
-        NoiseData noise = new NoiseData();
+        var noise = new NoiseData();
         noise.setNoiseLevel(SoundCapturing());
         System.out.println("noiseLevel " + noise.getNoiseLevel());
 
-        SensorData sd = new SensorData(noise);
-        Transaction t = new Transaction(pk, sd, l);
+        var sd = new SensorData(noise);
+        var t = new Transaction(pk, sd, l);
         bl.addTransaction(t);
         blockQueue.add(bl);
     }
@@ -53,9 +53,18 @@ public class DataCapturing extends Behaviour {
         int bytesRead;
         TargetDataLine line;
         //WAV format
-        AudioFormat format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED, 44100, 16, 2, 4, 44100, false);
-        DataLine.Info info = new DataLine.Info(TargetDataLine.class, format); // format is an AudioFormat object
-        if (!AudioSystem.isLineSupported(info)) System.out.println("Line not supported");
+        var format = new AudioFormat(AudioFormat.Encoding.PCM_SIGNED,
+                                     44100,
+                                     16,
+                                     2,
+                                     4,
+                                     44100,
+                                     false);
+        var info = new DataLine.Info(TargetDataLine.class,
+                                     format); // format is an AudioFormat object
+        if (!AudioSystem.isLineSupported(info)) {
+            System.out.println("Line not supported");
+        }
         // Obtain and open the line.
         try {
             line = (TargetDataLine) AudioSystem.getLine(info);
@@ -68,11 +77,12 @@ public class DataCapturing extends Behaviour {
             if (bytesRead >= 0) {
                 max = (short) (buffer[0] + (buffer[1] << 8));
                 for (int p = 2; p < bytesRead - 1; p += 2) {
-                    short thisValue = (short) (buffer[p] + (buffer[p + 1] << 8));
+                    var thisValue = (short) (buffer[p] + (buffer[p + 1] << 8));
                     if (thisValue > max) max = thisValue;
                 }
             }
         } catch (LineUnavailableException ex) {
+            ex.printStackTrace();
         }
         return (int)max;
     }
