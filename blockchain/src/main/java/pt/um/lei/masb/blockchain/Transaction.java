@@ -4,16 +4,23 @@ import pt.um.lei.masb.blockchain.data.SensorData;
 import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 import pt.um.lei.masb.blockchain.stringutils.Crypter;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Transient;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+@Entity
 public class Transaction implements Sizeable {
     private static Crypter crypter = StringUtil.getDefaultCrypter();
     // a rough count of how many transactions have been generated.
     private static AtomicLong sequence = new AtomicLong(0);
+
+    @Id
+    private long id;
     // this is also the hash of the transaction.
     private final String transactionId;
     // Agent's pub key.
@@ -24,6 +31,8 @@ public class Transaction implements Sizeable {
     private final List<TransactionOutput> outputs = new ArrayList<>();
     // this is to identify unequivocally an agent.
     private byte[] signature;
+
+    @Transient
     private transient int byteSize;
 
 

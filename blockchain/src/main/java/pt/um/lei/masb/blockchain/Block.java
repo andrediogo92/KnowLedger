@@ -3,12 +3,12 @@ package pt.um.lei.masb.blockchain;
 import pt.um.lei.masb.blockchain.data.MerkleTree;
 import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
+import javax.persistence.*;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Observable;
 
-
-public final class Block extends Observable {
+@Entity
+public final class Block {
     private static Block origin;
     private static int MAX_BLOCK_SIZE = 500;
     private static int MAX_MEM = 2097152;
@@ -17,9 +17,24 @@ public final class Block extends Observable {
         origin = new Block("0");
     }
 
+    static Block getOrigin() {
+        return origin;
+    }
+
+
+    @Id
+    @GeneratedValue
+    private long id;
+
+    @OneToMany
     private final Transaction data[];
+
+    @Transient
     private transient final String target;
-    private BlockHeader hd;
+
+    @Embedded
+    private final BlockHeader hd;
+
     private int cur;
 
     private Block() {
@@ -43,10 +58,6 @@ public final class Block extends Observable {
         hd = BlockHeader.getOrigin();
     }
 
-    static Block getOrigin() {
-        return origin;
-    }
-
     /**
      * Attempt one nonce calculation.
      *
@@ -55,11 +66,11 @@ public final class Block extends Observable {
      * @return Whether the block was successfully mined.
      */
     public boolean attemptMineBlock(boolean invalidate, boolean time) {
+        boolean res = false;
         //Can't mine origin block.
         if (this == origin) {
-            return false;
+            return res;
         }
-        boolean res = false;
         if (invalidate && time) {
             int lastsize = hd.getMerkleTree().getApproximateSize();
             hd.setMerkleTree(MerkleTree.buildMerkleTree(data, cur));

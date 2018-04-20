@@ -4,10 +4,15 @@ import pt.um.lei.masb.blockchain.data.MerkleTree;
 import pt.um.lei.masb.blockchain.stringutils.Crypter;
 import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
+import javax.persistence.Embeddable;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
+@Entity
 public final class BlockHeader implements Sizeable {
     private static BlockHeader origin;
     private static Crypter crypter = StringUtil.getDefaultCrypter();
@@ -16,10 +21,14 @@ public final class BlockHeader implements Sizeable {
         origin = new BlockHeader("0");
     }
 
+    // Difficulty is fixed at block generation time.
     private final int difficulty;
     private String hash;
     private int byteSize;
+
+    @OneToOne
     private MerkleTree merkleTree;
+
     private String previousHash;
     private String timeStamp;
     private int nonce;
@@ -62,7 +71,6 @@ public final class BlockHeader implements Sizeable {
      * Hash is a SHA-256 calculated from previous hash, nonce, timestamp,
      * {@link MerkleTree}'s root and each {@link Transaction}'s hash.
      *
-     * @return The hash string.
      */
     protected void updateHash() {
         hash = calculateHash();
