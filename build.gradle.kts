@@ -1,7 +1,7 @@
 import java.net.URI
 
 
-allprojects {
+subprojects {
 
     group = "pt.um.lei.masb"
     version = "1.0-SNAPSHOT"
@@ -9,9 +9,15 @@ allprojects {
     repositories {
         mavenCentral()
         jcenter()
-        // maven{url = URI("http://repo.spring.io/libs-snapshot") }
-        // maven{url = URI("http://repo.spring.io/milestone")}
-        maven { url = URI("http://jade.tilab.com/maven") }
+        maven("http://jade.tilab.com/maven")
+    }
+
+    ext {
+        set("junitVersion", "5.1.0")
+        set("gsonVersion", "2.8.2")
+        set("bouncyCastleVersion", "1.59")
+        set("jadeVersion", "4.5.0")
+        //set("vertxVersion", "3.5.1")
     }
 
 }

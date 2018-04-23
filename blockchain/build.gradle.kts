@@ -1,10 +1,6 @@
 group = "pt.um.lei.masb"
 version = "1.0"
 
-//val vertxVersion = "3.5.1"
-val junitversion = "5.1.0"
-val gsonversion = "2.8.2"
-val bouncycastle = "1.59"
 
 plugins {
     `java-library`
@@ -12,10 +8,10 @@ plugins {
 
 dependencies {
     //compile("io.vertx", "vertx-mongo-client", vertxVersion)
-    testCompile("org.junit.jupiter", "junit-jupiter-api", junitversion)
-    testRuntime("org.junit.jupiter", "junit-jupiter-params", junitversion)
-    compile("com.google.code.gson", "gson", gsonversion)
-    implementation("org.bouncycastle", "bcprov-jdk15on", bouncycastle)
+    testCompile("org.junit.jupiter", "junit-jupiter-api", project.ext["junitVersion"] as String)
+    testRuntime("org.junit.jupiter", "junit-jupiter-params", project.ext["junitVersion"] as String)
+    compile("com.google.code.gson", "gson", project.ext["gsonVersion"] as String)
+    implementation("org.bouncycastle", "bcprov-jdk15on", project.ext["bouncyCastleVersion"] as String)
 }
 
 tasks.withType<JavaCompile> {
