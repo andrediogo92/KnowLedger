@@ -19,10 +19,12 @@ public class DataCapturing extends Behaviour {
     private BlockChain bc;
     private Queue<Block> blockQueue;
     private PublicKey pk;
+    private ArrayList<Transaction> tq;
 
-    public DataCapturing(BlockChain bc, PublicKey pk, Queue<Block> blockQueue) {
+    public DataCapturing(BlockChain bc, PublicKey pk, Queue<Block> blockQueue,ArrayList<Transaction> tq) {
         this.bc = bc;
         this.pk = pk;
+        this.tq = tq;
         this.blockQueue = blockQueue;
     }
 
@@ -38,6 +40,7 @@ public class DataCapturing extends Behaviour {
         var sd = new SensorData(noise);
         var t = new Transaction(pk, sd, l);
         bl.addTransaction(t);
+        tq.add(t);
         blockQueue.add(bl);
     }
 
