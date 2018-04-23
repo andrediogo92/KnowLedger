@@ -3,11 +3,6 @@ version = "1.0"
 
 //val vertxVersion = "3.5.1"
 val junitversion = "5.1.0"
-val h2version = "1.4.197"
-val hibernatecore = "5.3.0.CR1"
-val hibernatevalidator = "6.0.9.Final"
-val gsonversion = "2.8.2"
-val bouncycastle = "1.59"
 
 plugins {
     `java-library`
@@ -22,6 +17,10 @@ dependencies {
     compile("org.hibernate", "hibernate-validator", hibernatevalidator)
     implementation("com.google.code.gson", "gson", gsonversion)
     implementation("org.bouncycastle", "bcprov-jdk15on", bouncycastle)
+    testCompile("org.junit.jupiter", "junit-jupiter-api", project.ext["junitVersion"] as String)
+    testRuntime("org.junit.jupiter", "junit-jupiter-params", project.ext["junitVersion"] as String)
+    compile("com.google.code.gson", "gson", project.ext["gsonVersion"] as String)
+    implementation("org.bouncycastle", "bcprov-jdk15on", project.ext["bouncyCastleVersion"] as String)
 }
 
 tasks.withType<JavaCompile> {
