@@ -1,5 +1,7 @@
 package pt.um.lei.masb.blockchain.data;
 
+import org.openjdk.jol.info.ClassLayout;
+import org.openjdk.jol.info.GraphLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 import pt.um.lei.masb.blockchain.Transaction;
 import pt.um.lei.masb.blockchain.stringutils.Crypter;
@@ -23,7 +25,6 @@ public final class MerkleTree implements Sizeable {
      * <p>
      * Start at leaves and iteratively build next layer at depth-1 until it arrives at root.
      * <p>
-     * TODO: Unit test to check algorithm.
      *
      * @param data Transactions in the block.
      * @param size Actual number of transactions used in array (negative numbers interpreted as 0).
@@ -164,8 +165,9 @@ public final class MerkleTree implements Sizeable {
     }
 
     @Override
-    public int getApproximateSize() {
-        return 1280 * trans.size();
+    public long getApproximateSize() {
+        return root.getApproximateSize() +
+                ClassLayout.parseClass(MerkleTree.class).instanceSize();
     }
 }
 

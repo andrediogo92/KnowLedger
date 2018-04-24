@@ -18,6 +18,7 @@ subprojects {
         set("h2Version", "1.4.197")
         set("hibernateVersion","5.2.16.Final")
         set("hibernateValidatorVersion","6.0.9.Final")
+        set("jolVersion", "0.9")
         //set("vertxVersion", "3.5.1")
     }
 

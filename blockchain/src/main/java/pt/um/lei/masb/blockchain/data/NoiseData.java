@@ -1,15 +1,12 @@
 package pt.um.lei.masb.blockchain.data;
 
+import org.openjdk.jol.info.GraphLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 
 public class NoiseData implements Sizeable {
     private int noiseLevel;
 
     public NoiseData() {
-    }
-
-    public int getApproximateSize() {
-        return 5;
     }
 
     public int getNoiseLevel() {

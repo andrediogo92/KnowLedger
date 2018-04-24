@@ -1,14 +1,17 @@
 package pt.um.lei.masb.blockchain;
 
+import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.MerkleTree;
 import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
 import javax.persistence.*;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+
 
 @Entity
-public final class Block {
+public final class Block implements Sizeable {
     private static Block origin;
     private static int MAX_BLOCK_SIZE = 500;
     private static int MAX_MEM = 2097152;
@@ -36,6 +39,9 @@ public final class Block {
     private final BlockHeader hd;
 
     private int cur;
+    private transient final long classSize = ClassLayout.parseClass(this.getClass()).instanceSize();
+    private transient long headerSize = hd.getApproximateSize();
+    private transient long transactionsSize;
 
     private Block() {
         cur = -1;
@@ -72,16 +78,14 @@ public final class Block {
             return res;
         }
         if (invalidate && time) {
-            int lastsize = hd.getMerkleTree().getApproximateSize();
             hd.setMerkleTree(MerkleTree.buildMerkleTree(data, cur));
-            hd.updateByteSize(hd.getMerkleTree().getApproximateSize() - lastsize);
             hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toString());
             hd.zeroNonce();
+            headerSize = hd.getApproximateSize();
         } else if (invalidate) {
-            int lastsize = hd.getMerkleTree().getApproximateSize();
             hd.setMerkleTree(MerkleTree.buildMerkleTree(data, cur));
-            hd.updateByteSize(hd.getMerkleTree().getApproximateSize() - lastsize);
             hd.zeroNonce();
+            headerSize = hd.getApproximateSize();
         } else if (time) {
             hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toString());
             hd.zeroNonce();
@@ -111,12 +115,13 @@ public final class Block {
             return false;
         }
 
-        if (hd.getApproximateSize() + transaction.getApproximateSize() < MAX_MEM) {
+        var transactionSize = transaction.getApproximateSize();
+        if (transactionsSize + headerSize + classSize + transactionSize < MAX_MEM) {
             if (cur < MAX_BLOCK_SIZE) {
                 if (transaction.processTransaction()) {
                     data[cur] = transaction;
                     cur++;
-                    hd.updateByteSize(transaction.getApproximateSize());
+                    transactionsSize += transactionSize;
                     System.out.println("Transaction Successfully added to Block");
                     return true;
                 }
@@ -149,6 +154,29 @@ public final class Block {
     public String calculateHash() {
         return hd.calculateHash();
     }
+
+    @Override
+    public long getApproximateSize() {
+        return classSize + transactionsSize + headerSize;
+    }
+
+    /**
+     * Recalculates the entire block size.
+     *
+     * Is somewhat time consuming and only necessary if:
+     *
+     * 1. You need to calculate the size after deserialization
+     * 2. You need to calculate the size after retrieval
+     * of a block from a database.
+     */
+    public void resetApproximateSize() {
+        headerSize = hd.getApproximateSize();
+        transactionsSize = Arrays.stream(data)
+                                 .limit(cur)
+                                 .mapToLong(Transaction::getApproximateSize)
+                                 .sum();
+    }
+
 
     public String toString() {
         var sb = new StringBuilder();

@@ -1,10 +1,7 @@
 package pt.um.lei.masb.blockchain.data;
 
+import org.openjdk.jol.info.GraphLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 
 public class LuminosityData implements Sizeable {
-    @Override
-    public int getApproximateSize() {
-        return 0;
-    }
 }
