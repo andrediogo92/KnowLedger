@@ -40,7 +40,7 @@ public final class Block implements Sizeable {
 
     private int cur;
     private transient final long classSize = ClassLayout.parseClass(this.getClass()).instanceSize();
-    private transient long headerSize = hd.getApproximateSize();
+    private transient long headerSize;
     private transient long transactionsSize;
 
     private Block() {
@@ -55,6 +55,7 @@ public final class Block implements Sizeable {
         this.data = new Transaction[MAX_BLOCK_SIZE];
         cur = 0;
         this.target = StringUtil.getDifficultyString(difficulty);
+        headerSize = hd.getApproximateSize();
     }
 
     private Block(String s) {
@@ -62,6 +63,7 @@ public final class Block implements Sizeable {
         cur = -1;
         target = "0";
         hd = BlockHeader.getOrigin();
+        headerSize = hd.getApproximateSize();
     }
 
     /**
