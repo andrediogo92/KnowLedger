@@ -1,10 +1,10 @@
 package pt.um.lei.masb.blockchain;
 
+import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.MerkleTree;
 import pt.um.lei.masb.blockchain.stringutils.Crypter;
 import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -18,7 +18,6 @@ public final class BlockHeader implements Sizeable {
 
     private final int difficulty;
     private String hash;
-    private int byteSize;
     private MerkleTree merkleTree;
     private String previousHash;
     private String timeStamp;
@@ -31,7 +30,6 @@ public final class BlockHeader implements Sizeable {
      */
     private BlockHeader(String origin) {
         hash = origin;
-        byteSize = 752;
         merkleTree = null;
         previousHash = "";
         timeStamp = ZonedDateTime.of(2018, 3, 13, 0, 0, 0, 0, ZoneOffset.UTC)
@@ -41,13 +39,12 @@ public final class BlockHeader implements Sizeable {
     }
 
     BlockHeader(String previousHash, int difficulty) {
-        this.nonce = 0;
+        nonce = 0;
         this.difficulty = difficulty;
         this.timeStamp = ZonedDateTime.now(ZoneOffset.UTC).toString();
         this.previousHash = previousHash;
-        this.merkleTree = MerkleTree.buildMerkleTree(null, 0);
-        this.hash = null; //Making sure we do this after we set the other values.
-        this.byteSize = 752;
+        merkleTree = null;
+        hash = null; //Making sure we do this after we set the other values.
     }
 
     private BlockHeader() {
@@ -74,7 +71,7 @@ public final class BlockHeader implements Sizeable {
           .append(Long.toHexString(nonce))
           .append(timeStamp)
           .append(merkleTree.getRoot())
-          .append(byteSize);
+          .append(getApproximateSize());
         return crypter.applyHash(sb.toString());
     }
 
@@ -111,10 +108,6 @@ public final class BlockHeader implements Sizeable {
         return difficulty;
     }
 
-    protected void updateByteSize(int delta) {
-        byteSize += delta;
-    }
-
 
     protected void zeroNonce() {
         nonce = 0;
@@ -125,8 +118,13 @@ public final class BlockHeader implements Sizeable {
     }
 
     @Override
-    public int getApproximateSize() {
-        return byteSize;
+    public long getApproximateSize() {
+        if(merkleTree != null) {
+            return ClassLayout.parseClass(this.getClass()).instanceSize() + merkleTree.getApproximateSize();
+        }
+        else {
+            return ClassLayout.parseClass(this.getClass()).instanceSize();
+        }
     }
 
     public String toString() {

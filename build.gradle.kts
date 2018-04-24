@@ -17,6 +17,7 @@ subprojects {
         set("gsonVersion", "2.8.2")
         set("bouncyCastleVersion", "1.59")
         set("jadeVersion", "4.5.0")
+        set("jolVersion", "0.9")
         //set("vertxVersion", "3.5.1")
     }
 

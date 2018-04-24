@@ -90,9 +90,4 @@ public final class MerkleNode implements Sizeable {
                 ", hash='" + hash + '\'' +
                 '}';
     }
-
-    @Override
-    public int getApproximateSize() {
-        return 512;
-    }
 }

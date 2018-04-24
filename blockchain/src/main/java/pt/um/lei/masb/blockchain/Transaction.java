@@ -1,5 +1,6 @@
 package pt.um.lei.masb.blockchain;
 
+import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.SensorData;
 import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 import pt.um.lei.masb.blockchain.stringutils.Crypter;
@@ -24,7 +25,7 @@ public class Transaction implements Sizeable {
     private final List<TransactionOutput> outputs = new ArrayList<>();
     // this is to identify unequivocally an agent.
     private byte[] signature;
-    private transient int byteSize;
+    private transient long byteSize;
 
 
     public Transaction(PublicKey from, SensorData sd, List<TransactionInput> inputs) {
@@ -32,9 +33,10 @@ public class Transaction implements Sizeable {
         this.sd = sd;
         this.inputs = inputs;
         this.transactionId = calculateHash();
-        byteSize = 512 + sd.getApproximateSize()
-                + (inputs.size() * new TransactionInput().getApproximateSize())
-                + (outputs.size() * new TransactionOutput().getApproximateSize());
+        byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
+                sd.getApproximateSize() +
+                (inputs.size() * new TransactionInput().getApproximateSize()) +
+                (outputs.size() * new TransactionOutput().getApproximateSize());
     }
 
     public String getTransactionId() {
@@ -101,8 +103,20 @@ public class Transaction implements Sizeable {
      * @return the size of the transaction in bytes.
      */
     @Override
-    public int getApproximateSize() {
+    public long getApproximateSize() {
         return byteSize;
+    }
+
+    /**
+     * Recalculates the Transaction size if it's necessary,
+     *
+     * The size of the transaction is lost when storing it in database or serialization.
+     */
+    public void resetSize() {
+        byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
+                sd.getApproximateSize() +
+                (inputs.size() * new TransactionInput().getApproximateSize()) +
+                (outputs.size() * new TransactionOutput().getApproximateSize());
     }
 
     @Override
