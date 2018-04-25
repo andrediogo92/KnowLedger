@@ -42,8 +42,10 @@ public final class Block implements Sizeable {
     @Transient
     private transient long transactionsSize;
 
+    //Consider only the class size contribution to size.
+    //Makes the total block size in the possible ballpark of 2MB + merkleTree graph size.
     @Transient
-    private transient long merkleTreeSize;
+    private transient long merkleTreeSize = ClassLayout.parseClass(merkleTree.getClass()).instanceSize();
 
     protected Block() {
         cur = -1;
@@ -89,12 +91,10 @@ public final class Block implements Sizeable {
             merkleTree = MerkleTree.buildMerkleTree(data, cur);
             hd.setMerkleRoot(merkleTree.getRoot().getHash());
             hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toString());
-            merkleTreeSize = merkleTree.getApproximateSize();
             hd.zeroNonce();
         } else if (invalidate) {
             merkleTree = MerkleTree.buildMerkleTree(data, cur);
             hd.setMerkleRoot(merkleTree.getRoot().getHash());
-            merkleTreeSize = merkleTree.getApproximateSize();
             hd.zeroNonce();
         } else if (time) {
             hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toString());
@@ -126,7 +126,7 @@ public final class Block implements Sizeable {
         }
 
         var transactionSize = transaction.getApproximateSize();
-        if (transactionsSize + headerSize + classSize + transactionSize < MAX_MEM) {
+        if (transactionsSize + headerSize + classSize + merkleTreeSize + transactionSize < MAX_MEM) {
             if (cur < MAX_BLOCK_SIZE) {
                 if (transaction.processTransaction()) {
                     data[cur] = transaction;
@@ -175,8 +175,8 @@ public final class Block implements Sizeable {
      *
      * Is somewhat time consuming and only necessary if:
      *
-     * 1. You need to calculate the size after deserialization
-     * 2. You need to calculate the size after retrieval
+     * 1. You need to calculate the effective block size after deserialization
+     * 2. You need to calculate the effective block size after retrieval
      * of a block from a database.
      */
     public void resetApproximateSize() {
@@ -185,6 +185,7 @@ public final class Block implements Sizeable {
                                  .limit(cur)
                                  .mapToLong(Transaction::getApproximateSize)
                                  .sum();
+        merkleTreeSize = merkleTree.getApproximateSize();
     }
 
 
