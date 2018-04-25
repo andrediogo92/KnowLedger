@@ -2,9 +2,10 @@ package pt.um.lei.masb.blockchain;
 
 import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.MerkleTree;
-import pt.um.lei.masb.blockchain.stringutils.Crypter;
-import pt.um.lei.masb.blockchain.stringutils.StringUtil;
+import pt.um.lei.masb.blockchain.utils.Crypter;
+import pt.um.lei.masb.blockchain.utils.StringUtil;
 
+import java.math.BigInteger;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -16,9 +17,9 @@ public final class BlockHeader implements Sizeable {
         origin = new BlockHeader("0");
     }
 
-    private final int difficulty;
+    private final BigInteger difficulty;
     private String hash;
-    private MerkleTree merkleTree;
+    private String merkleRoot;
     private String previousHash;
     private String timeStamp;
     private int nonce;
@@ -30,25 +31,25 @@ public final class BlockHeader implements Sizeable {
      */
     private BlockHeader(String origin) {
         hash = origin;
-        merkleTree = null;
+        merkleRoot = null;
         previousHash = "";
         timeStamp = ZonedDateTime.of(2018, 3, 13, 0, 0, 0, 0, ZoneOffset.UTC)
                                  .toString();
         nonce = 0;
-        difficulty = 1;
+        difficulty = BigInteger.ZERO;
     }
 
-    BlockHeader(String previousHash, int difficulty) {
+    BlockHeader(String previousHash, BigInteger difficulty) {
         nonce = 0;
         this.difficulty = difficulty;
         this.timeStamp = ZonedDateTime.now(ZoneOffset.UTC).toString();
         this.previousHash = previousHash;
-        merkleTree = null;
+        merkleRoot = null;
         hash = null; //Making sure we do this after we set the other values.
     }
 
     private BlockHeader() {
-        this.difficulty = -1;
+        this.difficulty = null;
     }
 
     static BlockHeader getOrigin() {
@@ -70,8 +71,7 @@ public final class BlockHeader implements Sizeable {
         sb.append(previousHash)
           .append(Long.toHexString(nonce))
           .append(timeStamp)
-          .append(merkleTree.getRoot())
-          .append(getApproximateSize());
+          .append(merkleRoot);
         return crypter.applyHash(sb.toString());
     }
 
@@ -80,12 +80,12 @@ public final class BlockHeader implements Sizeable {
     }
 
 
-    protected MerkleTree getMerkleTree() {
-        return merkleTree;
+    protected String getMerkleRoot() {
+        return merkleRoot;
     }
 
-    protected void setMerkleTree(MerkleTree merkleTree) {
-        this.merkleTree = merkleTree;
+    protected void setMerkleRoot(String merkleRoot) {
+        this.merkleRoot = merkleRoot;
     }
 
     protected String getPreviousHash() {
@@ -104,7 +104,7 @@ public final class BlockHeader implements Sizeable {
         this.timeStamp = timeStamp;
     }
 
-    protected int getDifficulty() {
+    protected BigInteger getDifficulty() {
         return difficulty;
     }
 
@@ -119,12 +119,7 @@ public final class BlockHeader implements Sizeable {
 
     @Override
     public long getApproximateSize() {
-        if(merkleTree != null) {
-            return ClassLayout.parseClass(this.getClass()).instanceSize() + merkleTree.getApproximateSize();
-        }
-        else {
             return ClassLayout.parseClass(this.getClass()).instanceSize();
-        }
     }
 
     public String toString() {

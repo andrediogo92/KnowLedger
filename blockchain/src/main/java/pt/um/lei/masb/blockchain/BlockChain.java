@@ -1,35 +1,35 @@
 package pt.um.lei.masb.blockchain;
 
-import pt.um.lei.masb.blockchain.stringutils.StringUtil;
+import pt.um.lei.masb.blockchain.utils.RingBuffer;
+import pt.um.lei.masb.blockchain.utils.StringUtil;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 
 public class BlockChain {
-    private static final int INIT_SIZE = 1000;
     private static final int CACHE_SIZE = 40;
-    private final List<Block> blockchain;
+    private final RingBuffer<Block> blockchain;
+    private BigInteger difficultyTarget;
     //private final List<Block> candidateBlocks;
 
     public BlockChain() {
-        this.blockchain = new ArrayList<>(INIT_SIZE);
+        this.blockchain = new RingBuffer<>(CACHE_SIZE);
         //    this.candidateBlocks = new ArrayList<>(CACHE_SIZE);
-        Block origin = Block.getOrigin();
-        blockchain.add(origin);
+        var origin = Block.getOrigin();
+        blockchain.offer(origin);
+        difficultyTarget = new BigInteger(StringUtil.getInitialDifficultyString());
     }
 
     public boolean isChainValid() {
-        Block currentBlock;
-        Block previousBlock;
+        var blocks = blockchain.iterator();
+        //Origin block is always the first block.
+        var previousBlock = blocks.next();
 
         //loop through blockchain to check hashes:
-        for (int i = 1; i < blockchain.size(); i++) {
-            currentBlock = blockchain.get(i);
-            previousBlock = blockchain.get(i - 1);
-            String hashTarget = new String(new char[currentBlock.getDifficulty()]);
-            hashTarget = hashTarget.replace('\0', '0');
+        while (blocks.hasNext()) {
+            var currentBlock = blocks.next();
 
             //compare registered hash and calculated hash:
             if (!currentBlock.getHash().equals(currentBlock.calculateHash())) {
@@ -41,12 +41,14 @@ public class BlockChain {
                 System.out.println("Previous Hashes not equal");
                 return false;
             }
-            if (!currentBlock.getHash()
-                             .substring(0, currentBlock.getDifficulty())
-                             .equals(hashTarget)) {
-                System.out.println("Unmined block: " + i);
+
+            var hashTarget = currentBlock.getDifficulty();
+            if (new BigInteger(currentBlock.getHash()).compareTo(hashTarget) > 0) {
+                System.out.println("Unmined block: " + currentBlock.getHash());
                 return false;
             }
+
+            previousBlock = currentBlock;
         }
         return true;
     }
@@ -56,7 +58,7 @@ public class BlockChain {
      * @return The tail-end block of the blockchain.
      */
     public Block getLastBlock() {
-        return blockchain.get(blockchain.size() - 1);
+        return blockchain.peek();
     }
 
     /**
@@ -76,7 +78,8 @@ public class BlockChain {
      * @return If a block with said hash exists.
      */
     public boolean hasBlock(String hash) {
-        return blockchain.stream().anyMatch(h -> !h.getHash().equals(hash));
+        return blockchain.stream()
+                         .anyMatch(h -> !h.getHash().equals(hash));
     }
 
     /**
@@ -100,11 +103,8 @@ public class BlockChain {
      * @return Whether block was successfully added.
      */
     public boolean addBlock(Block b) {
-        if (b.getPreviousHash().equals(blockchain.get(blockchain.size() - 1).getHash())) {
-            if (b.getHash()
-                 .substring(0, b.getDifficulty())
-                 .equals(StringUtil.getDifficultyString(b.getDifficulty()))) {
-
+        if (b.getPreviousHash().equals(blockchain.peek().getHash())) {
+            if (new BigInteger(b.getHash()).compareTo(b.getDifficulty()) < 1) {
                 return blockchain.add(b);
             }
         }

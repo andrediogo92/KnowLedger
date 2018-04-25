@@ -2,8 +2,8 @@ package pt.um.lei.masb.blockchain;
 
 import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.SensorData;
-import pt.um.lei.masb.blockchain.stringutils.StringUtil;
-import pt.um.lei.masb.blockchain.stringutils.Crypter;
+import pt.um.lei.masb.blockchain.utils.StringUtil;
+import pt.um.lei.masb.blockchain.utils.Crypter;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -76,7 +76,7 @@ public class Transaction implements Sizeable {
      * Signs the sensor data using the public key.
      */
     public void generateSignature(PrivateKey privateKey) {
-        String data = StringUtil.getStringFromKey(publicKey) + sd.toString();
+        var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
         signature = StringUtil.applyECDSASig(privateKey, data);
     }
 
@@ -86,7 +86,7 @@ public class Transaction implements Sizeable {
      * @return whether the data was signed with the corresponding private key.
      */
     public boolean verifySignature() {
-        String data = StringUtil.getStringFromKey(publicKey) + sd.toString();
+        var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
         return StringUtil.verifyECDSASig(publicKey, data, signature);
     }
 
@@ -121,7 +121,7 @@ public class Transaction implements Sizeable {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        var sb = new StringBuilder();
         sb.append("Transaction {")
           .append(System.lineSeparator())
           .append("Transaction id: ")
