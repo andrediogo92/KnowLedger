@@ -119,7 +119,7 @@ public final class BlockHeader implements Sizeable {
 
     @Override
     public long getApproximateSize() {
-            return ClassLayout.parseClass(this.getClass()).instanceSize();
+        return ClassLayout.parseClass(this.getClass()).instanceSize();
     }
 
     public String toString() {

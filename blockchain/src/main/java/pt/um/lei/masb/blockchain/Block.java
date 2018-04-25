@@ -34,7 +34,7 @@ public final class Block implements Sizeable {
         merkleTree = null;
     }
 
-    public Block(String previousHash, BigInteger difficulty) {
+    Block(String previousHash, BigInteger difficulty) {
         this.hd = new BlockHeader(previousHash, difficulty);
         this.data = new Transaction[MAX_BLOCK_SIZE];
         cur = 0;
