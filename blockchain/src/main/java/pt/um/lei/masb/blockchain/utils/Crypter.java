@@ -1,4 +1,4 @@
-package pt.um.lei.masb.blockchain.stringutils;
+package pt.um.lei.masb.blockchain.utils;
 
 public interface Crypter {
     String applyHash(String input);

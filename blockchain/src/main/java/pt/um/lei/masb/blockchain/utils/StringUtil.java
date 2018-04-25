@@ -1,4 +1,4 @@
-package pt.um.lei.masb.blockchain.stringutils;
+package pt.um.lei.masb.blockchain.utils;
 
 import java.security.*;
 import java.util.Base64;
@@ -27,7 +27,7 @@ public final class StringUtil {
         try {
             dsa = Signature.getInstance("ECDSA", "BC");
             dsa.initSign(privateKey);
-            byte[] strByte = input.getBytes();
+            var strByte = input.getBytes();
             dsa.update(strByte);
             output = dsa.sign();
         } catch (GeneralSecurityException e) {
@@ -40,7 +40,7 @@ public final class StringUtil {
     //Verifies a String signature
     public static boolean verifyECDSASig(PublicKey publicKey, String data, byte[] signature) {
         try {
-            Signature ecdsaVerify = Signature.getInstance("ECDSA", "BC");
+            var ecdsaVerify = Signature.getInstance("ECDSA", "BC");
             ecdsaVerify.initVerify(publicKey);
             ecdsaVerify.update(data.getBytes());
             return ecdsaVerify.verify(signature);
@@ -55,7 +55,12 @@ public final class StringUtil {
     }
 
 
-    public static String getDifficultyString(int difficulty) {
-        return new String(new char[difficulty]).replace('\0', '0'); //Create a string with difficulty * "0"
+    public static String getInitialDifficultyString() {
+        var targetbuilder = new StringBuilder();
+        targetbuilder.append("111");
+        for(int i=0; i<253;i++) {
+            targetbuilder.append('0');
+        }
+        return targetbuilder.toString();
     }
 }
