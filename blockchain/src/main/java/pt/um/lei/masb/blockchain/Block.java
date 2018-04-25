@@ -20,8 +20,10 @@ public final class Block implements Sizeable {
 
     private MerkleTree merkleTree;
     private final Transaction data[];
+    private final Coinbase coinbase;
     private BlockHeader hd;
     private int cur;
+
     private transient final long classSize = ClassLayout.parseClass(this.getClass()).instanceSize();
     private transient long headerSize;
     private transient long transactionsSize;
@@ -36,6 +38,7 @@ public final class Block implements Sizeable {
         data = null;
         hd = null;
         merkleTree = null;
+        coinbase = null;
     }
 
     Block(String previousHash, BigInteger difficulty) {
@@ -44,6 +47,7 @@ public final class Block implements Sizeable {
         cur = 0;
         headerSize = hd.getApproximateSize();
         this.merkleTree = null;
+        coinbase = new Coinbase();
     }
 
     private Block(String s) {
@@ -52,6 +56,7 @@ public final class Block implements Sizeable {
         hd = BlockHeader.getOrigin();
         headerSize = hd.getApproximateSize();
         this.merkleTree = null;
+        coinbase = null;
     }
 
     static Block getOrigin() {

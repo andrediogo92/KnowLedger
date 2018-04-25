@@ -2,13 +2,11 @@ package pt.um.lei.masb.blockchain;
 
 import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.SensorData;
-import pt.um.lei.masb.blockchain.utils.StringUtil;
 import pt.um.lei.masb.blockchain.utils.Crypter;
+import pt.um.lei.masb.blockchain.utils.StringUtil;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Transaction implements Sizeable {
@@ -21,22 +19,18 @@ public class Transaction implements Sizeable {
     private final PublicKey publicKey;
     private final SensorData sd;
 
-    private final List<TransactionInput> inputs;
-    private final List<TransactionOutput> outputs = new ArrayList<>();
     // this is to identify unequivocally an agent.
     private byte[] signature;
+
     private transient long byteSize;
 
 
-    public Transaction(PublicKey from, SensorData sd, List<TransactionInput> inputs) {
+    public Transaction(PublicKey from, SensorData sd) {
         this.publicKey = from;
         this.sd = sd;
-        this.inputs = inputs;
         this.transactionId = calculateHash();
         byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
-                sd.getApproximateSize() +
-                (inputs.size() * new TransactionInput().getApproximateSize()) +
-                (outputs.size() * new TransactionOutput().getApproximateSize());
+                sd.getApproximateSize();
     }
 
     public String getTransactionId() {
@@ -55,21 +49,13 @@ public class Transaction implements Sizeable {
         return sd;
     }
 
-    public List<TransactionInput> getInputs() {
-        return inputs;
-    }
-
-    public List<TransactionOutput> getOutputs() {
-        return outputs;
-    }
 
     // This Calculates the transaction hash (which will be used as its Id)
     private String calculateHash() {
         //Increase the sequence to avoid 2 identical transactions having the same hash
-        return crypter.applyHash(
-                StringUtil.getStringFromKey(publicKey) +
-                        sd.toString() + sequence.incrementAndGet()
-                                );
+        return crypter.applyHash(StringUtil.getStringFromKey(publicKey) +
+                                 sd.toString() +
+                                 sequence.incrementAndGet());
     }
 
     /**
@@ -114,9 +100,7 @@ public class Transaction implements Sizeable {
      */
     public void resetSize() {
         byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
-                sd.getApproximateSize() +
-                (inputs.size() * new TransactionInput().getApproximateSize()) +
-                (outputs.size() * new TransactionOutput().getApproximateSize());
+                sd.getApproximateSize();
     }
 
     @Override
