@@ -140,7 +140,7 @@ public final class MerkleTree implements Sizeable {
 
     public boolean verifyTransaction(String hash) {
         var res = true;
-        MerkleNode t = getTransactionNode(hash);
+        var t = getTransactionNode(hash);
         if (t != null) {
             for (MerkleNode s; t != null && t != root; t = t.getParent()) {
                 s = t.getSibling();
