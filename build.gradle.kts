@@ -1,5 +1,3 @@
-import java.net.URI
-
 
 subprojects {
 
@@ -12,14 +10,12 @@ subprojects {
         maven("http://jade.tilab.com/maven")
     }
 
-    ext {
-        set("junitVersion", "5.1.0")
-        set("gsonVersion", "2.8.2")
-        set("bouncyCastleVersion", "1.59")
-        set("jadeVersion", "4.5.0")
-        set("jolVersion", "0.9")
+    extra.set("junitVersion", "5.1.0")
+    extra.set("gsonVersion", "2.8.2")
+    extra.set("bouncyCastleVersion", "1.59")
+    extra.set("jadeVersion", "4.5.0")
+    extra.set("jolVersion", "0.9")
         //set("vertxVersion", "3.5.1")
-    }
 
 }
 
