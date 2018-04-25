@@ -5,10 +5,7 @@ import pt.um.lei.masb.blockchain.data.MerkleTree;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
-import javax.persistence.Embeddable;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.math.BigInteger;
 import java.time.ZoneOffset;
@@ -24,11 +21,22 @@ public final class BlockHeader implements Sizeable {
     }
 
     // Difficulty is fixed at block generation time.
+    @Basic(optional = false)
     private final BigInteger difficulty;
+
+    @Id
     private String hash;
+
+    @Basic(optional = false)
     private String merkleRoot;
+
+    @Basic(optional = false)
     private String previousHash;
+
+    @Basic(optional = false)
     private String timeStamp;
+
+    @Basic(optional = false)
     private int nonce;
 
     /**
@@ -55,7 +63,7 @@ public final class BlockHeader implements Sizeable {
         hash = null; //Making sure we do this after we set the other values.
     }
 
-    private BlockHeader() {
+    protected BlockHeader() {
         this.difficulty = null;
     }
 

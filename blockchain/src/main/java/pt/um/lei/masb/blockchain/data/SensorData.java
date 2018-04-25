@@ -4,6 +4,10 @@ import org.openjdk.jol.info.ClassLayout;
 import org.openjdk.jol.info.GraphLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import java.io.Serializable;
 
 /**
@@ -12,15 +16,30 @@ import java.io.Serializable;
  * <p>
  * Supported categories for prototyping will be: noise, temperature, humidity and luminosity.
  */
+@Entity
 public class SensorData implements Sizeable {
+    @Id
+    @GeneratedValue
+    private long id;
+
     private final Category category;
+
+    @Embedded
     private final NoiseData nd;
+
+    @Embedded
     private final TemperatureData td;
+
+    @Embedded
     private final HumidityData hd;
+
+    @Embedded
     private final LuminosityData ld;
+
+    @Embedded
     private final OtherData<? extends Serializable> od;
 
-    private SensorData() {
+    protected SensorData() {
         category = null;
         nd = null;
         td = null;

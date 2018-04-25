@@ -6,13 +6,25 @@ import pt.um.lei.masb.blockchain.Transaction;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import java.util.HashMap;
 import java.util.Map;
 
+@Entity
 public final class MerkleTree implements Sizeable {
     private static Crypter crypter = StringUtil.getDefaultCrypter();
+
+    @Id
+    @OneToOne
     private MerkleNode root;
+
+    @OneToMany
     private Map<String, MerkleNode> trans;
+
+    protected MerkleTree(){}
 
     private MerkleTree(int size) {
         this.root = null;

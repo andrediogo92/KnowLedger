@@ -7,6 +7,7 @@ import pt.um.lei.masb.blockchain.utils.Crypter;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.OneToOne;
 import javax.persistence.Transient;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -20,12 +21,13 @@ public class Transaction implements Sizeable {
     // a rough count of how many transactions have been generated.
     private static AtomicLong sequence = new AtomicLong(0);
 
-    @Id
-    private long id;
     // this is also the hash of the transaction.
+    @Id
     private final String transactionId;
     // Agent's pub key.
     private final PublicKey publicKey;
+
+    @OneToOne
     private final SensorData sd;
 
     private final List<TransactionInput> inputs;
@@ -36,6 +38,12 @@ public class Transaction implements Sizeable {
     @Transient
     private transient long byteSize;
 
+    protected Transaction() {
+        transactionId = null;
+        publicKey = null;
+        sd = null;
+        inputs = null;
+    }
 
     public Transaction(PublicKey from, SensorData sd, List<TransactionInput> inputs) {
         this.publicKey = from;

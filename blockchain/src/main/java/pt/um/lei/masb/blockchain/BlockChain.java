@@ -3,15 +3,24 @@ package pt.um.lei.masb.blockchain;
 import pt.um.lei.masb.blockchain.utils.RingBuffer;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+@Entity
 public class BlockChain {
+    @Id
+    @GeneratedValue
+    private long id;
+
     private static final int CACHE_SIZE = 40;
     private static final int RECALC_TRIGGER = 2048;
-    private final RingBuffer<Block> blockchain;
+
+    private transient final RingBuffer<Block> blockchain;
     private BigInteger difficultyTarget;
     private int lastRecalc;
     // private final List<Block> candidateBlocks;

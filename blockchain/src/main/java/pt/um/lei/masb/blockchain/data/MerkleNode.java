@@ -2,14 +2,29 @@ package pt.um.lei.masb.blockchain.data;
 
 import pt.um.lei.masb.blockchain.Sizeable;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToOne;
 import java.util.Objects;
 
+@Entity
 public final class MerkleNode implements Sizeable {
+    @OneToOne
     private MerkleNode left;
+
+    @OneToOne
     private MerkleNode right;
+
+    @OneToOne
     private MerkleNode parent;
+
+    @OneToOne
     private MerkleNode sibling;
+
+    @Id
     private String hash;
+
+    protected MerkleNode(){}
 
     public MerkleNode(String hash) {
         this.parent = null;

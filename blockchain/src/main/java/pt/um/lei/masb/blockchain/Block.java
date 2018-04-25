@@ -3,7 +3,7 @@ package pt.um.lei.masb.blockchain;
 import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.MerkleTree;
 
-import javax.persistence.Entity;
+import javax.persistence.*;
 import java.math.BigInteger;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -20,16 +20,32 @@ public final class Block implements Sizeable {
         origin = new Block("0");
     }
 
+    @Id
+    private long blockheight;
+
+    @OneToOne
     private MerkleTree merkleTree;
+
+    @OneToMany
     private final Transaction data[];
-    private BlockHeader hd;
     private int cur;
+
+    @OneToOne
+    private BlockHeader hd;
+
+    @Transient
     private transient final long classSize = ClassLayout.parseClass(this.getClass()).instanceSize();
+
+    @Transient
     private transient long headerSize;
+
+    @Transient
     private transient long transactionsSize;
+
+    @Transient
     private transient long merkleTreeSize;
 
-    private Block() {
+    protected Block() {
         cur = -1;
         data = null;
         hd = null;
