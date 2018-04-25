@@ -10,17 +10,15 @@ subprojects {
         maven("http://jade.tilab.com/maven")
     }
 
-    ext {
-        set("junitVersion", "5.1.0")
-        set("gsonVersion", "2.8.2")
-        set("bouncyCastleVersion", "1.59")
-        set("jadeVersion", "4.5.0")
-        set("h2Version", "1.4.197")
-        set("hibernateVersion","5.2.16.Final")
-        set("hibernateValidatorVersion","6.0.9.Final")
-        set("jolVersion", "0.9")
+    extra.set("junitVersion", "5.1.0")
+    extra.set("gsonVersion", "2.8.2")
+    extra.set("bouncyCastleVersion", "1.59")
+    extra.set("jadeVersion", "4.5.0")
+    extra.set("jolVersion", "0.9")
+    extra.set("h2Version", "1.4.197")
+    extra.set("hibernateVersion","5.2.16.Final")
+    extra.set("hibernateValidatorVersion","6.0.9.Final")
         //set("vertxVersion", "3.5.1")
-    }
 
 }
 
