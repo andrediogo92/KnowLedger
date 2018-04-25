@@ -94,10 +94,7 @@ public class RingBuffer<E> extends AbstractCollection<E>
 
         @Override
         public boolean hasNext() {
-            if(remaining>0)
-                return true;
-            else
-                return false;
+            return remaining > 0;
         }
 
         @Override
