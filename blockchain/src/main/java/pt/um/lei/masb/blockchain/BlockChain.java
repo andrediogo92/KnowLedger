@@ -19,7 +19,7 @@ public class BlockChain {
         //    this.candidateBlocks = new ArrayList<>(CACHE_SIZE);
         var origin = Block.getOrigin();
         blockchain.offer(origin);
-        difficultyTarget = new BigInteger(StringUtil.getInitialDifficultyString());
+        difficultyTarget = StringUtil.getInitialDifficulty();
     }
 
     public boolean isChainValid() {
