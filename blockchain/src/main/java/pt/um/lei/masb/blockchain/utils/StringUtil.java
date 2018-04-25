@@ -1,6 +1,8 @@
 package pt.um.lei.masb.blockchain.utils;
 
+import java.math.BigInteger;
 import java.security.*;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -55,12 +57,12 @@ public final class StringUtil {
     }
 
 
-    public static String getInitialDifficultyString() {
-        var targetbuilder = new StringBuilder();
-        targetbuilder.append("111");
-        for(int i=0; i<253;i++) {
-            targetbuilder.append('0');
+    public static BigInteger getInitialDifficulty() {
+        var targetbuilder = new byte[256];
+        targetbuilder[0] = (byte) 0xE0;
+        for(int i=1; i<256;i++) {
+            targetbuilder[i] = 0x0;
         }
-        return targetbuilder.toString();
+        return new BigInteger(targetbuilder);
     }
 }
