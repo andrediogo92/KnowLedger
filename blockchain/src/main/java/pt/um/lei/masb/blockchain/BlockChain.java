@@ -1,62 +1,64 @@
 package pt.um.lei.masb.blockchain;
 
-import pt.um.lei.masb.blockchain.stringutils.StringUtil;
+import pt.um.lei.masb.blockchain.utils.RingBuffer;
+import pt.um.lei.masb.blockchain.utils.StringUtil;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
 
 public class BlockChain {
-    private static final int INIT_SIZE = 1000;
     private static final int CACHE_SIZE = 40;
-    private final List<Block> blockchain;
-    //private final List<Block> candidateBlocks;
+    private static final int RECALC_TRIGGER = 2048;
+    private final RingBuffer<Block> blockchain;
+    private BigInteger difficultyTarget;
+    private int lastRecalc;
+    // private final List<Block> candidateBlocks;
 
     public BlockChain() {
-        this.blockchain = new ArrayList<>(INIT_SIZE);
+        this.blockchain = new RingBuffer<>(CACHE_SIZE);
         //    this.candidateBlocks = new ArrayList<>(CACHE_SIZE);
-        Block origin = Block.getOrigin();
-        blockchain.add(origin);
+        var origin = Block.getOrigin();
+        blockchain.offer(origin);
+        difficultyTarget = StringUtil.getInitialDifficulty();
+        lastRecalc = 0;
     }
 
     public boolean isChainValid() {
-        Block currentBlock;
-        Block previousBlock;
+        var blocks = blockchain.iterator();
+        // Origin block is always the first block.
+        var previousBlock = blocks.next();
 
-        //loop through blockchain to check hashes:
-        for (int i = 1; i < blockchain.size(); i++) {
-            currentBlock = blockchain.get(i);
-            previousBlock = blockchain.get(i - 1);
-            String hashTarget = new String(new char[currentBlock.getDifficulty()]);
-            hashTarget = hashTarget.replace('\0', '0');
+        // loop through blockchain to check hashes:
+        while (blocks.hasNext()) {
+            var currentBlock = blocks.next();
 
-            //compare registered hash and calculated hash:
+            // compare registered hash and calculated hash:
             if (!currentBlock.getHash().equals(currentBlock.calculateHash())) {
                 System.out.println("Current Hashes not equal");
                 return false;
             }
-            //compare previous hash and registered previous hash
+            // compare previous hash and registered previous hash
             if (!previousBlock.getHash().equals(currentBlock.getPreviousHash())) {
                 System.out.println("Previous Hashes not equal");
                 return false;
             }
-            if (!currentBlock.getHash()
-                             .substring(0, currentBlock.getDifficulty())
-                             .equals(hashTarget)) {
-                System.out.println("Unmined block: " + i);
+
+            var hashTarget = currentBlock.getDifficulty();
+            if (new BigInteger(currentBlock.getHash()).compareTo(hashTarget) > 0) {
+                System.out.println("Unmined block: " + currentBlock.getHash());
                 return false;
             }
+
+            previousBlock = currentBlock;
         }
         return true;
     }
 
-
-    /**
-     * @return The tail-end block of the blockchain.
-     */
+    /** @return The tail-end block of the blockchain. */
     public Block getLastBlock() {
-        return blockchain.get(blockchain.size() - 1);
+        return blockchain.peek();
     }
 
     /**
@@ -64,11 +66,7 @@ public class BlockChain {
      * @return Block with provided hash if exists, else null.
      */
     public Block getBlock(String hash) {
-        return blockchain.stream()
-                         .filter(h -> !h.getHash()
-                                        .equals(hash))
-                         .findAny()
-                         .orElse(null);
+        return blockchain.stream().filter(h -> !h.getHash().equals(hash)).findAny().orElse(null);
     }
 
     /**
@@ -86,43 +84,55 @@ public class BlockChain {
      * @return The previous block to the one with the provided hash if exists, else null.
      */
     public Block getPrevBlock(String hash) {
-        return blockchain.stream()
-                         .filter(h -> !h.getHash()
-                                        .equals(hash))
-                         .findAny()
-                         .orElse(null);
+        return blockchain.stream().filter(h -> !h.getHash().equals(hash)).findAny().orElse(null);
     }
 
     /**
      * Add Block to blockchain if block is valid.
      *
+     * <p>May trigger difficulty recalculation.
+     *
      * @param b Block to add
      * @return Whether block was successfully added.
      */
     public boolean addBlock(Block b) {
-        if (b.getPreviousHash().equals(blockchain.get(blockchain.size() - 1).getHash())) {
-            if (b.getHash()
-                 .substring(0, b.getDifficulty())
-                 .equals(StringUtil.getDifficultyString(b.getDifficulty()))) {
-
+        if (b.getPreviousHash().equals(blockchain.peek().getHash())) {
+            if (new BigInteger(b.getHash()).compareTo(b.getDifficulty()) < 1) {
+                if (lastRecalc == RECALC_TRIGGER) {
+                    recalculateDifficulty();
+                    lastRecalc = 0;
+                } else {
+                    lastRecalc++;
+                }
                 return blockchain.add(b);
             }
         }
         return false;
     }
 
+    /** TODO: Implement difficulty recalculation. */
+    private void recalculateDifficulty() {}
 
-    /*
-    @Override
-    public void update(Observable o, Object arg) {
-        Block b = (Block) o;
-        candidateBlocks.stream()
-                       .filter(bl -> bl.getHash().equals(b.getHash()))
-                       .findAny()
-                       .ifPresent(ob -> {
-                           minedblocks.add(ob);
-                           blockchain.add(candidateBlocks.get(0))
-                       });
+    /**
+     * Creates new Block with appropriate difficulty target.
+     *
+     * @return
+     */
+    public Block newBlock() {
+        return new Block(getLastBlock().getHash(), difficultyTarget);
     }
-    */
+
+  /*
+  @Override
+  public void update(Observable o, Object arg) {
+      Block b = (Block) o;
+      candidateBlocks.stream()
+                     .filter(bl -> bl.getHash().equals(b.getHash()))
+                     .findAny()
+                     .ifPresent(ob -> {
+                         minedblocks.add(ob);
+                         blockchain.add(candidateBlocks.get(0))
+                     });
+  }
+  */
 }

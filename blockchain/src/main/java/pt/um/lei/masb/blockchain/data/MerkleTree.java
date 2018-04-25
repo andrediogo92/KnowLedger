@@ -1,11 +1,10 @@
 package pt.um.lei.masb.blockchain.data;
 
 import org.openjdk.jol.info.ClassLayout;
-import org.openjdk.jol.info.GraphLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 import pt.um.lei.masb.blockchain.Transaction;
-import pt.um.lei.masb.blockchain.stringutils.Crypter;
-import pt.um.lei.masb.blockchain.stringutils.StringUtil;
+import pt.um.lei.masb.blockchain.utils.Crypter;
+import pt.um.lei.masb.blockchain.utils.StringUtil;
 
 import java.util.HashMap;
 import java.util.Map;

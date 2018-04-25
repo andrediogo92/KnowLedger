@@ -7,8 +7,8 @@ import pt.um.lei.masb.blockchain.data.MerkleNode;
 import pt.um.lei.masb.blockchain.data.MerkleTree;
 import pt.um.lei.masb.blockchain.data.SensorData;
 import pt.um.lei.masb.blockchain.data.TemperatureData;
-import pt.um.lei.masb.blockchain.stringutils.Crypter;
-import pt.um.lei.masb.blockchain.stringutils.StringUtil;
+import pt.um.lei.masb.blockchain.utils.Crypter;
+import pt.um.lei.masb.blockchain.utils.StringUtil;
 
 import java.util.ArrayList;
 

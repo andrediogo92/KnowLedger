@@ -1,4 +1,4 @@
-package pt.um.lei.masb.blockchain.stringutils;
+package pt.um.lei.masb.blockchain.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
@@ -12,10 +12,10 @@ public class SHA256Encrypter implements Crypter {
     //Applies Sha256 to a string and returns the result.
     public String applyHash(String input) {
         try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            var digest = MessageDigest.getInstance("SHA-256");
             //Applies sha256 to our input,
-            byte[] hash = digest.digest(input.getBytes("UTF-8"));
-            StringBuffer hexString = new StringBuffer(); // This will contain hash as hexidecimal
+            var hash = digest.digest(input.getBytes("UTF-8"));
+            var hexString = new StringBuffer(); // This will contain hash as hexidecimal
             for (byte aHash : hash) {
                 String hex = Integer.toHexString(0xff & aHash);
                 if (hex.length() == 1) {

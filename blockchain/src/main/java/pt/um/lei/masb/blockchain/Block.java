@@ -2,9 +2,9 @@ package pt.um.lei.masb.blockchain;
 
 import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.MerkleTree;
-import pt.um.lei.masb.blockchain.stringutils.StringUtil;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import java.math.BigInteger;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -20,50 +20,40 @@ public final class Block implements Sizeable {
         origin = new Block("0");
     }
 
-    static Block getOrigin() {
-        return origin;
-    }
-
-
-    @Id
-    @GeneratedValue
-    private long id;
-
-    @OneToMany
+    private MerkleTree merkleTree;
     private final Transaction data[];
-
-    @Transient
-    private transient final String target;
-
-    @Embedded
-    private final BlockHeader hd;
-
+    private BlockHeader hd;
     private int cur;
     private transient final long classSize = ClassLayout.parseClass(this.getClass()).instanceSize();
     private transient long headerSize;
     private transient long transactionsSize;
+    private transient long merkleTreeSize;
 
     private Block() {
         cur = -1;
         data = null;
         hd = null;
-        target = null;
+        merkleTree = null;
     }
 
-    public Block(String previousHash, int difficulty) {
+    Block(String previousHash, BigInteger difficulty) {
         this.hd = new BlockHeader(previousHash, difficulty);
         this.data = new Transaction[MAX_BLOCK_SIZE];
         cur = 0;
-        this.target = StringUtil.getDifficultyString(difficulty);
         headerSize = hd.getApproximateSize();
+        this.merkleTree = null;
     }
 
     private Block(String s) {
         data = null;
         cur = -1;
-        target = "0";
         hd = BlockHeader.getOrigin();
         headerSize = hd.getApproximateSize();
+        this.merkleTree = null;
+    }
+
+    static Block getOrigin() {
+        return origin;
     }
 
     /**
@@ -74,26 +64,28 @@ public final class Block implements Sizeable {
      * @return Whether the block was successfully mined.
      */
     public boolean attemptMineBlock(boolean invalidate, boolean time) {
-        boolean res = false;
         //Can't mine origin block.
         if (this == origin) {
-            return res;
+            return false;
         }
+        boolean res = false;
         if (invalidate && time) {
-            hd.setMerkleTree(MerkleTree.buildMerkleTree(data, cur));
+            merkleTree = MerkleTree.buildMerkleTree(data, cur);
+            hd.setMerkleRoot(merkleTree.getRoot().getHash());
             hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toString());
+            merkleTreeSize = merkleTree.getApproximateSize();
             hd.zeroNonce();
-            headerSize = hd.getApproximateSize();
         } else if (invalidate) {
-            hd.setMerkleTree(MerkleTree.buildMerkleTree(data, cur));
+            merkleTree = MerkleTree.buildMerkleTree(data, cur);
+            hd.setMerkleRoot(merkleTree.getRoot().getHash());
+            merkleTreeSize = merkleTree.getApproximateSize();
             hd.zeroNonce();
-            headerSize = hd.getApproximateSize();
         } else if (time) {
             hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toString());
             hd.zeroNonce();
         }
         hd.updateHash();
-        if (hd.getHash().substring(0, hd.getDifficulty()).equals(target)) {
+        if (new BigInteger(hd.getHash()).compareTo(hd.getDifficulty()) < 1) {
             res = true;
             System.out.println("Block Mined!!! : " + hd.getHash());
             System.out.println("Block contains: " + toString());
@@ -149,7 +141,7 @@ public final class Block implements Sizeable {
         return hd.getTimeStamp();
     }
 
-    public int getDifficulty() {
+    public BigInteger getDifficulty() {
         return hd.getDifficulty();
     }
 

@@ -1,6 +1,8 @@
-package pt.um.lei.masb.blockchain.stringutils;
+package pt.um.lei.masb.blockchain.utils;
 
+import java.math.BigInteger;
 import java.security.*;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,7 +29,7 @@ public final class StringUtil {
         try {
             dsa = Signature.getInstance("ECDSA", "BC");
             dsa.initSign(privateKey);
-            byte[] strByte = input.getBytes();
+            var strByte = input.getBytes();
             dsa.update(strByte);
             output = dsa.sign();
         } catch (GeneralSecurityException e) {
@@ -40,7 +42,7 @@ public final class StringUtil {
     //Verifies a String signature
     public static boolean verifyECDSASig(PublicKey publicKey, String data, byte[] signature) {
         try {
-            Signature ecdsaVerify = Signature.getInstance("ECDSA", "BC");
+            var ecdsaVerify = Signature.getInstance("ECDSA", "BC");
             ecdsaVerify.initVerify(publicKey);
             ecdsaVerify.update(data.getBytes());
             return ecdsaVerify.verify(signature);
@@ -55,7 +57,12 @@ public final class StringUtil {
     }
 
 
-    public static String getDifficultyString(int difficulty) {
-        return new String(new char[difficulty]).replace('\0', '0'); //Create a string with difficulty * "0"
+    public static BigInteger getInitialDifficulty() {
+        var targetbuilder = new byte[256];
+        targetbuilder[0] = (byte) 0xE0;
+        for(int i=1; i<256;i++) {
+            targetbuilder[i] = 0x0;
+        }
+        return new BigInteger(targetbuilder);
     }
 }
