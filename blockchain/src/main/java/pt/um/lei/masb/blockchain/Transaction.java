@@ -2,38 +2,40 @@ package pt.um.lei.masb.blockchain;
 
 import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.SensorData;
-import pt.um.lei.masb.blockchain.utils.StringUtil;
 import pt.um.lei.masb.blockchain.utils.Crypter;
+import pt.um.lei.masb.blockchain.utils.StringUtil;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import javax.persistence.Transient;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Entity
 public class Transaction implements Sizeable {
+    @NotNull
     private static Crypter crypter = StringUtil.getDefaultCrypter();
-    // a rough count of how many transactions have been generated.
+
+    // A rough count of how many transactions have been generated.
     private static AtomicLong sequence = new AtomicLong(0);
 
     // this is also the hash of the transaction.
     @Id
     private final String transactionId;
+
     // Agent's pub key.
     private final PublicKey publicKey;
 
     @OneToOne
     private final SensorData sd;
 
-    private final List<TransactionInput> inputs;
-    private final List<TransactionOutput> outputs = new ArrayList<>();
-    // this is to identify unequivocally an agent.
+    // This is to identify unequivocally an agent.
     private byte[] signature;
+
 
     @Transient
     private transient long byteSize;
@@ -42,18 +44,15 @@ public class Transaction implements Sizeable {
         transactionId = null;
         publicKey = null;
         sd = null;
-        inputs = null;
     }
 
-    public Transaction(PublicKey from, SensorData sd, List<TransactionInput> inputs) {
+    public Transaction(@NotNull PublicKey from,
+                       @NotNull SensorData sd) {
         this.publicKey = from;
         this.sd = sd;
-        this.inputs = inputs;
         this.transactionId = calculateHash();
         byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
-                sd.getApproximateSize() +
-                (inputs.size() * new TransactionInput().getApproximateSize()) +
-                (outputs.size() * new TransactionOutput().getApproximateSize());
+                sd.getApproximateSize();
     }
 
     public String getTransactionId() {
@@ -72,29 +71,28 @@ public class Transaction implements Sizeable {
         return sd;
     }
 
-    public List<TransactionInput> getInputs() {
-        return inputs;
-    }
-
-    public List<TransactionOutput> getOutputs() {
-        return outputs;
-    }
 
     // This Calculates the transaction hash (which will be used as its Id)
-    private String calculateHash() {
+    private @NotEmpty String calculateHash() {
         //Increase the sequence to avoid 2 identical transactions having the same hash
-        return crypter.applyHash(
-                StringUtil.getStringFromKey(publicKey) +
-                        sd.toString() + sequence.incrementAndGet()
-                                );
+        return crypter.applyHash(StringUtil.getStringFromKey(publicKey) +
+                                 sd.toString() +
+                                 sequence.incrementAndGet());
     }
 
     /**
-     * Signs the sensor data using the public key.
+     * Signs the sensor data using the private key.
+     * @return whether signing was successful.
      */
-    public void generateSignature(PrivateKey privateKey) {
-        var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
-        signature = StringUtil.applyECDSASig(privateKey, data);
+    public boolean generateSignature(@NotNull PrivateKey privateKey) {
+        if(publicKey == null) {
+            var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
+            signature = StringUtil.applyECDSASig(privateKey, data);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     /**
@@ -108,6 +106,7 @@ public class Transaction implements Sizeable {
     }
 
     /**
+     * TODO: Transaction verification.
      * @return whether the transaction is valid.
      */
     public boolean processTransaction() {
@@ -131,13 +130,11 @@ public class Transaction implements Sizeable {
      */
     public void resetSize() {
         byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
-                sd.getApproximateSize() +
-                (inputs.size() * new TransactionInput().getApproximateSize()) +
-                (outputs.size() * new TransactionOutput().getApproximateSize());
+                sd.getApproximateSize();
     }
 
     @Override
-    public String toString() {
+    public @NotEmpty String toString() {
         var sb = new StringBuilder();
         sb.append("Transaction {")
           .append(System.lineSeparator())

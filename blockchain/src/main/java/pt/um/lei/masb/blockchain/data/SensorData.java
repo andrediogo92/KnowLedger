@@ -8,13 +8,16 @@ import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * Sensor data must be categorized in order to allow serialization and de-serialization to and from JSON.
- * It can't be any arbitrary object.
+ * It can't be any arbitrary object, must be serializable.
  * <p>
- * Supported categories for prototyping will be: noise, temperature, humidity and luminosity.
+ * Supported categories are those in {@link Category}.
+ * This class is built through explicit composition.
  */
 @Entity
 public class SensorData implements Sizeable {
@@ -121,10 +124,10 @@ public class SensorData implements Sizeable {
         switch (category) {
             case NOISE:
                 return nd.getApproximateSize() + classSize;
-            case HUMIDITY:
-                return hd.getApproximateSize() + classSize;
             case TEMPERATURE:
                 return td.getApproximateSize() + classSize;
+            case HUMIDITY:
+                return hd.getApproximateSize() + classSize;
             case LUMINOSITY:
                 return ld.getApproximateSize() + classSize;
             case OTHER:
@@ -132,5 +135,43 @@ public class SensorData implements Sizeable {
             default:
                 return -1;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        SensorData that = (SensorData) o;
+        return category == that.category &&
+                Objects.equals(nd, that.nd) &&
+                Objects.equals(td, that.td) &&
+                Objects.equals(hd, that.hd) &&
+                Objects.equals(ld, that.ld) &&
+                Objects.equals(od, that.od);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(category, nd, td, hd, ld, od);
+    }
+
+    @Override
+    public @NotNull String toString() {
+        var sb = new StringBuilder();
+        sb.append("SensorData {");
+        switch (category) {
+            case NOISE: sb.append(nd.toString()); break;
+            case TEMPERATURE: sb.append(td.toString());break;
+            case HUMIDITY: sb.append(hd.toString());break;
+            case LUMINOSITY: sb.append(ld.toString());break;
+            case OTHER: sb.append(od.toString());break;
+        }
+        sb.append(" }");
+        return sb.toString();
     }
 }

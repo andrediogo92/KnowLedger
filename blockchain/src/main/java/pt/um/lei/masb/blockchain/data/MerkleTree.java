@@ -10,11 +10,16 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.HashMap;
 import java.util.Map;
 
 @Entity
 public final class MerkleTree implements Sizeable {
+    @NotNull
     private static Crypter crypter = StringUtil.getDefaultCrypter();
 
     @Id
@@ -26,7 +31,7 @@ public final class MerkleTree implements Sizeable {
 
     protected MerkleTree(){}
 
-    private MerkleTree(int size) {
+    private MerkleTree(@Positive int size) {
         this.root = null;
         this.trans = new HashMap<>(size);
     }
@@ -38,39 +43,35 @@ public final class MerkleTree implements Sizeable {
      * <p>
      *
      * @param data Transactions in the block.
-     * @param size Actual number of transactions used in array (negative numbers interpreted as 0).
+     * @param size Actual number of transactions used in array.
      * @return the corresponding MerkleTree or empty MerkleTree if empty transactions.
      */
-    public static MerkleTree buildMerkleTree(Transaction[] data, int size) {
-        if (size > 0) {
-
-            var t = new MerkleTree(size);
-            MerkleNode treeLayer[] = initTree(t, size, data);
-            //Next layer's node count for depth-1
-            int count = (treeLayer.length / 2) + (treeLayer.length % 2);
-            //While we're not at root yet:
-            for (; count > 1; count = (count / 2) + (count % 2)) {
-                treeLayer = buildNewLayer(treeLayer, count);
-            }
-            MerkleNode root;
-            if (treeLayer.length == 2) {
-                root = new MerkleNode(crypter.applyHash(treeLayer[0].getHash() + treeLayer[1].getHash()));
-                root.setLeft(treeLayer[0]);
-                root.setRight(treeLayer[1]);
-                treeLayer[0].setParent(root);
-                treeLayer[1].setParent(root);
-                treeLayer[0].setSibling(treeLayer[1]);
-                treeLayer[1].setSibling(treeLayer[0]);
-                t.setRoot(root);
-            }
-            //If the previous layer was already length 1, that means we started at the root.
-            else if (treeLayer.length == 1) {
-                t.setRoot(treeLayer[0]);
-            }
-            return t;
-        } else {
-            return new MerkleTree(0);
+    public static @NotNull MerkleTree buildMerkleTree(@NotNull Transaction[] data,
+                                                      @Positive int size) {
+        var t = new MerkleTree(size);
+        MerkleNode treeLayer[] = initTree(t, size, data);
+        //Next layer's node count for depth-1
+        int count = (treeLayer.length / 2) + (treeLayer.length % 2);
+        //While we're not at root yet:
+        for (; count > 1; count = (count / 2) + (count % 2)) {
+            treeLayer = buildNewLayer(treeLayer, count);
         }
+        MerkleNode root;
+        if (treeLayer.length == 2) {
+            root = new MerkleNode(crypter.applyHash(treeLayer[0].getHash() + treeLayer[1].getHash()));
+            root.setLeft(treeLayer[0]);
+            root.setRight(treeLayer[1]);
+            treeLayer[0].setParent(root);
+            treeLayer[1].setParent(root);
+            treeLayer[0].setSibling(treeLayer[1]);
+            treeLayer[1].setSibling(treeLayer[0]);
+            t.setRoot(root);
+        }
+        //If the previous layer was already length 1, that means we started at the root.
+        else if (treeLayer.length == 1) {
+            t.setRoot(treeLayer[0]);
+        }
+        return t;
     }
 
     /**
@@ -82,9 +83,11 @@ public final class MerkleTree implements Sizeable {
      * @param count             the node count for this next layer.
      * @return
      */
-    private static MerkleNode[] buildNewLayer(MerkleNode[] previousTreeLayer, int count) {
+    private static @NotEmpty MerkleNode[] buildNewLayer(MerkleNode[] previousTreeLayer,
+                                                        int count) {
         MerkleNode treeLayer[] = new MerkleNode[count];
         var j = 0;
+        //While we're inside the bounds of this layer, calculate two by two the hash.
         for (int i = 1; i < previousTreeLayer.length; i += 2, j++) {
             treeLayer[j] = new MerkleNode(crypter.applyHash(previousTreeLayer[i - 1].getHash() +
                                                                     previousTreeLayer[i].getHash()));
@@ -93,9 +96,12 @@ public final class MerkleTree implements Sizeable {
             previousTreeLayer[i - 1].setParent(treeLayer[j]);
             previousTreeLayer[i].setParent(treeLayer[j]);
         }
+        //If we're still in the layer, there's one left, it's grouped and hashed with itself.
         if (j < treeLayer.length) {
-            treeLayer[j] = new MerkleNode(previousTreeLayer[previousTreeLayer.length - 1].getHash());
+            treeLayer[j] = new MerkleNode(crypter.applyHash(previousTreeLayer[previousTreeLayer.length - 1].getHash() +
+                                                                    previousTreeLayer[previousTreeLayer.length - 1].getHash()));
             treeLayer[j].setLeft(previousTreeLayer[previousTreeLayer.length - 1]);
+            treeLayer[j].setRight(previousTreeLayer[previousTreeLayer.length - 1]);
             previousTreeLayer[previousTreeLayer.length - 1].setParent(treeLayer[j]);
         }
         fillSiblings(treeLayer, treeLayer.length);
@@ -112,7 +118,8 @@ public final class MerkleTree implements Sizeable {
      * @param data The transactions array.
      * @return The first node layer of max depth (all leafs).
      */
-    private static MerkleNode[] initTree(MerkleTree t, int size, Transaction[] data) {
+    private static @NotEmpty MerkleNode[] initTree(@NotNull MerkleTree t,
+                                                   @Positive int size, @NotEmpty Transaction[] data) {
         MerkleNode baseLayer[] = new MerkleNode[size];
         for (int i = 0; i < size; i++) {
             baseLayer[i] = new MerkleNode(data[i].getTransactionId());
@@ -122,7 +129,8 @@ public final class MerkleTree implements Sizeable {
         return baseLayer;
     }
 
-    private static void fillSiblings(MerkleNode[] baseLayer, int size) {
+    private static void fillSiblings(MerkleNode[] baseLayer,
+                                     int size) {
         for (int i = 0; i + 1 < size; i += 2) {
             baseLayer[i].setSibling(baseLayer[i + 1]);
         }
@@ -150,7 +158,7 @@ public final class MerkleTree implements Sizeable {
         return null;
     }
 
-    public boolean verifyTransaction(String hash) {
+    public boolean verifyTransaction(@NotEmpty String hash) {
         var res = true;
         var t = getTransactionNode(hash);
         if (t != null) {

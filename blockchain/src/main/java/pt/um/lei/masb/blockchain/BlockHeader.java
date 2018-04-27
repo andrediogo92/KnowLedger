@@ -7,7 +7,9 @@ import pt.um.lei.masb.blockchain.utils.StringUtil;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import javax.validation.constraints.*;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
@@ -34,7 +36,7 @@ public final class BlockHeader implements Sizeable {
     private String previousHash;
 
     @Basic(optional = false)
-    private String timeStamp;
+    private Instant timeStamp;
 
     @Basic(optional = false)
     private int nonce;
@@ -44,20 +46,21 @@ public final class BlockHeader implements Sizeable {
      *
      * @param origin special string "0"
      */
-    private BlockHeader(String origin) {
+    private BlockHeader(@Pattern(regexp = "0") String origin) {
         hash = origin;
         merkleRoot = null;
         previousHash = "";
         timeStamp = ZonedDateTime.of(2018, 3, 13, 0, 0, 0, 0, ZoneOffset.UTC)
-                                 .toString();
+                                 .toInstant();
         nonce = 0;
         difficulty = BigInteger.ZERO;
     }
 
-    BlockHeader(String previousHash, BigInteger difficulty) {
+    BlockHeader(@NotNull String previousHash,
+                @NotNull BigInteger difficulty) {
         nonce = 0;
         this.difficulty = difficulty;
-        this.timeStamp = ZonedDateTime.now(ZoneOffset.UTC).toString();
+        this.timeStamp = ZonedDateTime.now(ZoneOffset.UTC).toInstant();
         this.previousHash = previousHash;
         merkleRoot = null;
         hash = null; //Making sure we do this after we set the other values.
@@ -76,11 +79,11 @@ public final class BlockHeader implements Sizeable {
      * {@link MerkleTree}'s root and each {@link Transaction}'s hash.
      *
      */
-    protected void updateHash() {
+    void updateHash() {
         hash = calculateHash();
     }
 
-    protected String calculateHash() {
+    @NotNull String calculateHash() {
         StringBuilder sb = new StringBuilder();
         sb.append(previousHash)
           .append(Long.toHexString(nonce))
@@ -89,7 +92,7 @@ public final class BlockHeader implements Sizeable {
         return crypter.applyHash(sb.toString());
     }
 
-    protected String getHash() {
+    String getHash() {
         return hash;
     }
 
@@ -98,36 +101,35 @@ public final class BlockHeader implements Sizeable {
         return merkleRoot;
     }
 
-    protected void setMerkleRoot(String merkleRoot) {
+    void setMerkleRoot(@NotEmpty String merkleRoot) {
         this.merkleRoot = merkleRoot;
     }
 
-    protected String getPreviousHash() {
+    String getPreviousHash() {
         return previousHash;
     }
 
-    protected void setPreviousHash(String previousHash) {
+    protected void setPreviousHash(@NotEmpty String previousHash) {
         this.previousHash = previousHash;
     }
 
-    protected String getTimeStamp() {
+    Instant getTimeStamp() {
         return timeStamp;
     }
 
-    protected void setTimeStamp(String timeStamp) {
+    void setTimeStamp(@NotNull Instant timeStamp) {
         this.timeStamp = timeStamp;
     }
 
-    protected BigInteger getDifficulty() {
+    BigInteger getDifficulty() {
         return difficulty;
     }
 
-
-    protected void zeroNonce() {
+    void zeroNonce() {
         nonce = 0;
     }
 
-    protected void incNonce() {
+    void incNonce() {
         nonce++;
     }
 
@@ -136,7 +138,7 @@ public final class BlockHeader implements Sizeable {
         return ClassLayout.parseClass(this.getClass()).instanceSize();
     }
 
-    public String toString() {
+    public @NotEmpty String toString() {
         var sb = new StringBuilder();
         sb.append("Header : [")
           .append(System.lineSeparator())

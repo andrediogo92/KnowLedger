@@ -1,5 +1,6 @@
 package pt.um.lei.masb.blockchain;
 
+import javax.validation.constraints.NotNull;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 import java.util.logging.Level;
@@ -15,14 +16,21 @@ public class Ident {
         }
     }
 
+    @NotNull
     private PrivateKey privateKey;
+    @NotNull
     private PublicKey publicKey;
 
-
+    /**
+     * @throws RuntimeException when key generation fails.
+     */
     public Ident() {
         generateKeyPair();
     }
 
+    /**
+     * @throws RuntimeException when key generation fails.
+     */
     private void generateKeyPair() {
         try {
             var keygen = KeyPairGenerator.getInstance("ECDSA", "BC");
@@ -30,7 +38,7 @@ public class Ident {
             var ecSpec = new ECGenParameterSpec("prime192v1");
             // Initialize the key generator and generate a KeyPair
             keygen.initialize(ecSpec, random);   //256 bytes provides an acceptable security level
-            KeyPair keyPair = keygen.generateKeyPair();
+            var keyPair = keygen.generateKeyPair();
             // Set the public and private keys from the keyPair
             privateKey = keyPair.getPrivate();
             publicKey = keyPair.getPublic();
@@ -40,11 +48,11 @@ public class Ident {
         }
     }
 
-    public PrivateKey getPrivateKey() {
+    public @NotNull PrivateKey getPrivateKey() {
         return privateKey;
     }
 
-    public PublicKey getPublicKey() {
+    public @NotNull PublicKey getPublicKey() {
         return publicKey;
     }
 }

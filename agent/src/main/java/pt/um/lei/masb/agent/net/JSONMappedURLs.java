@@ -11,7 +11,7 @@ public class JSONMappedURLs {
     private Map<Category, URL[]> tcp;
     private URL jade[];
 
-    private JSONMappedURLs() {
+    JSONMappedURLs() {
     }
 
     public URL[] getApis() {

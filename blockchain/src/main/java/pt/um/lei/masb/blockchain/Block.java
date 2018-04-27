@@ -4,7 +4,10 @@ import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.MerkleTree;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -12,13 +15,9 @@ import java.util.Arrays;
 
 @Entity
 public final class Block implements Sizeable {
-    private static Block origin;
+    private static Block origin = new Block("0");
     private static int MAX_BLOCK_SIZE = 500;
     private static int MAX_MEM = 2097152;
-
-    static {
-        origin = new Block("0");
-    }
 
     @Id
     private long blockheight;
@@ -28,6 +27,8 @@ public final class Block implements Sizeable {
 
     @OneToMany
     private final Transaction data[];
+    private final Coinbase coinbase;
+    private BlockHeader hd;
     private int cur;
 
     @OneToOne
@@ -47,19 +48,23 @@ public final class Block implements Sizeable {
     @Transient
     private transient long merkleTreeSize = ClassLayout.parseClass(merkleTree.getClass()).instanceSize();
 
-    protected Block() {
+
+    Block() {
         cur = -1;
         data = null;
         hd = null;
         merkleTree = null;
+        coinbase = null;
     }
 
-    Block(String previousHash, BigInteger difficulty) {
+    Block(@NotEmpty String previousHash,
+          @NotNull BigInteger difficulty) {
         this.hd = new BlockHeader(previousHash, difficulty);
         this.data = new Transaction[MAX_BLOCK_SIZE];
         cur = 0;
         headerSize = hd.getApproximateSize();
         this.merkleTree = null;
+        coinbase = new Coinbase();
     }
 
     private Block(String s) {
@@ -68,6 +73,7 @@ public final class Block implements Sizeable {
         hd = BlockHeader.getOrigin();
         headerSize = hd.getApproximateSize();
         this.merkleTree = null;
+        coinbase = null;
     }
 
     static Block getOrigin() {
@@ -90,14 +96,14 @@ public final class Block implements Sizeable {
         if (invalidate && time) {
             merkleTree = MerkleTree.buildMerkleTree(data, cur);
             hd.setMerkleRoot(merkleTree.getRoot().getHash());
-            hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toString());
+            hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toInstant());
             hd.zeroNonce();
         } else if (invalidate) {
             merkleTree = MerkleTree.buildMerkleTree(data, cur);
             hd.setMerkleRoot(merkleTree.getRoot().getHash());
             hd.zeroNonce();
         } else if (time) {
-            hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toString());
+            hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toInstant());
             hd.zeroNonce();
         }
         hd.updateHash();
@@ -119,12 +125,7 @@ public final class Block implements Sizeable {
      * @param transaction to add.
      * @return whether transaction was valid.
      */
-    public boolean addTransaction(Transaction transaction) {
-        //process transaction and check if valid, unless block is genesis block then ignore.
-        if (transaction == null) {
-            return false;
-        }
-
+    public boolean addTransaction(@NotNull Transaction transaction) {
         var transactionSize = transaction.getApproximateSize();
         if (transactionsSize + headerSize + classSize + merkleTreeSize + transactionSize < MAX_MEM) {
             if (cur < MAX_BLOCK_SIZE) {
@@ -153,7 +154,7 @@ public final class Block implements Sizeable {
         return hd.getPreviousHash();
     }
 
-    public String getTimeStamp() {
+    public Instant getTimeStamp() {
         return hd.getTimeStamp();
     }
 

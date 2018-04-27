@@ -1,12 +1,20 @@
 package pt.um.lei.masb.blockchain;
 
+import org.hibernate.validator.constraints.time.DurationMax;
 import pt.um.lei.masb.blockchain.utils.RingBuffer;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -23,8 +31,16 @@ public class BlockChain {
     private transient final RingBuffer<Block> blockchain;
     private BigInteger difficultyTarget;
     private int lastRecalc;
+    private final boolean bounded;
+    private final BigDecimal boundnorth;
+    private final BigDecimal boundsouth;
+    private final BigDecimal boundeast;
+    private final BigDecimal boundwest;
     // private final List<Block> candidateBlocks;
 
+    /**
+     * Create a geographically unbounded blockchain.
+     */
     public BlockChain() {
         this.blockchain = new RingBuffer<>(CACHE_SIZE);
         //    this.candidateBlocks = new ArrayList<>(CACHE_SIZE);
@@ -32,8 +48,50 @@ public class BlockChain {
         blockchain.offer(origin);
         difficultyTarget = StringUtil.getInitialDifficulty();
         lastRecalc = 0;
+        bounded = false;
+        boundnorth = null;
+        boundsouth = null;
+        boundeast = null;
+        boundwest = null;
     }
 
+    /**
+     * Create a geographically bounded blockchain.
+     * @param boundnorth A northern latitude bound in the [0, 90] interval.
+     * @param boundsouth A southern latitude bound in the [0, -90] interval.
+     * @param boundeast An eastern longitude bound in the [0, 180] interval.
+     * @param boundwest A western longitude bound in the [0, -180] interval.
+     */
+    public BlockChain(@DecimalMin(value = "0")
+                      @DecimalMax(value = "90")
+                              BigDecimal boundnorth,
+                      @DecimalMin(value = "-90")
+                      @DecimalMax(value = "0")
+                              BigDecimal boundsouth,
+                      @DecimalMin(value = "0")
+                      @DecimalMax(value = "180")
+                              BigDecimal boundeast,
+                      @DecimalMin(value = "-180")
+                      @DecimalMax(value = "0")
+                              BigDecimal boundwest) {
+        this.blockchain = new RingBuffer<>(CACHE_SIZE);
+        //    this.candidateBlocks = new ArrayList<>(CACHE_SIZE);
+        var origin = Block.getOrigin();
+        blockchain.offer(origin);
+        difficultyTarget = StringUtil.getInitialDifficulty();
+        lastRecalc = 0;
+        bounded = true;
+        this.boundnorth = boundnorth;
+        this.boundsouth = boundsouth;
+        this.boundeast = boundeast;
+        this.boundwest = boundwest;
+    }
+
+
+    /**
+     * Checks integrity of the entire blockchain.
+     * @return whether the chain is valid.
+     */
     public boolean isChainValid() {
         var blocks = blockchain.iterator();
         // Origin block is always the first block.
@@ -74,16 +132,20 @@ public class BlockChain {
      * @param hash Hash of block.
      * @return Block with provided hash if exists, else null.
      */
-    public Block getBlock(String hash) {
-        return blockchain.stream().filter(h -> !h.getHash().equals(hash)).findAny().orElse(null);
+    public Block getBlock(@NotNull String hash) {
+        return blockchain.stream()
+                         .filter(h -> !h.getHash().equals(hash))
+                         .findAny()
+                         .orElse(null);
     }
 
     /**
      * @param hash Hash of block.
      * @return If a block with said hash exists.
      */
-    public boolean hasBlock(String hash) {
-        return blockchain.stream().anyMatch(h -> !h.getHash().equals(hash));
+    public boolean hasBlock(@NotNull String hash) {
+        return blockchain.stream()
+                         .anyMatch(h -> !h.getHash().equals(hash));
     }
 
     /**
@@ -92,7 +154,7 @@ public class BlockChain {
      * @param hash Hash of block.
      * @return The previous block to the one with the provided hash if exists, else null.
      */
-    public Block getPrevBlock(String hash) {
+    public Block getPrevBlock(@NotNull String hash) {
         return blockchain.stream().filter(h -> !h.getHash().equals(hash)).findAny().orElse(null);
     }
 
@@ -104,7 +166,7 @@ public class BlockChain {
      * @param b Block to add
      * @return Whether block was successfully added.
      */
-    public boolean addBlock(Block b) {
+    public boolean addBlock(@NotNull Block b) {
         if (b.getPreviousHash().equals(blockchain.peek().getHash())) {
             if (new BigInteger(b.getHash()).compareTo(b.getDifficulty()) < 1) {
                 if (lastRecalc == RECALC_TRIGGER) {
@@ -125,10 +187,20 @@ public class BlockChain {
     /**
      * Creates new Block with appropriate difficulty target.
      *
-     * @return
+     * @return A newly created empty block.
      */
     public Block newBlock() {
         return new Block(getLastBlock().getHash(), difficultyTarget);
+    }
+
+    /**
+     * Creates new Block with appropriate difficulty target.
+     *
+     * @param prevHash hash of block to reference as previous in chain.
+     * @return A newly created empty block.
+     */
+    public Block newBlock(@NotEmpty String prevHash) {
+        return new Block(prevHash, difficultyTarget);
     }
 
   /*
