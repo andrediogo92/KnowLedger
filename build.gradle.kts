@@ -15,6 +15,7 @@ subprojects {
     extra.set("bouncyCastleVersion", "1.59")
     extra.set("jadeVersion", "4.5.0")
     extra.set("jolVersion", "0.9")
+    extra.set("hibernateValidatorVersion", "6.0.9.Final")
         //set("vertxVersion", "3.5.1")
 
 }
