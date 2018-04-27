@@ -30,15 +30,13 @@ public class DataCapturing extends Behaviour {
 
     @Override
     public void action() {
-        ArrayList<TransactionInput> l = new ArrayList<>();
-        var bl = new Block(bc.getLastBlock().getHash(), 5);
+        var bl = bc.newBlock();
 
-        var noise = new NoiseData();
-        noise.setNoiseLevel(SoundCapturing());
+        var noise = new NoiseData(SoundCapturing());
         System.out.println("noiseLevel " + noise.getNoiseLevel());
 
         var sd = new SensorData(noise);
-        var t = new Transaction(pk, sd, l);
+        var t = new Transaction(pk, sd);
         bl.addTransaction(t);
         tq.add(t);
         blockQueue.add(bl);

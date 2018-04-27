@@ -23,15 +23,14 @@ public class ReceiveMessages extends Behaviour {
 
     @Override
     public void action() {
-        MessageTemplate mt = MessageTemplate.and(MessageTemplate.MatchLanguage(codec.getName()),MessageTemplate.MatchOntology(ontology.getName()) );
-        ACLMessage msg = myAgent.receive(mt);
+        var mt = MessageTemplate.and(MessageTemplate.MatchLanguage(codec.getName()),
+                                     MessageTemplate.MatchOntology(ontology.getName()) );
+        var msg = myAgent.receive(mt);
 
         try {
             ContentElement ce= myAgent.getContentManager().extractContent(msg);
             t= (Transaction)ce;
-        } catch (Codec.CodecException e) {
-            e.printStackTrace();
-        } catch (OntologyException e) {
+        } catch (Codec.CodecException | OntologyException e) {
             e.printStackTrace();
         }
 

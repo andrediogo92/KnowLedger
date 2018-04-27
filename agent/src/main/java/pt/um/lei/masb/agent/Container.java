@@ -67,7 +67,7 @@ public class Container {
   public static void main(String[] args) throws InterruptedException {
 
     var a = new Container();
-    var bc=new BlockChain();
+    var bc = new BlockChain();
 
     a.initMainContainerInPlatform("localhost", "9888", "Container");
 

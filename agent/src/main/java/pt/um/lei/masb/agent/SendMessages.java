@@ -25,7 +25,7 @@ public class SendMessages extends Behaviour {
         DFAgentDescription dfd = new DFAgentDescription();
         try {
             DFAgentDescription[] agentList = DFService.search(myAgent, dfd);
-            Codec codec = new SLCodec();
+            var codec = new SLCodec();
             TransactionOntology ontology= null;
             try {
                 ontology = new TransactionOntology();
