@@ -2,6 +2,7 @@ package pt.um.lei.masb.blockchain.data;
 
 import pt.um.lei.masb.blockchain.Sizeable;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.Objects;
 
 public final class MerkleNode implements Sizeable {
@@ -11,7 +12,9 @@ public final class MerkleNode implements Sizeable {
     private MerkleNode sibling;
     private String hash;
 
-    public MerkleNode(String hash) {
+    protected MerkleNode() {}
+
+    public MerkleNode(@NotEmpty String hash) {
         this.parent = null;
         this.left = null;
         this.right = null;
@@ -23,7 +26,7 @@ public final class MerkleNode implements Sizeable {
         return left;
     }
 
-    public void setLeft(MerkleNode left) {
+    void setLeft(MerkleNode left) {
         this.left = left;
     }
 
@@ -31,7 +34,7 @@ public final class MerkleNode implements Sizeable {
         return right;
     }
 
-    public void setRight(MerkleNode right) {
+    void setRight(MerkleNode right) {
         this.right = right;
     }
 
@@ -39,7 +42,7 @@ public final class MerkleNode implements Sizeable {
         return parent;
     }
 
-    public void setParent(MerkleNode parent) {
+    void setParent(MerkleNode parent) {
         this.parent = parent;
     }
 
@@ -47,7 +50,7 @@ public final class MerkleNode implements Sizeable {
         return sibling;
     }
 
-    public void setSibling(MerkleNode sibling) {
+    void setSibling(MerkleNode sibling) {
         this.sibling = sibling;
     }
 
