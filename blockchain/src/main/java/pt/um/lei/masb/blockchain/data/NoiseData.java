@@ -3,17 +3,47 @@ package pt.um.lei.masb.blockchain.data;
 import org.openjdk.jol.info.GraphLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 
-public class NoiseData implements Sizeable {
-    private int noiseLevel;
+import javax.validation.constraints.NotNull;
+import java.util.Objects;
 
-    public NoiseData() {
+/**
+ * Ambient Noise Level measured in dB.
+ */
+public class NoiseData implements Sizeable {
+    private double noiseLevel;
+
+    protected NoiseData() {}
+
+    public NoiseData(int noiseLevel) {
+        this.noiseLevel = noiseLevel;
     }
 
-    public int getNoiseLevel() {
+    public double getNoiseLevel() {
         return this.noiseLevel;
     }
 
-    public void setNoiseLevel(int nl) {
-        noiseLevel = nl;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        NoiseData noiseData = (NoiseData) o;
+        return noiseLevel == noiseData.noiseLevel;
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(noiseLevel);
+    }
+
+    @Override
+    public @NotNull String toString() {
+        return "NoiseData { " +
+                "noiseLevel=" + noiseLevel + ' ' +
+                '}';
     }
 }
