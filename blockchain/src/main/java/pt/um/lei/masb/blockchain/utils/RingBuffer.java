@@ -1,8 +1,16 @@
 package pt.um.lei.masb.blockchain.utils;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * TODO: Needs testing.
+ * An evicting queue implementation.
+ * @param <E> the element type to store.
+ */
 public class RingBuffer<E> extends AbstractCollection<E>
         implements Queue<E>, Cloneable, Serializable {
 
@@ -12,33 +20,39 @@ public class RingBuffer<E> extends AbstractCollection<E>
     private int tail = 0;
     private int size = 0;
 
-    public RingBuffer(int capacity) {
+    public RingBuffer(@Positive int capacity) {
         n = capacity;
         buf = new Object[capacity];
     }
 
-    public int capacity() {
+    public @Positive int capacity() {
         return n;
     }
 
     @Override
-    public Iterator<E> iterator() {
+    public @NotNull Iterator<E> iterator() {
         return new RingBufferIterator<E>();
     }
 
     @Override
-    public int size() {
+    public @PositiveOrZero int size() {
         return size;
     }
 
     @Override
     public boolean offer(E e) {
         var s = size();
-        if (s == n) {
-            head = (head + 1) % n;
-            tail = (tail + 1) % n;
-        } else {
-            head = (head + 1) % n;
+        try {
+            if (s == n) {
+                buf[head] = e;
+                head = (head + 1) % n;
+                tail = (tail + 1) % n;
+            } else {
+                buf[head] = e;
+                head = (head + 1) % n;
+            }
+        } catch (Exception ex) {
+            return false;
         }
         size++;
         return true;

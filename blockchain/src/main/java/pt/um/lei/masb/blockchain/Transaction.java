@@ -5,27 +5,40 @@ import pt.um.lei.masb.blockchain.data.SensorData;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Transaction implements Sizeable {
+    @NotNull
     private static Crypter crypter = StringUtil.getDefaultCrypter();
-    // a rough count of how many transactions have been generated.
+
+    // A rough count of how many transactions have been generated.
     private static AtomicLong sequence = new AtomicLong(0);
-    // this is also the hash of the transaction.
+
+    // This is also the hash of the transaction.
     private final String transactionId;
+
     // Agent's pub key.
     private final PublicKey publicKey;
     private final SensorData sd;
 
-    // this is to identify unequivocally an agent.
+    // This is to identify unequivocally an agent.
     private byte[] signature;
 
     private transient long byteSize;
 
+    protected Transaction() {
+        transactionId = null;
+        publicKey = null;
+        sd = null;
+    }
 
-    public Transaction(PublicKey from, SensorData sd) {
+
+    public Transaction(@NotNull PublicKey from,
+                       @NotNull SensorData sd) {
         this.publicKey = from;
         this.sd = sd;
         this.transactionId = calculateHash();
@@ -51,7 +64,7 @@ public class Transaction implements Sizeable {
 
 
     // This Calculates the transaction hash (which will be used as its Id)
-    private String calculateHash() {
+    private @NotEmpty String calculateHash() {
         //Increase the sequence to avoid 2 identical transactions having the same hash
         return crypter.applyHash(StringUtil.getStringFromKey(publicKey) +
                                  sd.toString() +
@@ -59,11 +72,18 @@ public class Transaction implements Sizeable {
     }
 
     /**
-     * Signs the sensor data using the public key.
+     * Signs the sensor data using the private key.
+     * @return whether signing was successful.
      */
-    public void generateSignature(PrivateKey privateKey) {
-        var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
-        signature = StringUtil.applyECDSASig(privateKey, data);
+    public boolean generateSignature(@NotNull PrivateKey privateKey) {
+        if(publicKey == null) {
+            var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
+            signature = StringUtil.applyECDSASig(privateKey, data);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     /**
@@ -77,6 +97,7 @@ public class Transaction implements Sizeable {
     }
 
     /**
+     * TODO: Transaction verification.
      * @return whether the transaction is valid.
      */
     public boolean processTransaction() {
@@ -104,7 +125,7 @@ public class Transaction implements Sizeable {
     }
 
     @Override
-    public String toString() {
+    public @NotEmpty String toString() {
         var sb = new StringBuilder();
         sb.append("Transaction {")
           .append(System.lineSeparator())

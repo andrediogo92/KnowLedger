@@ -3,20 +3,19 @@ package pt.um.lei.masb.blockchain;
 import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.MerkleTree;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.math.BigInteger;
+import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 
 public final class Block implements Sizeable {
-    private static Block origin;
+    private static Block origin = new Block("0");
     private static int MAX_BLOCK_SIZE = 500;
     private static int MAX_MEM = 2097152;
-
-    static {
-        origin = new Block("0");
-    }
 
     private MerkleTree merkleTree;
     private final Transaction data[];
@@ -33,7 +32,7 @@ public final class Block implements Sizeable {
     private transient long merkleTreeSize = ClassLayout.parseClass(merkleTree.getClass()).instanceSize();
 
 
-    private Block() {
+    Block() {
         cur = -1;
         data = null;
         hd = null;
@@ -41,7 +40,8 @@ public final class Block implements Sizeable {
         coinbase = null;
     }
 
-    Block(String previousHash, BigInteger difficulty) {
+    Block(@NotEmpty String previousHash,
+          @NotNull BigInteger difficulty) {
         this.hd = new BlockHeader(previousHash, difficulty);
         this.data = new Transaction[MAX_BLOCK_SIZE];
         cur = 0;
@@ -79,14 +79,14 @@ public final class Block implements Sizeable {
         if (invalidate && time) {
             merkleTree = MerkleTree.buildMerkleTree(data, cur);
             hd.setMerkleRoot(merkleTree.getRoot().getHash());
-            hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toString());
+            hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toInstant());
             hd.zeroNonce();
         } else if (invalidate) {
             merkleTree = MerkleTree.buildMerkleTree(data, cur);
             hd.setMerkleRoot(merkleTree.getRoot().getHash());
             hd.zeroNonce();
         } else if (time) {
-            hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toString());
+            hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toInstant());
             hd.zeroNonce();
         }
         hd.updateHash();
@@ -108,12 +108,7 @@ public final class Block implements Sizeable {
      * @param transaction to add.
      * @return whether transaction was valid.
      */
-    public boolean addTransaction(Transaction transaction) {
-        //process transaction and check if valid, unless block is genesis block then ignore.
-        if (transaction == null) {
-            return false;
-        }
-
+    public boolean addTransaction(@NotNull Transaction transaction) {
         var transactionSize = transaction.getApproximateSize();
         if (transactionsSize + headerSize + classSize + merkleTreeSize + transactionSize < MAX_MEM) {
             if (cur < MAX_BLOCK_SIZE) {
@@ -142,7 +137,7 @@ public final class Block implements Sizeable {
         return hd.getPreviousHash();
     }
 
-    public String getTimeStamp() {
+    public Instant getTimeStamp() {
         return hd.getTimeStamp();
     }
 

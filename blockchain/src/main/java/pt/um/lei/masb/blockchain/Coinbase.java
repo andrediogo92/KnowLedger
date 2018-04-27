@@ -1,5 +1,6 @@
 package pt.um.lei.masb.blockchain;
 
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,16 +15,16 @@ public final class Coinbase implements Sizeable {
      * The coinbase will be continually updated
      * to reflect changes to the block.
      */
-    public Coinbase() {
+    Coinbase() {
         coinbase = new TransactionInput();
         payoutTXO = new ArrayList<>();
     }
 
-    public List<TransactionOutput> getPayoutTXO() {
+    public @NotNull List<TransactionOutput> getPayoutTXO() {
         return payoutTXO;
     }
 
-    public TransactionInput getCoinbase() {
+    public @NotNull TransactionInput getCoinbase() {
         return coinbase;
     }
 
@@ -32,7 +33,8 @@ public final class Coinbase implements Sizeable {
      * @param newT Transaction to contribute to payout.
      * @param latestKnown Transaction to compare for fluctuation.
      */
-    protected void addToInput(Transaction newT, Transaction latestKnown) {
+    protected void addToInput(@NotNull Transaction newT,
+                              @NotNull Transaction latestKnown) {
 
     }
 
@@ -40,7 +42,7 @@ public final class Coinbase implements Sizeable {
      * TODO: Calculate new outputs based on transaction.
      * @param t Transaction to register in outputs.
      */
-    protected void addToOutputs(Transaction t) {
+    protected void addToOutputs(@NotNull Transaction t) {
 
     }
 }
