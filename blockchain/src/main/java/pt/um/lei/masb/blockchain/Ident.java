@@ -7,7 +7,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class Ident {
-    private static Logger LOGGER = Logger.getLogger("Ident");
+    private final static Logger LOGGER = Logger.getLogger("Ident");
 
     //Ensure Bouncy Castle Crypto provider is present
     static {

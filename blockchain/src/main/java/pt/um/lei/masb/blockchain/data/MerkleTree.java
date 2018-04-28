@@ -9,15 +9,14 @@ import pt.um.lei.masb.blockchain.utils.StringUtil;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
-import javax.validation.constraints.PositiveOrZero;
 import java.util.HashMap;
 import java.util.Map;
 
 public final class MerkleTree implements Sizeable {
     @NotNull
-    private static Crypter crypter = StringUtil.getDefaultCrypter();
+    private final static Crypter crypter = StringUtil.getDefaultCrypter();
     private MerkleNode root;
-    private Map<String, MerkleNode> trans;
+    private final Map<String, MerkleNode> trans;
 
     protected MerkleTree() {
         root = null;
@@ -74,7 +73,7 @@ public final class MerkleTree implements Sizeable {
      *
      * @param previousTreeLayer The previous tree layer, depth+1
      * @param count             the node count for this next layer.
-     * @return
+     * @return the new Layer of {@link MerkleNode}s with their children set.
      */
     private static @NotEmpty MerkleNode[] buildNewLayer(MerkleNode[] previousTreeLayer,
                                                         int count) {

@@ -8,8 +8,8 @@ import java.util.List;
  * The coinbase transaction. Pays out to contributors to the blockchain.
  */
 public final class Coinbase implements Sizeable {
-    private TransactionInput coinbase;
-    private List<TransactionOutput> payoutTXO;
+    private final TransactionInput coinbase;
+    private final List<TransactionOutput> payoutTXO;
 
     /**
      * The coinbase will be continually updated

@@ -1,6 +1,5 @@
 package pt.um.lei.masb.blockchain.data;
 
-import org.openjdk.jol.info.GraphLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 
 import javax.validation.constraints.NotNull;
@@ -14,7 +13,7 @@ public class NoiseData implements Sizeable {
 
     protected NoiseData() {}
 
-    public NoiseData(int noiseLevel) {
+    public NoiseData(double noiseLevel) {
         this.noiseLevel = noiseLevel;
     }
 

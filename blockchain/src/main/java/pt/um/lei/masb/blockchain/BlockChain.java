@@ -1,22 +1,13 @@
 package pt.um.lei.masb.blockchain;
 
-import org.hibernate.validator.constraints.time.DurationMax;
 import pt.um.lei.masb.blockchain.utils.RingBuffer;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
-import javax.validation.constraints.DecimalMax;
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
 
-public class BlockChain {
+public final class BlockChain {
     private static final int CACHE_SIZE = 40;
     private static final int RECALC_TRIGGER = 2048;
     private final RingBuffer<Block> blockchain;
@@ -78,6 +69,29 @@ public class BlockChain {
         this.boundwest = boundwest;
     }
 
+    /**
+     * Returns the bounds if the blockchain is bounded.
+     *
+     * @return the bounds of the blockchain in each cardinal direction [N, S, E, W].
+     * <p> Possible values are [[0,90],[-90,0],[0,180],[-180,0]].
+     * <p> If the blockchain is not bounded, returns an empty array.
+     */
+    public @Size(max = 4) BigDecimal[] getBounds() {
+        if (bounded) {
+            return new BigDecimal[]{
+                    boundnorth,
+                    boundsouth,
+                    boundeast,
+                    boundwest
+            };
+        } else {
+            return new BigDecimal[0];
+        }
+    }
+
+    public boolean isBounded() {
+        return bounded;
+    }
 
     /**
      * Checks integrity of the entire blockchain.

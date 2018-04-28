@@ -1,17 +1,12 @@
 package pt.um.lei.masb.agent.net;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.lang.reflect.Type;
 import java.net.URL;
-import java.util.Collection;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -20,12 +15,24 @@ import java.util.logging.Logger;
 public class JSONFileUrlParser {
     @NotNull
     private static final Logger LOGGER = Logger.getLogger("JSONFileUrlParser");
-    private String root;
-    private URL file;
+    private final URL file;
 
+    /**
+     * A parser for a file based on a path string from the classpath resources.
+     *
+     * @param file the path string to a resource in the classpath.
+     */
     public JSONFileUrlParser(@NotEmpty String file) {
-        root = file;
         this.file = getClass().getResource(file);
+    }
+
+    /**
+     * A parser for a file at the specified URL.
+     *
+     * @param file
+     */
+    public JSONFileUrlParser(@NotEmpty URL file) {
+        this.file = file;
     }
 
     public @NotNull JSONMappedURLs parseFromJSON() throws FileNotFoundException {

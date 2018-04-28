@@ -13,10 +13,10 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class Transaction implements Sizeable {
     @NotNull
-    private static Crypter crypter = StringUtil.getDefaultCrypter();
+    private final static Crypter crypter = StringUtil.getDefaultCrypter();
 
     // A rough count of how many transactions have been generated.
-    private static AtomicLong sequence = new AtomicLong(0);
+    private final static AtomicLong sequence = new AtomicLong(0);
 
     // This is also the hash of the transaction.
     private final String transactionId;
@@ -76,7 +76,7 @@ public class Transaction implements Sizeable {
      * @return whether signing was successful.
      */
     public boolean generateSignature(@NotNull PrivateKey privateKey) {
-        if(publicKey == null) {
+        if (publicKey != null) {
             var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
             signature = StringUtil.applyECDSASig(privateKey, data);
             return true;
@@ -126,18 +126,17 @@ public class Transaction implements Sizeable {
 
     @Override
     public @NotEmpty String toString() {
-        var sb = new StringBuilder();
-        sb.append("Transaction {")
-          .append(System.lineSeparator())
-          .append("Transaction id: ")
-          .append(transactionId)
-          .append(System.lineSeparator())
-          .append("Public Key: ")
-          .append(publicKey.toString())
-          .append(System.lineSeparator())
-          .append("Data : {").append(getSensorData().toString())
-          .append('}')
-          .append(System.lineSeparator());
-        return sb.toString();
+        String sb = "Transaction {" +
+                System.lineSeparator() +
+                "Transaction id: " +
+                transactionId +
+                System.lineSeparator() +
+                "Public Key: " +
+                publicKey.toString() +
+                System.lineSeparator() +
+                "Data : {" + getSensorData().toString() +
+                '}' +
+                System.lineSeparator();
+        return sb;
     }
 }

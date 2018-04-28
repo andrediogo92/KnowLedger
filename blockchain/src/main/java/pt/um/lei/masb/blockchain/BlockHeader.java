@@ -5,19 +5,17 @@ import pt.um.lei.masb.blockchain.data.MerkleTree;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Null;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 public final class BlockHeader implements Sizeable {
-    private static BlockHeader origin;
-    private static Crypter crypter = StringUtil.getDefaultCrypter();
-
-    static {
-        origin = new BlockHeader("0");
-    }
+    private final static BlockHeader origin = new BlockHeader(null);
+    private final static Crypter crypter = StringUtil.getDefaultCrypter();
 
     private final BigInteger difficulty;
     private String hash;
@@ -29,10 +27,10 @@ public final class BlockHeader implements Sizeable {
     /**
      * Origin block specialty constructor
      *
-     * @param origin special string "0"
+     * @param v null parameter for special constructor.
      */
-    private BlockHeader(@Pattern(regexp = "0") String origin) {
-        hash = origin;
+    private BlockHeader(@Null Void v) {
+        hash = "0";
         merkleRoot = null;
         previousHash = "";
         timeStamp = ZonedDateTime.of(2018, 3, 13, 0, 0, 0, 0, ZoneOffset.UTC)
@@ -62,20 +60,17 @@ public final class BlockHeader implements Sizeable {
     /**
      * Hash is a SHA-256 calculated from previous hash, nonce, timestamp,
      * {@link MerkleTree}'s root and each {@link Transaction}'s hash.
-     *
-     * @return The hash string.
      */
     void updateHash() {
         hash = calculateHash();
     }
 
     @NotNull String calculateHash() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(previousHash)
-          .append(Long.toHexString(nonce))
-          .append(timeStamp)
-          .append(merkleRoot);
-        return crypter.applyHash(sb.toString());
+        String sb = previousHash +
+                Long.toHexString(nonce) +
+                timeStamp +
+                merkleRoot;
+        return crypter.applyHash(sb);
     }
 
     String getHash() {
@@ -93,10 +88,6 @@ public final class BlockHeader implements Sizeable {
 
     String getPreviousHash() {
         return previousHash;
-    }
-
-    protected void setPreviousHash(@NotEmpty String previousHash) {
-        this.previousHash = previousHash;
     }
 
     Instant getTimeStamp() {
@@ -125,23 +116,22 @@ public final class BlockHeader implements Sizeable {
     }
 
     public @NotEmpty String toString() {
-        var sb = new StringBuilder();
-        sb.append("Header : [")
-          .append(System.lineSeparator())
-          .append("difficulty: ")
-          .append(difficulty)
-          .append(System.lineSeparator())
-          .append("prevHash: ")
-          .append(previousHash)
-          .append(System.lineSeparator())
-          .append("Hash: ")
-          .append(hash)
-          .append(System.lineSeparator())
-          .append("Time: ")
-          .append(timeStamp)
-          .append(System.lineSeparator())
-          .append(']')
-          .append(System.lineSeparator());
-        return sb.toString();
+        String sb = "Header : [" +
+                System.lineSeparator() +
+                "difficulty: " +
+                difficulty +
+                System.lineSeparator() +
+                "prevHash: " +
+                previousHash +
+                System.lineSeparator() +
+                "Hash: " +
+                hash +
+                System.lineSeparator() +
+                "Time: " +
+                timeStamp +
+                System.lineSeparator() +
+                ']' +
+                System.lineSeparator();
+        return sb;
     }
 }

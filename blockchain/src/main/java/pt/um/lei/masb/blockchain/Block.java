@@ -13,14 +13,14 @@ import java.util.Arrays;
 
 
 public final class Block implements Sizeable {
-    private static Block origin = new Block("0");
-    private static int MAX_BLOCK_SIZE = 500;
-    private static int MAX_MEM = 2097152;
+    private static final Block origin = new Block(null);
+    private static final int MAX_BLOCK_SIZE = 500;
+    private static final int MAX_MEM = 2097152;
 
     private MerkleTree merkleTree;
     private final Transaction data[];
     private final Coinbase coinbase;
-    private BlockHeader hd;
+    private final BlockHeader hd;
     private int cur;
 
     private transient final long classSize = ClassLayout.parseClass(this.getClass()).instanceSize();
@@ -31,6 +31,18 @@ public final class Block implements Sizeable {
     //Makes the total block size in the possible ballpark of 2MB + merkleTree graph size.
     private transient long merkleTreeSize = ClassLayout.parseClass(merkleTree.getClass()).instanceSize();
 
+    private Block(Void v) {
+        data = null;
+        cur = -1;
+        hd = BlockHeader.getOrigin();
+        headerSize = hd.getApproximateSize();
+        this.merkleTree = null;
+        coinbase = null;
+    }
+
+    public static int getMaxBlockSize() {
+        return MAX_BLOCK_SIZE;
+    }
 
     Block() {
         cur = -1;
@@ -50,13 +62,8 @@ public final class Block implements Sizeable {
         coinbase = new Coinbase();
     }
 
-    private Block(String s) {
-        data = null;
-        cur = -1;
-        hd = BlockHeader.getOrigin();
-        headerSize = hd.getApproximateSize();
-        this.merkleTree = null;
-        coinbase = null;
+    public static int getMaxMem() {
+        return MAX_MEM;
     }
 
     static Block getOrigin() {
@@ -147,6 +154,10 @@ public final class Block implements Sizeable {
 
     public String calculateHash() {
         return hd.calculateHash();
+    }
+
+    public Coinbase getCoinbase() {
+        return coinbase;
     }
 
     @Override
