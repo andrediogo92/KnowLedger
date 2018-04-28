@@ -50,7 +50,7 @@ public class HumidityData implements Sizeable {
         switch(unit) {
             case G_BY_KG:
                 hum /= 1000;
-                unit = HUnit.G_BY_KG;
+                unit = HUnit.KG_BY_KG;
                 break;
             case KG_BY_KG:
                 break;

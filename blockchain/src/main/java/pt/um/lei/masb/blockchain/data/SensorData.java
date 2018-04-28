@@ -1,7 +1,6 @@
 package pt.um.lei.masb.blockchain.data;
 
 import org.openjdk.jol.info.ClassLayout;
-import org.openjdk.jol.info.GraphLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 
 import javax.persistence.Embedded;
@@ -121,19 +120,23 @@ public class SensorData implements Sizeable {
     @Override
     public long getApproximateSize() {
         long classSize = ClassLayout.parseClass(this.getClass()).instanceSize();
-        switch (category) {
-            case NOISE:
-                return nd.getApproximateSize() + classSize;
-            case TEMPERATURE:
-                return td.getApproximateSize() + classSize;
-            case HUMIDITY:
-                return hd.getApproximateSize() + classSize;
-            case LUMINOSITY:
-                return ld.getApproximateSize() + classSize;
-            case OTHER:
-                return od.getApproximateSize() + classSize;
-            default:
-                return -1;
+        if (category == null) {
+            switch (category) {
+                case NOISE:
+                    return nd.getApproximateSize() + classSize;
+                case TEMPERATURE:
+                    return td.getApproximateSize() + classSize;
+                case HUMIDITY:
+                    return hd.getApproximateSize() + classSize;
+                case LUMINOSITY:
+                    return ld.getApproximateSize() + classSize;
+                case OTHER:
+                    return od.getApproximateSize() + classSize;
+                default:
+                    return -1;
+            }
+        } else {
+            return classSize;
         }
     }
 
@@ -164,12 +167,24 @@ public class SensorData implements Sizeable {
     public @NotNull String toString() {
         var sb = new StringBuilder();
         sb.append("SensorData {");
-        switch (category) {
-            case NOISE: sb.append(nd.toString()); break;
-            case TEMPERATURE: sb.append(td.toString());break;
-            case HUMIDITY: sb.append(hd.toString());break;
-            case LUMINOSITY: sb.append(ld.toString());break;
-            case OTHER: sb.append(od.toString());break;
+        if (category != null) {
+            switch (category) {
+                case NOISE:
+                    sb.append(nd.toString());
+                    break;
+                case TEMPERATURE:
+                    sb.append(td.toString());
+                    break;
+                case HUMIDITY:
+                    sb.append(hd.toString());
+                    break;
+                case LUMINOSITY:
+                    sb.append(ld.toString());
+                    break;
+                case OTHER:
+                    sb.append(od.toString());
+                    break;
+            }
         }
         sb.append(" }");
         return sb.toString();

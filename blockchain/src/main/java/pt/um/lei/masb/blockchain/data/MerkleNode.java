@@ -71,10 +71,6 @@ public final class MerkleNode implements Sizeable {
         return hash;
     }
 
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {

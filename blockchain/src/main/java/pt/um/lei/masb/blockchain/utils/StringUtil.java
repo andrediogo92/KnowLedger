@@ -2,14 +2,13 @@ package pt.um.lei.masb.blockchain.utils;
 
 import java.math.BigInteger;
 import java.security.*;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public final class StringUtil {
-    private static Logger LOGGER = Logger.getLogger("StringUtil");
-    private static Crypter DEFAULTCRYPTER = new SHA256Encrypter();
+    private final static Logger LOGGER = Logger.getLogger("StringUtil");
+    private final static Crypter DEFAULTCRYPTER = new SHA256Encrypter();
 
     //Ensure Bouncy Castle Crypto provider is present
     static {

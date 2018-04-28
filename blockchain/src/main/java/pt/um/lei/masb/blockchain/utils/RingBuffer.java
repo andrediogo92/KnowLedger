@@ -4,7 +4,10 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
 import java.io.Serializable;
-import java.util.*;
+import java.util.AbstractCollection;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Queue;
 
 /**
  * TODO: Needs testing.
@@ -31,7 +34,7 @@ public class RingBuffer<E> extends AbstractCollection<E>
 
     @Override
     public @NotNull Iterator<E> iterator() {
-        return new RingBufferIterator<E>();
+        return new RingBufferIterator<>();
     }
 
     @Override

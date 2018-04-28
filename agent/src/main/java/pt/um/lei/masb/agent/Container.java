@@ -1,19 +1,9 @@
 package pt.um.lei.masb.agent;
-import jade.core.Runtime;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
-import jade.domain.FIPAAgentManagement.ServiceDescription;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Random;
-import java.util.concurrent.TimeUnit;
-
-import jade.core.AID;
 import jade.core.Profile;
 import jade.core.ProfileImpl;
-import jade.wrapper.AgentController;
+import jade.core.Runtime;
 import jade.wrapper.ContainerController;
-import jade.wrapper.StaleProxyException;
 import pt.um.lei.masb.blockchain.BlockChain;
 
 public class Container {
@@ -64,7 +54,7 @@ public class Container {
     }
   }
 
-  public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
 
     var a = new Container();
     var bc = new BlockChain();
