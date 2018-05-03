@@ -6,29 +6,34 @@ import pt.um.lei.masb.blockchain.Transaction;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import java.util.HashMap;
 import java.util.Map;
 
-@Entity
+@Entity(name = "MerkleTree")
 public final class MerkleTree implements Sizeable {
     @NotNull
     private final static Crypter crypter = StringUtil.getDefaultCrypter();
 
+    @OneToMany(cascade = CascadeType.ALL,
+               orphanRemoval = true,
+               fetch = FetchType.EAGER)
+    @MapKey
+    private final Map<String, MerkleNode> trans;
     @Id
-    @OneToOne
+    @GeneratedValue
+    private long id;
+    @OneToOne(cascade = CascadeType.ALL,
+              orphanRemoval = true,
+              fetch = FetchType.EAGER)
     private MerkleNode root;
 
-    @OneToMany
-    private final Map<String, MerkleNode> trans;
-
-    protected MerkleTree(){}
+    protected MerkleTree() {
+        trans = null;
+    }
 
     private MerkleTree(@Positive int size) {
         this.root = null;
