@@ -5,9 +5,9 @@ import pt.um.lei.masb.blockchain.data.MerkleTree;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
-import javax.persistence.*;
-import java.time.LocalDateTime;
-import javax.validation.constraints.*;
+import javax.persistence.Basic;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Null;
@@ -47,7 +47,7 @@ public final class BlockHeader implements Sizeable {
      */
     private BlockHeader(@Null Void v) {
         hash = "0";
-        merkleRoot = null;
+        merkleRoot = "0";
         previousHash = "";
         timeStamp = ZonedDateTime.of(2018, 3, 13, 0, 0, 0, 0, ZoneOffset.UTC)
                                  .toInstant();

@@ -13,7 +13,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 
 
-@Entity
+@Entity(name = "Block")
 public final class Block implements Sizeable {
     private static final Block origin = new Block(null);
     private static final int MAX_BLOCK_SIZE = 500;
@@ -22,17 +22,21 @@ public final class Block implements Sizeable {
     @Id
     private long blockheight;
 
-    @OneToOne
-    private MerkleTree merkleTree;
-
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL,
+               fetch = FetchType.EAGER)
     private final Transaction data[];
+    @OneToOne(cascade = CascadeType.ALL,
+              optional = false)
     private final Coinbase coinbase;
+    @OneToOne(cascade = CascadeType.ALL,
+              optional = false)
     private final BlockHeader hd;
+    @OneToOne(cascade = CascadeType.ALL,
+              optional = false)
+    private MerkleTree merkleTree;
+    @Basic(optional = false)
     private int cur;
 
-    @OneToOne
-    private BlockHeader hd;
 
     @Transient
     private transient final long classSize = ClassLayout.parseClass(this.getClass()).instanceSize();
@@ -61,7 +65,7 @@ public final class Block implements Sizeable {
         return MAX_BLOCK_SIZE;
     }
 
-    Block() {
+    protected Block() {
         cur = -1;
         data = null;
         hd = null;

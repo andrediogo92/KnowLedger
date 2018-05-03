@@ -5,10 +5,7 @@ import pt.um.lei.masb.blockchain.data.SensorData;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.security.PrivateKey;
@@ -28,12 +25,15 @@ public class Transaction implements Sizeable {
     private final String transactionId;
 
     // Agent's pub key.
+    @Basic(optional = false)
     private final PublicKey publicKey;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL,
+              optional = false)
     private final SensorData sd;
 
     // This is to identify unequivocally an agent.
+    @Basic(optional = false)
     private byte[] signature;
 
 

@@ -1,5 +1,6 @@
 package pt.um.lei.masb.blockchain;
 
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,15 +8,21 @@ import java.util.List;
 /**
  * The coinbase transaction. Pays out to contributors to the blockchain.
  */
+@Entity
 public final class Coinbase implements Sizeable {
+    @Embedded
     private final TransactionInput coinbase;
+    @OneToMany()
     private final List<TransactionOutput> payoutTXO;
+    @Id
+    @GeneratedValue
+    private long id;
 
     /**
      * The coinbase will be continually updated
      * to reflect changes to the block.
      */
-    Coinbase() {
+    protected Coinbase() {
         coinbase = new TransactionInput();
         payoutTXO = new ArrayList<>();
     }
