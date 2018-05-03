@@ -3,10 +3,10 @@ package pt.um.lei.masb.blockchain.data;
 import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.OneToOne;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.Objects;
@@ -26,19 +26,19 @@ public class SensorData implements Sizeable {
 
     private final Category category;
 
-    @Embedded
+    @OneToOne
     private final NoiseData nd;
 
-    @Embedded
+    @OneToOne
     private final TemperatureData td;
 
-    @Embedded
+    @OneToOne
     private final HumidityData hd;
 
-    @Embedded
+    @OneToOne
     private final LuminosityData ld;
 
-    @Embedded
+    @OneToOne
     private final OtherData<? extends Serializable> od;
 
     protected SensorData() {

@@ -2,32 +2,56 @@ package pt.um.lei.masb.blockchain.data;
 
 import pt.um.lei.masb.blockchain.Sizeable;
 
+import javax.persistence.Basic;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.Objects;
-import javax.persistence.Embeddable;
 
 /**
  * Temperature data specifies a double and a Temperature unit (Celsius, Fahrenheit, Rankine and Kelvin) and
  * idempotent methods to convert between them as needed.
  */
-@Embeddable
-public class TemperatureData implements Sizeable {
+@Entity
+public class TemperatureData extends GeoData implements Sizeable {
 
+    @Id
+    @GeneratedValue
+    private long id;
+
+    @Basic(optional = false)
     private double temperature;
+
+    @Basic(optional = false)
     private TUnit unit;
 
-    public TemperatureData(double temperature, @NotNull TUnit unit) {
+    public TemperatureData(double temperature,
+                           @NotNull TUnit unit,
+                           BigDecimal lat,
+                           BigDecimal lng) {
+        super(lat, lng);
         this.temperature = temperature;
         this.unit = unit;
+
     }
 
-    protected TemperatureData() {}
+    protected TemperatureData() {
+        super(new BigDecimal(0), new BigDecimal(0));
+    }
 
+    /**
+     * @return The temperature reading's unit (Celsius, Fahrenheit, Rankine, Kelvin).
+     */
     public TUnit getUnit() {
         return unit;
     }
 
+    /**
+     * @return A temperature reading in a certain unit.
+     */
     public double getTemperature() {
         return temperature;
     }

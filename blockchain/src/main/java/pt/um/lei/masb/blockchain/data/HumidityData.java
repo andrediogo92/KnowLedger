@@ -2,8 +2,12 @@ package pt.um.lei.masb.blockchain.data;
 
 import pt.um.lei.masb.blockchain.Sizeable;
 
-import javax.persistence.Embeddable;
+import javax.persistence.Basic;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.Objects;
 
 
@@ -11,26 +15,29 @@ import java.util.Objects;
  * Humidity data can be expressed in Absolute/Volumetric or Relative humidity.
  * As such possible measurements can be in g/kg, Kg/kg or percentage.
  */
-@Embeddable
-public class HumidityData implements Sizeable {
+@Entity
+public class HumidityData extends GeoData implements Sizeable {
+    @Id
+    @GeneratedValue
+    private long id;
+
+    @Basic(optional = false)
     private double hum;
+
+    @Basic(optional = false)
     private HUnit unit;
 
-    public HumidityData(double hum,@NotNull HUnit unit) {
+    public HumidityData(double hum,
+                        @NotNull HUnit unit,
+                        BigDecimal lat,
+                        BigDecimal lng) {
+        super(lat, lng);
         this.hum = hum;
         this.unit = unit;
     }
 
     protected HumidityData() {
-    }
-
-    private HumidityData(HumidityData other) {
-        this.hum = other.hum;
-        this.unit = other.unit;
-    }
-
-    public @NotNull HumidityData clone(HumidityData hd) {
-        return new HumidityData(hd);
+        super(new BigDecimal(0), new BigDecimal(0));
     }
 
     public void convertToGbyKG() {
