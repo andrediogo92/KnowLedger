@@ -4,10 +4,15 @@ package pt.um.lei.masb.blockchain.persistance;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class PersistanceWrapper {
+/**
+ * A Thread-safe wrapper into the JPA context of the blockchain.
+ */
+final class PersistanceWrapper {
     private static final PersistanceWrapper persistanceWrapper = new PersistanceWrapper();
 
     private final EntityManagerFactory sessionFactory;
@@ -17,11 +22,19 @@ public class PersistanceWrapper {
         sessionFactory = Persistence.createEntityManagerFactory("pt.um.lei.masb.blockchain.unit");
     }
 
-    public static PersistanceWrapper getInstance() {
+    static PersistanceWrapper getInstance() {
         return persistanceWrapper;
     }
 
-    public PersistanceWrapper executeInCurrentSession(Consumer<EntityManager> executable) {
+    synchronized <R> PersistanceWrapper executeInCurrentSession(BiConsumer<EntityManager, R> executable, R param) {
+        if (entityManager == null) {
+            entityManager = sessionFactory.createEntityManager();
+        }
+        executable.accept(entityManager, param);//
+        return this;
+    }
+
+    synchronized PersistanceWrapper executeInCurrentSession(Consumer<EntityManager> executable) {
         if (entityManager == null) {
             entityManager = sessionFactory.createEntityManager();
         }
@@ -29,7 +42,15 @@ public class PersistanceWrapper {
         return this;
     }
 
-    public <R> R executeInSessionAndReturn(Function<EntityManager, R> function) {
+
+    synchronized <R, F> R executeInSessionAndReturn(BiFunction<EntityManager, F, R> function, F param) {
+        if (entityManager == null) {
+            entityManager = sessionFactory.createEntityManager();
+        }
+        return function.apply(entityManager, param);
+    }
+
+    synchronized <R> R executeInSessionAndReturn(Function<EntityManager, R> function) {
         if (entityManager == null) {
             entityManager = sessionFactory.createEntityManager();
         }
@@ -37,7 +58,7 @@ public class PersistanceWrapper {
     }
 
 
-    public PersistanceWrapper closeCurrentSession() {
+    synchronized PersistanceWrapper closeCurrentSession() {
         if (entityManager != null) {
             entityManager.close();
         }
