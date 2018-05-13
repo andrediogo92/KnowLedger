@@ -5,9 +5,7 @@ import pt.um.lei.masb.blockchain.data.MerkleTree;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
-import javax.persistence.Basic;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Null;
@@ -16,6 +14,17 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
+@NamedQueries({
+                      @NamedQuery(
+                              name = "blockheader_by_height",
+                              query = "SELECT b from BlockHeader b where blockheight = :height"
+                      )
+                      ,
+                      @NamedQuery(
+                              name = "blockheader_by_hash",
+                              query = "SELECT b FROM BlockHeader b where b.hash = :hash"
+                      )
+              })
 @Entity
 public final class BlockHeader implements Sizeable {
     private final static BlockHeader origin = new BlockHeader(null);
@@ -24,6 +33,16 @@ public final class BlockHeader implements Sizeable {
     // Difficulty is fixed at block generation time.
     @Basic(optional = false)
     private final BigInteger difficulty;
+
+    @OneToOne(cascade = CascadeType.ALL,
+              fetch = FetchType.LAZY,
+              optional = false,
+              mappedBy = "blockid",
+              orphanRemoval = true)
+    private Block block;
+
+    @Basic(optional = false)
+    private long blockheight;
 
     @Id
     private String hash;
@@ -49,6 +68,7 @@ public final class BlockHeader implements Sizeable {
         hash = "0";
         merkleRoot = "0";
         previousHash = "";
+        blockheight = 0;
         timeStamp = ZonedDateTime.of(2018, 3, 13, 0, 0, 0, 0, ZoneOffset.UTC)
                                  .toInstant();
         nonce = 0;
@@ -56,11 +76,13 @@ public final class BlockHeader implements Sizeable {
     }
 
     BlockHeader(@NotNull String previousHash,
-                @NotNull BigInteger difficulty) {
+                @NotNull BigInteger difficulty,
+                long blockheight) {
         nonce = 0;
         this.difficulty = difficulty;
-        this.timeStamp = ZonedDateTime.now(ZoneOffset.UTC).toInstant();
+        this.timeStamp = Instant.now();
         this.previousHash = previousHash;
+        this.blockheight = blockheight;
         merkleRoot = null;
         hash = null; //Making sure we do this after we set the other values.
     }
@@ -94,6 +116,14 @@ public final class BlockHeader implements Sizeable {
         return hash;
     }
 
+    /**
+     * Getter for property 'blockheight'.
+     *
+     * @return Value for property 'blockheight'.
+     */
+    public long getBlockheight() {
+        return blockheight;
+    }
 
     protected String getMerkleRoot() {
         return merkleRoot;

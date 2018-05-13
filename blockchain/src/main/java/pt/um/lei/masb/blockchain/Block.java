@@ -12,28 +12,48 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 
-
+@NamedQueries({
+                      @NamedQuery(
+                              name = "block_by_height",
+                              query = "SELECT b from Block b where b.hd.blockheight = :height"
+                      )
+                      ,
+                      @NamedQuery(
+                              name = "block_by_hash",
+                              query = "SELECT b FROM Block b where b.hd.hash = :hash"
+                      )
+              })
 @Entity(name = "Block")
 public final class Block implements Sizeable {
     private static final Block origin = new Block(null);
     private static final int MAX_BLOCK_SIZE = 500;
     private static final int MAX_MEM = 2097152;
 
-    @Id
-    private long blockheight;
-
     @OneToMany(cascade = CascadeType.ALL,
-               fetch = FetchType.EAGER)
+               fetch = FetchType.EAGER,
+               orphanRemoval = true)
     private final Transaction data[];
     @OneToOne(cascade = CascadeType.ALL,
-              optional = false)
+              fetch = FetchType.EAGER,
+              optional = false,
+              orphanRemoval = true)
     private final Coinbase coinbase;
+    @MapsId
     @OneToOne(cascade = CascadeType.ALL,
-              optional = false)
+              fetch = FetchType.EAGER,
+              optional = false,
+              orphanRemoval = true)
     private final BlockHeader hd;
+    @Id
+    @GeneratedValue
+    private long blockid;
     @OneToOne(cascade = CascadeType.ALL,
-              optional = false)
+              fetch = FetchType.EAGER,
+              optional = false,
+              orphanRemoval = true)
     private MerkleTree merkleTree;
+
+
     @Basic(optional = false)
     private int cur;
 
@@ -74,8 +94,9 @@ public final class Block implements Sizeable {
     }
 
     Block(@NotEmpty String previousHash,
-          @NotNull BigInteger difficulty) {
-        this.hd = new BlockHeader(previousHash, difficulty);
+          @NotNull BigInteger difficulty,
+          long blockheight) {
+        this.hd = new BlockHeader(previousHash, difficulty, blockheight);
         this.data = new Transaction[MAX_BLOCK_SIZE];
         cur = 0;
         headerSize = hd.getApproximateSize();
@@ -106,12 +127,12 @@ public final class Block implements Sizeable {
         boolean res = false;
         if (invalidate && time) {
             merkleTree = MerkleTree.buildMerkleTree(data, cur);
-            hd.setMerkleRoot(merkleTree.getRoot().getHash());
+            hd.setMerkleRoot(merkleTree.getRoot());
             hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toInstant());
             hd.zeroNonce();
         } else if (invalidate) {
             merkleTree = MerkleTree.buildMerkleTree(data, cur);
-            hd.setMerkleRoot(merkleTree.getRoot().getHash());
+            hd.setMerkleRoot(merkleTree.getRoot());
             hd.zeroNonce();
         } else if (time) {
             hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toInstant());
@@ -163,6 +184,14 @@ public final class Block implements Sizeable {
 
     public String getPreviousHash() {
         return hd.getPreviousHash();
+    }
+
+    public long getBlockid() {
+        return blockid;
+    }
+
+    public long getBlockHeight() {
+        return hd.getBlockheight();
     }
 
     public Instant getTimeStamp() {
