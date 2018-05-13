@@ -1,46 +1,20 @@
 package pt.um.lei.masb.blockchain;
 
-import pt.um.lei.masb.blockchain.persistance.PersistanceWrapper;
 import pt.um.lei.masb.blockchain.utils.RingBuffer;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
-import javax.persistence.Basic;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Transient;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.math.BigInteger;
-import java.util.Optional;
 
-@Entity
 public final class BlockChain {
-    private static final BlockChain blockChain =
-            PersistanceWrapper.getInstance()
-                              .executeInSessionAndReturn(
-                                      t -> Optional.ofNullable(
-                                              t.find(BlockChain.class,
-                                                     1))
-                                                   .orElse(new BlockChain()));
-
-    static {
-        PersistanceWrapper.getInstance()
-                          .closeCurrentSession();
-    }
+    private static final BlockChain blockChain = new BlockChain();
 
     private static final int CACHE_SIZE = 40;
     private static final int RECALC_TRIGGER = 2048;
 
-    @Id
-    private final long id = 1;
-    @Transient
     private transient final RingBuffer<Block> blockchain;
-    @Basic(optional = false)
-    private final boolean bounded;
-    @Basic(optional = false)
     private BigInteger difficultyTarget;
-
-    @Basic(optional = false)
     private int lastRecalc;
 
     /**
@@ -53,7 +27,6 @@ public final class BlockChain {
         blockchain.offer(origin);
         difficultyTarget = StringUtil.getInitialDifficulty();
         lastRecalc = 0;
-        bounded = false;
     }
 
     public static BlockChain getInstance() {
@@ -67,10 +40,6 @@ public final class BlockChain {
         return difficultyTarget;
     }
 
-
-    public boolean isBounded() {
-        return bounded;
-    }
 
     /**
      * Checks integrity of the entire blockchain.
@@ -169,12 +138,12 @@ public final class BlockChain {
     private void recalculateDifficulty() {}
 
     /**
-     * Creates new Block with appropriate difficulty target.
+     * Creates new Block with appropriate difficulty target referencing the last known block.
      *
      * @return A newly created empty block.
      */
     public Block newBlock() {
-        return new Block(getLastBlock().getHash(), difficultyTarget);
+        return new Block(getLastBlock().getHash(), difficultyTarget, getLastBlock().getBlockHeight() + 1);
     }
 
     /**
@@ -184,20 +153,7 @@ public final class BlockChain {
      * @return A newly created empty block.
      */
     public Block newBlock(@NotEmpty String prevHash) {
-        return new Block(prevHash, difficultyTarget);
+        return new Block(prevHash, difficultyTarget, getBlock(prevHash).getBlockHeight() + 1);
     }
 
-  /*
-  @Override
-  public void update(Observable o, Object arg) {
-      Block b = (Block) o;
-      candidateBlocks.stream()
-                     .filter(bl -> bl.getHash().equals(b.getHash()))
-                     .findAny()
-                     .ifPresent(ob -> {
-                         minedblocks.add(ob);
-                         blockchain.add(candidateBlocks.get(0))
-                     });
-  }
-  */
 }
