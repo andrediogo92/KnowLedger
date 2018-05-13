@@ -18,7 +18,14 @@ dependencies {
     implementation("org.openjdk.jol", "jol-core", project.extra["jolVersion"] as String)
 }
 
+
+
 tasks.withType<JavaCompile> {
     sourceCompatibility = "1.10"
     targetCompatibility = "1.10"
 }
+
+tasks.withType<JavaExec> {
+    jvmArgs("-Djdk.attach.allowAttachSelf=true")
+}
+
