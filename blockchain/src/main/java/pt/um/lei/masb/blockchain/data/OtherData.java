@@ -8,18 +8,25 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Objects;
 
 
 @Entity
-public class OtherData<T extends Serializable> implements Sizeable {
+public final class OtherData<T extends Serializable>
+        extends GeoData
+        implements Sizeable {
     @Basic(optional = false)
     private final T data;
+
     @Id
     @GeneratedValue
     private long id;
 
-    public OtherData(@NotNull T data) {
+    public OtherData(@NotNull T data,
+                     BigDecimal lat,
+                     BigDecimal lng) {
+        super(lat, lng);
         this.data = data;
     }
 

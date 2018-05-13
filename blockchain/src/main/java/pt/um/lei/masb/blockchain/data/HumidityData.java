@@ -16,7 +16,7 @@ import java.util.Objects;
  * As such possible measurements can be in g/kg, Kg/kg or percentage.
  */
 @Entity
-public class HumidityData extends GeoData implements Sizeable {
+public final class HumidityData extends GeoData implements Sizeable {
     @Id
     @GeneratedValue
     private long id;

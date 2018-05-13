@@ -14,7 +14,7 @@ import java.util.Objects;
  * Ambient Noise Level measured in dB.
  */
 @Entity
-public class NoiseData extends GeoData implements Sizeable {
+public final class NoiseData extends GeoData implements Sizeable {
     @Id
     @GeneratedValue
     private long id;

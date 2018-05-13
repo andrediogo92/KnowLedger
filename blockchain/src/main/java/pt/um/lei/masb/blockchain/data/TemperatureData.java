@@ -16,7 +16,7 @@ import java.util.Objects;
  * idempotent methods to convert between them as needed.
  */
 @Entity
-public class TemperatureData extends GeoData implements Sizeable {
+public final class TemperatureData extends GeoData implements Sizeable {
 
     @Id
     @GeneratedValue

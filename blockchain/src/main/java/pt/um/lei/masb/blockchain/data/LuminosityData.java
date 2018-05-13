@@ -14,7 +14,7 @@ import java.util.Objects;
  * or a lighting unit, outputting a specific amount of lumens.
  */
 @Entity
-public class LuminosityData extends GeoData implements Sizeable {
+public final class LuminosityData extends GeoData implements Sizeable {
     @Id
     @GeneratedValue
     private long id;
