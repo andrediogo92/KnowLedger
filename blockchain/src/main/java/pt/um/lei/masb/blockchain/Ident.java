@@ -1,15 +1,16 @@
 package pt.um.lei.masb.blockchain;
 
-import javax.persistence.Basic;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@NamedQueries({
+                      @NamedQuery(name = "get_ident",
+                                  query = "SELECT i from Ident i")
+              })
 @Entity
 public class Ident {
     private final static Logger LOGGER = Logger.getLogger("Ident");
