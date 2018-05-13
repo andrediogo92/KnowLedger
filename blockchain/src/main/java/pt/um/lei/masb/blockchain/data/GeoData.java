@@ -1,6 +1,6 @@
 package pt.um.lei.masb.blockchain.data;
 
-import javax.persistence.Basic;
+import javax.persistence.*;
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import java.math.BigDecimal;
@@ -8,13 +8,25 @@ import java.math.BigDecimal;
 /**
  * Data constrained to some latitude and longitude coordinates.
  */
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
 public abstract class GeoData {
+    @Id
+    @GeneratedValue
+    private long id;
+
+
     @Basic(optional = false)
     private BigDecimal lat;
 
     @Basic(optional = false)
     private BigDecimal lng;
 
+
+    protected GeoData() {
+        lat = null;
+        lng = null;
+    }
 
     GeoData(@DecimalMin(value = "-90")
             @DecimalMax(value = "90")
