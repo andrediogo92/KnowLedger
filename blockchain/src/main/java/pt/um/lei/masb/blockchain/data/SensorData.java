@@ -3,165 +3,137 @@ package pt.um.lei.masb.blockchain.data;
 import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
+import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.Objects;
+import java.time.Instant;
 
 /**
  * Sensor data must be categorized in order to allow serialization and de-serialization to and from JSON.
  * It can't be any arbitrary object, must be serializable.
  * <p>
  * Supported categories are those in {@link Category}.
- * This class is built through explicit composition.
+ * This class is built through implicit composition.
  */
 @Entity
-public class SensorData implements Sizeable {
+public final class SensorData implements Sizeable {
     @Id
     @GeneratedValue
     private long id;
 
+    @Basic(optional = false)
     private final Category category;
-
-    @OneToOne
-    private final NoiseData nd;
-
-    @OneToOne
-    private final TemperatureData td;
-
-    @OneToOne
-    private final HumidityData hd;
-
-    @OneToOne
-    private final LuminosityData ld;
-
-    @OneToOne
-    private final OtherData<? extends Serializable> od;
+    @OneToOne(optional = false)
+    private final GeoData data;
+    @Basic(optional = false)
+    private Instant t;
 
     protected SensorData() {
         category = null;
-        nd = null;
-        td = null;
-        hd = null;
-        ld = null;
-        od = null;
+        data = null;
     }
 
-    public SensorData(NoiseData nd) {
+    public SensorData(@NotNull NoiseData nd) {
         category = Category.NOISE;
-        this.nd = nd;
-        td = null;
-        hd = null;
-        ld = null;
-        od = null;
+        data = nd;
     }
 
-    public SensorData(TemperatureData td) {
+    public SensorData(@NotNull TemperatureData td) {
         category = Category.TEMPERATURE;
-        nd = null;
-        this.td = td;
-        hd = null;
-        ld = null;
-        od = null;
+        data = td;
     }
 
-    public SensorData(HumidityData hd) {
+    public SensorData(@NotNull HumidityData hd) {
         category = Category.HUMIDITY;
-        nd = null;
-        td = null;
-        this.hd = hd;
-        ld = null;
-        od = null;
+        data = hd;
     }
 
-    public SensorData(LuminosityData ld) {
+    public SensorData(@NotNull LuminosityData ld) {
         category = Category.LUMINOSITY;
-        nd = null;
-        td = null;
-        hd = null;
-        this.ld = ld;
-        od = null;
+        data = ld;
     }
 
-    public SensorData(OtherData<? extends  Serializable> od) {
+    public SensorData(@NotNull OtherData<? extends Serializable> od) {
         category = Category.OTHER;
-        nd = null;
-        td = null;
-        hd = null;
-        ld = null;
-        this.od = od;
+        data = od;
     }
 
     public Category getCategory() {
         return category;
     }
 
-    public NoiseData getNoiseData() {
-        return nd;
+    /**
+     * Provided convenience method. Check {@link Category} matches NOISE first.
+     *
+     * @return The noise data.
+     * @throws ClassCastException If the data does not match this type.
+     */
+    public @NotNull NoiseData getNoiseData() throws ClassCastException {
+        return (NoiseData) data;
     }
 
-    public TemperatureData getTemperatureData() {
-        return td;
+    /**
+     * Provided convenience method. Check {@link Category} matches TEMPERATURE first.
+     *
+     * @return The temperature data.
+     * @throws ClassCastException If the data does not match this type.
+     */
+    public TemperatureData getTemperatureData() throws ClassCastException {
+        return (TemperatureData) data;
     }
 
-    public HumidityData getHumidityData() {
-        return hd;
+    /**
+     * Provided convenience method. Check {@link Category} matches HUMIDITY first.
+     *
+     * @return The humidity data.
+     * @throws ClassCastException If the data does not match this type.
+     */
+
+    public HumidityData getHumidityData() throws ClassCastException {
+        return (HumidityData) data;
     }
 
-    public LuminosityData getLuminosityData() {
-        return ld;
+    /**
+     * Provided convenience method. Check {@link Category} matches LUMINOSITY first.
+     *
+     * @return The luminosity data.
+     * @throws ClassCastException If the data does not match this type.
+     */
+    public LuminosityData getLuminosityData() throws ClassCastException {
+        return (LuminosityData) data;
     }
 
-    public OtherData<? extends Serializable> getOtherData() { return od; }
+    /**
+     * Provided convenience method. Check {@link Category} matches OTHER first.
+     *
+     * @return The other data.
+     * @throws ClassCastException If the data does not match this type.
+     */
+    public OtherData<? extends Serializable> getOtherData() throws ClassCastException {
+        return (OtherData<? extends Serializable>) data;
+    }
 
     @Override
     public long getApproximateSize() {
         long classSize = ClassLayout.parseClass(this.getClass()).instanceSize();
-        if (category == null) {
+        if (category != null) {
             switch (category) {
                 case NOISE:
-                    return nd.getApproximateSize() + classSize;
+                    return ((NoiseData) data).getApproximateSize() + classSize;
                 case TEMPERATURE:
-                    return td.getApproximateSize() + classSize;
+                    return ((TemperatureData) data).getApproximateSize() + classSize;
                 case HUMIDITY:
-                    return hd.getApproximateSize() + classSize;
+                    return ((HumidityData) data).getApproximateSize() + classSize;
                 case LUMINOSITY:
-                    return ld.getApproximateSize() + classSize;
+                    return ((LuminosityData) data).getApproximateSize() + classSize;
                 case OTHER:
-                    return od.getApproximateSize() + classSize;
-                default:
-                    return -1;
+                    return ((OtherData<? extends Serializable>) data).getApproximateSize() + classSize;
             }
-        } else {
-            return classSize;
         }
+        return classSize;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        SensorData that = (SensorData) o;
-        return category == that.category &&
-                Objects.equals(nd, that.nd) &&
-                Objects.equals(td, that.td) &&
-                Objects.equals(hd, that.hd) &&
-                Objects.equals(ld, that.ld) &&
-                Objects.equals(od, that.od);
-    }
 
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(category, nd, td, hd, ld, od);
-    }
 
     @Override
     public @NotNull String toString() {
@@ -170,19 +142,19 @@ public class SensorData implements Sizeable {
         if (category != null) {
             switch (category) {
                 case NOISE:
-                    sb.append(nd.toString());
+                    sb.append(((NoiseData) data).toString());
                     break;
                 case TEMPERATURE:
-                    sb.append(td.toString());
+                    sb.append(data).toString();
                     break;
                 case HUMIDITY:
-                    sb.append(hd.toString());
+                    sb.append(data).toString();
                     break;
                 case LUMINOSITY:
-                    sb.append(ld.toString());
+                    sb.append(data).toString();
                     break;
                 case OTHER:
-                    sb.append(od.toString());
+                    sb.append(data).toString();
                     break;
             }
         }
