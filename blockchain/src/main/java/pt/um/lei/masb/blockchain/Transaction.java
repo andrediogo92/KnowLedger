@@ -12,6 +12,14 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.concurrent.atomic.AtomicLong;
 
+@NamedQueries({
+                      @NamedQuery(name = "transaction_by_hash",
+                                  query = "SELECT b FROM Transaction b where b.transactionId = :hash"),
+                      @NamedQuery(name = "transactions_by_time_stamp",
+                                  query = "SELECT b FROM Transaction b order by b.sd.t desc"),
+                      @NamedQuery(name = "transactions_from_agent",
+                                  query = "SELECT t from Transaction t where publicKey = :publicKey order by t.sd.t desc")
+              })
 @Entity
 public class Transaction implements Sizeable {
     @NotNull
@@ -76,8 +84,8 @@ public class Transaction implements Sizeable {
     private @NotEmpty String calculateHash() {
         //Increase the sequence to avoid 2 identical transactions having the same hash
         return crypter.applyHash(StringUtil.getStringFromKey(publicKey) +
-                                 sd.toString() +
-                                 sequence.incrementAndGet());
+                                         sd.toString() +
+                                         sequence.incrementAndGet());
     }
 
     /**
@@ -89,8 +97,7 @@ public class Transaction implements Sizeable {
             var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
             signature = StringUtil.applyECDSASig(privateKey, data);
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
