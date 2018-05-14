@@ -8,6 +8,7 @@ import pt.um.lei.masb.blockchain.Transaction;
 import pt.um.lei.masb.blockchain.TransactionInput;
 import pt.um.lei.masb.blockchain.data.NoiseData;
 import pt.um.lei.masb.blockchain.data.SensorData;
+import pt.um.lei.masb.blockchain.utils.RingBuffer;
 
 import javax.sound.sampled.*;
 import java.security.PublicKey;
@@ -19,12 +20,12 @@ public class DataCapturing extends Behaviour {
     private BlockChain bc;
     private Queue<Block> blockQueue;
     private PublicKey pk;
-    private ArrayList<Transaction> tq;
+    private RingBuffer<Transaction> toSend;
 
-    public DataCapturing(BlockChain bc, PublicKey pk, Queue<Block> blockQueue,ArrayList<Transaction> tq) {
+    public DataCapturing(BlockChain bc, PublicKey pk, Queue<Block> blockQueue,RingBuffer<Transaction> tq) {
         this.bc = bc;
         this.pk = pk;
-        this.tq = tq;
+        this.toSend = tq;
         this.blockQueue = blockQueue;
     }
 
@@ -37,8 +38,7 @@ public class DataCapturing extends Behaviour {
 
         var sd = new SensorData(noise);
         var t = new Transaction(pk, sd);
-        bl.addTransaction(t);
-        tq.add(t);
+        toSend.offer(t);
         blockQueue.add(bl);
     }
 

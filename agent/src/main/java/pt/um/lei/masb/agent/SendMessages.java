@@ -9,14 +9,17 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import pt.um.lei.masb.blockchain.Transaction;
+import pt.um.lei.masb.blockchain.utils.RingBuffer;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 public class SendMessages extends Behaviour {
-    private ArrayList<Transaction> tq;
+    private Transaction toSend;
+    private RingBuffer<Transaction> rb;
 
-    public SendMessages(ArrayList<Transaction> tq){
-        this.tq=tq;
+    public SendMessages(RingBuffer<Transaction> tq){
+        this.rb=tq;
     }
 
 
@@ -32,14 +35,14 @@ public class SendMessages extends Behaviour {
             } catch (BeanOntologyException e) {
                 e.printStackTrace();
             }
-            for (Transaction t : tq){
-                for (DFAgentDescription agent : agentList){
+            for (DFAgentDescription agent : agentList){
+                for(Transaction t: rb) {
                     ACLMessage msg = new ACLMessage(ACLMessage.QUERY_IF);
+                    myAgent.getContentManager().fillContent(msg,t);
                     msg.addReceiver(agent.getName()); // sellerAID is the AID of the Seller agent
                     msg.setLanguage(codec.getName());
                     msg.setOntology(ontology.getName());
                 }
-                tq.remove(t);
             }
         } catch (FIPAException e) {
             e.printStackTrace();

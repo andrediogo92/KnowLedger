@@ -9,6 +9,7 @@ import pt.um.lei.masb.blockchain.Block;
 import pt.um.lei.masb.blockchain.BlockChain;
 import pt.um.lei.masb.blockchain.Ident;
 import pt.um.lei.masb.blockchain.Transaction;
+import pt.um.lei.masb.blockchain.utils.RingBuffer;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -25,7 +26,7 @@ public class agentZero extends Agent{
     private Queue<Block> bl;
     private PublicKey publicKey;
     private PrivateKey privateKey;
-    private ArrayList<Transaction> toSend;
+    private RingBuffer<Transaction> toSend;
 
     @Override
     protected void setup() {
@@ -38,7 +39,7 @@ public class agentZero extends Agent{
             fe.printStackTrace();
         }
 
-        toSend= new ArrayList<>();
+        toSend= new RingBuffer<>(3);
         var i = new Ident();
         publicKey=i.getPublicKey();
         privateKey=i.getPrivateKey();
