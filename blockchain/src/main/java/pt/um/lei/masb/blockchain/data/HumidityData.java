@@ -40,30 +40,40 @@ public final class HumidityData extends GeoData implements Sizeable {
         super(new BigDecimal(0), new BigDecimal(0));
     }
 
-    public void convertToGbyKG() {
+    public double convertToGbyKG() {
+        var res = hum;
         switch(unit) {
             case G_BY_KG:
                 break;
             case KG_BY_KG:
-                hum *= 1000;
-                unit = HUnit.G_BY_KG;
+                res *= 1000;
                 break;
             case RELATIVE:
                 break;
         }
+        return res;
     }
 
-    public void convertToKGbyKG() {
+    public double convertToKGbyKG() {
+        var res = hum;
         switch(unit) {
             case G_BY_KG:
-                hum /= 1000;
-                unit = HUnit.KG_BY_KG;
+                res /= 1000;
                 break;
             case KG_BY_KG:
                 break;
             case RELATIVE:
                 break;
         }
+        return res;
+    }
+
+    public double getHum() {
+        return hum;
+    }
+
+    public HUnit getUnit() {
+        return unit;
     }
 
     @Override

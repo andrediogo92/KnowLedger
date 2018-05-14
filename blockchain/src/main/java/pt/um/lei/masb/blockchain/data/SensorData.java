@@ -66,7 +66,7 @@ public final class SensorData implements Sizeable {
      * Provided convenience method. Check {@link Category} matches NOISE first.
      *
      * @return The noise data.
-     * @throws ClassCastException If the data does not match this type.
+     * @throws ClassCastException   If the data does not match this type.
      */
     public @NotNull NoiseData getNoiseData() throws ClassCastException {
         return (NoiseData) data;
@@ -76,7 +76,7 @@ public final class SensorData implements Sizeable {
      * Provided convenience method. Check {@link Category} matches TEMPERATURE first.
      *
      * @return The temperature data.
-     * @throws ClassCastException If the data does not match this type.
+     * @throws ClassCastException   If the data does not match this type.
      */
     public TemperatureData getTemperatureData() throws ClassCastException {
         return (TemperatureData) data;
@@ -86,7 +86,7 @@ public final class SensorData implements Sizeable {
      * Provided convenience method. Check {@link Category} matches HUMIDITY first.
      *
      * @return The humidity data.
-     * @throws ClassCastException If the data does not match this type.
+     * @throws ClassCastException   If the data does not match this type.
      */
 
     public HumidityData getHumidityData() throws ClassCastException {
@@ -97,7 +97,7 @@ public final class SensorData implements Sizeable {
      * Provided convenience method. Check {@link Category} matches LUMINOSITY first.
      *
      * @return The luminosity data.
-     * @throws ClassCastException If the data does not match this type.
+     * @throws ClassCastException   If the data does not match this type.
      */
     public LuminosityData getLuminosityData() throws ClassCastException {
         return (LuminosityData) data;
@@ -107,10 +107,14 @@ public final class SensorData implements Sizeable {
      * Provided convenience method. Check {@link Category} matches OTHER first.
      *
      * @return The other data.
-     * @throws ClassCastException If the data does not match this type.
+     * @throws ClassCastException   If the data does not match this type.
      */
     public OtherData<? extends Serializable> getOtherData() throws ClassCastException {
         return (OtherData<? extends Serializable>) data;
+    }
+
+    public Instant getTimestamp() {
+        return t;
     }
 
     @Override

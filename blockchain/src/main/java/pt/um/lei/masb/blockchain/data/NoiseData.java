@@ -46,7 +46,7 @@ public final class NoiseData extends GeoData implements Sizeable {
                      double relative) {
         super(lat, lng);
         this.relativeOrRMS = relativeOrRMS;
-        this.peak = peak;
+        this.peak = 0;
         this.unit = NUnit.DBSPL;
     }
 
