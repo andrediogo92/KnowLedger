@@ -1,8 +1,9 @@
 package pt.um.lei.masb.blockchain.persistance;
 
+import javax.persistence.EntityManager;
 import java.util.logging.Logger;
 
-abstract class AbstractTransactionsWrapper implements TransactionsWrapper {
+abstract class AbstractTransactionsWrapper<T> implements TransactionsWrapper {
     protected static Logger LOGGER = Logger.getLogger("TransactionsWrapper");
     protected PersistanceWrapper p = PersistanceWrapper.getInstance();
 
@@ -12,4 +13,23 @@ abstract class AbstractTransactionsWrapper implements TransactionsWrapper {
     public void clearTransactionsContext() {
         p.closeCurrentSession();
     }
+
+    public boolean persistEntity(T entity) {
+        return p.executeInCurrentSession(this::persist, entity);
+    }
+
+    public boolean updateEntity(T entity) {
+        return p.executeInCurrentSession(this::update, entity);
+    }
+
+    private boolean persist(EntityManager entityManager, T r) {
+        return persistEntity(entityManager, r, LOGGER);
+    }
+
+
+    private boolean update(EntityManager entityManager, T entity) {
+        return mergeEntity(entityManager, entity, LOGGER);
+    }
+
+
 }
