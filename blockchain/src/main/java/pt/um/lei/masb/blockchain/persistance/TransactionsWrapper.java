@@ -1,6 +1,8 @@
 package pt.um.lei.masb.blockchain.persistance;
 
+import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
+import javax.persistence.TransactionRequiredException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -177,6 +179,57 @@ interface TransactionsWrapper {
             logger.log(Level.WARNING, e.getMessage());
         }
         return res;
+    }
+
+    /**
+     * Not to be used directly. Requires knowledge of inner workings of DB:
+     *
+     * @param tClass        The class of the object result.
+     * @param entityManager The entity manager to query.
+     * @param id            The unique id of the object.
+     * @param logger        A logger to log exceptional flows.
+     * @param <T>           The type of the result queried.
+     * @param <R>           The type of the id supplied.
+     * @return An optional result (querying might fail).
+     */
+    default <T, R> Optional<T> findEntity(Class<T> tClass,
+                                          EntityManager entityManager,
+                                          R id,
+                                          Logger logger) {
+        Optional<T> res = Optional.empty();
+        try {
+            res = Optional.ofNullable(entityManager.find(tClass, id));
+        } catch (IllegalArgumentException e) {
+            logger.log(Level.WARNING, e.getMessage());
+        }
+        return res;
+    }
+
+    default <T> boolean persistEntity(EntityManager entityManager,
+                                      T param,
+                                      Logger logger) {
+        try {
+            entityManager.persist(param);
+            return true;
+        } catch (IllegalArgumentException |
+                EntityExistsException |
+                TransactionRequiredException e) {
+            logger.log(Level.SEVERE, e::getMessage);
+        }
+        return false;
+    }
+
+    default <T> boolean mergeEntity(EntityManager entityManager,
+                                    T param,
+                                    Logger logger) {
+        try {
+            entityManager.merge(param);
+            return true;
+        } catch (IllegalArgumentException |
+                TransactionRequiredException e) {
+            logger.log(Level.SEVERE, e::getMessage);
+        }
+        return false;
     }
 
     /**
