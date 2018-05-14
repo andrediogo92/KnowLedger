@@ -7,7 +7,7 @@ import javax.persistence.EntityManager;
 import java.util.Optional;
 
 public final class IdentTransactions
-        extends AbstractTransactionsWrapper
+        extends AbstractTransactionsWrapper<Ident>
         implements TransactionsWrapper {
 
     public Optional<Ident> getIdent() {
@@ -15,10 +15,10 @@ public final class IdentTransactions
     }
 
     private Optional<Ident> UniqueIdent(EntityManager entityManager) {
-        return getUniqueResult(Ident.class,
-                               entityManager,
-                               "get_ident",
-                               LOGGER);
+        return findEntity(Ident.class,
+                          entityManager,
+                          0,
+                          LOGGER);
     }
 
 }

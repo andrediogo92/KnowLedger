@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public final class TransactionTransactions
-        extends AbstractTransactionsWrapper
+        extends AbstractTransactionsWrapper<Transaction>
         implements TransactionsWrapper {
     public List<Transaction> getTransactionsFromAgent(PublicKey publicKey) {
         return p.executeInSessionAndReturn(this::transactionByPubKey, publicKey);
@@ -31,12 +31,10 @@ public final class TransactionTransactions
 
     private Optional<Transaction> transactionById(EntityManager entityManager,
                                                   String hash) {
-        return getUniqueResultSingleParameter(Transaction.class,
-                                              entityManager,
-                                              "transaction_by_hash",
-                                              "hash",
-                                              hash,
-                                              LOGGER);
+        return findEntity(Transaction.class,
+                          entityManager,
+                          hash,
+                          LOGGER);
     }
 
     private List<Transaction> transactionByPubKey(EntityManager entityManager,

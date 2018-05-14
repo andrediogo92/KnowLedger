@@ -6,7 +6,7 @@ import javax.persistence.EntityManager;
 import java.util.Optional;
 
 public final class BlockHeaderTransactions
-        extends AbstractTransactionsWrapper
+        extends AbstractTransactionsWrapper<BlockHeader>
         implements TransactionsWrapper {
 
     public Optional<BlockHeader> getBlockHeaderByHash(String hash) {
@@ -19,12 +19,10 @@ public final class BlockHeaderTransactions
 
 
     private Optional<BlockHeader> blockHeaderById(EntityManager entityManager, String hash) {
-        return getUniqueResultSingleParameter(BlockHeader.class,
-                                              entityManager,
-                                              "blockheader_by_hash",
-                                              "hash",
-                                              hash,
-                                              LOGGER);
+        return findEntity(BlockHeader.class,
+                          entityManager,
+                          hash,
+                          LOGGER);
     }
 
     private Optional<BlockHeader> blockHeaderByHeight(EntityManager entityManager,
