@@ -19,11 +19,6 @@ import java.time.ZonedDateTime;
                               name = "blockheader_by_height",
                               query = "SELECT b from BlockHeader b where blockheight = :height"
                       )
-                      ,
-                      @NamedQuery(
-                              name = "blockheader_by_hash",
-                              query = "SELECT b FROM BlockHeader b where b.hash = :hash"
-                      )
               })
 @Entity
 public final class BlockHeader implements Sizeable {
@@ -41,7 +36,8 @@ public final class BlockHeader implements Sizeable {
               orphanRemoval = true)
     private Block block;
 
-    @Basic(optional = false)
+    @Column(unique = true,
+            nullable = false)
     private long blockheight;
 
     @Id
@@ -62,7 +58,7 @@ public final class BlockHeader implements Sizeable {
     /**
      * Origin block specialty constructor
      *
-     * @param v null parameter for special constructor.
+     * @param v Null parameter for special constructor.
      */
     private BlockHeader(@Null Void v) {
         hash = "0";
@@ -116,11 +112,6 @@ public final class BlockHeader implements Sizeable {
         return hash;
     }
 
-    /**
-     * Getter for property 'blockheight'.
-     *
-     * @return Value for property 'blockheight'.
-     */
     public long getBlockheight() {
         return blockheight;
     }
@@ -181,4 +172,5 @@ public final class BlockHeader implements Sizeable {
                 System.lineSeparator();
         return sb;
     }
+
 }
