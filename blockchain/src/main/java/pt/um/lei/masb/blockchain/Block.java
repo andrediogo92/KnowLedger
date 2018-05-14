@@ -14,13 +14,23 @@ import java.util.Arrays;
 
 @NamedQueries({
                       @NamedQuery(
-                              name = "block_by_height",
-                              query = "SELECT b from Block b where b.hd.blockheight = :height"
+                              name = "get_block_by_height",
+                              query = "SELECT b FROM Block b WHERE b.hd.blockheight = :height"
                       )
                       ,
                       @NamedQuery(
-                              name = "block_by_hash",
-                              query = "SELECT b FROM Block b where b.hd.hash = :hash"
+                              name = "get_block_by_hash",
+                              query = "SELECT b FROM Block b WHERE b.hd.hash = :hash"
+                      )
+                      ,
+                      @NamedQuery(
+                              name = "get_prev_block_by_hash",
+                              query = "SELECT b FROM Block b WHERE b.hd.previousHash = :hash"
+                      )
+                      ,
+                      @NamedQuery(
+                              name = "get_latest_block",
+                              query = "SELECT b FROM Block b WHERE b.hd.blockheight = (SELECT MAX(b2.blockheight) FROM BlockHeader b2)"
                       )
               })
 @Entity(name = "Block")
@@ -115,8 +125,10 @@ public final class Block implements Sizeable {
     /**
      * Attempt one nonce calculation.
      *
-     * @param invalidate Whether to invalidate the nonce and MerkleTree in case block has changed.
-     * @param time       Whether to invalidate block calculations due to timestamp (every couple of seconds).
+     * @param invalidate    Whether to invalidate the nonce and MerkleTree
+     *                      in case block has changed.
+     * @param time          Whether to invalidate block calculations due to
+     *                      timestamp (every couple of seconds).
      * @return Whether the block was successfully mined.
      */
     public boolean attemptMineBlock(boolean invalidate, boolean time) {
@@ -151,19 +163,20 @@ public final class Block implements Sizeable {
 
     /**
      * Add a single new transaction.
+     * <p>
      * Checks if block is sized correctly.
+     * <p>
      * Checks if the transaction is valid.
      *
-     * @param transaction to add.
-     * @return whether transaction was valid.
+     * @param transaction   Transaction to attempt to add to the block.
+     * @return Whether the transaction was valid and cprrectly inserted.
      */
     public boolean addTransaction(@NotNull Transaction transaction) {
         var transactionSize = transaction.getApproximateSize();
         if (transactionsSize + headerSize + classSize + merkleTreeSize + transactionSize < MAX_MEM) {
             if (cur < MAX_BLOCK_SIZE) {
                 if (transaction.processTransaction()) {
-                    data[cur] = transaction;
-                    cur++;
+                    insertSorted(transaction);
                     transactionsSize += transactionSize;
                     System.out.println("Transaction Successfully added to Block");
                     return true;
@@ -174,12 +187,28 @@ public final class Block implements Sizeable {
         return false;
     }
 
+    /**
+     * Transactions are sorted in descending order of data timestamp.
+     *
+     * @param transaction Transaction to insert in descending order.
+     */
+    private void insertSorted(Transaction transaction) {
+        var i = cur - 1;
+        for (; i >= 0 && transaction.getSensorData()
+                                    .getTimestamp()
+                                    .isBefore(data[i].getSensorData()
+                                                     .getTimestamp()); i--) {
+            data[i + 1] = data[i];       // shift elements forward
+        }
+        data[i + 1] = transaction;
+    }
+
     public String getHash() {
         return hd.getHash();
     }
 
     public Transaction[] getData() {
-        return data;
+        return Arrays.copyOf(data, cur, Transaction[].class);
     }
 
     public String getPreviousHash() {
@@ -217,12 +246,13 @@ public final class Block implements Sizeable {
 
     /**
      * Recalculates the entire block size.
-     *
+     * <p>
      * Is somewhat time consuming and only necessary if:
-     *
-     * 1. You need to calculate the effective block size after deserialization
-     * 2. You need to calculate the effective block size after retrieval
-     * of a block from a database.
+     * <ol>
+     *  <li>    You need to calculate the effective block size after deserialization
+     *  <li>    You need to calculate the effective block size after retrieval
+     *          of a block from a database.
+     * </ol>
      */
     public void resetApproximateSize() {
         headerSize = hd.getApproximateSize();
@@ -248,5 +278,9 @@ public final class Block implements Sizeable {
         sb.append(" ]")
           .append(System.lineSeparator()).append('}');
         return sb.toString();
+    }
+
+    public boolean verifyTransactions() {
+        return merkleTree.verifyBlockTransactions(data, cur);
     }
 }
