@@ -1,16 +1,14 @@
 package pt.um.lei.masb.blockchain;
 
-import javax.persistence.*;
+import javax.persistence.Basic;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-@NamedQueries({
-                      @NamedQuery(name = "get_ident",
-                                  query = "SELECT i from Ident i")
-              })
 @Entity
 public class Ident {
     private final static Logger LOGGER = Logger.getLogger("Ident");
@@ -23,8 +21,7 @@ public class Ident {
     }
 
     @Id
-    @GeneratedValue
-    private long id;
+    private long id = 0;
 
     @NotNull
     @Basic(optional = false)
@@ -35,14 +32,14 @@ public class Ident {
     private PublicKey publicKey;
 
     /**
-     * @throws RuntimeException when key generation fails.
+     * @throws RuntimeException When key generation fails.
      */
     public Ident() {
         generateKeyPair();
     }
 
     /**
-     * @throws RuntimeException when key generation fails.
+     * @throws RuntimeException When key generation fails.
      */
     private void generateKeyPair() {
         try {
