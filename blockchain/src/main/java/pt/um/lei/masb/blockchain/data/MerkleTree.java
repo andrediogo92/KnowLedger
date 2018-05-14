@@ -46,9 +46,9 @@ public final class MerkleTree implements Sizeable {
      * Start at leaves and iteratively build next layer at depth-1 until it arrives at root.
      * <p>
      *
-     * @param data Transactions in the block.
-     * @param size Actual number of transactions used in array.
-     * @return the corresponding MerkleTree or empty MerkleTree if empty transactions.
+     * @param data  Transactions in the block.
+     * @param size  Actual number of transactions used in array.
+     * @return The corresponding MerkleTree or empty MerkleTree if empty transactions.
      */
     public static @NotNull MerkleTree buildMerkleTree(@NotNull Transaction[] data,
                                                       @Positive int size) {
@@ -125,7 +125,8 @@ public final class MerkleTree implements Sizeable {
      */
     private static String[] initTree(@Positive int size,
                                      @NotEmpty Transaction[] data) {
-        return Arrays.stream(data).filter(Objects::nonNull)
+        return Arrays.stream(data, 0, size)
+                     .filter(Objects::nonNull)
                      .map(Transaction::getTransactionId)
                      .toArray(String[]::new);
     }
@@ -167,14 +168,14 @@ public final class MerkleTree implements Sizeable {
     }
 
     /**
-     * @param hash hash to verify against merkleTree.
-     * @return
+     * @param hash  hash to verify against merkleTree.
+     * @return Whether the transaction is present and
+     *              matched all the way up the merkleTree.
      */
     public boolean verifyTransaction(@NotEmpty String hash) {
         var res = false;
         var t = getTransactionId(hash);
         if (t.isPresent()) {
-            System.out.println("TxIndex is: " + t);
             res = loopUpVerification(t.get(), hash, levelIndex.length - 1);
         }
         return res;
@@ -186,31 +187,100 @@ public final class MerkleTree implements Sizeable {
             var delta = index - levelIndex[level];
             //Is a left leaf
             if (delta % 2 == 0) {
-                System.out.println(index + 1 == hashes.length);
                 //Is an edge case left leaf
                 if (index + 1 == hashes.length ||
                         (level + 1 != levelIndex.length &&
                                 index + 1 == levelIndex[level + 1])) {
-                    System.out.println(index + " is a Left edge leaf");
                     hash = crypter.applyHash(hashes[index] + hashes[index]);
                 } else {
-                    System.out.println(index + " is a Left non-edge leaf");
                     hash = crypter.applyHash(hashes[index] + hashes[index + 1]);
                 }
             }
             //Is a right leaf
             else {
-                System.out.println(index + " is a right leaf");
                 hash = crypter.applyHash(hashes[index - 1] + hashes[index]);
             }
-            System.out.println(hash);
-            System.out.println("index is : " + index);
-            System.out.println(hashes[index]);
             level--;
+            //Index of parent is at the start of the last level
+            // + the distance from start of this level / 2
             index = levelIndex[level] + (delta / 2);
         }
         return res;
     }
+
+    /**
+     * Verifies entire merkleTree against the transaction data.
+     *
+     * @param data The transaction data.
+     * @param size Actual size of the transaction data.
+     * @return Whether the entire merkleTree matches
+     * against the transaction data.
+     */
+    public boolean verifyBlockTransactions(Transaction[] data, int size) {
+        var res = checkAllTransactionsPresent(data, size);
+        if (hashes.length != 1) {
+            res = loopUpAllVerification(levelIndex.length - 2);
+        }
+        return res;
+    }
+
+    private boolean loopUpAllVerification(int level) {
+        var res = true;
+        //2 fors evaluate to essentially checking level by level starting at the second to last.
+        //We already checked the last level immediately against the data provided.
+        for (int i; res && level >= 0; ) {
+            i = levelIndex[level];
+            for (; i < levelIndex[level + 1]; i++) {
+                //Delta is level index difference + current index + difference to current level index.
+                //It checks out to exactly the left child leaf of any node.
+                var delta = levelIndex[level + 1] - levelIndex[level] + i + (i - levelIndex[level]);
+                //Either the child is the last leaf in the next level, or is the last leaf.
+                //Since we know delta points to left leafs both these conditions mean
+                //edge case leafs.
+                if ((level + 2 != levelIndex.length && delta + 1 == levelIndex[level + 2])
+                        || delta + 1 == hashes.length) {
+                    if (!hashes[i].equals(crypter.applyHash(hashes[delta] + hashes[delta]))) {
+                        res = false;
+                        break;
+                    }
+                }
+                //Then it's a regular left leaf.
+                else {
+                    if (!hashes[i].equals(crypter.applyHash(hashes[delta] + hashes[delta + 1]))) {
+                        res = false;
+                        break;
+                    }
+                }
+            }
+            level--;
+        }
+        return res;
+    }
+
+    private boolean checkAllTransactionsPresent(Transaction[] data, int size) {
+        var i = levelIndex[levelIndex.length - 1];
+        var res = true;
+        var arr = Arrays.stream(data, 0, size)
+                        .filter(Objects::nonNull)
+                        .map(Transaction::getTransactionId)
+                        .toArray(String[]::new);
+        for (String it : arr) {
+            //There are at least as many transactions
+            //They match the ones in the merkle tree.
+            if (i < hashes.length && it.equals(hashes[i])) {
+                i++;
+            } else {
+                res = false;
+                break;
+            }
+        }
+        //There are less transactions in the provided block
+        if (i != hashes.length) {
+            res = false;
+        }
+        return res;
+    }
+
 
     @Override
     public long getApproximateSize() {

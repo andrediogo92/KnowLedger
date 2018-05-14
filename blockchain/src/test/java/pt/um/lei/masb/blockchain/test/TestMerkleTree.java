@@ -267,7 +267,7 @@ public class TestMerkleTree {
 
 
     @Test
-    void testMerkleVerification() {
+    void testMerkleSingleVerification() {
         Ident id[] = new Ident[]{new Ident(), new Ident()};
         Random r = new Random();
         Transaction ts[] = new Transaction[]{
@@ -372,5 +372,105 @@ public class TestMerkleTree {
         assertTrue(tree.verifyTransaction(ts[4].getTransactionId()));
         assertTrue(tree.verifyTransaction(ts[5].getTransactionId()));
         assertTrue(tree.verifyTransaction(ts[6].getTransactionId()));
+    }
+
+
+    @Test
+    void testMerkleAllVerification() {
+        Ident id[] = new Ident[]{new Ident(), new Ident()};
+        Random r = new Random();
+        Transaction ts[] = new Transaction[]{
+                new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0))))
+        };
+        MerkleTree tree = MerkleTree.buildMerkleTree(ts, ts.length);
+        assertNotNull(tree.getRoot());
+        assertTrue(tree.verifyBlockTransactions(ts, ts.length));
+        ts = new Transaction[]{
+                new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                null,
+                null,
+                null
+        };
+        tree = MerkleTree.buildMerkleTree(ts, 5);
+        assertNotNull(tree.getRoot());
+        assertTrue(tree.verifyBlockTransactions(ts, 5));
+        ts = new Transaction[]{
+                new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[1].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                new Transaction(id[0].getPublicKey(), new SensorData(new TemperatureData(r.nextDouble() * 100,
+                                                                                         TUnit.CELSIUS,
+                                                                                         new BigDecimal(0),
+                                                                                         new BigDecimal(0)))),
+                null,
+                null,
+                null
+        };
+        tree = MerkleTree.buildMerkleTree(ts, 7);
+        assertNotNull(tree.getRoot());
+        assertTrue(tree.verifyBlockTransactions(ts, 7));
     }
 }
