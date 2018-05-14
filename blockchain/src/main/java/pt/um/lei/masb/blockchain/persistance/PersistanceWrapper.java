@@ -34,6 +34,14 @@ final class PersistanceWrapper {
         return this;
     }
 
+    synchronized <R> boolean executeInCurrentSession(BiFunction<EntityManager, R, Boolean> executable, R param) {
+        if (entityManager == null) {
+            entityManager = sessionFactory.createEntityManager();
+        }
+        return executable.apply(entityManager, param);//
+    }
+
+
     synchronized PersistanceWrapper executeInCurrentSession(Consumer<EntityManager> executable) {
         if (entityManager == null) {
             entityManager = sessionFactory.createEntityManager();
