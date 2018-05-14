@@ -90,7 +90,7 @@ public class Transaction implements Sizeable {
 
     /**
      * Signs the sensor data using the private key.
-     * @return whether signing was successful.
+     * @return Whether signing was successful.
      */
     public boolean generateSignature(@NotNull PrivateKey privateKey) {
         if (publicKey != null) {
@@ -105,7 +105,7 @@ public class Transaction implements Sizeable {
     /**
      * Verifies the data we signed hasn't been tampered with.
      *
-     * @return whether the data was signed with the corresponding private key.
+     * @return Whether the data was signed with the corresponding private key.
      */
     public boolean verifySignature() {
         var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
@@ -114,7 +114,7 @@ public class Transaction implements Sizeable {
 
     /**
      * TODO: Transaction verification.
-     * @return whether the transaction is valid.
+     * @return Whether the transaction is valid.
      */
     public boolean processTransaction() {
         return true;//verifySignature();
@@ -123,7 +123,7 @@ public class Transaction implements Sizeable {
     /**
      * Calculate the approximate size of the transaction.
      *
-     * @return the size of the transaction in bytes.
+     * @return The size of the transaction in bytes.
      */
     @Override
     public long getApproximateSize() {
