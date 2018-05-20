@@ -53,7 +53,7 @@ public final class BlockHeader implements Sizeable {
     private Instant timeStamp;
 
     @Basic(optional = false)
-    private int nonce;
+    private long nonce;
 
     /**
      * Origin block specialty constructor
