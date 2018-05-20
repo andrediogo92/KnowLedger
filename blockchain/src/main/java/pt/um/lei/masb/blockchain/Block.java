@@ -160,6 +160,8 @@ public final class Block implements Sizeable {
         return coinbase;
     }
 
+    public BlockHeader getHeader() {return hd;}
+
     @Override
     public long getApproximateSize() {
         return classSize + transactionsSize + headerSize;

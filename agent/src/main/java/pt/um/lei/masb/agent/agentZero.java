@@ -5,6 +5,7 @@ import jade.core.behaviours.ParallelBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAException;
+import jade.lang.acl.ACLMessage;
 import pt.um.lei.masb.blockchain.Block;
 import pt.um.lei.masb.blockchain.BlockChain;
 import pt.um.lei.masb.blockchain.Ident;
@@ -16,6 +17,7 @@ import java.security.PublicKey;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Queue;
+import java.util.Random;
 
 public class agentZero extends Agent{
 
@@ -56,9 +58,10 @@ public class agentZero extends Agent{
                 return 0;
             }
         };
+        b.addSubBehaviour(new getMissingBlocks(bc));
+        b.addSubBehaviour(new ReceiveMessages(bc));
         b.addSubBehaviour(new DataCapturing(bc,publicKey, bl,toSend));
         b.addSubBehaviour(new Mining(bc, bl));
-        b.addSubBehaviour(new ReceiveMessages());
         b.addSubBehaviour(new SendMessages(toSend));
         addBehaviour(b);
     }

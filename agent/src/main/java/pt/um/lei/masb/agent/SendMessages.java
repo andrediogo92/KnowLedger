@@ -37,9 +37,9 @@ public class SendMessages extends Behaviour {
             }
             for (DFAgentDescription agent : agentList){
                 for(Transaction t: rb) {
-                    ACLMessage msg = new ACLMessage(ACLMessage.QUERY_IF);
+                    var msg = new ACLMessage(ACLMessage.INFORM);
                     myAgent.getContentManager().fillContent(msg,t);
-                    msg.addReceiver(agent.getName()); // sellerAID is the AID of the Seller agent
+                    msg.addReceiver(agent.getName());
                     msg.setLanguage(codec.getName());
                     msg.setOntology(ontology.getName());
                 }

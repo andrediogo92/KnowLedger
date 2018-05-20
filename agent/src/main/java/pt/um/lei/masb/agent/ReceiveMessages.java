@@ -10,19 +10,22 @@ import jade.core.behaviours.Behaviour;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import pt.um.lei.masb.blockchain.Block;
+import pt.um.lei.masb.blockchain.BlockChain;
 import pt.um.lei.masb.blockchain.Transaction;
-import pt.um.lei.masb.blockchain.utils.RingBuffer;
-
-import java.util.ArrayList;
 
 public class ReceiveMessages extends Behaviour {
     private Codec codec = new SLCodec();
-    private Ontology ontology;
-    private Transaction t;
+    private Ontology txOntology,blOntology;
+    private Transaction tx;
+    private Block bl;
+    private BlockChain bc;
 
-    public ReceiveMessages ()  {
+    public ReceiveMessages (BlockChain bc)  {
+        this.bc=bc;
         try {
-            ontology=new TransactionOntology();
+            txOntology=new TransactionOntology();
+            blOntology=new BlockOntology();
         } catch (BeanOntologyException e) {
             e.printStackTrace();
         }
@@ -32,16 +35,39 @@ public class ReceiveMessages extends Behaviour {
     @Override
     public void action() {
         var mt = MessageTemplate.and(MessageTemplate.MatchLanguage(codec.getName()),
-                                     MessageTemplate.MatchOntology(ontology.getName()) );
+                                     MessageTemplate.MatchOntology(txOntology.getName()) );
 
-        var msg = myAgent.receive(mt);
+
+        var txmsg = myAgent.receive(mt);
         try {
-            ContentElement ce = myAgent.getContentManager().extractContent(msg);
-            t = (Transaction) ce;
+            if (txmsg!=null) {
+                ContentElement txce = myAgent.getContentManager().extractContent(txmsg);
+                tx = (Transaction) txce;
+                bc.getLastBlock().addTransaction(tx);
+            }
         } catch (Codec.CodecException | OntologyException e) {
             e.printStackTrace();
         }
+        var blocksReq= myAgent.receive();
+        if (blocksReq!=null){
+            var rHeight=Long.parseLong(blocksReq.getContent());
+            //Send number of missing blocks
+            var sendMissingNum = new ACLMessage(ACLMessage.INFORM);
+            int missingNum=bc.getLastBlock().getHeader().getBlockHeight()-rHeight;
+            sendMissingNum.setContent(String.valueOf(missingNum<=0?0:missingNum));
 
+            //Send missing blocks
+            while (missingNum>0){
+                var codec = new SLCodec();
+                var blmsg = new ACLMessage(ACLMessage.INFORM);
+                myAgent.getContentManager().fillContent(blmsg,bc.getBlockByHeight(rHeight));
+                blmsg.addReceiver(blocksReq.getSender());
+                blmsg.setLanguage(codec.getName());
+                blmsg.setOntology(blOntology.getName());
+                rHeight++;
+                missingNum--;
+            }
+        }
     }
 
     @Override
