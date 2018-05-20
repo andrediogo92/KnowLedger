@@ -5,6 +5,7 @@ import pt.um.lei.masb.blockchain.data.*;
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
@@ -17,7 +18,7 @@ import java.util.Set;
  * The coinbase transaction. Pays out to contributors to the blockchain.
  */
 @Entity
-public final class Coinbase implements Sizeable {
+public final class Coinbase implements Sizeable, IHashed {
     private static final int TIME_BASE = 5;
     private static final int VALUE_BASE = 2;
     private static final int BASE = 3;
@@ -25,14 +26,21 @@ public final class Coinbase implements Sizeable {
     private static final int OTHER = 50;
     private static final int DATA = 5;
     private static final MathContext mathContext = new MathContext(8, RoundingMode.HALF_EVEN);
+    private static final Coinbase origin = Block.getOrigin().getCoinbase();
+
+
     @OneToMany(cascade = CascadeType.ALL,
                fetch = FetchType.EAGER,
                orphanRemoval = true)
     private final Set<TransactionOutput> payoutTXO;
+
+
     @Basic(optional = false)
     private BigDecimal coinbase;
+
+
     @Id
-    private String hash;
+    private String hashId;
 
     /**
      * The coinbase will be continually updated
@@ -41,6 +49,14 @@ public final class Coinbase implements Sizeable {
     protected Coinbase() {
         coinbase = new BigDecimal(0);
         payoutTXO = new HashSet<>();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public String getHashId() {
+        return hashId;
     }
 
     public @NotNull Set<TransactionOutput> getPayoutTXO() {
@@ -56,10 +72,10 @@ public final class Coinbase implements Sizeable {
      * @param latestKnown           Transaction to compare for fluctuation.
      * @param latestUTXO            Transaction with last unspent
      *                              transaction output for the new Transaction's publisher.
+     *                              <p>
+     *                              If it's the first time for this identity, supply the
+     *                              origin block coinbase.
      * @param cat                   Category of the transaction's data.
-     * @throws NullPointerException If the coinbase does not contain the provided identity,
-     *                              and that identity is not previously already present in this
-     *                              coinbase.
      */
     protected void addToInput(@NotNull Transaction newT,
                               @NotNull Transaction latestKnown,
@@ -103,19 +119,22 @@ public final class Coinbase implements Sizeable {
     }
 
 
-    private BigDecimal calculateDiffTemperature(TemperatureData newTD, TemperatureData oldTD) {
+    private @NotNull BigDecimal calculateDiffTemperature(@NotNull TemperatureData newTD,
+                                                         @NotNull TemperatureData oldTD) {
         var newT = new BigDecimal(newTD.convertToCelsius());
         var oldT = new BigDecimal(oldTD.convertToCelsius());
         return newT.subtract(oldT).divide(oldT, Coinbase.mathContext);
     }
 
-    private BigDecimal calculateDiffLuminosity(LuminosityData newLD, LuminosityData oldLD) {
+    private @NotNull BigDecimal calculateDiffLuminosity(@NotNull LuminosityData newLD,
+                                                        @NotNull LuminosityData oldLD) {
         var newL = new BigDecimal(newLD.getLum());
         var oldL = new BigDecimal(oldLD.getLum());
         return newL.subtract(oldL).divide(oldL, Coinbase.mathContext);
     }
 
-    private BigDecimal calculateDiffHumidity(HumidityData newHD, HumidityData oldHD) {
+    private @NotNull BigDecimal calculateDiffHumidity(@NotNull HumidityData newHD,
+                                                      @NotNull HumidityData oldHD) {
         BigDecimal newH;
         BigDecimal oldH;
         if (newHD.getUnit() == HUnit.RELATIVE) {
@@ -128,7 +147,8 @@ public final class Coinbase implements Sizeable {
         return newH.subtract(oldH).divide(oldH, Coinbase.mathContext);
     }
 
-    private BigDecimal calculateDiffNoise(NoiseData newND, NoiseData oldND) {
+    private @NotNull BigDecimal calculateDiffNoise(@NotNull NoiseData newND,
+                                                   @NotNull NoiseData oldND) {
         var newN = new BigDecimal(newND.getNoiseLevel()).add(new BigDecimal(newND.getPeakOrBase()).abs());
         var oldN = new BigDecimal(oldND.getNoiseLevel()).add(new BigDecimal(oldND.getPeakOrBase()).abs());
         return newN.subtract(oldN)
@@ -136,7 +156,8 @@ public final class Coinbase implements Sizeable {
     }
 
 
-    private BigDecimal getTimeDelta(SensorData dt, SensorData dt2) {
+    private @NotNull BigDecimal getTimeDelta(@NotNull SensorData dt,
+                                             @NotNull SensorData dt2) {
         var stamp1 = new BigDecimal(dt.getTimestamp()
                                       .getEpochSecond() * 1000 + dt.getTimestamp()
                                                                    .get(ChronoField.MILLI_OF_SECOND));
@@ -151,9 +172,6 @@ public final class Coinbase implements Sizeable {
      * @param publicKey Public Key of transaction publisher.
      * @param prevUTXO  Coinbase with previous known UTXO.
      * @param payout    Payout amount to publisher.
-     * @throws NullPointerException If the coinbase does not contain the provided identity,
-     *                              and that identity is not previously already present in this
-     *                              coinbase.
      */
     private void addToOutputs(@NotNull PublicKey publicKey,
                               @NotEmpty Coinbase prevUTXO,
@@ -172,21 +190,23 @@ public final class Coinbase implements Sizeable {
      * @param prevUTXO              The coinbase containing the previous transaction
      *                              output due to the agent.
      * @param payout                The new payout to add to previous output.
-     * @throws NullPointerException If the coinbase does not contain the provided identity.
      */
-    private void fillInFromPreviousUTXO(PublicKey publicKey, Coinbase prevUTXO, BigDecimal payout) {
+    private void fillInFromPreviousUTXO(@NotNull PublicKey publicKey,
+                                        @NotNull Coinbase prevUTXO,
+                                        @NotNull BigDecimal payout) {
         var newPayout = prevUTXO.payoutTXO.stream()
                                           .filter(t -> t.getPublicKey().equals(publicKey))
                                           .findAny()
-                                          .get()
-                                          .getPayout()
-                                          .add(payout);
+                                          .map(TransactionOutput::getPayout)
+                                          .orElseGet(() -> new BigDecimal(0)).add(payout);
         payoutTXO.add(new TransactionOutput(publicKey,
-                                            prevUTXO.hash,
+                                            prevUTXO.hashId,
                                             newPayout));
     }
 
-    private BigDecimal calculateDiff(BigDecimal deltaTime, BigDecimal deltaValue, int constant) {
+    private @NotNull BigDecimal calculateDiff(@NotNull BigDecimal deltaTime,
+                                              @NotNull BigDecimal deltaValue,
+                                              @Positive int constant) {
         var standardDivisor = new BigDecimal(Coinbase.THRESHOLD * constant);
         var timeFactor = deltaTime.multiply(new BigDecimal(Coinbase.TIME_BASE))
                                   .pow(2, Coinbase.mathContext)
