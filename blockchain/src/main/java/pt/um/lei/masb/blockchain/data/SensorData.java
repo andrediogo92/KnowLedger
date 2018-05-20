@@ -26,37 +26,83 @@ public final class SensorData implements Sizeable {
     @OneToOne(optional = false)
     private final GeoData data;
     @Basic(optional = false)
-    private Instant t;
+    private final Instant t;
 
     protected SensorData() {
         category = null;
         data = null;
+        t = null;
     }
 
     public SensorData(@NotNull NoiseData nd) {
         category = Category.NOISE;
         data = nd;
+        t = Instant.now();
     }
+
+    public SensorData(@NotNull NoiseData nd,
+                      @NotNull Instant t) {
+        category = Category.NOISE;
+        data = nd;
+        this.t = t;
+    }
+
 
     public SensorData(@NotNull TemperatureData td) {
         category = Category.TEMPERATURE;
         data = td;
+        t = Instant.now();
     }
+
+    public SensorData(@NotNull TemperatureData td,
+                      @NotNull Instant t) {
+        category = Category.NOISE;
+        data = td;
+        this.t = t;
+    }
+
 
     public SensorData(@NotNull HumidityData hd) {
         category = Category.HUMIDITY;
         data = hd;
+        t = Instant.now();
     }
+
+    public SensorData(@NotNull HumidityData hd,
+                      @NotNull Instant t) {
+        category = Category.NOISE;
+        data = hd;
+        this.t = t;
+    }
+
 
     public SensorData(@NotNull LuminosityData ld) {
         category = Category.LUMINOSITY;
         data = ld;
+        t = Instant.now();
     }
 
-    public SensorData(@NotNull OtherData<? extends Serializable> od) {
+    public SensorData(@NotNull LuminosityData ld,
+                      @NotNull Instant t) {
+        category = Category.NOISE;
+        data = ld;
+        this.t = t;
+    }
+
+
+    public SensorData(@NotNull OtherData<?> od) {
         category = Category.OTHER;
         data = od;
+        t = Instant.now();
     }
+
+    public SensorData(@NotNull OtherData<?> od,
+                      @NotNull Instant t) {
+        category = Category.NOISE;
+        data = od;
+        this.t = t;
+    }
+
 
     public Category getCategory() {
         return category;
