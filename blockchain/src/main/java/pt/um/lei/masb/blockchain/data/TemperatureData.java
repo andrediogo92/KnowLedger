@@ -23,10 +23,18 @@ public final class TemperatureData extends GeoData implements Sizeable {
     private long id;
 
     @Basic(optional = false)
-    private double temperature;
+    private final double temperature;
 
     @Basic(optional = false)
-    private TUnit unit;
+    private final TUnit unit;
+
+
+    protected TemperatureData() {
+        super(new BigDecimal(0), new BigDecimal(0));
+        temperature = 0;
+        unit = null;
+    }
+
 
     public TemperatureData(double temperature,
                            @NotNull TUnit unit,
@@ -38,9 +46,6 @@ public final class TemperatureData extends GeoData implements Sizeable {
 
     }
 
-    protected TemperatureData() {
-        super(new BigDecimal(0), new BigDecimal(0));
-    }
 
     /**
      * @return The temperature reading's unit (Celsius, Fahrenheit, Rankine, Kelvin).

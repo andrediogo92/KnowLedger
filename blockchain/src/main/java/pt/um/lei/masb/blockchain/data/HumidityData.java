@@ -27,6 +27,12 @@ public final class HumidityData extends GeoData implements Sizeable {
     @Basic(optional = false)
     private HUnit unit;
 
+
+    protected HumidityData() {
+        super(new BigDecimal(0), new BigDecimal(0));
+    }
+
+
     public HumidityData(double hum,
                         @NotNull HUnit unit,
                         BigDecimal lat,
@@ -36,9 +42,6 @@ public final class HumidityData extends GeoData implements Sizeable {
         this.unit = unit;
     }
 
-    protected HumidityData() {
-        super(new BigDecimal(0), new BigDecimal(0));
-    }
 
     public double convertToGbyKG() {
         var res = hum;

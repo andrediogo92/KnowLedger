@@ -6,6 +6,7 @@ import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.security.PublicKey;
 
@@ -29,7 +30,9 @@ public class TransactionOutput implements Sizeable {
         prevUTXO = null;
     }
 
-    protected TransactionOutput(PublicKey publicKey, String prevUTXO, BigDecimal cumUTXO) {
+    protected TransactionOutput(@NotNull PublicKey publicKey,
+                                @NotNull String prevUTXO,
+                                @NotNull BigDecimal cumUTXO) {
         this.publicKey = publicKey;
         this.prevUTXO = prevUTXO;
         payout = cumUTXO;
@@ -48,7 +51,7 @@ public class TransactionOutput implements Sizeable {
         return payout;
     }
 
-    public void addToPayout(BigDecimal payout) {
+    public void addToPayout(@NotNull BigDecimal payout) {
         this.payout.add(payout);
     }
 }

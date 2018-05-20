@@ -264,7 +264,7 @@ public final class Block implements Sizeable {
     }
 
 
-    public String toString() {
+    public @NotEmpty String toString() {
         var sb = new StringBuilder();
         sb.append('{')
           .append(' ')

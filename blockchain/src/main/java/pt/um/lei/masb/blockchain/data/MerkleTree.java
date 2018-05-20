@@ -1,6 +1,7 @@
 package pt.um.lei.masb.blockchain.data;
 
 import org.openjdk.jol.info.GraphLayout;
+import pt.um.lei.masb.blockchain.IHashed;
 import pt.um.lei.masb.blockchain.Sizeable;
 import pt.um.lei.masb.blockchain.Transaction;
 import pt.um.lei.masb.blockchain.utils.Crypter;
@@ -41,20 +42,52 @@ public final class MerkleTree implements Sizeable {
     }
 
     /**
-     * Build a Merkle Tree collapsed in a heap for easy navigability from bottom up.
-     * <p>
-     * Start at leaves and iteratively build next layer at depth-1 until it arrives at root.
-     * <p>
+     * Build a merkle tree collapsed in a heap for easy navigability from bottom up.
      *
      * @param data  Transactions in the block.
      * @param size  Actual number of transactions used in array.
      * @return The corresponding MerkleTree or empty MerkleTree if empty transactions.
      */
-    public static @NotNull MerkleTree buildMerkleTree(@NotNull Transaction[] data,
+    public static @NotNull MerkleTree buildMerkleTree(@NotNull IHashed[] data,
                                                       @Positive int size) {
         var t = new MerkleTree();
         var treeLayer = new ArrayList<String[]>((int) (Math.log(size) / Math.log(2)) + 1);
-        treeLayer.add(initTree(size, data));
+        treeLayer.add(initTree(data, size));
+        return buildLoop(t, treeLayer);
+    }
+
+    /**
+     * Build a merkle tree collapsed in a heap for easy navigability from bottom up.
+     * <p>
+     * Convenience method for pre-pending coinbase as first element in bottom layer.
+     *
+     * @param coinbase Coinbase of the block.
+     * @param data     Transactions in the block.
+     * @param size     Actual number of transactions used in array.
+     * @return The corresponding MerkleTree or empty MerkleTree if empty transactions.
+     */
+    public static @NotNull MerkleTree buildMerkleTree(@NotNull IHashed coinbase,
+                                                      @NotNull IHashed[] data,
+                                                      @Positive int size) {
+        var t = new MerkleTree();
+        var treeLayer = new ArrayList<String[]>((int) (Math.log(size) / Math.log(2)) + 1);
+        treeLayer.add(initTree(coinbase, data, size));
+        return buildLoop(t, treeLayer);
+    }
+
+
+    /**
+     * Build loop that builds a Merkle Tree collapsed in a heap.
+     * <p>
+     * Start at leaves and iteratively builds the next layer at
+     * depth-1 until it arrives at root.
+     * <p>
+     *
+     * @param t         The Merkle tree being built.
+     * @param treeLayer A container for the successive layers, containing layer = depth.
+     * @return The completed merkle tree.
+     */
+    private static MerkleTree buildLoop(MerkleTree t, ArrayList<String[]> treeLayer) {
         int i = 0;
         //Next layer's node count for depth-1
         int count = (treeLayer.get(i).length / 2) + (treeLayer.get(i).length % 2);
@@ -120,17 +153,38 @@ public final class MerkleTree implements Sizeable {
      * <p>
      * Sets a correspondence from each hash to it's index.
      *
-     * @param size The transaction array's effective size.
      * @param data The transactions array.
+     * @param size The transaction array's effective size.
      */
-    private static String[] initTree(@Positive int size,
-                                     @NotEmpty Transaction[] data) {
+    private static String[] initTree(@NotNull IHashed[] data,
+                                     @Positive int size) {
         return Arrays.stream(data, 0, size)
                      .filter(Objects::nonNull)
-                     .map(Transaction::getTransactionId)
+                     .map(IHashed::getHashId)
                      .toArray(String[]::new);
     }
 
+    /**
+     * Initialize the first tree layer, which is the transaction layer.
+     * <p>
+     * Sets a correspondence from each hash to it's index.
+     *
+     * @param coinbase The coinbase of the block.
+     * @param data     The transactions array.
+     * @param size     The transaction array's effective size.
+     */
+    private static String[] initTree(@NotEmpty IHashed coinbase,
+                                     @NotNull IHashed[] data,
+                                     @Positive int size) {
+
+        ArrayList<String> res = new ArrayList<>(size + 1);
+        res.add(coinbase.getHashId());
+        Arrays.stream(data, 0, size)
+              .filter(Objects::nonNull)
+              .map(IHashed::getHashId).forEach(res::add);
+        res.trimToSize();
+        return res.toArray(new String[0]);
+    }
 
     /**
      * @return The root hash.
@@ -262,7 +316,7 @@ public final class MerkleTree implements Sizeable {
         var res = true;
         var arr = Arrays.stream(data, 0, size)
                         .filter(Objects::nonNull)
-                        .map(Transaction::getTransactionId)
+                        .map(Transaction::getHashId)
                         .toArray(String[]::new);
         for (String it : arr) {
             //There are at least as many transactions

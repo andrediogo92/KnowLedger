@@ -20,10 +20,16 @@ public final class LuminosityData extends GeoData implements Sizeable {
     private long id;
 
     @Basic(optional = false)
-    private double lum;
+    private final double lum;
 
     @Basic(optional = false)
-    private LUnit unit;
+    private final LUnit unit;
+
+    protected LuminosityData() {
+        super(new BigDecimal(0), new BigDecimal(0));
+        lum = 0;
+        unit = null;
+    }
 
     public LuminosityData(double lum,
                           LUnit unit,
@@ -34,9 +40,6 @@ public final class LuminosityData extends GeoData implements Sizeable {
         this.unit = unit;
     }
 
-    protected LuminosityData() {
-        super(new BigDecimal(0), new BigDecimal(0));
-    }
 
     /**
      * @return Luminosity reading, either from lighting units or light sensors.

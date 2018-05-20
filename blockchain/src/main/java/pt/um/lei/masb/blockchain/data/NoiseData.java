@@ -20,30 +20,33 @@ public final class NoiseData extends GeoData implements Sizeable {
     private long id;
 
     @Basic(optional = false)
-    private double relativeOrRMS;
+    private final double relativeOrRMS;
 
-    private double peak;
+    private final double peak;
 
     @Basic(optional = false)
-    private NUnit unit;
+    private final NUnit unit;
 
     protected NoiseData() {
         super(new BigDecimal(0), new BigDecimal(0));
+        relativeOrRMS = 0;
+        peak = 0;
+        unit = null;
     }
 
-    public NoiseData(BigDecimal lat,
-                     BigDecimal lng,
-                     double rms,
-                     double peak) {
+    public NoiseData(double rms,
+                     double peak,
+                     BigDecimal lat,
+                     BigDecimal lng) {
         super(lat, lng);
         this.relativeOrRMS = rms;
         this.peak = peak;
         this.unit = NUnit.RMS;
     }
 
-    public NoiseData(BigDecimal lat,
-                     BigDecimal lng,
-                     double relative) {
+    public NoiseData(double relativeOrRMS,
+                     BigDecimal lat,
+                     BigDecimal lng) {
         super(lat, lng);
         this.relativeOrRMS = relativeOrRMS;
         this.peak = 0;

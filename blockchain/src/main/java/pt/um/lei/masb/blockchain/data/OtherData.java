@@ -16,12 +16,17 @@ import java.util.Objects;
 public final class OtherData<T extends Serializable>
         extends GeoData
         implements Sizeable {
-    @Basic(optional = false)
-    private final T data;
 
     @Id
     @GeneratedValue
     private long id;
+
+    @Basic(optional = false)
+    private final T data;
+
+    protected OtherData() {
+        this.data = null;
+    }
 
     public OtherData(@NotNull T data,
                      BigDecimal lat,
@@ -30,9 +35,6 @@ public final class OtherData<T extends Serializable>
         this.data = data;
     }
 
-    protected OtherData() {
-        this.data = null;
-    }
 
     public T getData() {
         return data;

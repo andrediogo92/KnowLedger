@@ -17,10 +17,10 @@ public abstract class GeoData {
 
 
     @Basic(optional = false)
-    private BigDecimal lat;
+    private final BigDecimal lat;
 
     @Basic(optional = false)
-    private BigDecimal lng;
+    private final BigDecimal lng;
 
 
     protected GeoData() {

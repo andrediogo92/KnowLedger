@@ -177,7 +177,7 @@ public final class BlockChain {
      * This difference is measured as a percentage of RECALC_TIME which is used to multiply
      * by current difficulty target.
      */
-    private void recalculateDifficulty(Block b) {
+    private void recalculateDifficulty(@NotNull Block b) {
         var cmp = b.getBlockHeight();
         var stamp1 = b.getTimeStamp()
                       .getEpochSecond();
