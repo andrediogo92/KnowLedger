@@ -2,6 +2,7 @@ package pt.um.lei.masb.blockchain.utils;
 
 import java.math.BigInteger;
 import java.security.*;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,7 +22,9 @@ public final class StringUtil {
         return DEFAULTCRYPTER;
     }
 
-    //Applies ECDSA Signature and returns the result ( as bytes ).
+    /**
+     * Applies ECDSA Signature and returns the result (as bytes).
+     */
     public static byte[] applyECDSASig(PrivateKey privateKey, String input) {
         Signature dsa;
         byte[] output;
@@ -38,7 +41,9 @@ public final class StringUtil {
         return output;
     }
 
-    //Verifies a String signature
+    /**
+     * Verifies a String signature.
+     */
     public static boolean verifyECDSASig(PublicKey publicKey, String data, byte[] signature) {
         try {
             var ecdsaVerify = Signature.getInstance("ECDSA", "BC");
@@ -51,8 +56,26 @@ public final class StringUtil {
         }
     }
 
+
     public static String getStringFromKey(Key key) {
         return Base64.getEncoder().encodeToString(key.getEncoded());
+    }
+
+    public static PublicKey stringToPublicKey(String s) {
+        var decoder = Base64.getDecoder();
+
+        PublicKey returnKey = null;
+
+        try {
+            var c = decoder.decode(s);
+            var keyFact = KeyFactory.getInstance("ECDSA", "BC");
+            var x509KeySpec = new X509EncodedKeySpec(c);
+            returnKey = keyFact.generatePublic(x509KeySpec);
+        } catch (GeneralSecurityException e) {
+            LOGGER.log(Level.SEVERE, e.getMessage());
+        }
+
+        return returnKey;
     }
 
 
