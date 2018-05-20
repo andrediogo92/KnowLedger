@@ -14,14 +14,14 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @NamedQueries({
                       @NamedQuery(name = "transaction_by_hash",
-                                  query = "SELECT b FROM Transaction b where b.transactionId = :hash"),
+                                  query = "SELECT b FROM Transaction b where b.hashId = :hash"),
                       @NamedQuery(name = "transactions_by_time_stamp",
                                   query = "SELECT b FROM Transaction b order by b.sd.t desc"),
                       @NamedQuery(name = "transactions_from_agent",
                                   query = "SELECT t from Transaction t where publicKey = :publicKey order by t.sd.t desc")
               })
 @Entity
-public class Transaction implements Sizeable {
+public class Transaction implements Sizeable, IHashed {
     @NotNull
     private final static Crypter crypter = StringUtil.getDefaultCrypter();
 
@@ -30,11 +30,12 @@ public class Transaction implements Sizeable {
 
     // this is also the hash of the transaction.
     @Id
-    private final String transactionId;
+    private final String hashId;
 
     // Agent's pub key.
     @Basic(optional = false)
     private final PublicKey publicKey;
+
 
     @OneToOne(cascade = CascadeType.ALL,
               optional = false)
@@ -42,29 +43,45 @@ public class Transaction implements Sizeable {
 
     // This is to identify unequivocally an agent.
     @Basic(optional = false)
-    private byte[] signature;
+    private final byte[] signature;
 
 
     @Transient
     private transient long byteSize;
 
     protected Transaction() {
-        transactionId = null;
+        hashId = null;
         publicKey = null;
         sd = null;
+        signature = null;
     }
 
-    public Transaction(@NotNull PublicKey from,
+    public Transaction(@NotNull PrivateKey privateKey,
+                       @NotNull PublicKey from,
                        @NotNull SensorData sd) {
         this.publicKey = from;
         this.sd = sd;
-        this.transactionId = calculateHash();
+        this.hashId = calculateHash();
+        signature = generateSignature(privateKey);
         byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
                 sd.getApproximateSize();
+
     }
 
-    public String getTransactionId() {
-        return transactionId;
+    public Transaction(@NotNull Ident id,
+                       @NotNull SensorData sd) {
+        this.publicKey = id.getPublicKey();
+        this.sd = sd;
+        this.hashId = calculateHash();
+        signature = generateSignature(id.getPrivateKey());
+        byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
+                sd.getApproximateSize();
+
+    }
+
+
+    public String getHashId() {
+        return hashId;
     }
 
     public PublicKey getPublicKey() {
@@ -90,16 +107,15 @@ public class Transaction implements Sizeable {
 
     /**
      * Signs the sensor data using the private key.
-     * @return Whether signing was successful.
+     * @return Signature generated.
      */
-    public boolean generateSignature(@NotNull PrivateKey privateKey) {
+    private byte[] generateSignature(@NotNull PrivateKey privateKey) {
+        byte[] v = null;
         if (publicKey != null) {
             var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
-            signature = StringUtil.applyECDSASig(privateKey, data);
-            return true;
-        } else {
-            return false;
+            v = StringUtil.applyECDSASig(privateKey, data);
         }
+        return v;
     }
 
     /**
@@ -145,7 +161,7 @@ public class Transaction implements Sizeable {
         String sb = "Transaction {" +
                 System.lineSeparator() +
                 "Transaction id: " +
-                transactionId +
+                hashId +
                 System.lineSeparator() +
                 "Public Key: " +
                 publicKey.toString() +
