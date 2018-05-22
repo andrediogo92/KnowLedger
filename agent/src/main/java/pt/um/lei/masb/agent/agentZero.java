@@ -1,5 +1,5 @@
 package pt.um.lei.masb.agent;
-import jade.core.AID;
+
 import jade.core.Agent;
 import jade.core.behaviours.ParallelBehaviour;
 import jade.domain.DFService;
@@ -55,7 +55,7 @@ public class agentZero extends Agent{
                 return 0;
             }
         };
-        b.addSubBehaviour(new DataCapturing(bc,publicKey, bl,toSend));
+        b.addSubBehaviour(new DataCapturing(bc, i, bl, toSend));
         b.addSubBehaviour(new Mining(bc, bl));
         b.addSubBehaviour(new ReceiveMessages());
         b.addSubBehaviour(new SendMessages(toSend));
