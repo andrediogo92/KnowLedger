@@ -21,7 +21,7 @@ public final class SensorData implements Sizeable {
     @GeneratedValue
     private long id;
 
-    @Basic(optional = false)
+    @Enumerated(EnumType.ORDINAL)
     private final Category category;
     @OneToOne(optional = false)
     private final GeoData data;

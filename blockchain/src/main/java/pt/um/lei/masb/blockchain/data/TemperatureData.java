@@ -158,7 +158,7 @@ public final class TemperatureData extends GeoData implements Sizeable {
         var sb = new StringBuilder();
         sb.append("TemperatureData {")
           .append(temperature)
-          .append('º');
+          .append("º");
         switch (unit) {
             case KELVIN: sb.append('K');break;
             case CELSIUS: sb.append('C');break;
