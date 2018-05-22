@@ -13,6 +13,7 @@ dependencies {
     compile("com.tilab.jade", "jade-misc", "2.8.0")
     compile("com.tilab.jade", "jade-xml-codec", "1.11.0")
     compile("com.tilab.jade", "jade-test-suite", "1.13.0")
+    compile("org.eclipse.paho","org.eclipse.paho.client.mqttv3",project.extra["eclipsePahoVersion"] as String)
     compile(project(":blockchain"))
 }
 
