@@ -3,17 +3,16 @@ package pt.um.lei.masb.blockchain.data;
 import org.openjdk.jol.info.GraphLayout;
 import pt.um.lei.masb.blockchain.IHashed;
 import pt.um.lei.masb.blockchain.Sizeable;
-import pt.um.lei.masb.blockchain.Transaction;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Positive;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 @Entity(name = "MerkleTree")
 public final class MerkleTree implements Sizeable {
@@ -26,15 +25,11 @@ public final class MerkleTree implements Sizeable {
     @GeneratedValue
     private long id;
 
-    @OneToMany(cascade = CascadeType.ALL,
-               fetch = FetchType.EAGER,
-               orphanRemoval = true)
-    private String hashes[];
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<String> hashes;
 
-    @OneToMany(cascade = CascadeType.ALL,
-               fetch = FetchType.EAGER,
-               orphanRemoval = true)
-    private Integer levelIndex[];
+    @ElementCollection(fetch = FetchType.EAGER)
+    private List<Integer> levelIndex;
 
     protected MerkleTree() {
         hashes = null;
@@ -45,14 +40,14 @@ public final class MerkleTree implements Sizeable {
      * Build a merkle tree collapsed in a heap for easy navigability from bottom up.
      *
      * @param data  Transactions in the block.
-     * @param size  Actual number of transactions used in array.
      * @return The corresponding MerkleTree or empty MerkleTree if empty transactions.
      */
-    public static @NotNull MerkleTree buildMerkleTree(@NotNull IHashed[] data,
-                                                      @Positive int size) {
+    public static @NotNull MerkleTree buildMerkleTree(@NotNull List<? extends IHashed> data) {
         var t = new MerkleTree();
-        var treeLayer = new ArrayList<String[]>((int) (Math.log(size) / Math.log(2)) + 1);
-        treeLayer.add(initTree(data, size));
+        List<String[]> treeLayer = data.size() == 0 ?
+                                   new ArrayList<>() :
+                                   new ArrayList<>((int) (Math.log(data.size()) / Math.log(2)) + 1);
+        treeLayer.add(initTree(data));
         return buildLoop(t, treeLayer);
     }
 
@@ -63,15 +58,15 @@ public final class MerkleTree implements Sizeable {
      *
      * @param coinbase Coinbase of the block.
      * @param data     Transactions in the block.
-     * @param size     Actual number of transactions used in array.
      * @return The corresponding MerkleTree or empty MerkleTree if empty transactions.
      */
     public static @NotNull MerkleTree buildMerkleTree(@NotNull IHashed coinbase,
-                                                      @NotNull IHashed[] data,
-                                                      @Positive int size) {
+                                                      @NotNull List<? extends IHashed> data) {
         var t = new MerkleTree();
-        var treeLayer = new ArrayList<String[]>((int) (Math.log(size) / Math.log(2)) + 1);
-        treeLayer.add(initTree(coinbase, data, size));
+        var treeLayer = data.size() == 0 ?
+                        new ArrayList<String[]>() :
+                        new ArrayList<String[]>((int) (Math.log(data.size()) / Math.log(2)) + 1);
+        treeLayer.add(initTree(coinbase, data));
         return buildLoop(t, treeLayer);
     }
 
@@ -87,7 +82,7 @@ public final class MerkleTree implements Sizeable {
      * @param treeLayer A container for the successive layers, containing layer = depth.
      * @return The completed merkle tree.
      */
-    private static MerkleTree buildLoop(MerkleTree t, ArrayList<String[]> treeLayer) {
+    private static MerkleTree buildLoop(MerkleTree t, List<String[]> treeLayer) {
         int i = 0;
         //Next layer's node count for depth-1
         int count = (treeLayer.get(i).length / 2) + (treeLayer.get(i).length % 2);
@@ -97,25 +92,22 @@ public final class MerkleTree implements Sizeable {
         }
         if (treeLayer.get(i).length == 2) {
             var len = treeLayer.stream().mapToInt(s -> s.length).sum();
-            t.hashes = new String[len + 1];
-            t.levelIndex = new Integer[treeLayer.size() + 1];
-            t.levelIndex[0] = 0;
+            t.hashes = new ArrayList<>(len + 1);
+            t.hashes.add(crypter.applyHash(treeLayer.get(i)[0] + treeLayer.get(i)[1]));
+            t.levelIndex = new ArrayList<>(treeLayer.size() + 1);
+            t.levelIndex.add(0);
             Collections.reverse(treeLayer);
             count = 1;
-            i = 1;
             for (String[] s : treeLayer) {
-                t.levelIndex[i] = count;
-                for (String s1 : s) {
-                    t.hashes[count] = s1;
-                    count++;
-                }
-                i++;
+                t.levelIndex.add(count);
+                t.hashes.addAll(Arrays.asList(s));
+                count += s.length;
             }
-            t.hashes[0] = crypter.applyHash(t.hashes[1] + t.hashes[2]);
         }
         //If the previous layer was already length 1, that means we started at the root.
         else if (treeLayer.get(i).length == 1) {
-            t.hashes = treeLayer.get(i);
+            t.hashes = new ArrayList<>(1);
+            t.hashes.add(treeLayer.get(i)[0]);
         } else {
             LOGGER.log(Level.SEVERE, "Empty merkle tree");
         }
@@ -154,14 +146,12 @@ public final class MerkleTree implements Sizeable {
      * Sets a correspondence from each hash to it's index.
      *
      * @param data The transactions array.
-     * @param size The transaction array's effective size.
      */
-    private static String[] initTree(@NotNull IHashed[] data,
-                                     @Positive int size) {
-        return Arrays.stream(data, 0, size)
-                     .filter(Objects::nonNull)
-                     .map(IHashed::getHashId)
-                     .toArray(String[]::new);
+    private static String[] initTree(@NotNull List<? extends IHashed> data) {
+        return data.stream()
+                   .filter(Objects::nonNull)
+                   .map(IHashed::getHashId)
+                   .toArray(String[]::new);
     }
 
     /**
@@ -171,17 +161,16 @@ public final class MerkleTree implements Sizeable {
      *
      * @param coinbase The coinbase of the block.
      * @param data     The transactions array.
-     * @param size     The transaction array's effective size.
      */
-    private static String[] initTree(@NotEmpty IHashed coinbase,
-                                     @NotNull IHashed[] data,
-                                     @Positive int size) {
+    private static String[] initTree(@NotNull IHashed coinbase,
+                                     @NotNull List<? extends IHashed> data) {
 
-        ArrayList<String> res = new ArrayList<>(size + 1);
+        ArrayList<String> res = new ArrayList<>(data.size() + 1);
         res.add(coinbase.getHashId());
-        Arrays.stream(data, 0, size)
-              .filter(Objects::nonNull)
-              .map(IHashed::getHashId).forEach(res::add);
+        data.stream()
+            .filter(Objects::nonNull)
+            .map(IHashed::getHashId)
+            .forEach(res::add);
         res.trimToSize();
         return res.toArray(new String[0]);
     }
@@ -190,14 +179,14 @@ public final class MerkleTree implements Sizeable {
      * @return The root hash.
      */
     public String getRoot() {
-        return hashes[0];
+        return hashes.get(0);
     }
 
     public boolean hasTransaction(@NotEmpty String hash) {
         var res = false;
         //levelIndex[index] points to leftmost node at level index of the tree
-        for (int i = hashes.length; i >= levelIndex[levelIndex.length - 1]; i--) {
-            if (hashes[i].equals(hash)) {
+        for (int i = hashes.size() - 1; i >= levelIndex.get(levelIndex.size() - 1); i--) {
+            if (hashes.get(i).equals(hash)) {
                 res = true;
                 break;
             }
@@ -208,8 +197,8 @@ public final class MerkleTree implements Sizeable {
     private Optional<Integer> getTransactionId(@NotEmpty String hash) {
         Optional<Integer> res = Optional.empty();
         //levelIndex[index] points to leftmost node at level index of the tree
-        for (int i = hashes.length - 1; i >= levelIndex[levelIndex.length - 1]; i--) {
-            if (hashes[i].equals(hash)) {
+        for (int i = hashes.size() - 1; i >= levelIndex.get(levelIndex.size() - 1); i--) {
+            if (hashes.get(i).equals(hash)) {
                 res = Optional.of(i);
                 break;
             }
@@ -217,7 +206,7 @@ public final class MerkleTree implements Sizeable {
         return res;
     }
 
-    public String[] getCollapsedTree() {
+    public List<String> getCollapsedTree() {
         return hashes;
     }
 
@@ -230,34 +219,34 @@ public final class MerkleTree implements Sizeable {
         var res = false;
         var t = getTransactionId(hash);
         if (t.isPresent()) {
-            res = loopUpVerification(t.get(), hash, levelIndex.length - 1);
+            res = loopUpVerification(t.get(), hash, levelIndex.size() - 1);
         }
         return res;
     }
 
     private boolean loopUpVerification(int index, String hash, int level) {
         boolean res;
-        while ((res = hash.equals(hashes[index])) && index != 0) {
-            var delta = index - levelIndex[level];
+        while ((res = hash.equals(hashes.get(index))) && index != 0) {
+            var delta = index - levelIndex.get(level);
             //Is a left leaf
             if (delta % 2 == 0) {
                 //Is an edge case left leaf
-                if (index + 1 == hashes.length ||
-                        (level + 1 != levelIndex.length &&
-                                index + 1 == levelIndex[level + 1])) {
-                    hash = crypter.applyHash(hashes[index] + hashes[index]);
+                if (index + 1 == hashes.size() ||
+                        (level + 1 != levelIndex.size() &&
+                                index + 1 == levelIndex.get(level + 1))) {
+                    hash = crypter.applyHash(hashes.get(index) + hashes.get(index));
                 } else {
-                    hash = crypter.applyHash(hashes[index] + hashes[index + 1]);
+                    hash = crypter.applyHash(hashes.get(index) + hashes.get(index + 1));
                 }
             }
             //Is a right leaf
             else {
-                hash = crypter.applyHash(hashes[index - 1] + hashes[index]);
+                hash = crypter.applyHash(hashes.get(index - 1) + hashes.get(index));
             }
             level--;
             //Index of parent is at the start of the last level
             // + the distance from start of this level / 2
-            index = levelIndex[level] + (delta / 2);
+            index = levelIndex.get(level) + (delta / 2);
         }
         return res;
     }
@@ -265,42 +254,54 @@ public final class MerkleTree implements Sizeable {
     /**
      * Verifies entire merkleTree against the transaction data.
      *
+     * @param coinbase The coinbase transaction.
      * @param data The transaction data.
-     * @param size Actual size of the transaction data.
      * @return Whether the entire merkleTree matches
      * against the transaction data.
      */
-    public boolean verifyBlockTransactions(Transaction[] data, int size) {
-        var res = checkAllTransactionsPresent(data, size);
-        if (hashes.length != 1) {
-            res = loopUpAllVerification(levelIndex.length - 2);
+    public boolean verifyBlockTransactions(@NotNull IHashed coinbase,
+                                           @NotNull List<? extends IHashed> data) {
+        var res = checkAllTransactionsPresent(coinbase, data);
+        if (hashes.size() != 1) {
+            res = loopUpAllVerification(levelIndex.size() - 2);
         }
         return res;
     }
 
+
     private boolean loopUpAllVerification(int level) {
         var res = true;
-        //2 fors evaluate to essentially checking level by level starting at the second to last.
-        //We already checked the last level immediately against the data provided.
+        //2 fors evaluate to essentially checking level by level
+        //starting at the second to last.
+        //We already checked the last level immediately
+        //against the data provided.
         for (int i; res && level >= 0; ) {
-            i = levelIndex[level];
-            for (; i < levelIndex[level + 1]; i++) {
-                //Delta is level index difference + current index + difference to current level index.
+            i = levelIndex.get(level);
+            for (; i < levelIndex.get(level + 1); i++) {
+                //Delta is level index difference + current index + difference
+                //to current level index.
                 //It checks out to exactly the left child leaf of any node.
-                var delta = levelIndex[level + 1] - levelIndex[level] + i + (i - levelIndex[level]);
+                var delta = levelIndex.get(level + 1) -
+                        levelIndex.get(level) +
+                        i +
+                        (i - levelIndex.get(level));
                 //Either the child is the last leaf in the next level, or is the last leaf.
                 //Since we know delta points to left leafs both these conditions mean
                 //edge case leafs.
-                if ((level + 2 != levelIndex.length && delta + 1 == levelIndex[level + 2])
-                        || delta + 1 == hashes.length) {
-                    if (!hashes[i].equals(crypter.applyHash(hashes[delta] + hashes[delta]))) {
+                if ((level + 2 != levelIndex.size() && delta + 1 == levelIndex.get(level + 2))
+                        || delta + 1 == hashes.size()) {
+                    if (!hashes.get(i)
+                               .equals(crypter.applyHash(hashes.get(delta) +
+                                                                 hashes.get(delta)))) {
                         res = false;
                         break;
                     }
                 }
                 //Then it's a regular left leaf.
                 else {
-                    if (!hashes[i].equals(crypter.applyHash(hashes[delta] + hashes[delta + 1]))) {
+                    if (!hashes.get(i)
+                               .equals(crypter.applyHash(hashes.get(delta) +
+                                                                 hashes.get(delta + 1)))) {
                         res = false;
                         break;
                     }
@@ -311,25 +312,30 @@ public final class MerkleTree implements Sizeable {
         return res;
     }
 
-    private boolean checkAllTransactionsPresent(Transaction[] data, int size) {
-        var i = levelIndex[levelIndex.length - 1];
+    private boolean checkAllTransactionsPresent(IHashed coinbase, List<? extends IHashed> data) {
+        var i = levelIndex.get(levelIndex.size() - 1) + 1;
         var res = true;
-        var arr = Arrays.stream(data, 0, size)
-                        .filter(Objects::nonNull)
-                        .map(Transaction::getHashId)
-                        .toArray(String[]::new);
-        for (String it : arr) {
-            //There are at least as many transactions
-            //They match the ones in the merkle tree.
-            if (i < hashes.length && it.equals(hashes[i])) {
-                i++;
-            } else {
-                res = false;
-                break;
+        var arr = data.stream()
+                      .filter(Objects::nonNull)
+                      .map(IHashed::getHashId)
+                      .collect(Collectors.toList());
+        if (hashes.get(i - 1)
+                  .equals(coinbase.getHashId())) {
+            for (String it : arr) {
+                //There are at least as many transactions
+                //They match the ones in the merkle tree.
+                if (i < hashes.size() && it.equals(hashes.get(i))) {
+                    i++;
+                } else {
+                    res = false;
+                    break;
+                }
             }
-        }
-        //There are less transactions in the provided block
-        if (i != hashes.length) {
+            //There are less transactions in the provided block
+            if (i != hashes.size()) {
+                res = false;
+            }
+        } else {
             res = false;
         }
         return res;
