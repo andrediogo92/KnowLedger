@@ -7,6 +7,9 @@ plugins {
 dependencies {
     testCompile("org.junit.jupiter", "junit-jupiter-api", project.extra["junitVersion"] as String)
     testRuntime("org.junit.jupiter", "junit-jupiter-params", project.extra["junitVersion"] as String)
+    testRuntime("org.junit.jupiter", "junit-jupiter-engine", project.extra["junitVersion"] as String)
+    testRuntime("org.junit.jupiter", "junit-jupiter-params", project.extra["junitVersion"] as String)
+    compile("org.eclipse.paho", "org.eclipse.paho.client.mqttv3", project.extra["eclipsePahoVersion"] as String)
     compile("com.google.code.gson", "gson", project.extra["gsonVersion"] as String)
     compile("org.hibernate.validator", "hibernate-validator", project.extra["hibernateValidatorVersion"] as String)
     compile("com.tilab.jade", "jade", project.extra["jadeVersion"] as String)
@@ -26,4 +29,10 @@ tasks.withType<JavaCompile> {
 
 configure<ApplicationPluginConvention> {
     mainClassName = "pt.um.lei.masb.agent.Container"
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform {
+        includeEngines("junit-jupiter")
+    }
 }

@@ -5,6 +5,7 @@ import pt.um.lei.masb.blockchain.data.MerkleTree;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
+import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Null;
@@ -13,26 +14,57 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
+@NamedQueries({
+                      @NamedQuery(
+                              name = "blockheader_by_height",
+                              query = "SELECT b from BlockHeader b where blockheight = :height"
+                      )
+              })
+@Entity
 public final class BlockHeader implements Sizeable {
     private final static BlockHeader origin = new BlockHeader(null);
     private final static Crypter crypter = StringUtil.getDefaultCrypter();
 
+    // Difficulty is fixed at block generation time.
+    @Basic(optional = false)
     private final BigInteger difficulty;
+
+    @OneToOne(cascade = CascadeType.ALL,
+              fetch = FetchType.LAZY,
+              optional = false,
+              mappedBy = "blockid",
+              orphanRemoval = true)
+    private Block block;
+
+    @Column(unique = true,
+            nullable = false)
+    private long blockheight;
+
+    @Id
     private String hash;
+
+    @Basic(optional = false)
     private String merkleRoot;
+
+    @Basic(optional = false)
     private String previousHash;
+
+    @Basic(optional = false)
     private Instant timeStamp;
-    private int nonce;
+
+    @Basic(optional = false)
+    private long nonce;
 
     /**
      * Origin block specialty constructor
      *
-     * @param v null parameter for special constructor.
+     * @param v Null parameter for special constructor.
      */
     private BlockHeader(@Null Void v) {
         hash = "0";
-        merkleRoot = null;
+        merkleRoot = "0";
         previousHash = "";
+        blockheight = 0;
         timeStamp = ZonedDateTime.of(2018, 3, 13, 0, 0, 0, 0, ZoneOffset.UTC)
                                  .toInstant();
         nonce = 0;
@@ -40,16 +72,18 @@ public final class BlockHeader implements Sizeable {
     }
 
     BlockHeader(@NotNull String previousHash,
-                @NotNull BigInteger difficulty) {
+                @NotNull BigInteger difficulty,
+                long blockheight) {
         nonce = 0;
         this.difficulty = difficulty;
-        this.timeStamp = ZonedDateTime.now(ZoneOffset.UTC).toInstant();
+        this.timeStamp = Instant.now();
         this.previousHash = previousHash;
+        this.blockheight = blockheight;
         merkleRoot = null;
         hash = null; //Making sure we do this after we set the other values.
     }
 
-    private BlockHeader() {
+    protected BlockHeader() {
         this.difficulty = null;
     }
 
@@ -60,6 +94,7 @@ public final class BlockHeader implements Sizeable {
     /**
      * Hash is a SHA-256 calculated from previous hash, nonce, timestamp,
      * {@link MerkleTree}'s root and each {@link Transaction}'s hash.
+     *
      */
     void updateHash() {
         hash = calculateHash();
@@ -77,6 +112,9 @@ public final class BlockHeader implements Sizeable {
         return hash;
     }
 
+    public long getBlockheight() {
+        return blockheight;
+    }
 
     protected String getMerkleRoot() {
         return merkleRoot;
@@ -134,4 +172,5 @@ public final class BlockHeader implements Sizeable {
                 System.lineSeparator();
         return sb;
     }
+
 }

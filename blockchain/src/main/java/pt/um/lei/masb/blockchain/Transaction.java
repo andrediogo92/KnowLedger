@@ -5,49 +5,83 @@ import pt.um.lei.masb.blockchain.data.SensorData;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
+import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Transaction implements Sizeable {
+@NamedQueries({
+                      @NamedQuery(name = "transaction_by_hash",
+                                  query = "SELECT b FROM Transaction b where b.hashId = :hash"),
+                      @NamedQuery(name = "transactions_by_time_stamp",
+                                  query = "SELECT b FROM Transaction b order by b.sd.t desc"),
+                      @NamedQuery(name = "transactions_from_agent",
+                                  query = "SELECT t from Transaction t where publicKey = :publicKey order by t.sd.t desc")
+              })
+@Entity
+public class Transaction implements Sizeable, IHashed {
     @NotNull
     private final static Crypter crypter = StringUtil.getDefaultCrypter();
 
     // A rough count of how many transactions have been generated.
     private final static AtomicLong sequence = new AtomicLong(0);
 
-    // This is also the hash of the transaction.
-    private final String transactionId;
+    // this is also the hash of the transaction.
+    @Id
+    private final String hashId;
 
     // Agent's pub key.
+    @Basic(optional = false)
     private final PublicKey publicKey;
+
+
+    @OneToOne(cascade = CascadeType.ALL,
+              optional = false)
     private final SensorData sd;
 
     // This is to identify unequivocally an agent.
-    private byte[] signature;
+    @Basic(optional = false)
+    private final byte[] signature;
 
+
+    @Transient
     private transient long byteSize;
 
     protected Transaction() {
-        transactionId = null;
+        hashId = null;
         publicKey = null;
         sd = null;
+        signature = null;
     }
 
-
-    public Transaction(@NotNull PublicKey from,
+    public Transaction(@NotNull PrivateKey privateKey,
+                       @NotNull PublicKey from,
                        @NotNull SensorData sd) {
         this.publicKey = from;
         this.sd = sd;
-        this.transactionId = calculateHash();
+        this.hashId = calculateHash();
+        signature = generateSignature(privateKey);
         byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
                 sd.getApproximateSize();
+
     }
 
-    public String getTransactionId() {
-        return transactionId;
+    public Transaction(@NotNull Ident id,
+                       @NotNull SensorData sd) {
+        this.publicKey = id.getPublicKey();
+        this.sd = sd;
+        this.hashId = calculateHash();
+        signature = generateSignature(id.getPrivateKey());
+        byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
+                sd.getApproximateSize();
+
+    }
+
+
+    public String getHashId() {
+        return hashId;
     }
 
     public PublicKey getPublicKey() {
@@ -67,29 +101,27 @@ public class Transaction implements Sizeable {
     private @NotEmpty String calculateHash() {
         //Increase the sequence to avoid 2 identical transactions having the same hash
         return crypter.applyHash(StringUtil.getStringFromKey(publicKey) +
-                                 sd.toString() +
-                                 sequence.incrementAndGet());
+                                         sd.toString() +
+                                         sequence.incrementAndGet());
     }
 
     /**
      * Signs the sensor data using the private key.
-     * @return whether signing was successful.
+     * @return Signature generated.
      */
-    public boolean generateSignature(@NotNull PrivateKey privateKey) {
+    private byte[] generateSignature(@NotNull PrivateKey privateKey) {
+        byte[] v = null;
         if (publicKey != null) {
             var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
-            signature = StringUtil.applyECDSASig(privateKey, data);
-            return true;
+            v = StringUtil.applyECDSASig(privateKey, data);
         }
-        else {
-            return false;
-        }
+        return v;
     }
 
     /**
      * Verifies the data we signed hasn't been tampered with.
      *
-     * @return whether the data was signed with the corresponding private key.
+     * @return Whether the data was signed with the corresponding private key.
      */
     public boolean verifySignature() {
         var data = StringUtil.getStringFromKey(publicKey) + sd.toString();
@@ -98,7 +130,7 @@ public class Transaction implements Sizeable {
 
     /**
      * TODO: Transaction verification.
-     * @return whether the transaction is valid.
+     * @return Whether the transaction is valid.
      */
     public boolean processTransaction() {
         return true;//verifySignature();
@@ -107,7 +139,7 @@ public class Transaction implements Sizeable {
     /**
      * Calculate the approximate size of the transaction.
      *
-     * @return the size of the transaction in bytes.
+     * @return The size of the transaction in bytes.
      */
     @Override
     public long getApproximateSize() {
@@ -129,7 +161,7 @@ public class Transaction implements Sizeable {
         String sb = "Transaction {" +
                 System.lineSeparator() +
                 "Transaction id: " +
-                transactionId +
+                hashId +
                 System.lineSeparator() +
                 "Public Key: " +
                 publicKey.toString() +

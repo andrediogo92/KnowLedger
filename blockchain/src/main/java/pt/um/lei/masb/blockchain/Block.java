@@ -3,60 +3,113 @@ package pt.um.lei.masb.blockchain;
 import org.openjdk.jol.info.ClassLayout;
 import pt.um.lei.masb.blockchain.data.MerkleTree;
 
+import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
-
+@NamedQueries({
+                      @NamedQuery(
+                              name = "get_block_by_height",
+                              query = "SELECT b FROM Block b WHERE b.hd.blockheight = :height"
+                      )
+                      ,
+                      @NamedQuery(
+                              name = "get_block_by_hash",
+                              query = "SELECT b FROM Block b WHERE b.hd.hash = :hash"
+                      )
+                      ,
+                      @NamedQuery(
+                              name = "get_prev_block_by_hash",
+                              query = "SELECT b FROM Block b WHERE b.hd.previousHash = :hash"
+                      )
+                      ,
+                      @NamedQuery(
+                              name = "get_latest_block",
+                              query = "SELECT b FROM Block b WHERE b.hd.blockheight = (SELECT MAX(b2.blockheight) FROM BlockHeader b2)"
+                      )
+              })
+@Entity(name = "Block")
 public final class Block implements Sizeable {
     private static final Block origin = new Block(null);
     private static final int MAX_BLOCK_SIZE = 500;
     private static final int MAX_MEM = 2097152;
 
-    private MerkleTree merkleTree;
-    private final Transaction data[];
-    private final Coinbase coinbase;
-    private final BlockHeader hd;
-    private int cur;
+    @OneToMany(cascade = CascadeType.ALL,
+               fetch = FetchType.EAGER,
+               orphanRemoval = true)
+    private final List<Transaction> data;
 
+    @OneToOne(cascade = CascadeType.ALL,
+              fetch = FetchType.EAGER,
+              optional = false,
+              orphanRemoval = true)
+    private final Coinbase coinbase;
+
+    @MapsId
+    @OneToOne(cascade = CascadeType.ALL,
+              fetch = FetchType.EAGER,
+              optional = false,
+              orphanRemoval = true)
+    private final BlockHeader hd;
+
+    @Id
+    @GeneratedValue
+    private long blockid;
+
+    @OneToOne(cascade = CascadeType.ALL,
+              fetch = FetchType.EAGER,
+              optional = false,
+              orphanRemoval = true)
+    private MerkleTree merkleTree;
+
+
+
+    @Transient
     private transient final long classSize = ClassLayout.parseClass(this.getClass()).instanceSize();
+
+    @Transient
     private transient long headerSize;
+
+    @Transient
     private transient long transactionsSize;
 
     //Consider only the class size contribution to size.
     //Makes the total block size in the possible ballpark of 2MB + merkleTree graph size.
-    private transient long merkleTreeSize = ClassLayout.parseClass(merkleTree.getClass()).instanceSize();
+    @Transient
+    private transient long merkleTreeSize = ClassLayout.parseClass(MerkleTree.class).instanceSize();
 
     private Block(Void v) {
         data = null;
-        cur = -1;
         hd = BlockHeader.getOrigin();
         headerSize = hd.getApproximateSize();
-        this.merkleTree = null;
-        coinbase = null;
+        this.merkleTree = MerkleTree.buildMerkleTree(new ArrayList<>());
+        coinbase = new Coinbase();
     }
 
     public static int getMaxBlockSize() {
         return MAX_BLOCK_SIZE;
     }
 
-    Block() {
-        cur = -1;
+    protected Block() {
         data = null;
         hd = null;
         merkleTree = null;
         coinbase = null;
     }
 
+
     Block(@NotEmpty String previousHash,
-          @NotNull BigInteger difficulty) {
-        this.hd = new BlockHeader(previousHash, difficulty);
-        this.data = new Transaction[MAX_BLOCK_SIZE];
-        cur = 0;
+          @NotNull BigInteger difficulty,
+          long blockheight) {
+        this.hd = new BlockHeader(previousHash, difficulty, blockheight);
+        this.data = new ArrayList<>(MAX_BLOCK_SIZE);
         headerSize = hd.getApproximateSize();
         this.merkleTree = null;
         coinbase = new Coinbase();
@@ -73,8 +126,10 @@ public final class Block implements Sizeable {
     /**
      * Attempt one nonce calculation.
      *
-     * @param invalidate Whether to invalidate the nonce and MerkleTree in case block has changed.
-     * @param time       Whether to invalidate block calculations due to timestamp (every couple of seconds).
+     * @param invalidate    Whether to invalidate the nonce and MerkleTree
+     *                      in case block has changed.
+     * @param time          Whether to invalidate block calculations due to
+     *                      timestamp (every couple of seconds).
      * @return Whether the block was successfully mined.
      */
     public boolean attemptMineBlock(boolean invalidate, boolean time) {
@@ -84,13 +139,13 @@ public final class Block implements Sizeable {
         }
         boolean res = false;
         if (invalidate && time) {
-            merkleTree = MerkleTree.buildMerkleTree(data, cur);
-            hd.setMerkleRoot(merkleTree.getRoot().getHash());
+            merkleTree = MerkleTree.buildMerkleTree(coinbase, data);
+            hd.setMerkleRoot(merkleTree.getRoot());
             hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toInstant());
             hd.zeroNonce();
         } else if (invalidate) {
-            merkleTree = MerkleTree.buildMerkleTree(data, cur);
-            hd.setMerkleRoot(merkleTree.getRoot().getHash());
+            merkleTree = MerkleTree.buildMerkleTree(coinbase, data);
+            hd.setMerkleRoot(merkleTree.getRoot());
             hd.zeroNonce();
         } else if (time) {
             hd.setTimeStamp(ZonedDateTime.now(ZoneOffset.UTC).toInstant());
@@ -109,19 +164,20 @@ public final class Block implements Sizeable {
 
     /**
      * Add a single new transaction.
+     * <p>
      * Checks if block is sized correctly.
+     * <p>
      * Checks if the transaction is valid.
      *
-     * @param transaction to add.
-     * @return whether transaction was valid.
+     * @param transaction   Transaction to attempt to add to the block.
+     * @return Whether the transaction was valid and cprrectly inserted.
      */
     public boolean addTransaction(@NotNull Transaction transaction) {
         var transactionSize = transaction.getApproximateSize();
         if (transactionsSize + headerSize + classSize + merkleTreeSize + transactionSize < MAX_MEM) {
-            if (cur < MAX_BLOCK_SIZE) {
+            if (data.size() < MAX_BLOCK_SIZE) {
                 if (transaction.processTransaction()) {
-                    data[cur] = transaction;
-                    cur++;
+                    insertSorted(transaction);
                     transactionsSize += transactionSize;
                     System.out.println("Transaction Successfully added to Block");
                     return true;
@@ -132,16 +188,34 @@ public final class Block implements Sizeable {
         return false;
     }
 
+    /**
+     * Transactions are sorted in descending order of data timestamp.
+     *
+     * @param transaction Transaction to insert in descending order.
+     */
+    private void insertSorted(Transaction transaction) {
+        data.add(transaction);
+        data.sort(Comparator.comparing(t -> t.getSensorData().getTimestamp()));
+    }
+
     public String getHash() {
         return hd.getHash();
     }
 
-    public Transaction[] getData() {
+    public List<Transaction> getData() {
         return data;
     }
 
     public String getPreviousHash() {
         return hd.getPreviousHash();
+    }
+
+    public long getBlockid() {
+        return blockid;
+    }
+
+    public long getBlockHeight() {
+        return hd.getBlockheight();
     }
 
     public Instant getTimeStamp() {
@@ -169,36 +243,39 @@ public final class Block implements Sizeable {
 
     /**
      * Recalculates the entire block size.
-     *
+     * <p>
      * Is somewhat time consuming and only necessary if:
-     *
-     * 1. You need to calculate the effective block size after deserialization
-     * 2. You need to calculate the effective block size after retrieval
-     * of a block from a database.
+     * <ol>
+     *  <li>    You need to calculate the effective block size after deserialization
+     *  <li>    You need to calculate the effective block size after retrieval
+     *          of a block from a database.
+     * </ol>
      */
     public void resetApproximateSize() {
         headerSize = hd.getApproximateSize();
-        transactionsSize = Arrays.stream(data)
-                                 .limit(cur)
-                                 .mapToLong(Transaction::getApproximateSize)
-                                 .sum();
+        transactionsSize = data.stream()
+                               .mapToLong(Transaction::getApproximateSize)
+                               .sum();
         merkleTreeSize = merkleTree.getApproximateSize();
     }
 
 
-    public String toString() {
+    public @NotEmpty String toString() {
         var sb = new StringBuilder();
         sb.append('{')
           .append(' ')
           .append(hd.toString())
           .append("Transactions: [")
           .append(System.lineSeparator());
-        for (int i = 0; i < cur; i++) {
-            System.out.println(data[i]);
-            sb.append(data[i].toString());
+        if (data != null) {
+            data.forEach(sb::append);
         }
         sb.append(" ]")
           .append(System.lineSeparator()).append('}');
         return sb.toString();
+    }
+
+    public boolean verifyTransactions() {
+        return merkleTree.verifyBlockTransactions(coinbase, data);
     }
 }

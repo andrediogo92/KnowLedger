@@ -2,7 +2,12 @@ package pt.um.lei.masb.blockchain.data;
 
 import pt.um.lei.masb.blockchain.Sizeable;
 
+import javax.persistence.Basic;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.Objects;
 
 
@@ -10,51 +15,68 @@ import java.util.Objects;
  * Humidity data can be expressed in Absolute/Volumetric or Relative humidity.
  * As such possible measurements can be in g/kg, Kg/kg or percentage.
  */
-public class HumidityData implements Sizeable {
+@Entity
+public final class HumidityData extends GeoData implements Sizeable {
+    @Id
+    @GeneratedValue
+    private long id;
+
+    @Basic(optional = false)
     private double hum;
+
+    @Basic(optional = false)
     private HUnit unit;
 
-    public HumidityData(double hum,@NotNull HUnit unit) {
+
+    protected HumidityData() {
+        super(new BigDecimal(0), new BigDecimal(0));
+    }
+
+
+    public HumidityData(double hum,
+                        @NotNull HUnit unit,
+                        BigDecimal lat,
+                        BigDecimal lng) {
+        super(lat, lng);
         this.hum = hum;
         this.unit = unit;
     }
 
-    protected HumidityData() {
-    }
 
-    private HumidityData(HumidityData other) {
-        this.hum = other.hum;
-        this.unit = other.unit;
-    }
-
-    public @NotNull HumidityData clone(HumidityData hd) {
-        return new HumidityData(hd);
-    }
-
-    public void convertToGbyKG() {
+    public double convertToGbyKG() {
+        var res = hum;
         switch(unit) {
             case G_BY_KG:
                 break;
             case KG_BY_KG:
-                hum *= 1000;
-                unit = HUnit.G_BY_KG;
+                res *= 1000;
                 break;
             case RELATIVE:
                 break;
         }
+        return res;
     }
 
-    public void convertToKGbyKG() {
+    public double convertToKGbyKG() {
+        var res = hum;
         switch(unit) {
             case G_BY_KG:
-                hum /= 1000;
-                unit = HUnit.KG_BY_KG;
+                res /= 1000;
                 break;
             case KG_BY_KG:
                 break;
             case RELATIVE:
                 break;
         }
+        return res;
+    }
+
+    public double getHum() {
+        return hum;
+    }
+
+    public HUnit getUnit() {
+        return unit;
     }
 
     @Override

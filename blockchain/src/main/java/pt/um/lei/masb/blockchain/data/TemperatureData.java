@@ -2,91 +2,134 @@ package pt.um.lei.masb.blockchain.data;
 
 import pt.um.lei.masb.blockchain.Sizeable;
 
+import javax.persistence.Basic;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.util.Objects;
 
 /**
  * Temperature data specifies a double and a Temperature unit (Celsius, Fahrenheit, Rankine and Kelvin) and
  * idempotent methods to convert between them as needed.
  */
-public class TemperatureData implements Sizeable {
+@Entity
+public final class TemperatureData extends GeoData implements Sizeable {
 
-    private double temperature;
-    private TUnit unit;
+    @Id
+    @GeneratedValue
+    private long id;
 
-    public TemperatureData(double temperature, @NotNull TUnit unit) {
-        this.temperature = temperature;
-        this.unit = unit;
+    @Basic(optional = false)
+    private final double temperature;
+
+    @Basic(optional = false)
+    private final TUnit unit;
+
+
+    protected TemperatureData() {
+        super(new BigDecimal(0), new BigDecimal(0));
+        temperature = 0;
+        unit = null;
     }
 
-    protected TemperatureData() {}
 
+    public TemperatureData(double temperature,
+                           @NotNull TUnit unit,
+                           BigDecimal lat,
+                           BigDecimal lng) {
+        super(lat, lng);
+        this.temperature = temperature;
+        this.unit = unit;
+
+    }
+
+
+    /**
+     * @return The temperature reading's unit (Celsius, Fahrenheit, Rankine, Kelvin).
+     */
     public TUnit getUnit() {
         return unit;
     }
 
+    /**
+     * @return A temperature reading in a certain unit.
+     */
     public double getTemperature() {
         return temperature;
     }
 
 
-    public void convertToCelsius() {
+    public double convertToCelsius() {
+        var res = temperature;
         switch(unit) {
-            case CELSIUS: break;
-            case FAHRENHEIT: temperature = (5 * (temperature - 32)) /9.0;
-                unit = TUnit.CELSIUS;
+            case CELSIUS:
                 break;
-            case KELVIN: temperature -= 273.16;
-                unit = TUnit.CELSIUS;
+            case FAHRENHEIT:
+                res = (5 * (res - 32)) / 9.0;
                 break;
-            case RANKINE: temperature = (5 * (temperature - 459.69 - 32)) / 9.0;
-                unit = TUnit.CELSIUS;
+            case KELVIN:
+                res -= 273.16;
+                break;
+            case RANKINE:
+                res = (5 * (res - 459.69 - 32)) / 9.0;
                 break;
         }
+        return res;
     }
 
-    public void convertToFahrenheit() {
+    public double convertToFahrenheit() {
+        var res = temperature;
         switch(unit) {
-            case CELSIUS: temperature = (9 * (temperature/ 5.0)) + 32;
-                unit = TUnit.FAHRENHEIT;
+            case CELSIUS:
+                res = (9 * (res / 5.0)) + 32;
                 break;
-            case FAHRENHEIT: break;
-            case KELVIN: temperature = (9 * (temperature - 273.15) / 5.0) + 32;
-                unit = TUnit.FAHRENHEIT;
+            case FAHRENHEIT:
                 break;
-            case RANKINE: temperature -= temperature;
-                unit = TUnit.FAHRENHEIT;
+            case KELVIN:
+                res = (9 * (res - 273.15) / 5.0) + 32;
+                break;
+            case RANKINE:
+                res -= 459.69;
                 break;
         }
+        return res;
     }
 
-    public void convertToRankine() {
+    public double convertToRankine() {
+        var res = temperature;
         switch(unit) {
-            case CELSIUS: temperature = (9 * temperature / 5.0) + 459.69 + 32;
-                unit = TUnit.RANKINE;
+            case CELSIUS:
+                res = (9 * res / 5.0) + 459.69 + 32;
                 break;
-            case FAHRENHEIT: temperature += temperature;
-                unit = TUnit.RANKINE;
+            case FAHRENHEIT:
+                res += 459.69;
                 break;
-            case KELVIN: temperature = (9 * (temperature - 273.15) / 5.0) + 32 + 459.69;
-                unit = TUnit.RANKINE;
+            case KELVIN:
+                res = (9 * (res - 273.15) / 5.0) + 32 + 459.69;
             case RANKINE: break;
         }
+        return res;
     }
 
-    public void convertToKelvin() {
+    public double convertToKelvin() {
+        var res = temperature;
         switch (unit){
-            case CELSIUS: temperature += 273.15;
-                unit = TUnit.KELVIN;
+            case CELSIUS:
+                res += 273.15;
                 break;
-            case FAHRENHEIT: temperature = (5.0 * (temperature - 32) / 9.0) + 273.15;
-                unit = TUnit.KELVIN;
-            case KELVIN: break;
-            case RANKINE: temperature = (5 * (temperature - 459.69 - 32)) / 9.0 + 273.15;
-                unit = TUnit.KELVIN;
+            case FAHRENHEIT:
+                res = (5.0 * (res - 32) / 9.0) + 273.15;
+                break;
+            case KELVIN:
+                break;
+            case RANKINE:
+                res = (5 * (res - 459.69 - 32)) / 9.0 + 273.15;
                 break;
         }
+        return res;
     }
 
 
@@ -115,7 +158,7 @@ public class TemperatureData implements Sizeable {
         var sb = new StringBuilder();
         sb.append("TemperatureData {")
           .append(temperature)
-          .append('º');
+          .append("º");
         switch (unit) {
             case KELVIN: sb.append('K');break;
             case CELSIUS: sb.append('C');break;

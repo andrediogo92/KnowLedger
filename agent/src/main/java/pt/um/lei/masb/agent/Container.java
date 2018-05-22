@@ -57,7 +57,7 @@ public class Container {
     public static void main(String[] args) {
 
     var a = new Container();
-    var bc = new BlockChain();
+        var bc = BlockChain.getInstance();
 
     a.initMainContainerInPlatform("localhost", "9888", "Container");
 

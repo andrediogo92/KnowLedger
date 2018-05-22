@@ -1,31 +1,56 @@
 package pt.um.lei.masb.blockchain.data;
 
-import org.openjdk.jol.info.GraphLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 
-import javax.validation.constraints.NotNull;
+import javax.persistence.Basic;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import java.math.BigDecimal;
 import java.util.Objects;
 
 /**
  * Luminosity data might be output by an ambient light sensor, using lux units
  * or a lighting unit, outputting a specific amount of lumens.
  */
-public class LuminosityData implements Sizeable {
-    private int lum;
-    private LUnit unit;
+@Entity
+public final class LuminosityData extends GeoData implements Sizeable {
+    @Id
+    @GeneratedValue
+    private long id;
 
-    public LuminosityData(int lum, LUnit unit) {
+    @Basic(optional = false)
+    private final double lum;
+
+    @Basic(optional = false)
+    private final LUnit unit;
+
+    protected LuminosityData() {
+        super(new BigDecimal(0), new BigDecimal(0));
+        lum = 0;
+        unit = null;
+    }
+
+    public LuminosityData(double lum,
+                          LUnit unit,
+                          BigDecimal lat,
+                          BigDecimal lng) {
+        super(lat, lng);
         this.lum = lum;
         this.unit = unit;
     }
 
-    protected LuminosityData() {
-    }
 
-    public int getLum() {
+    /**
+     * @return Luminosity reading, either from lighting units or light sensors.
+     */
+    public double getLum() {
         return lum;
     }
 
+    /**
+     * @return The unit of measurement, either lumen for lighting units or lux for light sensors.
+     */
     public LUnit getUnit() {
         return unit;
     }

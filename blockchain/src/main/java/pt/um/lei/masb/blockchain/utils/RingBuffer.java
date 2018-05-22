@@ -44,9 +44,8 @@ public class RingBuffer<E> extends AbstractCollection<E>
 
     @Override
     public boolean offer(E e) {
-        var s = size();
         try {
-            if (s == n) {
+            if (size == n) {
                 buf[head] = e;
                 head = (head + 1) % n;
                 tail = (tail + 1) % n;
@@ -67,8 +66,9 @@ public class RingBuffer<E> extends AbstractCollection<E>
             throw new NoSuchElementException();
         }
         else {
-            var res = (E) buf[head];
+            var res = (E) buf[head - 1];
             head = (head - 1) % n;
+            size--;
             return res;
         }
     }
@@ -79,8 +79,9 @@ public class RingBuffer<E> extends AbstractCollection<E>
             return null;
         }
         else {
-            E res = (E) buf[head];
+            E res = (E) buf[head - 1];
             head = (head - 1) % n;
+            size--;
             return res;
         }
     }
@@ -90,7 +91,7 @@ public class RingBuffer<E> extends AbstractCollection<E>
         if (size == 0) {
             throw new NoSuchElementException();
         } else {
-            return (E) buf[head];
+            return (E) buf[head - 1];
         }
     }
 
@@ -99,7 +100,7 @@ public class RingBuffer<E> extends AbstractCollection<E>
         if (size == 0) {
             return null;
         } else {
-            return (E) buf[head];
+            return (E) buf[head - 1];
         }
     }
 
@@ -118,7 +119,9 @@ public class RingBuffer<E> extends AbstractCollection<E>
         public E next() {
             if (remaining > 0) {
                 remaining--;
-                return (E) buf[cursor++];
+                var r = buf[cursor];
+                cursor = (cursor + 1) % n;
+                return (E) r;
             }
             else {
                 throw new NoSuchElementException();

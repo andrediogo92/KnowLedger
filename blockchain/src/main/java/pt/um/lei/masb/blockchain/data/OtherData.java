@@ -1,22 +1,40 @@
 package pt.um.lei.masb.blockchain.data;
 
-import org.openjdk.jol.info.GraphLayout;
 import pt.um.lei.masb.blockchain.Sizeable;
 
+import javax.persistence.Basic;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.Objects;
 
-public class OtherData<T extends Serializable> implements Sizeable {
-    private final T data;
 
-    public OtherData(@NotNull T data) {
-        this.data = data;
-    }
+@Entity
+public final class OtherData<T extends Serializable>
+        extends GeoData
+        implements Sizeable {
+
+    @Id
+    @GeneratedValue
+    private long id;
+
+    @Basic(optional = false)
+    private final T data;
 
     protected OtherData() {
         this.data = null;
     }
+
+    public OtherData(@NotNull T data,
+                     BigDecimal lat,
+                     BigDecimal lng) {
+        super(lat, lng);
+        this.data = data;
+    }
+
 
     public T getData() {
         return data;
