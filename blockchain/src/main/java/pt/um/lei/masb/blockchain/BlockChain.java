@@ -1,7 +1,5 @@
 package pt.um.lei.masb.blockchain;
 
-import pt.um.lei.masb.blockchain.persistance.BlockChainTransactions;
-import pt.um.lei.masb.blockchain.persistance.BlockHeaderTransactions;
 import pt.um.lei.masb.blockchain.persistance.BlockTransactions;
 import pt.um.lei.masb.blockchain.utils.RingBuffer;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
@@ -17,9 +15,9 @@ import java.util.logging.Logger;
 
 @Entity
 public final class BlockChain {
-    private static final BlockChain blockChain =
-            new BlockChainTransactions().getBlockChain()
-                                        .orElse(new BlockChain());
+    private static final BlockChain blockChain = new BlockChain();
+    //new BlockChainTransactions().getBlockChain()
+    //                            .orElse(new BlockChain());
     private static final Logger LOGGER = Logger.getLogger("Blockchain");
     private static final long RECALC_TIME = 1228800;
 
@@ -41,11 +39,13 @@ public final class BlockChain {
     protected BlockChain() {
         this.blockchain = new RingBuffer<>(CACHE_SIZE);
         var origin = Block.getOrigin();
-        if (!new BlockHeaderTransactions().getBlockHeaderByHash(origin.getHash())
+/*        if (!new BlockHeaderTransactions().getBlockHeaderByHash(origin.getHash())
                                           .isPresent()) {
             new BlockTransactions().persistEntity(origin);
             blockchain.offer(origin);
         }
+        */
+        blockchain.offer(origin);
         difficultyTarget = StringUtil.getInitialDifficulty();
         lastRecalc = 0;
     }
