@@ -5,7 +5,16 @@ import java.util.logging.Logger;
 
 abstract class AbstractTransactionsWrapper<T> implements TransactionsWrapper {
     protected static Logger LOGGER = Logger.getLogger("TransactionsWrapper");
-    protected PersistanceWrapper p = PersistanceWrapper.getInstance();
+    protected PersistenceWrapper p;
+
+    AbstractTransactionsWrapper(PersistenceWrapper p) {
+        this.p = p;
+    }
+
+    AbstractTransactionsWrapper() {
+        p = PersistenceWrapper.getInstance();
+    }
+
 
     /**
      * Should be called when querying is finished to reset the persistence context.

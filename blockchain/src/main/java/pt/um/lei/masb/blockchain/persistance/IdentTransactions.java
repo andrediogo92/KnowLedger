@@ -9,6 +9,12 @@ import java.util.Optional;
 public final class IdentTransactions
         extends AbstractTransactionsWrapper<Ident>
         implements TransactionsWrapper {
+    public IdentTransactions(PersistenceWrapper p) {
+        super(p);
+    }
+
+    public IdentTransactions() {
+    }
 
     public Optional<Ident> getIdent() {
         return p.executeInSessionAndReturn(this::UniqueIdent);

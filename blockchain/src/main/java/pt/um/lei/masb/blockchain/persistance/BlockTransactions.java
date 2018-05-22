@@ -8,6 +8,12 @@ import java.util.Optional;
 public final class BlockTransactions
         extends AbstractTransactionsWrapper<Block>
         implements TransactionsWrapper {
+    public BlockTransactions(PersistenceWrapper p) {
+        super(p);
+    }
+
+    public BlockTransactions() {
+    }
 
     public Optional<Block> getBlockByBlockHeight(long blockheight) {
         return p.executeInSessionAndReturn(this::blockById, blockheight);

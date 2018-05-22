@@ -12,21 +12,26 @@ import java.util.function.Function;
 /**
  * A Thread-safe wrapper into the JPA context of the blockchain.
  */
-final class PersistanceWrapper {
-    private static final PersistanceWrapper persistanceWrapper = new PersistanceWrapper();
+public final class PersistenceWrapper {
+    private static final PersistenceWrapper PERSISTENCE_WRAPPER = new PersistenceWrapper();
 
     private final EntityManagerFactory sessionFactory;
     private EntityManager entityManager;
 
-    private PersistanceWrapper() {
-        sessionFactory = Persistence.createEntityManagerFactory("pt.um.lei.masb.blockchain.unit");
+    private PersistenceWrapper() {
+        sessionFactory = Persistence.createEntityManagerFactory("blockchainUnit");
     }
 
-    static PersistanceWrapper getInstance() {
-        return persistanceWrapper;
+    public PersistenceWrapper(String persistenceUnit) {
+        sessionFactory = Persistence.createEntityManagerFactory(persistenceUnit,
+                                                                null);
     }
 
-    synchronized <R> PersistanceWrapper executeInCurrentSession(BiConsumer<EntityManager, R> executable, R param) {
+    static PersistenceWrapper getInstance() {
+        return PERSISTENCE_WRAPPER;
+    }
+
+    synchronized <R> PersistenceWrapper executeInCurrentSession(BiConsumer<EntityManager, R> executable, R param) {
         if (entityManager == null) {
             entityManager = sessionFactory.createEntityManager();
         }
@@ -42,7 +47,7 @@ final class PersistanceWrapper {
     }
 
 
-    synchronized PersistanceWrapper executeInCurrentSession(Consumer<EntityManager> executable) {
+    synchronized PersistenceWrapper executeInCurrentSession(Consumer<EntityManager> executable) {
         if (entityManager == null) {
             entityManager = sessionFactory.createEntityManager();
         }
@@ -66,7 +71,7 @@ final class PersistanceWrapper {
     }
 
 
-    synchronized PersistanceWrapper closeCurrentSession() {
+    synchronized PersistenceWrapper closeCurrentSession() {
         if (entityManager != null) {
             entityManager.close();
         }

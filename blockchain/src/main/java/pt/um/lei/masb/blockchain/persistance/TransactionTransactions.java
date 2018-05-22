@@ -10,6 +10,13 @@ import java.util.Optional;
 public final class TransactionTransactions
         extends AbstractTransactionsWrapper<Transaction>
         implements TransactionsWrapper {
+    public TransactionTransactions(PersistenceWrapper p) {
+        super(p);
+    }
+
+    public TransactionTransactions() {
+    }
+
     public List<Transaction> getTransactionsFromAgent(PublicKey publicKey) {
         return p.executeInSessionAndReturn(this::transactionByPubKey, publicKey);
     }

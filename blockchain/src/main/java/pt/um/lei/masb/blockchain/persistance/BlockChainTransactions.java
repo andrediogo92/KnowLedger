@@ -6,6 +6,15 @@ import javax.persistence.EntityManager;
 import java.util.Optional;
 
 public class BlockChainTransactions extends AbstractTransactionsWrapper<BlockChain> implements TransactionsWrapper {
+    public BlockChainTransactions(PersistenceWrapper p) {
+        super(p);
+    }
+
+    public BlockChainTransactions() {
+    }
+
+
+
     public Optional<BlockChain> getBlockChain() {
         return p.executeInSessionAndReturn(this::uniqueBlockChain);
     }

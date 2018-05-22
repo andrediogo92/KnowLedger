@@ -8,6 +8,12 @@ import java.util.Optional;
 public final class BlockHeaderTransactions
         extends AbstractTransactionsWrapper<BlockHeader>
         implements TransactionsWrapper {
+    public BlockHeaderTransactions(PersistenceWrapper p) {
+        super(p);
+    }
+
+    public BlockHeaderTransactions() {
+    }
 
     public Optional<BlockHeader> getBlockHeaderByHash(String hash) {
         return p.executeInSessionAndReturn(this::blockHeaderById, hash);
