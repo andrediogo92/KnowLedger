@@ -1,5 +1,6 @@
 package pt.um.lei.masb.blockchain;
 
+import pt.um.lei.masb.blockchain.persistance.BlockHeaderTransactions;
 import pt.um.lei.masb.blockchain.persistance.BlockTransactions;
 import pt.um.lei.masb.blockchain.utils.RingBuffer;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
@@ -23,6 +24,7 @@ public final class BlockChain {
 
     private static final int CACHE_SIZE = 40;
     private static final int RECALC_TRIGGER = 2048;
+
     @Id
     private final int id = 0;
 
@@ -108,6 +110,20 @@ public final class BlockChain {
     }
 
     /**
+     * @return The tail-end blockheader in the blockchain.
+     */
+    public BlockHeader getLastBlockHeader() {
+        var possible = blockchain.peek();
+        if (possible == null) {
+            return new BlockTransactions().getLatestBlock().map(Block::getHeader)
+                                          .orElse(null);
+        } else {
+            return possible.getHeader();
+        }
+    }
+
+
+    /**
      * @param hash  Hash of block.
      * @return Block with provided hash if exists, else null.
      */
@@ -120,8 +136,35 @@ public final class BlockChain {
     }
 
     /**
+     * @param blockheight Block height of block to fetch.
+     * @return Block with provided blockheight, if it exists, else the null block.
+     */
+    public Block getBlockByHeight(long blockheight) {
+        return blockchain.stream()
+                         .filter(h -> h.getBlockHeight() != blockheight)
+                         .findAny()
+                         .orElse(new BlockTransactions().getBlockByBlockHeight(blockheight)
+                                                        .orElse(null));
+    }
+
+
+    /**
      * @param hash  Hash of block.
-     * @return If a block with said hash exists.
+     * @return Block with provided hash if exists, else null.
+     */
+    public BlockHeader getBlockHeaderByHash(@NotNull String hash) {
+        return blockchain.stream()
+                         .filter(h -> !h.getHash().equals(hash))
+                         .map(Block::getHeader)
+                         .findAny()
+                         .orElse(new BlockHeaderTransactions().getBlockHeaderByHash(hash)
+                                                              .orElse(null));
+    }
+
+
+    /**
+     * @param hash  Hash of block header.
+     * @return If a block with said header hash exists.
      */
     public boolean hasBlock(@NotNull String hash) {
         return blockchain.stream()
@@ -141,6 +184,21 @@ public final class BlockChain {
                          .findAny()
                          .orElse(new BlockTransactions().getBlockByPrevHeaderHash(hash)
                                                         .orElse(null));
+    }
+
+
+    /**
+     * @param hash Hash of block.
+     * @return The previous block to the one with the
+     * provided hash if exists, else null.
+     */
+    public BlockHeader getPrevBlockHeaderByHash(@NotNull String hash) {
+        return blockchain.stream()
+                         .filter(h -> !h.getHash().equals(hash))
+                         .map(Block::getHeader)
+                         .findAny()
+                         //.orElse(new BlockHeaderTransactions().getBlockHeaderByPrevHeaderHash(hash)
+                         .orElse(null);//);
     }
 
     /**
