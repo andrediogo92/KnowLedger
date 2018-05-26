@@ -1,6 +1,5 @@
 package pt.um.lei.masb.agent;
 
-import jade.content.lang.Codec;
 import jade.content.lang.sl.SLCodec;
 import jade.content.onto.BeanOntologyException;
 import jade.core.behaviours.Behaviour;
@@ -8,11 +7,9 @@ import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
+import pt.um.lei.masb.agent.data.transaction.TransactionOntology;
 import pt.um.lei.masb.blockchain.Transaction;
 import pt.um.lei.masb.blockchain.utils.RingBuffer;
-
-import java.util.ArrayList;
-import java.util.Map;
 
 public class SendMessages extends Behaviour {
     private Transaction toSend;
@@ -38,6 +35,9 @@ public class SendMessages extends Behaviour {
             for (DFAgentDescription agent : agentList){
                 for(Transaction t: rb) {
                     var msg = new ACLMessage(ACLMessage.INFORM);
+                    //Transaction of the blockchain is not JADE serializable
+                    //Need to convert into Transaction of transaction ontology, in transaction.ontology package
+                    //in order to actually send it.
                     myAgent.getContentManager().fillContent(msg,t);
                     msg.addReceiver(agent.getName());
                     msg.setLanguage(codec.getName());

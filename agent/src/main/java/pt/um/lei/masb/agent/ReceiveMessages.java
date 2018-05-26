@@ -7,9 +7,9 @@ import jade.content.onto.BeanOntologyException;
 import jade.content.onto.Ontology;
 import jade.content.onto.OntologyException;
 import jade.core.behaviours.Behaviour;
-import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import pt.um.lei.masb.agent.data.transaction.TransactionOntology;
 import pt.um.lei.masb.blockchain.Block;
 import pt.um.lei.masb.blockchain.BlockChain;
 import pt.um.lei.masb.blockchain.Transaction;
@@ -53,13 +53,16 @@ public class ReceiveMessages extends Behaviour {
             var rHeight=Long.parseLong(blocksReq.getContent());
             //Send number of missing blocks
             var sendMissingNum = new ACLMessage(ACLMessage.INFORM);
-            int missingNum=bc.getLastBlock().getHeader().getBlockHeight()-rHeight;
+            var missingNum = bc.getLastBlock().getHeader().getBlockheight() - rHeight;
             sendMissingNum.setContent(String.valueOf(missingNum<=0?0:missingNum));
 
             //Send missing blocks
             while (missingNum>0){
                 var codec = new SLCodec();
                 var blmsg = new ACLMessage(ACLMessage.INFORM);
+                //Block of the blockchain is not JADE serializable
+                //Need to convert into Block of block ontology, in block.ontology package
+                //in order to actually send it.
                 myAgent.getContentManager().fillContent(blmsg,bc.getBlockByHeight(rHeight));
                 blmsg.addReceiver(blocksReq.getSender());
                 blmsg.setLanguage(codec.getName());
