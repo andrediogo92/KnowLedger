@@ -1,50 +1,34 @@
 package pt.um.lei.masb.agent;
 import com.google.gson.Gson;
+import jade.core.Agent;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
-import jade.core.Agent;
 import pt.um.lei.masb.blockchain.BlockChain;
 import pt.um.lei.masb.blockchain.Transaction;
+import pt.um.lei.masb.blockchain.data.Category;
+import pt.um.lei.masb.blockchain.data.SensorData;
 
+import java.util.List;
 import java.util.Properties;
 
 public class MonitorAgent extends Agent {
     private BlockChain bc;
+    private AdafruitPublishJSON json;
+    private String type;
 
     @Override
     public void setup() {
         var g=new Gson();
-        var json = new AdafruitPublishJSON();
-        String type="Other";
+        json = new AdafruitPublishJSON();
         while(true) {
-            Transaction tl[]=bc.getLastBlock().getData();
-            for(Transaction t : tl){
-                switch (t.getSensorData().getCategory()){
-                    case NOISE:
-                        json.setValue(t.getSensorData().getNoiseData().toString());
-                        type="SoundSensor";
-                        break;
-                    case HUMIDITY:
-                        json.setValue(t.getSensorData().getHumidityData().toString());
-                        type="HumiditySensor";
-                        break;
-                    case LUMINOSITY:
-                        json.setValue(t.getSensorData().getLuminosityData().toString());
-                        type="LuminositySensor";
-                        break;
-                    case TEMPERATURE:
-                        json.setValue(t.getSensorData().getTemperatureData().toString());
-                        type="TemperatureSensor";
-                        break;
-                    case OTHER:
-                        json.setValue(t.getSensorData().getOtherData().toString());
-                        break;
-                }
-            }
-
+            List<Transaction> tl = bc.getLastBlock().getData();
+            tl.stream()
+              .map(Transaction::getSensorData)
+              .filter(t -> t.getCategory() == Category.OTHER)
+              .forEach(this::setData);
             String topic = "MASBlockchain/feeds/"+type+"/json";
             String content = g.toJson(new AdafruitPublishJSON());
             int qos = 2;
@@ -79,6 +63,48 @@ public class MonitorAgent extends Agent {
                 me.printStackTrace();
 
             }
+        }
+    }
+
+    /**
+     * Collect all the data into the JSON adapter class
+     *
+     * @param t The sensor data to fill in
+     */
+    private void setData(SensorData t) {
+        switch (t.getCategory()) {
+            case NOISE:
+                json.setValue(String.valueOf(t.getNoiseData().getNoiseLevel()));
+                json.setCreated_at(t.getTimestamp().toString());
+                json.setLat(t.getNoiseData().getLat().toString());
+                json.setLon(t.getNoiseData().getLng().toString());
+                type = "SoundSensor";
+                break;
+            case HUMIDITY:
+                json.setValue(String.valueOf(t.getHumidityData().getHum()));
+                json.setCreated_at(t.getTimestamp().toString());
+                json.setLat(t.getHumidityData().getLat().toString());
+                json.setLon(t.getHumidityData().getLng().toString());
+                type = "HumiditySensor";
+                break;
+            case LUMINOSITY:
+                json.setValue(String.valueOf(t.getLuminosityData().getLum()));
+                json.setCreated_at(t.getTimestamp().toString());
+                json.setLat(t.getLuminosityData().getLat().toString());
+                json.setLon(t.getLuminosityData().getLng().toString());
+                type = "LuminositySensor";
+                break;
+            case TEMPERATURE:
+                json.setValue(String.valueOf(t.getTemperatureData().getTemperature()));
+                json.setCreated_at(t.getTimestamp().toString());
+                json.setLat(t.getTemperatureData().getLat().toString());
+                json.setLon(t.getTemperatureData().getLng().toString());
+                json.setLon(t.getTemperatureData().getLng().toString());
+                type = "TemperatureSensor";
+                break;
+            case OTHER:
+                //This one we actually have no guarantees on how to publish, so better not.
+                break;
         }
     }
 }
