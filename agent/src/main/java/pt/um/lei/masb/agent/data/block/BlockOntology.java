@@ -1,13 +1,12 @@
-package pt.um.lei.masb.agent;
+package pt.um.lei.masb.agent.data.block;
 
 import jade.content.onto.BasicOntology;
 import jade.content.onto.BeanOntology;
 import jade.content.onto.BeanOntologyException;
 import jade.content.onto.Ontology;
-import pt.um.lei.masb.blockchain.Transaction;
 
 public class BlockOntology extends BeanOntology {
-    public static final String ONTOLOGY_NAME="Block-ontology";
+    public static final String ONTOLOGY_NAME = "JBlock-ontology";
 
     // The singleton instance of this ontology
     private static Ontology theInstance;
@@ -27,6 +26,7 @@ public class BlockOntology extends BeanOntology {
 
     public BlockOntology() throws BeanOntologyException {
         super(ONTOLOGY_NAME, BasicOntology.getInstance());
-        add(Transaction.class);
+        add("pt.um.lei.masb.agent.transaction.ontology");
+        add("pt.um.lei.masb.agent.block.ontology");
     }
 }
