@@ -2,11 +2,11 @@ package pt.um.lei.masb.agent.data.transaction.ontology;
 
 import jade.content.Concept;
 
-public abstract class GeoData implements Concept {
+public abstract class JGeoData implements Concept {
     private String lat;
     private String lng;
 
-    public GeoData(String lat, String lng) {
+    public JGeoData(String lat, String lng) {
         this.lat = lat;
         this.lng = lng;
     }

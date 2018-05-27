@@ -4,14 +4,14 @@ import pt.um.lei.masb.blockchain.data.TUnit;
 
 import java.util.Objects;
 
-public class TemperatureData extends GeoData {
+public class JTemperatureData extends JGeoData {
     private double temperature;
     private TUnit tUnit;
 
-    public TemperatureData(double temperature,
-                           TUnit tUnit,
-                           String lat,
-                           String lng) {
+    public JTemperatureData(double temperature,
+                            TUnit tUnit,
+                            String lat,
+                            String lng) {
         super(lat, lng);
         this.temperature = temperature;
         this.tUnit = tUnit;
@@ -41,7 +41,7 @@ public class TemperatureData extends GeoData {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        TemperatureData that = (TemperatureData) o;
+        JTemperatureData that = (JTemperatureData) o;
         return Double.compare(that.temperature, temperature) == 0 &&
                 tUnit == that.tUnit;
     }
@@ -54,7 +54,7 @@ public class TemperatureData extends GeoData {
 
     @Override
     public String toString() {
-        return "TemperatureData{" +
+        return "JTemperatureData{" +
                 "temperature=" + temperature +
                 ", tUnit=" + tUnit +
                 '}';

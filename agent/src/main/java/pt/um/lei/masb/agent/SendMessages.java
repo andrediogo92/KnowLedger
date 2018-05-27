@@ -36,7 +36,7 @@ public class SendMessages extends Behaviour {
                 for(Transaction t: rb) {
                     var msg = new ACLMessage(ACLMessage.INFORM);
                     //Transaction of the blockchain is not JADE serializable
-                    //Need to convert into Transaction of transaction ontology, in transaction.ontology package
+                    //Need to convert into JTransaction of transaction ontology, in transaction.ontology package
                     //in order to actually send it.
                     myAgent.getContentManager().fillContent(msg,t);
                     msg.addReceiver(agent.getName());

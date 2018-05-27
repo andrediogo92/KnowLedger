@@ -7,15 +7,15 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.Set;
 
-public final class Coinbase implements Concept {
+public final class JCoinbase implements Concept {
     private Set<TransactionOutput> payoutTXO;
     private String coinbase;
     private String hashId;
 
 
-    public Coinbase(@NotNull Set<TransactionOutput> payoutTXO,
-                    @NotEmpty String coinbase,
-                    @NotEmpty String hashId) {
+    public JCoinbase(@NotNull Set<TransactionOutput> payoutTXO,
+                     @NotEmpty String coinbase,
+                     @NotEmpty String hashId) {
         this.payoutTXO = payoutTXO;
         this.coinbase = coinbase;
         this.hashId = hashId;

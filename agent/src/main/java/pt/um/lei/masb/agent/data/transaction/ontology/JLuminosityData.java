@@ -5,14 +5,14 @@ import pt.um.lei.masb.blockchain.data.LUnit;
 import java.util.Objects;
 
 
-public class LuminosityData extends GeoData {
+public class JLuminosityData extends JGeoData {
     private double lum;
     private LUnit unit;
 
-    public LuminosityData(double lum,
-                          LUnit unit,
-                          String lat,
-                          String lng) {
+    public JLuminosityData(double lum,
+                           LUnit unit,
+                           String lat,
+                           String lng) {
         super(lat, lng);
         this.lum = lum;
         this.unit = unit;
@@ -42,7 +42,7 @@ public class LuminosityData extends GeoData {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        LuminosityData that = (LuminosityData) o;
+        JLuminosityData that = (JLuminosityData) o;
         return Double.compare(that.lum, lum) == 0 &&
                 unit == that.unit;
     }
@@ -55,7 +55,7 @@ public class LuminosityData extends GeoData {
 
     @Override
     public String toString() {
-        return "LuminosityData{" +
+        return "JLuminosityData{" +
                 "lum=" + lum +
                 ", unit=" + unit +
                 '}';

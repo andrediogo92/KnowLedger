@@ -4,14 +4,14 @@ import pt.um.lei.masb.blockchain.data.HUnit;
 
 import java.util.Objects;
 
-public class HumidityData extends GeoData {
+public class JHumidityData extends JGeoData {
     private double hum;
     private HUnit unit;
 
-    public HumidityData(double hum,
-                        HUnit unit,
-                        String lat,
-                        String lng) {
+    public JHumidityData(double hum,
+                         HUnit unit,
+                         String lat,
+                         String lng) {
         super(lat, lng);
         this.hum = hum;
         this.unit = unit;
@@ -41,7 +41,7 @@ public class HumidityData extends GeoData {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        HumidityData that = (HumidityData) o;
+        JHumidityData that = (JHumidityData) o;
         return Double.compare(that.hum, hum) == 0 &&
                 unit == that.unit;
     }
@@ -54,7 +54,7 @@ public class HumidityData extends GeoData {
 
     @Override
     public String toString() {
-        return "HumidityData{" +
+        return "JHumidityData{" +
                 "hum=" + hum +
                 ", unit=" + unit +
                 '}';

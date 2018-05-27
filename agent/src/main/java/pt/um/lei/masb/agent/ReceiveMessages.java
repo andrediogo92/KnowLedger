@@ -9,6 +9,7 @@ import jade.content.onto.OntologyException;
 import jade.core.behaviours.Behaviour;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
+import pt.um.lei.masb.agent.data.block.BlockOntology;
 import pt.um.lei.masb.agent.data.transaction.TransactionOntology;
 import pt.um.lei.masb.blockchain.Block;
 import pt.um.lei.masb.blockchain.BlockChain;
@@ -61,7 +62,7 @@ public class ReceiveMessages extends Behaviour {
                 var codec = new SLCodec();
                 var blmsg = new ACLMessage(ACLMessage.INFORM);
                 //Block of the blockchain is not JADE serializable
-                //Need to convert into Block of block ontology, in block.ontology package
+                //Need to convert into JBlock of block ontology, in block.ontology package
                 //in order to actually send it.
                 myAgent.getContentManager().fillContent(blmsg,bc.getBlockByHeight(rHeight));
                 blmsg.addReceiver(blocksReq.getSender());

@@ -4,12 +4,12 @@ import jade.content.Concept;
 
 import javax.validation.constraints.NotEmpty;
 
-public class TransactionOutput implements Concept {
+public class JTransactionOutput implements Concept {
     private String pubkey;
     private String prevHash;
 
-    public TransactionOutput(@NotEmpty String pubkey,
-                             @NotEmpty String prevHash) {
+    public JTransactionOutput(@NotEmpty String pubkey,
+                              @NotEmpty String prevHash) {
         this.pubkey = pubkey;
         this.prevHash = prevHash;
     }

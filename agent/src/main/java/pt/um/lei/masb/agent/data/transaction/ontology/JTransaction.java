@@ -8,18 +8,18 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Transaction in ontology bean form.
+ * JTransaction in ontology bean form.
  */
-public class Transaction implements Concept {
+public class JTransaction implements Concept {
     private String transactionId;
     private String publicKey;
     private SensorData sd;
     private byte[] signature;
 
-    public Transaction(String transactionId,
-                       String publicKey,
-                       SensorData sd,
-                       byte[] signature) {
+    public JTransaction(String transactionId,
+                        String publicKey,
+                        SensorData sd,
+                        byte[] signature) {
         this.transactionId = transactionId;
         this.publicKey = publicKey;
         this.sd = sd;
@@ -66,7 +66,7 @@ public class Transaction implements Concept {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Transaction that = (Transaction) o;
+        JTransaction that = (JTransaction) o;
         return Objects.equals(transactionId, that.transactionId) &&
                 Objects.equals(publicKey, that.publicKey) &&
                 Objects.equals(sd, that.sd) &&
@@ -83,7 +83,7 @@ public class Transaction implements Concept {
 
     @Override
     public String toString() {
-        return "Transaction{" +
+        return "JTransaction{" +
                 "transactionId='" + transactionId + '\'' +
                 ", publicKey='" + publicKey + '\'' +
                 ", sd=" + sd +

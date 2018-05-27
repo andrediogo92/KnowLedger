@@ -1,25 +1,25 @@
 package pt.um.lei.masb.agent.data.block.ontology;
 
 import jade.content.Concept;
-import pt.um.lei.masb.agent.data.transaction.ontology.Transaction;
+import pt.um.lei.masb.agent.data.transaction.ontology.JTransaction;
 import pt.um.lei.masb.blockchain.Coinbase;
 
-public final class Block implements Concept {
-    private Transaction data[];
+public final class JBlock implements Concept {
+    private JTransaction data[];
     private Coinbase coinbase;
-    private BlockHeader header;
+    private JBlockHeader header;
 
-    public Block(Transaction[] data, Coinbase coinbase, BlockHeader header) {
+    public JBlock(JTransaction[] data, Coinbase coinbase, JBlockHeader header) {
         this.data = data;
         this.coinbase = coinbase;
         this.header = header;
     }
 
-    public Transaction[] getData() {
+    public JTransaction[] getData() {
         return data;
     }
 
-    public void setData(Transaction[] data) {
+    public void setData(JTransaction[] data) {
         this.data = data;
     }
 
@@ -31,11 +31,11 @@ public final class Block implements Concept {
         this.coinbase = coinbase;
     }
 
-    public BlockHeader getHeader() {
+    public JBlockHeader getHeader() {
         return header;
     }
 
-    public void setHeader(BlockHeader header) {
+    public void setHeader(JBlockHeader header) {
         this.header = header;
     }
 }

@@ -6,7 +6,7 @@ import jade.content.onto.BeanOntologyException;
 import jade.content.onto.Ontology;
 
 public class TransactionOntology extends BeanOntology {
-    public static final String ONTOLOGY_NAME="Transaction-ontology";
+    public static final String ONTOLOGY_NAME = "JTransaction-ontology";
 
     // The singleton instance of this ontology
     private static Ontology theInstance;

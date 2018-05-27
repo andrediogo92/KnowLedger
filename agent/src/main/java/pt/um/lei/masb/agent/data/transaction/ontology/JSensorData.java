@@ -5,13 +5,13 @@ import pt.um.lei.masb.blockchain.data.Category;
 
 import java.util.Objects;
 
-public class SensorData implements Concept {
+public class JSensorData implements Concept {
     private Category category;
-    private GeoData data;
+    private JGeoData data;
     private long timestamp;
 
 
-    public SensorData(Category category, GeoData data, long timestamp) {
+    public JSensorData(Category category, JGeoData data, long timestamp) {
         this.category = category;
         this.data = data;
         this.timestamp = timestamp;
@@ -27,11 +27,11 @@ public class SensorData implements Concept {
     }
 
 
-    public GeoData getData() {
+    public JGeoData getData() {
         return data;
     }
 
-    public void setData(GeoData data) {
+    public void setData(JGeoData data) {
         this.data = data;
     }
 
@@ -53,7 +53,7 @@ public class SensorData implements Concept {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        SensorData that = (SensorData) o;
+        JSensorData that = (JSensorData) o;
         return timestamp == that.timestamp &&
                 category == that.category &&
                 Objects.equals(data, that.data);
@@ -67,7 +67,7 @@ public class SensorData implements Concept {
 
     @Override
     public String toString() {
-        return "SensorData{" +
+        return "JSensorData{" +
                 "category=" + category +
                 ", data=" + data +
                 ", timestamp=" + timestamp +

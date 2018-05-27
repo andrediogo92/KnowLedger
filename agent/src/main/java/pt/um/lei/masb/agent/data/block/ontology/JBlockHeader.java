@@ -7,7 +7,7 @@ import javax.validation.constraints.NotNull;
 import java.util.Objects;
 
 
-public final class BlockHeader implements Concept {
+public final class JBlockHeader implements Concept {
     private String difficulty;
     private long blockheight;
     private String hash;
@@ -16,13 +16,13 @@ public final class BlockHeader implements Concept {
     private long timeStamp;
     private long nonce;
 
-    public BlockHeader(@NotEmpty String difficulty,
-                       long blockheight,
-                       @NotEmpty String hash,
-                       @NotEmpty String merkleRoot,
-                       @NotNull String previousHash,
-                       long timeStamp,
-                       long nonce) {
+    public JBlockHeader(@NotEmpty String difficulty,
+                        long blockheight,
+                        @NotEmpty String hash,
+                        @NotEmpty String merkleRoot,
+                        @NotNull String previousHash,
+                        long timeStamp,
+                        long nonce) {
         this.difficulty = difficulty;
         this.blockheight = blockheight;
         this.hash = hash;
@@ -96,7 +96,7 @@ public final class BlockHeader implements Concept {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        BlockHeader that = (BlockHeader) o;
+        JBlockHeader that = (JBlockHeader) o;
         return blockheight == that.blockheight &&
                 timeStamp == that.timeStamp &&
                 nonce == that.nonce &&
@@ -114,7 +114,7 @@ public final class BlockHeader implements Concept {
 
     @Override
     public @NotEmpty String toString() {
-        return "BlockHeader{" +
+        return "JBlockHeader{" +
                 "difficulty='" + difficulty + '\'' +
                 ", blockheight=" + blockheight +
                 ", hash='" + hash + '\'' +

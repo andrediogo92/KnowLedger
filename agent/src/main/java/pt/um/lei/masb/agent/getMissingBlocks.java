@@ -12,7 +12,8 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import pt.um.lei.masb.blockchain.Block;
+import pt.um.lei.masb.agent.data.block.BlockOntology;
+import pt.um.lei.masb.agent.data.block.ontology.JBlock;
 import pt.um.lei.masb.blockchain.BlockChain;
 
 import java.util.Random;
@@ -69,7 +70,8 @@ public class getMissingBlocks extends Behaviour {
                         try {
                             if (blmsg != null) {
                                 ContentElement blce = myAgent.getContentManager().extractContent(blmsg);
-                                Block bl = (Block) blce;
+                                JBlock bl = (JBlock) blce;
+                                //Convert JBlock to Block
                                 bc.addBlock(bl);
                             }else{
                                 break;

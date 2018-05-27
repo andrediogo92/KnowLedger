@@ -3,14 +3,14 @@ package pt.um.lei.masb.agent.data.transaction.ontology;
 import java.util.Arrays;
 import java.util.Objects;
 
-public class OtherData extends GeoData {
+public class JOtherData extends JGeoData {
     private String className;
     private byte[] data;
 
-    public OtherData(String lat,
-                     String lng,
-                     String className,
-                     byte[] data) {
+    public JOtherData(String lat,
+                      String lng,
+                      String className,
+                      byte[] data) {
         super(lat, lng);
         this.className = className;
         this.data = data;
@@ -40,7 +40,7 @@ public class OtherData extends GeoData {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        OtherData otherData = (OtherData) o;
+        JOtherData otherData = (JOtherData) o;
         return Objects.equals(className, otherData.className) &&
                 Arrays.equals(data, otherData.data);
     }
@@ -55,7 +55,7 @@ public class OtherData extends GeoData {
 
     @Override
     public String toString() {
-        return "OtherData{" +
+        return "JOtherData{" +
                 "className='" + className + '\'' +
                 ", data=" + data +
                 '}';
