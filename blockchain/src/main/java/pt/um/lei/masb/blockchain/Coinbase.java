@@ -25,8 +25,7 @@ public final class Coinbase implements Sizeable, IHashed {
     private static final int THRESHOLD = 100000;
     private static final int OTHER = 50;
     private static final int DATA = 5;
-    private static final MathContext mathContext = new MathContext(8, RoundingMode.HALF_EVEN);
-    private static final Coinbase origin = Block.getOrigin().getCoinbase();
+    private static final MathContext MATH_CONTEXT = new MathContext(8, RoundingMode.HALF_EVEN);
 
 
     @OneToMany(cascade = CascadeType.ALL,
@@ -49,6 +48,14 @@ public final class Coinbase implements Sizeable, IHashed {
     protected Coinbase() {
         coinbase = new BigDecimal(0);
         payoutTXO = new HashSet<>();
+    }
+
+    public Coinbase(Set<TransactionOutput> payoutTXO,
+                    BigDecimal coinbase,
+                    String hashId) {
+        this.payoutTXO = payoutTXO;
+        this.coinbase = coinbase;
+        this.hashId = hashId;
     }
 
     /**
@@ -121,16 +128,16 @@ public final class Coinbase implements Sizeable, IHashed {
 
     private @NotNull BigDecimal calculateDiffTemperature(@NotNull TemperatureData newTD,
                                                          @NotNull TemperatureData oldTD) {
-        var newT = new BigDecimal(newTD.convertToCelsius());
-        var oldT = new BigDecimal(oldTD.convertToCelsius());
-        return newT.subtract(oldT).divide(oldT, Coinbase.mathContext);
+        var newT = newTD.convertToCelsius();
+        var oldT = oldTD.convertToCelsius();
+        return newT.subtract(oldT).divide(oldT, Coinbase.MATH_CONTEXT);
     }
 
     private @NotNull BigDecimal calculateDiffLuminosity(@NotNull LuminosityData newLD,
                                                         @NotNull LuminosityData oldLD) {
-        var newL = new BigDecimal(newLD.getLum());
-        var oldL = new BigDecimal(oldLD.getLum());
-        return newL.subtract(oldL).divide(oldL, Coinbase.mathContext);
+        return newLD.getLum()
+                    .subtract(oldLD.getLum())
+                    .divide(oldLD.getLum(), Coinbase.MATH_CONTEXT);
     }
 
     private @NotNull BigDecimal calculateDiffHumidity(@NotNull HumidityData newHD,
@@ -138,21 +145,21 @@ public final class Coinbase implements Sizeable, IHashed {
         BigDecimal newH;
         BigDecimal oldH;
         if (newHD.getUnit() == HUnit.RELATIVE) {
-            newH = new BigDecimal(newHD.getHum());
-            oldH = new BigDecimal(oldHD.getHum());
+            newH = newHD.getHum();
+            oldH = oldHD.getHum();
         } else {
-            newH = new BigDecimal(newHD.convertToKGbyKG());
-            oldH = new BigDecimal(oldHD.convertToKGbyKG());
+            newH = newHD.convertToKGbyKG();
+            oldH = oldHD.convertToKGbyKG();
         }
-        return newH.subtract(oldH).divide(oldH, Coinbase.mathContext);
+        return newH.subtract(oldH).divide(oldH, Coinbase.MATH_CONTEXT);
     }
 
     private @NotNull BigDecimal calculateDiffNoise(@NotNull NoiseData newND,
                                                    @NotNull NoiseData oldND) {
-        var newN = new BigDecimal(newND.getNoiseLevel()).add(new BigDecimal(newND.getPeakOrBase()).abs());
-        var oldN = new BigDecimal(oldND.getNoiseLevel()).add(new BigDecimal(oldND.getPeakOrBase()).abs());
+        var newN = newND.getNoiseLevel().add(newND.getPeakOrBase()).abs();
+        var oldN = oldND.getNoiseLevel().add(oldND.getPeakOrBase()).abs();
         return newN.subtract(oldN)
-                   .divide(oldN, Coinbase.mathContext);
+                   .divide(oldN, Coinbase.MATH_CONTEXT);
     }
 
 
@@ -209,12 +216,12 @@ public final class Coinbase implements Sizeable, IHashed {
                                               @Positive int constant) {
         var standardDivisor = new BigDecimal(Coinbase.THRESHOLD * constant);
         var timeFactor = deltaTime.multiply(new BigDecimal(Coinbase.TIME_BASE))
-                                  .pow(2, Coinbase.mathContext)
-                                  .divide(standardDivisor, Coinbase.mathContext);
-        var valueFactor = deltaValue.divide(new BigDecimal(2), Coinbase.mathContext)
+                                  .pow(2, Coinbase.MATH_CONTEXT)
+                                  .divide(standardDivisor, Coinbase.MATH_CONTEXT);
+        var valueFactor = deltaValue.divide(new BigDecimal(2), Coinbase.MATH_CONTEXT)
                                     .multiply(new BigDecimal(Coinbase.VALUE_BASE))
-                                    .divide(standardDivisor, Coinbase.mathContext);
-        var baseFactor = new BigDecimal(Coinbase.BASE).divide(standardDivisor, Coinbase.mathContext);
+                                    .divide(standardDivisor, Coinbase.MATH_CONTEXT);
+        var baseFactor = new BigDecimal(Coinbase.BASE).divide(standardDivisor, Coinbase.MATH_CONTEXT);
         return timeFactor.add(valueFactor).add(baseFactor);
     }
 }
