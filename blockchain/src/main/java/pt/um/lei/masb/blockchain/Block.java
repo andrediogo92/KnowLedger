@@ -109,10 +109,21 @@ public final class Block implements Sizeable {
           @NotNull BigInteger difficulty,
           long blockheight) {
         this.hd = new BlockHeader(previousHash, difficulty, blockheight);
+        this.hd.setBlockReferenceOnce(this);
         this.data = new ArrayList<>(MAX_BLOCK_SIZE);
         headerSize = hd.getApproximateSize();
         this.merkleTree = null;
         coinbase = new Coinbase();
+    }
+
+    public Block(List<Transaction> data,
+                 Coinbase coinbase,
+                 BlockHeader hd,
+                 MerkleTree merkleTree) {
+        this.data = data;
+        this.coinbase = coinbase;
+        this.hd = hd;
+        this.merkleTree = merkleTree;
     }
 
     public static int getMaxMem() {
@@ -277,5 +288,9 @@ public final class Block implements Sizeable {
 
     public boolean verifyTransactions() {
         return merkleTree.verifyBlockTransactions(coinbase, data);
+    }
+
+    public MerkleTree getMerkleTree() {
+        return merkleTree;
     }
 }
