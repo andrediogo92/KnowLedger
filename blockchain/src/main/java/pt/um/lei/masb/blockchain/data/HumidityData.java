@@ -22,7 +22,7 @@ public final class HumidityData extends GeoData implements Sizeable {
     private long id;
 
     @Basic(optional = false)
-    private double hum;
+    private BigDecimal hum;
 
     @Basic(optional = false)
     private HUnit unit;
@@ -33,7 +33,7 @@ public final class HumidityData extends GeoData implements Sizeable {
     }
 
 
-    public HumidityData(double hum,
+    public HumidityData(BigDecimal hum,
                         @NotNull HUnit unit,
                         BigDecimal lat,
                         BigDecimal lng) {
@@ -43,13 +43,13 @@ public final class HumidityData extends GeoData implements Sizeable {
     }
 
 
-    public double convertToGbyKG() {
-        var res = hum;
+    public BigDecimal convertToGbyKG() {
+        BigDecimal res = hum;
         switch(unit) {
             case G_BY_KG:
                 break;
             case KG_BY_KG:
-                res *= 1000;
+                res = res.multiply(new BigDecimal("1000"));
                 break;
             case RELATIVE:
                 break;
@@ -57,11 +57,12 @@ public final class HumidityData extends GeoData implements Sizeable {
         return res;
     }
 
-    public double convertToKGbyKG() {
-        var res = hum;
+    public BigDecimal convertToKGbyKG() {
+        BigDecimal res = hum;
         switch(unit) {
             case G_BY_KG:
-                res /= 1000;
+                res = res.divide(new BigDecimal("1000"),
+                                 SensorData.getMathContext());
                 break;
             case KG_BY_KG:
                 break;
@@ -71,7 +72,7 @@ public final class HumidityData extends GeoData implements Sizeable {
         return res;
     }
 
-    public double getHum() {
+    public BigDecimal getHum() {
         return hum;
     }
 
@@ -88,7 +89,8 @@ public final class HumidityData extends GeoData implements Sizeable {
             return false;
         }
         HumidityData that = (HumidityData) o;
-        return Double.compare(that.hum, hum) == 0 &&
+        return id == that.id &&
+                Objects.equals(hum, that.hum) &&
                 unit == that.unit;
     }
 

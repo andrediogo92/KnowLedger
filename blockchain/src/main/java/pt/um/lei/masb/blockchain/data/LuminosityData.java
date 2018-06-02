@@ -20,18 +20,18 @@ public final class LuminosityData extends GeoData implements Sizeable {
     private long id;
 
     @Basic(optional = false)
-    private final double lum;
+    private final BigDecimal lum;
 
     @Basic(optional = false)
     private final LUnit unit;
 
     protected LuminosityData() {
         super(new BigDecimal(0), new BigDecimal(0));
-        lum = 0;
+        lum = null;
         unit = null;
     }
 
-    public LuminosityData(double lum,
+    public LuminosityData(BigDecimal lum,
                           LUnit unit,
                           BigDecimal lat,
                           BigDecimal lng) {
@@ -44,7 +44,7 @@ public final class LuminosityData extends GeoData implements Sizeable {
     /**
      * @return Luminosity reading, either from lighting units or light sensors.
      */
-    public double getLum() {
+    public BigDecimal getLum() {
         return lum;
     }
 
@@ -64,7 +64,8 @@ public final class LuminosityData extends GeoData implements Sizeable {
             return false;
         }
         LuminosityData that = (LuminosityData) o;
-        return lum == that.lum &&
+        return id == that.id &&
+                Objects.equals(lum, that.lum) &&
                 unit == that.unit;
     }
 

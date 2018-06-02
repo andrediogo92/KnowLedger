@@ -23,7 +23,7 @@ public final class TemperatureData extends GeoData implements Sizeable {
     private long id;
 
     @Basic(optional = false)
-    private final double temperature;
+    private final BigDecimal temperature;
 
     @Basic(optional = false)
     private final TUnit unit;
@@ -31,12 +31,12 @@ public final class TemperatureData extends GeoData implements Sizeable {
 
     protected TemperatureData() {
         super(new BigDecimal(0), new BigDecimal(0));
-        temperature = 0;
+        temperature = null;
         unit = null;
     }
 
 
-    public TemperatureData(double temperature,
+    public TemperatureData(BigDecimal temperature,
                            @NotNull TUnit unit,
                            BigDecimal lat,
                            BigDecimal lng) {
@@ -57,76 +57,94 @@ public final class TemperatureData extends GeoData implements Sizeable {
     /**
      * @return A temperature reading in a certain unit.
      */
-    public double getTemperature() {
+    public BigDecimal getTemperature() {
         return temperature;
     }
 
 
-    public double convertToCelsius() {
-        var res = temperature;
+    public BigDecimal convertToCelsius() {
+        BigDecimal res = temperature;
         switch(unit) {
             case CELSIUS:
                 break;
             case FAHRENHEIT:
-                res = (5 * (res - 32)) / 9.0;
+                res = new BigDecimal("5").multiply(res.subtract(new BigDecimal("32")))
+                                         .divide(new BigDecimal("9"),
+                                                 SensorData.getMathContext());
                 break;
             case KELVIN:
-                res -= 273.16;
+                res = res.subtract(new BigDecimal("273.16"));
                 break;
             case RANKINE:
-                res = (5 * (res - 459.69 - 32)) / 9.0;
+                res = new BigDecimal("5").multiply(res.subtract(new BigDecimal("491.69")))
+                                         .divide(new BigDecimal("9"),
+                                                 SensorData.getMathContext());
                 break;
         }
         return res;
     }
 
-    public double convertToFahrenheit() {
-        var res = temperature;
+    public BigDecimal convertToFahrenheit() {
+        BigDecimal res = temperature;
         switch(unit) {
             case CELSIUS:
-                res = (9 * (res / 5.0)) + 32;
+                res = new BigDecimal("9").multiply(res.divide(new BigDecimal("5")))
+                                         .add(new BigDecimal("32"));
                 break;
             case FAHRENHEIT:
                 break;
             case KELVIN:
-                res = (9 * (res - 273.15) / 5.0) + 32;
+                res = new BigDecimal("9").multiply(res.subtract(new BigDecimal("273.15")))
+                                         .divide(new BigDecimal("5.0"),
+                                                 SensorData.getMathContext())
+                                         .add(new BigDecimal("32"));
                 break;
             case RANKINE:
-                res -= 459.69;
+                res = res.subtract(new BigDecimal("459.69"));
                 break;
         }
         return res;
     }
 
-    public double convertToRankine() {
-        var res = temperature;
+    public BigDecimal convertToRankine() {
+        BigDecimal res = temperature;
         switch(unit) {
             case CELSIUS:
-                res = (9 * res / 5.0) + 459.69 + 32;
+                res = new BigDecimal("9").multiply(res.divide(new BigDecimal("5"),
+                                                              SensorData.getMathContext()))
+                                         .add(new BigDecimal("491.69"));
                 break;
             case FAHRENHEIT:
-                res += 459.69;
+                res = res.add(new BigDecimal("459.69"));
                 break;
             case KELVIN:
-                res = (9 * (res - 273.15) / 5.0) + 32 + 459.69;
+                res = new BigDecimal("9").multiply(res.subtract(new BigDecimal("273.15")))
+                                         .divide(new BigDecimal("5"))
+                                         .add(new BigDecimal("491.69"));
             case RANKINE: break;
         }
         return res;
     }
 
-    public double convertToKelvin() {
-        var res = temperature;
+    public BigDecimal convertToKelvin() {
+        BigDecimal res = temperature;
         switch (unit){
             case CELSIUS:
-                res += 273.15;
+                res = res.add(new BigDecimal("273.15"));
                 break;
             case FAHRENHEIT:
-                res = (5.0 * (res - 32) / 9.0) + 273.15;
+                res = new BigDecimal("5").multiply(res.subtract(new BigDecimal("32")))
+                                         .divide(new BigDecimal("9"),
+                                                 SensorData.getMathContext())
+                                         .add(new BigDecimal("273.15"));
                 break;
             case KELVIN:
                 break;
             case RANKINE:
-                res = (5 * (res - 459.69 - 32)) / 9.0 + 273.15;
+                res = new BigDecimal("5").multiply(res.subtract(new BigDecimal("491.69")))
+                                         .divide(new BigDecimal("9"),
+                                                 SensorData.getMathContext())
+                                         .add(new BigDecimal("273.15"));
                 break;
         }
         return res;
@@ -142,7 +160,8 @@ public final class TemperatureData extends GeoData implements Sizeable {
             return false;
         }
         TemperatureData that = (TemperatureData) o;
-        return Double.compare(that.temperature, temperature) == 0 &&
+        return id == that.id &&
+                Objects.equals(temperature, that.temperature) &&
                 unit == that.unit;
     }
 

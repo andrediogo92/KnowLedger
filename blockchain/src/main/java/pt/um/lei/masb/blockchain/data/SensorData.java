@@ -6,6 +6,8 @@ import pt.um.lei.masb.blockchain.Sizeable;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.time.Instant;
 
 /**
@@ -17,6 +19,12 @@ import java.time.Instant;
  */
 @Entity
 public final class SensorData implements Sizeable {
+    private static final MathContext MATH_CONTEXT = new MathContext(8, RoundingMode.HALF_EVEN);
+
+    public static MathContext getMathContext() {
+        return MATH_CONTEXT;
+    }
+
     @Id
     @GeneratedValue
     private long id;

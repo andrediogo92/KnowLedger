@@ -20,22 +20,22 @@ public final class NoiseData extends GeoData implements Sizeable {
     private long id;
 
     @Basic(optional = false)
-    private final double relativeOrRMS;
+    private final BigDecimal relativeOrRMS;
 
-    private final double peak;
+    private final BigDecimal peak;
 
     @Basic(optional = false)
     private final NUnit unit;
 
     protected NoiseData() {
         super(new BigDecimal(0), new BigDecimal(0));
-        relativeOrRMS = 0;
-        peak = 0;
+        relativeOrRMS = null;
+        peak = null;
         unit = null;
     }
 
-    public NoiseData(double rms,
-                     double peak,
+    public NoiseData(BigDecimal rms,
+                     BigDecimal peak,
                      BigDecimal lat,
                      BigDecimal lng) {
         super(lat, lng);
@@ -44,12 +44,12 @@ public final class NoiseData extends GeoData implements Sizeable {
         this.unit = NUnit.RMS;
     }
 
-    public NoiseData(double relativeOrRMS,
+    public NoiseData(BigDecimal relativeOrRMS,
                      BigDecimal lat,
                      BigDecimal lng) {
         super(lat, lng);
         this.relativeOrRMS = relativeOrRMS;
-        this.peak = 0;
+        this.peak = null;
         this.unit = NUnit.DBSPL;
     }
 
@@ -59,14 +59,14 @@ public final class NoiseData extends GeoData implements Sizeable {
      * RMS sampled from a PCM signal in the interval [-1, 1],
      * or a dB relative to the standard base ().
      */
-    public double getNoiseLevel() {
+    public BigDecimal getNoiseLevel() {
         return this.relativeOrRMS;
     }
 
     /**
      * @return The peak of the PCM signal.
      */
-    public double getPeakOrBase() {
+    public BigDecimal getPeakOrBase() {
         return peak;
     }
 
@@ -87,8 +87,8 @@ public final class NoiseData extends GeoData implements Sizeable {
         }
         NoiseData noiseData = (NoiseData) o;
         return id == noiseData.id &&
-                Double.compare(noiseData.relativeOrRMS, relativeOrRMS) == 0 &&
-                Double.compare(noiseData.peak, peak) == 0 &&
+                Objects.equals(relativeOrRMS, noiseData.relativeOrRMS) &&
+                Objects.equals(peak, noiseData.peak) &&
                 unit == noiseData.unit;
     }
 
