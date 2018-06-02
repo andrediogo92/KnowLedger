@@ -1,11 +1,12 @@
 package pt.um.lei.masb.agent.data;
 
 import javax.sound.sampled.*;
+import java.math.BigDecimal;
 
 public class SoundCapturing {
 
-    private double rms;
-    private double peak;
+    private BigDecimal rms;
+    private BigDecimal peak;
 
     public SoundCapturing() throws LineUnavailableException {
         short max = -1;
@@ -44,10 +45,11 @@ public class SoundCapturing {
                 // normalize to range of +/-1.0f
                 samples[s++] = sample / 32768f;
             }
-
+            double peak = 0;
+            double rms = 0;
             for (float sample : samples) {
 
-                float abs = Math.abs(sample);
+                double abs = Math.abs(sample);
                 if (abs > peak) {
                     peak = abs;
                 }
@@ -55,21 +57,22 @@ public class SoundCapturing {
                 rms += sample * sample;
             }
 
-            rms = Math.sqrt(rms / samples.length);
+            this.rms = new BigDecimal(Math.sqrt(rms / samples.length));
+            this.peak = new BigDecimal(peak);
         }
     }
 
     /**
      * @return Root mean square of recorded values, [-1, 1] range.
      */
-    public double getRms() {
+    public BigDecimal getRms() {
         return rms;
     }
 
     /**
      * @return Peak of recorded values [0, 1].
      */
-    public double getPeak() {
+    public BigDecimal getPeak() {
         return peak;
     }
 }
