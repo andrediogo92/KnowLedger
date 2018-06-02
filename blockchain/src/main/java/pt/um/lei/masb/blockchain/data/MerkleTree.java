@@ -36,6 +36,12 @@ public final class MerkleTree implements Sizeable {
         levelIndex = null;
     }
 
+    public MerkleTree(List<String> hashes,
+                      List<Integer> levelIndex) {
+        this.hashes = hashes;
+        this.levelIndex = levelIndex;
+    }
+
     /**
      * Build a merkle tree collapsed in a heap for easy navigability from bottom up.
      *
@@ -345,6 +351,10 @@ public final class MerkleTree implements Sizeable {
     @Override
     public long getApproximateSize() {
         return GraphLayout.parseInstance(this).totalSize();
+    }
+
+    public List<Integer> getIndexes() {
+        return levelIndex;
     }
 }
 
