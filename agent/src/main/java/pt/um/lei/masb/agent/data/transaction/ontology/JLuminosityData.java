@@ -6,10 +6,10 @@ import java.util.Objects;
 
 
 public class JLuminosityData extends JGeoData {
-    private double lum;
+    private String lum;
     private LUnit unit;
 
-    public JLuminosityData(double lum,
+    public JLuminosityData(String lum,
                            LUnit unit,
                            String lat,
                            String lng) {
@@ -18,11 +18,11 @@ public class JLuminosityData extends JGeoData {
         this.unit = unit;
     }
 
-    public double getLum() {
+    public String getLum() {
         return lum;
     }
 
-    public void setLum(double lum) {
+    public void setLum(String lum) {
         this.lum = lum;
     }
 
@@ -43,7 +43,7 @@ public class JLuminosityData extends JGeoData {
             return false;
         }
         JLuminosityData that = (JLuminosityData) o;
-        return Double.compare(that.lum, lum) == 0 &&
+        return Objects.equals(lum, that.lum) &&
                 unit == that.unit;
     }
 

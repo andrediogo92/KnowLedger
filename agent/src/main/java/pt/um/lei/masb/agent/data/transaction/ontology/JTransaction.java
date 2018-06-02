@@ -2,7 +2,6 @@ package pt.um.lei.masb.agent.data.transaction.ontology;
 
 
 import jade.content.Concept;
-import pt.um.lei.masb.blockchain.data.SensorData;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -13,12 +12,12 @@ import java.util.Objects;
 public class JTransaction implements Concept {
     private String transactionId;
     private String publicKey;
-    private SensorData sd;
+    private JSensorData sd;
     private byte[] signature;
 
     public JTransaction(String transactionId,
                         String publicKey,
-                        SensorData sd,
+                        JSensorData sd,
                         byte[] signature) {
         this.transactionId = transactionId;
         this.publicKey = publicKey;
@@ -42,11 +41,11 @@ public class JTransaction implements Concept {
         this.publicKey = publicKey;
     }
 
-    public SensorData getSd() {
+    public JSensorData getSd() {
         return sd;
     }
 
-    public void setSd(SensorData sd) {
+    public void setSd(JSensorData sd) {
         this.sd = sd;
     }
 

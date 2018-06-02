@@ -5,10 +5,10 @@ import pt.um.lei.masb.blockchain.data.HUnit;
 import java.util.Objects;
 
 public class JHumidityData extends JGeoData {
-    private double hum;
+    private String hum;
     private HUnit unit;
 
-    public JHumidityData(double hum,
+    public JHumidityData(String hum,
                          HUnit unit,
                          String lat,
                          String lng) {
@@ -17,11 +17,11 @@ public class JHumidityData extends JGeoData {
         this.unit = unit;
     }
 
-    public double getHum() {
+    public String getHum() {
         return hum;
     }
 
-    public void setHum(double hum) {
+    public void setHum(String hum) {
         this.hum = hum;
     }
 
@@ -42,7 +42,7 @@ public class JHumidityData extends JGeoData {
             return false;
         }
         JHumidityData that = (JHumidityData) o;
-        return Double.compare(that.hum, hum) == 0 &&
+        return Objects.equals(hum, that.hum) &&
                 unit == that.unit;
     }
 

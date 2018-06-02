@@ -8,10 +8,10 @@ import java.util.Objects;
 public class JSensorData implements Concept {
     private Category category;
     private JGeoData data;
-    private long timestamp;
+    private String timestamp;
 
 
-    public JSensorData(Category category, JGeoData data, long timestamp) {
+    public JSensorData(Category category, JGeoData data, String timestamp) {
         this.category = category;
         this.data = data;
         this.timestamp = timestamp;
@@ -36,11 +36,11 @@ public class JSensorData implements Concept {
     }
 
 
-    public long getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(long timestamp) {
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
 

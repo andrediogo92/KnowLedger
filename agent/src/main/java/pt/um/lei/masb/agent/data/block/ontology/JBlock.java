@@ -2,32 +2,46 @@ package pt.um.lei.masb.agent.data.block.ontology;
 
 import jade.content.Concept;
 import pt.um.lei.masb.agent.data.transaction.ontology.JTransaction;
-import pt.um.lei.masb.blockchain.Coinbase;
+
+import java.util.List;
 
 public final class JBlock implements Concept {
-    private JTransaction data[];
-    private Coinbase coinbase;
+    private List<JTransaction> data;
+    private JCoinbase coinbase;
     private JBlockHeader header;
+    private JMerkleTree merkleTree;
 
-    public JBlock(JTransaction[] data, Coinbase coinbase, JBlockHeader header) {
+    public JBlock(List<JTransaction> data,
+                  JCoinbase coinbase,
+                  JBlockHeader header,
+                  JMerkleTree merkleTree) {
         this.data = data;
         this.coinbase = coinbase;
         this.header = header;
+        this.merkleTree = merkleTree;
     }
 
-    public JTransaction[] getData() {
+    public JMerkleTree getMerkleTree() {
+        return merkleTree;
+    }
+
+    public void setMerkleTree(JMerkleTree merkleTree) {
+        this.merkleTree = merkleTree;
+    }
+
+    public List<JTransaction> getData() {
         return data;
     }
 
-    public void setData(JTransaction[] data) {
+    public void setData(List<JTransaction> data) {
         this.data = data;
     }
 
-    public Coinbase getCoinbase() {
+    public JCoinbase getCoinbase() {
         return coinbase;
     }
 
-    public void setCoinbase(Coinbase coinbase) {
+    public void setCoinbase(JCoinbase coinbase) {
         this.coinbase = coinbase;
     }
 

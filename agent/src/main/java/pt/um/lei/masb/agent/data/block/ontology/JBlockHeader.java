@@ -13,7 +13,7 @@ public final class JBlockHeader implements Concept {
     private String hash;
     private String merkleRoot;
     private String previousHash;
-    private long timeStamp;
+    private String timeStamp;
     private long nonce;
 
     public JBlockHeader(@NotEmpty String difficulty,
@@ -21,7 +21,7 @@ public final class JBlockHeader implements Concept {
                         @NotEmpty String hash,
                         @NotEmpty String merkleRoot,
                         @NotNull String previousHash,
-                        long timeStamp,
+                        @NotEmpty String timeStamp,
                         long nonce) {
         this.difficulty = difficulty;
         this.blockheight = blockheight;
@@ -72,11 +72,11 @@ public final class JBlockHeader implements Concept {
         this.previousHash = previousHash;
     }
 
-    public long getTimeStamp() {
+    public String getTimeStamp() {
         return timeStamp;
     }
 
-    public void setTimeStamp(long timeStamp) {
+    public void setTimeStamp(String timeStamp) {
         this.timeStamp = timeStamp;
     }
 
