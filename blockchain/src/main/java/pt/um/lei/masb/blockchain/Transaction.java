@@ -65,8 +65,19 @@ public class Transaction implements Sizeable, IHashed {
         signature = generateSignature(privateKey);
         byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
                 sd.getApproximateSize();
-
     }
+
+    public Transaction(@NotNull PublicKey from,
+                       @NotNull SensorData sd,
+                       @NotNull byte signature[]) {
+        this.publicKey = from;
+        this.sd = sd;
+        this.hashId = calculateHash();
+        this.signature = signature;
+        byteSize = ClassLayout.parseClass(this.getClass()).instanceSize() +
+                sd.getApproximateSize();
+    }
+
 
     public Transaction(@NotNull Ident id,
                        @NotNull SensorData sd) {

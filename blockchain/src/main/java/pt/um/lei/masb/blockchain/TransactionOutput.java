@@ -30,9 +30,9 @@ public class TransactionOutput implements Sizeable {
         prevUTXO = null;
     }
 
-    protected TransactionOutput(@NotNull PublicKey publicKey,
-                                @NotNull String prevUTXO,
-                                @NotNull BigDecimal cumUTXO) {
+    public TransactionOutput(@NotNull PublicKey publicKey,
+                             @NotNull String prevUTXO,
+                             @NotNull BigDecimal cumUTXO) {
         this.publicKey = publicKey;
         this.prevUTXO = prevUTXO;
         payout = cumUTXO;
@@ -53,5 +53,9 @@ public class TransactionOutput implements Sizeable {
 
     public void addToPayout(@NotNull BigDecimal payout) {
         this.payout.add(payout);
+    }
+
+    public String getPrevUTXO() {
+        return prevUTXO;
     }
 }
