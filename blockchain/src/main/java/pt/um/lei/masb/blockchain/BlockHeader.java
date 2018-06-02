@@ -13,6 +13,7 @@ import java.math.BigInteger;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 @NamedQueries({
                       @NamedQuery(
@@ -83,6 +84,23 @@ public final class BlockHeader implements Sizeable {
         hash = null; //Making sure we do this after we set the other values.
     }
 
+    public BlockHeader(@NotNull BigInteger difficulty,
+                       long blockheight,
+                       @NotEmpty String hash,
+                       @NotNull String merkleRoot,
+                       @NotNull String previousHash,
+                       @NotNull Instant timeStamp,
+                       long nonce) {
+        this.difficulty = difficulty;
+        this.block = block;
+        this.blockheight = blockheight;
+        this.hash = hash;
+        this.merkleRoot = merkleRoot;
+        this.previousHash = previousHash;
+        this.timeStamp = timeStamp;
+        this.nonce = nonce;
+    }
+
     protected BlockHeader() {
         this.difficulty = null;
     }
@@ -108,7 +126,18 @@ public final class BlockHeader implements Sizeable {
         return crypter.applyHash(sb);
     }
 
-    String getHash() {
+    public boolean setBlockReferenceOnce(Block b) {
+        if (this.block == null) {
+            //We're dealing with the exact same pointer.
+            if (b.getHeader() == this) {
+                this.block = b;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String getHash() {
         return hash;
     }
 
@@ -116,7 +145,7 @@ public final class BlockHeader implements Sizeable {
         return blockheight;
     }
 
-    protected String getMerkleRoot() {
+    public String getMerkleRoot() {
         return merkleRoot;
     }
 
@@ -124,11 +153,11 @@ public final class BlockHeader implements Sizeable {
         this.merkleRoot = merkleRoot;
     }
 
-    String getPreviousHash() {
+    public String getPreviousHash() {
         return previousHash;
     }
 
-    Instant getTimeStamp() {
+    public Instant getTimeStamp() {
         return timeStamp;
     }
 
@@ -136,8 +165,12 @@ public final class BlockHeader implements Sizeable {
         this.timeStamp = timeStamp;
     }
 
-    BigInteger getDifficulty() {
+    public BigInteger getDifficulty() {
         return difficulty;
+    }
+
+    public long getNonce() {
+        return nonce;
     }
 
     void zeroNonce() {
@@ -146,6 +179,31 @@ public final class BlockHeader implements Sizeable {
 
     void incNonce() {
         nonce++;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        BlockHeader that = (BlockHeader) o;
+        return blockheight == that.blockheight &&
+                nonce == that.nonce &&
+                Objects.equals(difficulty, that.difficulty) &&
+                Objects.equals(block, that.block) &&
+                Objects.equals(hash, that.hash) &&
+                Objects.equals(merkleRoot, that.merkleRoot) &&
+                Objects.equals(previousHash, that.previousHash) &&
+                Objects.equals(timeStamp, that.timeStamp);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(difficulty, block, blockheight, hash, merkleRoot, previousHash, timeStamp, nonce);
     }
 
     @Override
