@@ -1,5 +1,5 @@
 package pt.um.lei.masb.blockchain;
 
-public interface IHashed {
+public interface Hashed {
     String getHashId();
 }

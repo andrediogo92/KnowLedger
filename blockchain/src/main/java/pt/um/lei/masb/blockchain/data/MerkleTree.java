@@ -1,7 +1,7 @@
 package pt.um.lei.masb.blockchain.data;
 
 import org.openjdk.jol.info.GraphLayout;
-import pt.um.lei.masb.blockchain.IHashed;
+import pt.um.lei.masb.blockchain.Hashed;
 import pt.um.lei.masb.blockchain.Sizeable;
 import pt.um.lei.masb.blockchain.utils.Crypter;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
@@ -48,7 +48,7 @@ public final class MerkleTree implements Sizeable {
      * @param data  Transactions in the block.
      * @return The corresponding MerkleTree or empty MerkleTree if empty transactions.
      */
-    public static @NotNull MerkleTree buildMerkleTree(@NotNull List<? extends IHashed> data) {
+    public static @NotNull MerkleTree buildMerkleTree(@NotNull List<? extends Hashed> data) {
         var t = new MerkleTree();
         List<String[]> treeLayer = data.size() == 0 ?
                                    new ArrayList<>() :
@@ -66,8 +66,8 @@ public final class MerkleTree implements Sizeable {
      * @param data     Transactions in the block.
      * @return The corresponding MerkleTree or empty MerkleTree if empty transactions.
      */
-    public static @NotNull MerkleTree buildMerkleTree(@NotNull IHashed coinbase,
-                                                      @NotNull List<? extends IHashed> data) {
+    public static @NotNull MerkleTree buildMerkleTree(@NotNull Hashed coinbase,
+                                                      @NotNull List<? extends Hashed> data) {
         var t = new MerkleTree();
         var treeLayer = data.size() == 0 ?
                         new ArrayList<String[]>() :
@@ -153,10 +153,10 @@ public final class MerkleTree implements Sizeable {
      *
      * @param data The transactions array.
      */
-    private static String[] initTree(@NotNull List<? extends IHashed> data) {
+    private static String[] initTree(@NotNull List<? extends Hashed> data) {
         return data.stream()
                    .filter(Objects::nonNull)
-                   .map(IHashed::getHashId)
+                   .map(Hashed::getHashId)
                    .toArray(String[]::new);
     }
 
@@ -168,14 +168,14 @@ public final class MerkleTree implements Sizeable {
      * @param coinbase The coinbase of the block.
      * @param data     The transactions array.
      */
-    private static String[] initTree(@NotNull IHashed coinbase,
-                                     @NotNull List<? extends IHashed> data) {
+    private static String[] initTree(@NotNull Hashed coinbase,
+                                     @NotNull List<? extends Hashed> data) {
 
         ArrayList<String> res = new ArrayList<>(data.size() + 1);
         res.add(coinbase.getHashId());
         data.stream()
             .filter(Objects::nonNull)
-            .map(IHashed::getHashId)
+            .map(Hashed::getHashId)
             .forEach(res::add);
         res.trimToSize();
         return res.toArray(new String[0]);
@@ -265,8 +265,8 @@ public final class MerkleTree implements Sizeable {
      * @return Whether the entire merkleTree matches
      * against the transaction data.
      */
-    public boolean verifyBlockTransactions(@NotNull IHashed coinbase,
-                                           @NotNull List<? extends IHashed> data) {
+    public boolean verifyBlockTransactions(@NotNull Hashed coinbase,
+                                           @NotNull List<? extends Hashed> data) {
         var res = checkAllTransactionsPresent(coinbase, data);
         if (hashes.size() != 1) {
             res = loopUpAllVerification(levelIndex.size() - 2);
@@ -318,12 +318,12 @@ public final class MerkleTree implements Sizeable {
         return res;
     }
 
-    private boolean checkAllTransactionsPresent(IHashed coinbase, List<? extends IHashed> data) {
+    private boolean checkAllTransactionsPresent(Hashed coinbase, List<? extends Hashed> data) {
         var i = levelIndex.get(levelIndex.size() - 1) + 1;
         var res = true;
         var arr = data.stream()
                       .filter(Objects::nonNull)
-                      .map(IHashed::getHashId)
+                      .map(Hashed::getHashId)
                       .collect(Collectors.toList());
         if (hashes.get(i - 1)
                   .equals(coinbase.getHashId())) {

@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicLong;
                                   query = "SELECT t from Transaction t where publicKey = :publicKey order by t.sd.t desc")
               })
 @Entity
-public class Transaction implements Sizeable, IHashed {
+public class Transaction implements Sizeable, Hashed {
     @NotNull
     private final static Crypter crypter = StringUtil.getDefaultCrypter();
 
