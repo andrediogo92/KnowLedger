@@ -4,41 +4,64 @@ import jade.content.Concept;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import java.util.Set;
 
 public class JTransactionOutput implements Concept {
     private String pubkey;
+    private String hashId;
     private String prevHash;
     private String payout;
+    private Set<String> tx;
 
-    public JTransactionOutput(@NotEmpty String pubkey,
-                              @NotEmpty String prevHash,
-                              @NotNull String payout) {
+    public JTransactionOutput(@NotNull String pubkey,
+                              @NotNull String hashId,
+                              @NotNull String prevHash,
+                              @NotNull String payout,
+                              @NotEmpty Set<String> tx) {
         this.pubkey = pubkey;
+        this.hashId = hashId;
         this.prevHash = prevHash;
         this.payout = payout;
+        this.tx = tx;
     }
 
-    public @NotEmpty String getPubkey() {
+    public @NotNull String getPubkey() {
         return pubkey;
     }
 
-    public void setPubkey(@NotEmpty String pubkey) {
+    public void setPubkey(@NotNull String pubkey) {
         this.pubkey = pubkey;
     }
 
-    public @NotEmpty String getPrevHash() {
+    public @NotNull String getPrevHash() {
         return prevHash;
     }
 
-    public void setPrevHash(@NotEmpty String prevHash) {
+    public void setPrevHash(@NotNull String prevHash) {
         this.prevHash = prevHash;
     }
 
-    public String getPayout() {
+    public @NotNull String getPayout() {
         return payout;
     }
 
-    public void setPayout(String payout) {
+    public void setPayout(@NotNull String payout) {
         this.payout = payout;
+    }
+
+    public @NotNull String getHashId() {
+        return hashId;
+    }
+
+    public void setHashId(@NotNull String hashId) {
+        this.hashId = hashId;
+    }
+
+    public @NotEmpty Set<String> getTx() {
+        return tx;
+    }
+
+    public void setTx(@NotEmpty Set<String> tx) {
+        this.tx = tx;
     }
 }

@@ -58,8 +58,10 @@ public class DataConverter {
 
     private JTransactionOutput convertToJadeTransactionOutput(TransactionOutput txo) {
         return new JTransactionOutput(StringUtil.getStringFromKey(txo.getPublicKey()),
-                                      txo.getPrevUTXO(),
-                                      txo.getPayout().toString());
+                                      txo.getHashId(),
+                                      txo.getPrevCoinbase(),
+                                      txo.getPayout().toString(),
+                                      txo.getTx());
     }
 
     public JTransaction convertToJadeTransaction(Transaction t) {
@@ -177,8 +179,10 @@ public class DataConverter {
 
     private TransactionOutput convertFromJadeTransactionOutput(JTransactionOutput txo) {
         return new TransactionOutput(StringUtil.stringToPublicKey(txo.getPubkey()),
+                                     txo.getHashId(),
                                      txo.getPrevHash(),
-                                     new BigDecimal(txo.getPayout()));
+                                     new BigDecimal(txo.getPayout()),
+                                     txo.getTx());
     }
 
 
