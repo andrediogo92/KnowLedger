@@ -207,6 +207,8 @@ public final class BlockChain {
      * <p>
      * May trigger difficulty recalculation.
      *
+     * TODO: Verify coinbase.
+     *
      * @param b Block to add
      * @return Whether block was successfully added.
      */
