@@ -1,9 +1,9 @@
 package pt.um.lei.masb.blockchain;
 
 import pt.um.lei.masb.blockchain.data.*;
+import pt.um.lei.masb.blockchain.utils.StringUtil;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import java.math.BigDecimal;
@@ -18,7 +18,7 @@ import java.util.Set;
  * The coinbase transaction. Pays out to contributors to the blockchain.
  */
 @Entity
-public final class Coinbase implements Sizeable, IHashed {
+public final class Coinbase implements Sizeable, Hashed {
     private static final int TIME_BASE = 5;
     private static final int VALUE_BASE = 2;
     private static final int BASE = 3;
@@ -27,6 +27,9 @@ public final class Coinbase implements Sizeable, IHashed {
     private static final int DATA = 5;
     private static final MathContext MATH_CONTEXT = new MathContext(8, RoundingMode.HALF_EVEN);
 
+    @Id
+    @GeneratedValue
+    private long id;
 
     @OneToMany(cascade = CascadeType.ALL,
                fetch = FetchType.EAGER,
@@ -38,7 +41,7 @@ public final class Coinbase implements Sizeable, IHashed {
     private BigDecimal coinbase;
 
 
-    @Id
+    @Basic(optional = false)
     private String hashId;
 
     /**
@@ -48,6 +51,7 @@ public final class Coinbase implements Sizeable, IHashed {
     protected Coinbase() {
         coinbase = new BigDecimal(0);
         payoutTXO = new HashSet<>();
+        hashId = recalculateHash();
     }
 
     public Coinbase(Set<TransactionOutput> payoutTXO,
@@ -74,25 +78,62 @@ public final class Coinbase implements Sizeable, IHashed {
         return coinbase;
     }
 
+    private String recalculateHash() {
+        return StringUtil.getDefaultCrypter()
+                         .applyHash(payoutTXO.stream()
+                                             .map(TransactionOutput::getHashId)
+                                             .reduce("",
+                                                     String::concat) + coinbase);
+    }
+
     /**
+     * Takes the new Transaction and attempts to calculate a fluctuation from
+     * the previous Transaction of same type and in the same geographical area.
+     *
+     * Adds a payout for the transaction's agent in a transaction output.
      * @param newT                  Transaction to contribute to payout.
      * @param latestKnown           Transaction to compare for fluctuation.
-     * @param latestUTXO            Transaction with last unspent
-     *                              transaction output for the new Transaction's publisher.
+     * @param latestUTXO            Last unspent transaction output for
+     *                              the new Transaction's publisher.
      *                              <p>
-     *                              If it's the first time for this identity, supply the
-     *                              origin block coinbase.
-     * @param cat                   Category of the transaction's data.
+     *                              If it's the first time for this identity, supply
+     *                              null.
      */
     protected void addToInput(@NotNull Transaction newT,
-                              @NotNull Transaction latestKnown,
-                              @NotNull Coinbase latestUTXO,
-                              @NotNull Category cat) {
-        var dt = newT.getSensorData();
-        var dt2 = latestKnown.getSensorData();
-        var deltaTime = getTimeDelta(dt, dt2);
+                              Transaction latestKnown,
+                              TransactionOutput latestUTXO) {
+        BigDecimal payout;
+        String lkHash;
+        String lUTXOHash;
+        //None are known for this area.
+        if (latestKnown == null) {
+            payout = calculateDiff(new BigDecimal("1"), new BigDecimal("1"), Coinbase.DATA);
+            lkHash = "";
+        } else {
+            payout = calculatePayout(newT.getSensorData(),
+                                     latestKnown.getSensorData());
+            lkHash = latestKnown.getHashId();
+        }
+        if (latestUTXO == null) {
+            lUTXOHash = "";
+        } else {
+            lUTXOHash = latestUTXO.getHashId();
+        }
+        coinbase = coinbase.add(payout);
+        addToOutputs(newT.getPublicKey(),
+                     lUTXOHash,
+                     newT.getHashId(),
+                     lkHash,
+                     payout);
+        hashId = recalculateHash();
+    }
+
+
+    private BigDecimal calculatePayout(SensorData dt, SensorData dt2) {
         BigDecimal deltaValue;
         BigDecimal payout;
+        var deltaTime = getTimeDelta(dt, dt2);
+        var cat = dt.getCategory();
         switch (cat) {
             case TEMPERATURE:
                 deltaValue = calculateDiffTemperature(dt.getTemperatureData(),
@@ -121,8 +162,7 @@ public final class Coinbase implements Sizeable, IHashed {
             default:
                 payout = new BigDecimal(0);
         }
-        coinbase = coinbase.add(payout);
-        addToOutputs(newT.getPublicKey(), latestUTXO, payout);
+        return payout;
     }
 
 
@@ -177,39 +217,29 @@ public final class Coinbase implements Sizeable, IHashed {
 
     /**
      * @param publicKey Public Key of transaction publisher.
-     * @param prevUTXO  Coinbase with previous known UTXO.
+     * @param prevUTXO  Previous known UTXO's hash.
+     * @param newT      Transaction to contribute to payout's hash.
+     * @param prev      Transaction compared for fluctuation's hash,
+     *                  might be empty.
      * @param payout    Payout amount to publisher.
      */
     private void addToOutputs(@NotNull PublicKey publicKey,
-                              @NotEmpty Coinbase prevUTXO,
+                              @NotNull String prevUTXO,
+                              @NotNull String newT,
+                              @NotNull String prev,
                               @NotNull BigDecimal payout) {
         payoutTXO.stream()
                  .filter(t -> t.getPublicKey().equals(publicKey))
                  .findAny()
-                 .ifPresentOrElse(t -> t.addToPayout(payout),
-                                  () -> fillInFromPreviousUTXO(publicKey, prevUTXO, payout));
+                 .ifPresentOrElse(t -> t.addToPayout(payout, newT, prev),
+                                  () -> payoutTXO.add(new TransactionOutput(publicKey,
+                                                                            prevUTXO,
+                                                                            payout,
+                                                                            newT,
+                                                                            prev)));
     }
 
 
-    /**
-     *
-     * @param publicKey             The public identity associated with an agent.
-     * @param prevUTXO              The coinbase containing the previous transaction
-     *                              output due to the agent.
-     * @param payout                The new payout to add to previous output.
-     */
-    private void fillInFromPreviousUTXO(@NotNull PublicKey publicKey,
-                                        @NotNull Coinbase prevUTXO,
-                                        @NotNull BigDecimal payout) {
-        var newPayout = prevUTXO.payoutTXO.stream()
-                                          .filter(t -> t.getPublicKey().equals(publicKey))
-                                          .findAny()
-                                          .map(TransactionOutput::getPayout)
-                                          .orElseGet(() -> new BigDecimal(0)).add(payout);
-        payoutTXO.add(new TransactionOutput(publicKey,
-                                            prevUTXO.hashId,
-                                            newPayout));
-    }
 
     private @NotNull BigDecimal calculateDiff(@NotNull BigDecimal deltaTime,
                                               @NotNull BigDecimal deltaValue,
