@@ -29,4 +29,9 @@ public final class SHA256Encrypter implements Crypter {
             throw new RuntimeException("Apply SHA256 problem", e);
         }
     }
+
+    @Override
+    public long hashSize() {
+        return 32;
+    }
 }
