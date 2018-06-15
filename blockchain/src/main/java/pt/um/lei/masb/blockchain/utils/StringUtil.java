@@ -80,9 +80,9 @@ public final class StringUtil {
 
 
     public static BigInteger getInitialDifficulty() {
-        var targetbuilder = new byte[256];
+        var targetbuilder = new byte[32];
         targetbuilder[0] = (byte) 0xE0;
-        for(int i=1; i<256;i++) {
+        for (int i = 1; i < 32; i++) {
             targetbuilder[i] = 0x0;
         }
         return new BigInteger(targetbuilder);
