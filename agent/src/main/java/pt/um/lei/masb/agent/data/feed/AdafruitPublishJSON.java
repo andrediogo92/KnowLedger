@@ -1,4 +1,4 @@
-package pt.um.lei.masb.agent;
+package pt.um.lei.masb.agent.data.feed;
 
 public class AdafruitPublishJSON {
     private String value;
