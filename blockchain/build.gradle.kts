@@ -1,7 +1,3 @@
-
-group = "pt.um.lei.masb"
-version = "1.0"
-
 plugins {
     `java-library`
 }
@@ -9,7 +5,7 @@ plugins {
 dependencies {
     implementation("com.h2database", "h2", project.extra["h2Version"] as String)
     implementation("org.hibernate", "hibernate-core", project.extra["hibernateVersion"] as String)
-    testImplementation("org.junit.platform", "junit-platform-runner", project.extra["junitRunnerVersion"] as String)
+    testRuntime("org.junit.platform", "junit-platform-runner", project.extra["junitRunnerVersion"] as String)
     testImplementation("org.junit.jupiter", "junit-jupiter-api", project.extra["junitVersion"] as String)
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", project.extra["junitVersion"] as String)
     testRuntimeOnly("org.junit.jupiter", "junit-jupiter-params", project.extra["junitVersion"] as String)
@@ -17,6 +13,8 @@ dependencies {
     implementation("org.hibernate.validator", "hibernate-validator", project.extra["hibernateValidatorVersion"] as String)
     implementation("org.bouncycastle", "bcprov-jdk15on", project.extra["bouncyCastleVersion"] as String)
     implementation("org.openjdk.jol", "jol-core", project.extra["jolVersion"] as String)
+    implementation("org.slf4j", "slf4j-api", extra["slf4j_version"] as String)
+    runtime("org.slf4j", "slf4j-simple", extra["slf4j_version"] as String)
 }
 
 
