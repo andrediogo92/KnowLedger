@@ -1,48 +1,49 @@
 package pt.um.lei.masb.agent.net;
 
+import pt.um.lei.masb.agent.data.DataSource;
+import pt.um.lei.masb.agent.data.apis.ApiSource;
 import pt.um.lei.masb.blockchain.data.Category;
 
-import java.net.URL;
-import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class JSONMappedURLs {
-    private URL apis[];
-    private Map<Category, URL[]> tcp;
-    private URL jade[];
+    private List<ApiSource> apis;
+    private Map<Category, DataSource[]> tcp;
+    private DataSource jade[];
 
     JSONMappedURLs() {
     }
 
-    public URL[] getApis() {
+    public List<ApiSource> getApis() {
         return apis;
     }
 
-    public Map<Category, URL[]> getTcp() {
+    public Map<Category, DataSource[]> getTcp() {
         return tcp;
     }
 
-    public URL[] getTemperatureCategory() {
-        return tcp.getOrDefault(Category.TEMPERATURE, new URL[0]);
+    public DataSource[] getTemperatureCategory() {
+        return tcp.getOrDefault(Category.TEMPERATURE, new DataSource[0]);
     }
 
-    public URL[] getHumidityCategory() {
-        return tcp.getOrDefault(Category.HUMIDITY, new URL[0]);
+    public DataSource[] getHumidityCategory() {
+        return tcp.getOrDefault(Category.HUMIDITY, new DataSource[0]);
     }
 
-    public URL[] getLuminosityCategory() {
-        return tcp.getOrDefault(Category.LUMINOSITY, new URL[0]);
+    public DataSource[] getLuminosityCategory() {
+        return tcp.getOrDefault(Category.LUMINOSITY, new DataSource[0]);
     }
 
-    public URL[] getNoiseCategory() {
-        return tcp.getOrDefault(Category.NOISE, new URL[0]);
+    public DataSource[] getNoiseCategory() {
+        return tcp.getOrDefault(Category.NOISE, new DataSource[0]);
     }
 
-    public URL[] getOtherCategory() {
-        return tcp.getOrDefault(Category.OTHER, new URL[0]);
+    public DataSource[] getOtherCategory() {
+        return tcp.getOrDefault(Category.OTHER, new DataSource[0]);
     }
 
-    public URL[] getJade() {
+    public DataSource[] getJade() {
         return jade;
     }
 
