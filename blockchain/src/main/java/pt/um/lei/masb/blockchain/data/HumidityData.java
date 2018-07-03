@@ -1,5 +1,6 @@
 package pt.um.lei.masb.blockchain.data;
 
+import pt.um.lei.masb.blockchain.Coinbase;
 import pt.um.lei.masb.blockchain.Sizeable;
 
 import javax.persistence.Basic;
@@ -16,7 +17,7 @@ import java.util.Objects;
  * As such possible measurements can be in g/kg, Kg/kg or percentage.
  */
 @Entity
-public final class HumidityData extends GeoData implements Sizeable {
+public final class HumidityData extends GeoData implements Sizeable, SelfInterval<HumidityData> {
     @Id
     @GeneratedValue
     private long id;
@@ -41,6 +42,21 @@ public final class HumidityData extends GeoData implements Sizeable {
         this.hum = hum;
         this.unit = unit;
     }
+
+    @Override
+    public @NotNull BigDecimal calculateDiff(@NotNull HumidityData oldHD) {
+        BigDecimal newH;
+        BigDecimal oldH;
+        if (unit == HUnit.RELATIVE) {
+            newH = hum;
+            oldH = oldHD.getHum();
+        } else {
+            newH = convertToKGbyKG();
+            oldH = oldHD.convertToKGbyKG();
+        }
+        return newH.subtract(oldH).divide(oldH, Coinbase.getMathContext());
+    }
+
 
 
     public BigDecimal convertToGbyKG() {

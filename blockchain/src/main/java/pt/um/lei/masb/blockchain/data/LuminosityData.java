@@ -1,11 +1,13 @@
 package pt.um.lei.masb.blockchain.data;
 
+import pt.um.lei.masb.blockchain.Coinbase;
 import pt.um.lei.masb.blockchain.Sizeable;
 
 import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -14,7 +16,7 @@ import java.util.Objects;
  * or a lighting unit, outputting a specific amount of lumens.
  */
 @Entity
-public final class LuminosityData extends GeoData implements Sizeable {
+public final class LuminosityData extends GeoData implements Sizeable, SelfInterval<LuminosityData> {
     @Id
     @GeneratedValue
     private long id;
@@ -39,6 +41,13 @@ public final class LuminosityData extends GeoData implements Sizeable {
         this.lum = lum;
         this.unit = unit;
     }
+
+    @Override
+    public @NotNull BigDecimal calculateDiff(@NotNull LuminosityData oldLD) {
+        return lum.subtract(oldLD.getLum())
+                  .divide(oldLD.getLum(), Coinbase.getMathContext());
+    }
+
 
 
     /**

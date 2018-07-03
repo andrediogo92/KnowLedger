@@ -1,11 +1,13 @@
 package pt.um.lei.masb.blockchain.data;
 
+import pt.um.lei.masb.blockchain.Coinbase;
 import pt.um.lei.masb.blockchain.Sizeable;
 
 import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.Objects;
 
@@ -14,7 +16,7 @@ import java.util.Objects;
  * Ambient Noise Level measured in dB.
  */
 @Entity
-public final class NoiseData extends GeoData implements Sizeable {
+public final class NoiseData extends GeoData implements Sizeable, SelfInterval<NoiseData> {
     @Id
     @GeneratedValue
     private long id;
@@ -52,6 +54,15 @@ public final class NoiseData extends GeoData implements Sizeable {
         this.peak = null;
         this.unit = NUnit.DBSPL;
     }
+
+    @Override
+    public @NotNull BigDecimal calculateDiff(@NotNull NoiseData oldND) {
+        var newN = relativeOrRMS.add(peak).abs();
+        var oldN = oldND.getNoiseLevel().add(oldND.getPeakOrBase()).abs();
+        return newN.subtract(oldN)
+                   .divide(oldN, Coinbase.getMathContext());
+    }
+
 
 
     /**

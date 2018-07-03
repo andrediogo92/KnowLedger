@@ -1,5 +1,6 @@
 package pt.um.lei.masb.blockchain.data;
 
+import pt.um.lei.masb.blockchain.Coinbase;
 import pt.um.lei.masb.blockchain.Sizeable;
 
 import javax.persistence.Basic;
@@ -16,7 +17,7 @@ import java.util.Objects;
  * idempotent methods to convert between them as needed.
  */
 @Entity
-public final class TemperatureData extends GeoData implements Sizeable {
+public final class TemperatureData extends GeoData implements Sizeable, SelfInterval<TemperatureData> {
 
     @Id
     @GeneratedValue
@@ -45,6 +46,13 @@ public final class TemperatureData extends GeoData implements Sizeable {
         this.unit = unit;
 
     }
+
+    @Override
+    public @NotNull BigDecimal calculateDiff(@NotNull TemperatureData oldTD) {
+        var oldT = oldTD.convertToCelsius();
+        return convertToCelsius().subtract(oldT).divide(oldT, Coinbase.getMathContext());
+    }
+
 
 
     /**
