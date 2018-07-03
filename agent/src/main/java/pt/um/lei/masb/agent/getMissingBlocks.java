@@ -12,20 +12,24 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
 import jade.lang.acl.MessageTemplate;
-import pt.um.lei.masb.agent.data.block.BlockOntology;
-import pt.um.lei.masb.agent.data.block.ontology.JBlock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import pt.um.lei.masb.agent.data.DataConverter;
+import pt.um.lei.masb.agent.messaging.block.BlockOntology;
+import pt.um.lei.masb.agent.messaging.block.ontology.JBlock;
 import pt.um.lei.masb.blockchain.BlockChain;
 
 import java.util.Random;
 
 public class getMissingBlocks extends Behaviour {
+    private static final Logger LOGGER = LoggerFactory.getLogger(getMissingBlocks.class);
     private Codec codec = new SLCodec();
     private BlockChain bc;
     private Ontology blOntology;
 
     public getMissingBlocks(BlockChain bc){
         try {
-            blOntology=new BlockOntology();
+            blOntology = new BlockOntology();
         } catch (BeanOntologyException e) {
             e.printStackTrace();
         }
@@ -40,6 +44,8 @@ public class getMissingBlocks extends Behaviour {
 
         DFAgentDescription dfd = new DFAgentDescription();
         DFAgentDescription[] agentList = new DFAgentDescription[0];
+
+        DataConverter d = new DataConverter();
         try {
             agentList = DFService.search(myAgent, dfd);
         } catch (FIPAException e) {
@@ -54,7 +60,7 @@ public class getMissingBlocks extends Behaviour {
             var msg = new ACLMessage(ACLMessage.REQUEST);
 
             msg.addReceiver(agent.getName());
-            msg.setContent(bc.getLastBlock().getHeader().getBlockHeight());
+            msg.setContent(Long.toString(bc.getLastBlock().getHeader().getBlockheight()));
 
             //Receive number of missing blocks
             ACLMessage num= myAgent.blockingReceive(3000);
@@ -70,9 +76,12 @@ public class getMissingBlocks extends Behaviour {
                         try {
                             if (blmsg != null) {
                                 ContentElement blce = myAgent.getContentManager().extractContent(blmsg);
-                                JBlock bl = (JBlock) blce;
-                                //Convert JBlock to Block
-                                bc.addBlock(bl);
+                                //Needs to be a message.
+                                if (blce instanceof JBlock) {
+                                    JBlock bl = (JBlock) blce;
+                                    //Convert JBlock to Block
+                                    bc.addBlock(d.convertFromJadeBlock(bl));
+                                }
                             }else{
                                 break;
                             }

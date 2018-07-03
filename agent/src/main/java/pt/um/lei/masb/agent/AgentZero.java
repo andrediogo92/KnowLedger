@@ -5,29 +5,25 @@ import jade.core.behaviours.ParallelBehaviour;
 import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAException;
-import jade.lang.acl.ACLMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pt.um.lei.masb.blockchain.Block;
 import pt.um.lei.masb.blockchain.BlockChain;
 import pt.um.lei.masb.blockchain.Ident;
 import pt.um.lei.masb.blockchain.Transaction;
 import pt.um.lei.masb.blockchain.utils.RingBuffer;
 
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Queue;
-import java.util.Random;
 
-public class agentZero extends Agent{
+public class AgentZero extends Agent {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AgentZero.class);
 
     //agent will try maximizing reward
     //sessionRewards could later be translated into user reward
     private double sessionRewards;
     private BlockChain bc;
     private Queue<Block> bl;
-    private PublicKey publicKey;
-    private PrivateKey privateKey;
     private RingBuffer<Transaction> toSend;
 
     @Override
@@ -38,13 +34,11 @@ public class agentZero extends Agent{
             DFService.register( this, dfd );
         }
         catch (FIPAException fe) {
-            fe.printStackTrace();
+            LOGGER.error("", fe);
         }
 
         toSend= new RingBuffer<>(3);
         var i = new Ident();
-        publicKey=i.getPublicKey();
-        privateKey=i.getPrivateKey();
         sessionRewards=0;
 
         Object[] args = getArguments();
@@ -54,7 +48,7 @@ public class agentZero extends Agent{
         var b= new ParallelBehaviour(this,ParallelBehaviour.WHEN_ALL) {
             @Override
             public int onEnd() {
-                System.out.println("Session Closed");
+                LOGGER.info("Session Closed");
                 return 0;
             }
         };

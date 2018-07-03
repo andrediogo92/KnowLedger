@@ -1,6 +1,6 @@
 package pt.um.lei.masb.blockchain;
 
-import pt.um.lei.masb.blockchain.data.*;
+import pt.um.lei.masb.blockchain.data.SensorData;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
 
 import javax.persistence.*;
@@ -78,12 +78,8 @@ public final class Coinbase implements Sizeable, Hashed {
         return coinbase;
     }
 
-    private String recalculateHash() {
-        return StringUtil.getDefaultCrypter()
-                         .applyHash(payoutTXO.stream()
-                                             .map(TransactionOutput::getHashId)
-                                             .reduce("",
-                                                     String::concat) + coinbase);
+    public static MathContext getMathContext() {
+        return MATH_CONTEXT;
     }
 
     /**
@@ -128,78 +124,12 @@ public final class Coinbase implements Sizeable, Hashed {
         hashId = recalculateHash();
     }
 
-
-    private BigDecimal calculatePayout(SensorData dt, SensorData dt2) {
-        BigDecimal deltaValue;
-        BigDecimal payout;
-        var deltaTime = getTimeDelta(dt, dt2);
-        var cat = dt.getCategory();
-        switch (cat) {
-            case TEMPERATURE:
-                deltaValue = calculateDiffTemperature(dt.getTemperatureData(),
-                                                      dt2.getTemperatureData());
-                payout = calculateDiff(deltaTime, deltaValue, Coinbase.DATA);
-                break;
-            case LUMINOSITY:
-                deltaValue = calculateDiffLuminosity(dt.getLuminosityData(),
-                                                     dt2.getLuminosityData());
-                payout = calculateDiff(deltaTime, deltaValue, Coinbase.DATA);
-                break;
-            case HUMIDITY:
-                deltaValue = calculateDiffHumidity(dt.getHumidityData(),
-                                                   dt2.getHumidityData());
-                payout = calculateDiff(deltaTime, deltaValue, Coinbase.DATA);
-                break;
-            case NOISE:
-                deltaValue = calculateDiffNoise(dt.getNoiseData(),
-                                                dt2.getNoiseData());
-                payout = calculateDiff(deltaTime, deltaValue, Coinbase.DATA);
-                break;
-            case OTHER:
-                deltaValue = new BigDecimal(0);
-                payout = calculateDiff(deltaTime, deltaValue, Coinbase.OTHER);
-                break;
-            default:
-                payout = new BigDecimal(0);
-        }
-        return payout;
-    }
-
-
-    private @NotNull BigDecimal calculateDiffTemperature(@NotNull TemperatureData newTD,
-                                                         @NotNull TemperatureData oldTD) {
-        var newT = newTD.convertToCelsius();
-        var oldT = oldTD.convertToCelsius();
-        return newT.subtract(oldT).divide(oldT, Coinbase.MATH_CONTEXT);
-    }
-
-    private @NotNull BigDecimal calculateDiffLuminosity(@NotNull LuminosityData newLD,
-                                                        @NotNull LuminosityData oldLD) {
-        return newLD.getLum()
-                    .subtract(oldLD.getLum())
-                    .divide(oldLD.getLum(), Coinbase.MATH_CONTEXT);
-    }
-
-    private @NotNull BigDecimal calculateDiffHumidity(@NotNull HumidityData newHD,
-                                                      @NotNull HumidityData oldHD) {
-        BigDecimal newH;
-        BigDecimal oldH;
-        if (newHD.getUnit() == HUnit.RELATIVE) {
-            newH = newHD.getHum();
-            oldH = oldHD.getHum();
-        } else {
-            newH = newHD.convertToKGbyKG();
-            oldH = oldHD.convertToKGbyKG();
-        }
-        return newH.subtract(oldH).divide(oldH, Coinbase.MATH_CONTEXT);
-    }
-
-    private @NotNull BigDecimal calculateDiffNoise(@NotNull NoiseData newND,
-                                                   @NotNull NoiseData oldND) {
-        var newN = newND.getNoiseLevel().add(newND.getPeakOrBase()).abs();
-        var oldN = oldND.getNoiseLevel().add(oldND.getPeakOrBase()).abs();
-        return newN.subtract(oldN)
-                   .divide(oldN, Coinbase.MATH_CONTEXT);
+    private String recalculateHash() {
+        var tx = payoutTXO.stream()
+                          .map(TransactionOutput::getHashId)
+                          .reduce("", String::concat);
+        return StringUtil.getDefaultCrypter()
+                         .applyHash(tx + coinbase);
     }
 
 
@@ -253,5 +183,38 @@ public final class Coinbase implements Sizeable, Hashed {
                                     .divide(standardDivisor, Coinbase.MATH_CONTEXT);
         var baseFactor = new BigDecimal(Coinbase.BASE).divide(standardDivisor, Coinbase.MATH_CONTEXT);
         return timeFactor.add(valueFactor).add(baseFactor);
+    }
+
+    private BigDecimal calculatePayout(SensorData dt, SensorData dt2) {
+        BigDecimal deltaValue;
+        BigDecimal payout;
+        var deltaTime = getTimeDelta(dt, dt2);
+        var cat = dt.getCategory();
+        switch (cat) {
+            case TEMPERATURE:
+                deltaValue = dt.getTemperatureData()
+                               .calculateDiff(dt2.getTemperatureData());
+                payout = calculateDiff(deltaTime, deltaValue, Coinbase.DATA);
+                break;
+            case LUMINOSITY:
+                deltaValue = dt.getLuminosityData().calculateDiff(dt2.getLuminosityData());
+                payout = calculateDiff(deltaTime, deltaValue, Coinbase.DATA);
+                break;
+            case HUMIDITY:
+                deltaValue = dt.getHumidityData().calculateDiff(dt2.getHumidityData());
+                payout = calculateDiff(deltaTime, deltaValue, Coinbase.DATA);
+                break;
+            case NOISE:
+                deltaValue = dt.getNoiseData().calculateDiff(dt2.getNoiseData());
+                payout = calculateDiff(deltaTime, deltaValue, Coinbase.DATA);
+                break;
+            case OTHER:
+                deltaValue = new BigDecimal(0);
+                payout = calculateDiff(deltaTime, deltaValue, Coinbase.OTHER);
+                break;
+            default:
+                payout = new BigDecimal(0);
+        }
+        return payout;
     }
 }

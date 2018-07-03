@@ -1,7 +1,9 @@
 package pt.um.lei.masb.agent.data;
 
-import pt.um.lei.masb.agent.data.block.ontology.*;
-import pt.um.lei.masb.agent.data.transaction.ontology.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import pt.um.lei.masb.agent.messaging.block.ontology.*;
+import pt.um.lei.masb.agent.messaging.transaction.ontology.*;
 import pt.um.lei.masb.blockchain.*;
 import pt.um.lei.masb.blockchain.data.*;
 import pt.um.lei.masb.blockchain.utils.StringUtil;
@@ -10,12 +12,10 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class DataConverter {
-    private static final Logger LOGGER = Logger.getLogger(DataConverter.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataConverter.class.getName());
 
     public DataConverter() {
     }
@@ -102,10 +102,10 @@ public class DataConverter {
         try (var ob = new ObjectOutputStream(b)) {
             ob.writeObject(otherData.getData());
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, e.getMessage());
+            LOGGER.error("", e.getMessage());
         }
-        return new JOtherData(otherData.getLat().toString(),
-                              otherData.getLng().toString(),
+        return new JOtherData(otherData.getLatitude().toString(),
+                              otherData.getLongitude().toString(),
                               otherData.getClass().getName(),
                               b.toByteArray());
     }
@@ -113,30 +113,30 @@ public class DataConverter {
     private JGeoData convertToJadeLuminosityData(LuminosityData luminosityData) {
         return new JLuminosityData(luminosityData.getLum().toString(),
                                    luminosityData.getUnit(),
-                                   luminosityData.getLat().toString(),
-                                   luminosityData.getLng().toString());
+                                   luminosityData.getLatitude().toString(),
+                                   luminosityData.getLongitude().toString());
     }
 
     private JGeoData convertToJadeHumidityData(HumidityData humidityData) {
         return new JHumidityData(humidityData.getHum().toString(),
                                  humidityData.getUnit(),
-                                 humidityData.getLat().toString(),
-                                 humidityData.getLng().toString());
+                                 humidityData.getLatitude().toString(),
+                                 humidityData.getLongitude().toString());
     }
 
     private JGeoData convertToJadeTemperatureData(TemperatureData temperatureData) {
         return new JTemperatureData(temperatureData.getTemperature().toString(),
                                     temperatureData.getUnit(),
-                                    temperatureData.getLat().toString(),
-                                    temperatureData.getLng().toString());
+                                    temperatureData.getLatitude().toString(),
+                                    temperatureData.getLongitude().toString());
     }
 
     private JGeoData convertToJadeNoiseData(NoiseData noiseData) {
         return new JNoiseData(noiseData.getNoiseLevel().toString(),
                               noiseData.getPeakOrBase().toString(),
                               noiseData.getUnit(),
-                              noiseData.getLat().toString(),
-                              noiseData.getLng().toString());
+                              noiseData.getLatitude().toString(),
+                              noiseData.getLongitude().toString());
     }
 
 
@@ -239,7 +239,7 @@ public class DataConverter {
                                    new BigDecimal(data.getLat()),
                                    new BigDecimal(data.getLng()));
         } catch (IOException | ClassNotFoundException e) {
-            LOGGER.log(Level.SEVERE, e.getMessage());
+            LOGGER.error("", e.getMessage());
             res = new Serializable() {
             };
         }

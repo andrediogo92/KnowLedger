@@ -7,7 +7,7 @@ import jade.domain.DFService;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAException;
 import jade.lang.acl.ACLMessage;
-import pt.um.lei.masb.agent.data.transaction.TransactionOntology;
+import pt.um.lei.masb.agent.messaging.transaction.TransactionOntology;
 import pt.um.lei.masb.blockchain.Transaction;
 import pt.um.lei.masb.blockchain.utils.RingBuffer;
 

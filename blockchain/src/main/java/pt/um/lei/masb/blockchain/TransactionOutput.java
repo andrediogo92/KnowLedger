@@ -60,10 +60,10 @@ public class TransactionOutput implements Sizeable, Hashed {
     }
 
     private String recalculateHash() {
+        var trx = tx.stream()
+                    .reduce("", String::concat);
         return StringUtil.getDefaultCrypter()
-                         .applyHash(tx.stream()
-                                      .reduce("",
-                                              String::concat) + StringUtil.getStringFromKey(publicKey));
+                         .applyHash(trx + StringUtil.getStringFromKey(publicKey));
     }
 
     @Override

@@ -1,5 +1,7 @@
 package pt.um.lei.masb.blockchain;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import pt.um.lei.masb.blockchain.persistance.BlockHeaderTransactions;
 import pt.um.lei.masb.blockchain.persistance.BlockTransactions;
 import pt.um.lei.masb.blockchain.utils.RingBuffer;
@@ -11,15 +13,13 @@ import javax.persistence.Id;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.math.BigInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @Entity
 public final class BlockChain {
     private static final BlockChain blockChain = new BlockChain();
     //new BlockChainTransactions().getBlockChain()
     //                            .orElse(new BlockChain());
-    private static final Logger LOGGER = Logger.getLogger("Blockchain");
+    private static final Logger LOGGER = LoggerFactory.getLogger(BlockChain.class);
     private static final long RECALC_TIME = 1228800;
 
     private static final int CACHE_SIZE = 40;
@@ -248,7 +248,7 @@ public final class BlockChain {
             var delta = new BigInteger("" + (stamp1 - stamp2) * 1000000 / RECALC_TIME);
             difficultyTarget = difficultyTarget.multiply(delta)
                                                .divide(new BigInteger("1000000"));
-        }, () -> LOGGER.log(Level.SEVERE, "Difficulty retrigger without 2048 blocks existant"));
+        }, () -> LOGGER.error("Difficulty retrigger without 2048 blocks existent"));
     }
 
     /**

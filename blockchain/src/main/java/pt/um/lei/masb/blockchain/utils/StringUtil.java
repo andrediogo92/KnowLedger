@@ -1,14 +1,15 @@
 package pt.um.lei.masb.blockchain.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public final class StringUtil {
-    private final static Logger LOGGER = Logger.getLogger("StringUtil");
+    private final static Logger LOGGER = LoggerFactory.getLogger(StringUtil.class);
     private final static Crypter DEFAULTCRYPTER = new SHA256Encrypter();
 
     //Ensure Bouncy Castle Crypto provider is present
@@ -35,7 +36,7 @@ public final class StringUtil {
             dsa.update(strByte);
             output = dsa.sign();
         } catch (GeneralSecurityException e) {
-            LOGGER.log(Level.SEVERE, e.getMessage());
+            LOGGER.error("", e.getMessage());
             throw new RuntimeException("ECDSA Signature problem", e);
         }
         return output;
@@ -51,7 +52,7 @@ public final class StringUtil {
             ecdsaVerify.update(data.getBytes());
             return ecdsaVerify.verify(signature);
         } catch (GeneralSecurityException e) {
-            LOGGER.log(Level.SEVERE, e.getMessage());
+            LOGGER.error("", e.getMessage());
             throw new RuntimeException("ECDSA Verification problem", e);
         }
     }
@@ -72,7 +73,7 @@ public final class StringUtil {
             var x509KeySpec = new X509EncodedKeySpec(c);
             returnKey = keyFact.generatePublic(x509KeySpec);
         } catch (GeneralSecurityException e) {
-            LOGGER.log(Level.SEVERE, e.getMessage());
+            LOGGER.error("", e.getMessage());
         }
 
         return returnKey;

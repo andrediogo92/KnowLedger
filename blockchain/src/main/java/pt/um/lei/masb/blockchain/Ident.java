@@ -1,17 +1,18 @@
 package pt.um.lei.masb.blockchain;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.persistence.Basic;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.validation.constraints.NotNull;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @Entity
 public class Ident {
-    private final static Logger LOGGER = Logger.getLogger("Ident");
+    private final static Logger LOGGER = LoggerFactory.getLogger(Ident.class);
 
     //Ensure Bouncy Castle Crypto provider is present
     static {
@@ -53,7 +54,7 @@ public class Ident {
             privateKey = keyPair.getPrivate();
             publicKey = keyPair.getPublic();
         } catch (GeneralSecurityException e) {
-            LOGGER.log(Level.SEVERE, e.getMessage());
+            LOGGER.error("", e.getMessage());
             throw new RuntimeException("Keygen problem", e);
         }
     }
