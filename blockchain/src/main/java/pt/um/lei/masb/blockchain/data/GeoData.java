@@ -1,5 +1,7 @@
 package pt.um.lei.masb.blockchain.data;
 
+import pt.um.lei.masb.blockchain.utils.GeoCoords;
+
 import javax.persistence.*;
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
@@ -15,17 +17,12 @@ public abstract class GeoData {
     @GeneratedValue
     private long id;
 
-
-    @Basic(optional = false)
-    private final BigDecimal lat;
-
-    @Basic(optional = false)
-    private final BigDecimal lng;
+    @Embedded
+    private final GeoCoords gc;
 
 
     protected GeoData() {
-        lat = null;
-        lng = null;
+        gc = new GeoCoords();
     }
 
     GeoData(@DecimalMin(value = "-90")
@@ -34,21 +31,20 @@ public abstract class GeoData {
             @DecimalMin(value = "-180")
             @DecimalMax(value = "180")
                     BigDecimal lng) {
-        this.lat = lat;
-        this.lng = lng;
+        gc = new GeoCoords(lat, lng);
     }
 
     /**
-     * @return Latitude for this sensor reading.
+     * @return Latitude for this data object.
      */
-    public BigDecimal getLat() {
-        return lat;
+    public BigDecimal getLatitude() {
+        return gc.getLatitude();
     }
 
     /**
-     * @return Longitude for this sensor reading.
+     * @return Longitude for this data object.
      */
-    public BigDecimal getLng() {
-        return lng;
+    public BigDecimal getLongitude() {
+        return gc.getLongitude();
     }
 }
