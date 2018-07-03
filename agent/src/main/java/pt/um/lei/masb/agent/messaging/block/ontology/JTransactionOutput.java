@@ -1,4 +1,4 @@
-package pt.um.lei.masb.agent.data.block.ontology;
+package pt.um.lei.masb.agent.messaging.block.ontology;
 
 import jade.content.Concept;
 

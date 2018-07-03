@@ -1,4 +1,4 @@
-package pt.um.lei.masb.agent.data.transaction;
+package pt.um.lei.masb.agent.messaging.transaction;
 
 import jade.content.onto.BasicOntology;
 import jade.content.onto.BeanOntology;
@@ -27,6 +27,6 @@ public class TransactionOntology extends BeanOntology {
     public TransactionOntology() throws BeanOntologyException {
         super(ONTOLOGY_NAME, BasicOntology.getInstance());
         //Ontology made up of all the transaction classes.
-        add("pt.um.lei.masb.agent.transaction.ontology");
+        add("pt.um.lei.masb.agent.messaging.transaction.ontology");
     }
 }

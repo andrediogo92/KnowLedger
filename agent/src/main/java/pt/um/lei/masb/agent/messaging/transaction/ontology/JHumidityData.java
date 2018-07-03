@@ -1,4 +1,4 @@
-package pt.um.lei.masb.agent.data.transaction.ontology;
+package pt.um.lei.masb.agent.messaging.transaction.ontology;
 
 import pt.um.lei.masb.blockchain.data.HUnit;
 

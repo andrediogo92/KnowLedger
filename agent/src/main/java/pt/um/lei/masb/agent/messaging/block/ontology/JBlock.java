@@ -1,7 +1,7 @@
-package pt.um.lei.masb.agent.data.block.ontology;
+package pt.um.lei.masb.agent.messaging.block.ontology;
 
 import jade.content.Concept;
-import pt.um.lei.masb.agent.data.transaction.ontology.JTransaction;
+import pt.um.lei.masb.agent.messaging.transaction.ontology.JTransaction;
 
 import java.util.List;
 
