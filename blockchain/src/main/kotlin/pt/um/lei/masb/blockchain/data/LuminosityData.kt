@@ -1,36 +1,45 @@
 package pt.um.lei.masb.blockchain.data
 
+import com.orientechnologies.orient.core.record.OElement
+import com.orientechnologies.orient.core.record.impl.ODocument
+import kotlinx.serialization.Serializable
 import pt.um.lei.masb.blockchain.Coinbase
+import java.io.InvalidClassException
 import java.math.BigDecimal
 
 /**
  * Luminosity data might be output by an ambient light sensor, using lux units
- * or a lighting unit, outputting a specific amount of lumens.
+ * or a lighting unit, outputting a specific amount of lumens, according to [unit].
  */
-class LuminosityData(
-        val lum: BigDecimal,
-        val unit: LUnit
-) : BlockChainData<LuminosityData> {
+@Serializable
+data class LuminosityData(
+    val lum: BigDecimal,
+    val unit: LUnit
+) : BlockChainData {
+    override fun store(): OElement =
+        ODocument("Luminosity").let {
+            it.setProperty("lum", lum)
+            it.setProperty(
+                "unit", when (unit) {
+                    LUnit.LUMENS -> 0x00.toByte()
+                    LUnit.LUX -> 0x01.toByte()
+                }
+            )
+            it
+        }
 
-    override fun calculateDiff(previous: LuminosityData): BigDecimal =
-            lum.subtract(previous.lum)
-                .divide(previous.lum, Coinbase.MATH_CONTEXT)
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is LuminosityData) return false
+    override fun calculateDiff(previous: SelfInterval): BigDecimal =
+        when (previous) {
+            is LuminosityData -> calculateDiffLum(previous)
+            else ->
+                throw InvalidClassException("SelfInterval supplied is not ${this::class.simpleName}")
+        }
 
-        if (lum != other.lum) return false
-        if (unit != other.unit) return false
+    private fun calculateDiffLum(previous: LuminosityData): BigDecimal =
+        lum.subtract(previous.lum)
+            .divide(previous.lum, Coinbase.MATH_CONTEXT)
 
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = lum.hashCode()
-        result = 31 * result + unit.hashCode()
-        return result
-    }
 
     override fun toString(): String {
         return "LuminosityData(lum=$lum, unit=$unit)"

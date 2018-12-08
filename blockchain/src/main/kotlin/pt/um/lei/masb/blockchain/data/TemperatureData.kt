@@ -1,6 +1,10 @@
 package pt.um.lei.masb.blockchain.data
 
+import com.orientechnologies.orient.core.record.OElement
+import com.orientechnologies.orient.core.record.impl.ODocument
+import kotlinx.serialization.Serializable
 import pt.um.lei.masb.blockchain.Coinbase
+import java.io.InvalidClassException
 import java.math.BigDecimal
 
 /**
@@ -8,37 +12,45 @@ import java.math.BigDecimal
  * idempotent methods to convert between them as needed.
  * <pw>
  */
+@Serializable
 class TemperatureData(
-        val temperature: BigDecimal,
-        val unit: TUnit
-) : BlockChainData<TemperatureData> {
+    val temperature: BigDecimal,
+    val unit: TUnit
+) : BlockChainData {
+    override fun store(): OElement =
+        ODocument("Temperature").let {
+            it.setProperty("temperature", temperature)
+            it.setProperty(
+                "unit", when (unit) {
+                    TUnit.CELSIUS -> 0x00.toByte()
+                    TUnit.FAHRENHEIT -> 0x01.toByte()
+                    TUnit.KELVIN -> 0x02.toByte()
+                    TUnit.RANKINE -> 0x03.toByte()
+                }
+            )
+            it
+        }
 
-    override fun calculateDiff(previous: TemperatureData): BigDecimal {
-        val oldT = previous.unit.convertTo(previous.temperature, TUnit.CELSIUS)
+    override fun calculateDiff(previous: SelfInterval): BigDecimal =
+        when (previous) {
+            is TemperatureData -> calculateDiffTemp(previous)
+            else ->
+                throw InvalidClassException("SelfInterval supplied is not ${this::class.simpleName}")
+        }
+
+
+    private fun calculateDiffTemp(previous: TemperatureData): BigDecimal {
+        val oldT = previous.unit.convertTo(
+            previous.temperature,
+            TUnit.CELSIUS
+        )
         return unit.convertTo(temperature, TUnit.CELSIUS)
             .subtract(oldT)
             .divide(oldT, Coinbase.MATH_CONTEXT)
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is TemperatureData) return false
-
-        if (temperature != other.temperature) return false
-        if (unit != other.unit) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = temperature.hashCode()
-        result = 31 * result + unit.hashCode()
-        return result
-    }
-
-    override fun toString(): String {
-        return "TemperatureData(temperature=$temperature, unit=$unit)"
-    }
+    override fun toString(): String =
+        "TemperatureData(temperature=$temperature,unit=$unit)"
 
 
 }

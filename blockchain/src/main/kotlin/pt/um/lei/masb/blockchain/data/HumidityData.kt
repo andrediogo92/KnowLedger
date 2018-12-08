@@ -1,19 +1,43 @@
 package pt.um.lei.masb.blockchain.data
 
+import com.orientechnologies.orient.core.record.impl.ODocument
+import kotlinx.serialization.Serializable
 import pt.um.lei.masb.blockchain.Coinbase
+import java.io.InvalidClassException
 import java.math.BigDecimal
 
 
 /**
  * Humidity data can be expressed in Absolute/Volumetric or Relative humidity.
- * As such possible measurements can be in g/kg, Kg/kg or percentage.
+ * As such possible measurements can be in g/kg, Kg/kg or percentage expressed by the [unit].
  */
-class HumidityData(
-        val hum: BigDecimal,
-        val unit: HUnit
-) : BlockChainData<HumidityData> {
+@Serializable
+data class HumidityData(
+    val hum: BigDecimal,
+    val unit: HUnit
+) : BlockChainData {
+    override fun store(): ODocument =
+        ODocument("Humidity").let {
+            it.setProperty("hum", hum)
+            val hUnit = when (unit) {
+                HUnit.G_BY_KG -> 0x00.toByte()
+                HUnit.KG_BY_KG -> 0x01.toByte()
+                HUnit.RELATIVE -> 0x02.toByte()
+            }
+            it.setProperty("unit", hUnit)
+            it
+        }
 
-    override fun calculateDiff(previous: HumidityData): BigDecimal {
+
+    override fun calculateDiff(previous: SelfInterval): BigDecimal =
+        when (previous) {
+            is HumidityData ->
+                calculateDiffHum(previous)
+            else ->
+                throw InvalidClassException("SelfInterval supplied is not ${this::class.simpleName}")
+        }
+
+    private fun calculateDiffHum(previous: HumidityData): BigDecimal {
         val newH: BigDecimal
         val oldH: BigDecimal
         if (unit == HUnit.RELATIVE) {
@@ -27,22 +51,6 @@ class HumidityData(
             .divide(oldH, Coinbase.MATH_CONTEXT)
     }
 
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is HumidityData) return false
-
-        if (hum != other.hum) return false
-        if (unit != other.unit) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = hum.hashCode()
-        result = 31 * result + unit.hashCode()
-        return result
-    }
 
     override fun toString(): String {
         return "HumidityData(hum=$hum, unit=$unit)"
