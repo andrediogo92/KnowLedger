@@ -49,7 +49,7 @@ object PersistenceWrapper {
             }
         } else {
             val cl = schema.getClass(provider.id)
-            val (propsIn, propsNotIn) = cl
+            val (propsNotIn, propsIn) = cl
                 .declaredProperties()
                 .partition {
                     it.name !in provider.properties.keys
