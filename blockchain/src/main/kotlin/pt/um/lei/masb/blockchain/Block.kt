@@ -1,32 +1,31 @@
 package pt.um.lei.masb.blockchain
 
+import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
-import pt.um.lei.masb.blockchain.data.BlockChainData
 import pt.um.lei.masb.blockchain.data.MerkleTree
-import java.math.BigInteger
+import pt.um.lei.masb.blockchain.data.Storable
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
-class Block<T : BlockChainData<T>>(
-        val data: MutableList<Transaction<T>>,
-        val coinbase: Coinbase<T>,
-        val header: BlockHeader,
-        private var _merkleTree: MerkleTree) : Sizeable {
+class Block(
+    private val _data: MutableList<Transaction>,
+    val coinbase: Coinbase,
+    val header: BlockHeader,
+    private var _merkleTree: MerkleTree
+) : Sizeable, Storable {
 
-    companion object : KLogging() {
-        private var origins: MutableMap<Class<*>, Block<*>> = mutableMapOf()
 
-        const val MAX_BLOCK_SIZE = 500
-        const val MAX_MEM = 2097152
-    }
+    val data: List<Transaction>
+        get() = _data
 
     val merkleTree
         get() = _merkleTree
 
     @Transient
-    private val classSize: Long = ClassLayout.parseClass(this::class.java)
-        .instanceSize()
+    private val classSize: Long =
+        ClassLayout.parseClass(this::class.java)
+            .instanceSize()
 
     @Transient
     private var headerSize: Long = 0
@@ -35,20 +34,37 @@ class Block<T : BlockChainData<T>>(
     private var transactionsSize: Long = 0
 
     //Consider only the class size contribution to size.
-    //Makes the total block size in the possible ballpark of 2MB + merkleTree graph size.
+    //Makes the total block size in the possible ballpark of 2MB + merkleRoot graph size.
     @Transient
     private var merkleTreeSize: Long = ClassLayout.parseClass(MerkleTree::class.java)
         .instanceSize()
 
 
-    constructor(blockChainId: BlockChainId,
-                previousHash: String,
-                difficulty: BigInteger,
-                blockheight: Long) : this(mutableListOf(),
-                                          Coinbase(blockChainId),
-                                          BlockHeader(blockChainId, previousHash, difficulty, blockheight),
-                                          MerkleTree()) {
+    override val approximateSize: Long
+        get() = classSize + transactionsSize + headerSize
+
+    constructor(
+        blockChainId: BlockChainId,
+        previousHash: Hash,
+        difficulty: Difficulty,
+        blockheight: Long
+    ) : this(
+        mutableListOf(),
+        Coinbase(),
+        BlockHeader(
+            blockChainId,
+            previousHash,
+            difficulty,
+            blockheight
+        ),
+        MerkleTree()
+    ) {
         headerSize = header.approximateSize
+    }
+
+
+    override fun store(): OElement {
+        TODO("not implemented")
     }
 
     /**
@@ -58,31 +74,35 @@ class Block<T : BlockChainData<T>>(
      *                      in case block has changed.
      * @param time          Whether to invalidate block calculations due to
      *                      timestamp (every couple of seconds).
+     * @param clazz         The block's effective underlying class.
      * @return Whether the block was successfully mined.
      */
-    fun attemptMineBlock(invalidate: Boolean, time: Boolean): Boolean {
+    fun attemptMineBlock(
+        invalidate: Boolean,
+        time: Boolean
+    ): Boolean {
         //Can't mine origin block.
-        if (this == origins[this::class.typeParameters[0].javaClass]) {
+        if (this == origins[header.blockChainId]) {
             return false
         }
         if (invalidate && time) {
             _merkleTree = MerkleTree.buildMerkleTree(coinbase, data)
-            header.merkleRoot = merkleTree.root
-            header.timestamp = ZonedDateTime.now(ZoneOffset.UTC)
+            header._merkleRoot = merkleTree.root
+            header._timestamp = ZonedDateTime.now(ZoneOffset.UTC)
                 .toInstant()
             header.zeroNonce()
         } else if (invalidate) {
             _merkleTree = MerkleTree.buildMerkleTree(coinbase, data)
-            header.merkleRoot = merkleTree.root
+            header._merkleRoot = merkleTree.root
             header.zeroNonce()
         } else if (time) {
-            header.timestamp = ZonedDateTime.now(ZoneOffset.UTC)
+            header._timestamp = ZonedDateTime.now(ZoneOffset.UTC)
                 .toInstant()
             header.zeroNonce()
         }
         header.updateHash()
-        //TODO convert difficulty into hash correctly.
-        return if (header.currentHash < header.difficulty.toString()) {
+        val curDiff = header.currentHash.toDifficulty()
+        return if (curDiff < header.difficulty) {
             logger.info { "Block Mined!!! : ${header.currentHash}" }
             logger.info { "Block contains: ${toString()}" }
             true
@@ -94,15 +114,15 @@ class Block<T : BlockChainData<T>>(
 
     /**
      * Add a single new transaction.
-     * <pw>
+     *
      * Checks if block is sized correctly.
-     * <pw>
+     *
      * Checks if the transaction is valid.
      *
      * @param transaction   Transaction to attempt to add to the block.
      * @return Whether the transaction was valid and cprrectly inserted.
      */
-    fun addTransaction(transaction: Transaction<T>): Boolean {
+    fun addTransaction(transaction: Transaction): Boolean {
         val transactionSize = transaction.approximateSize
         if (transactionsSize + headerSize + classSize + merkleTreeSize + transactionSize < MAX_MEM) {
             if (data.size < MAX_BLOCK_SIZE) {
@@ -119,27 +139,23 @@ class Block<T : BlockChainData<T>>(
     }
 
     /**
-     * Transactions are sorted in descending order of data timestamp.
+     * Transactions are sorted in descending order of data _timestamp.
      *
      * @param transaction Transaction to insert in descending order.
      */
-    private fun insertSorted(transaction: Transaction<T>) {
-        data.add(transaction)
-        data.sortByDescending { t -> t.data.instant }
+    private fun insertSorted(transaction: Transaction) {
+        _data.add(transaction)
+        _data.sortByDescending { t -> t.data.instant }
     }
-
-    override val approximateSize: Long
-        get() = classSize + transactionsSize + headerSize
 
     /**
      * Recalculates the entire block size.
-     * <p>
+     *
      * Is somewhat time consuming and only necessary if:
-     * <ol>
-     *  <li>    There is a need to calculate the effective block size after deserialization
-     *  <li>    There is a need to calculate the effective block size after retrieval
-     *          of a block from a database.
-     * </ol>
+     *
+     *      1. There is a need to calculate the effective block size after deserialization
+     *      2. There is a need to calculate the effective block size after retrieval
+     *         of a block from a database.
      */
     fun resetApproximateSize() {
         headerSize = header.approximateSize
@@ -149,22 +165,42 @@ class Block<T : BlockChainData<T>>(
         merkleTreeSize = merkleTree.approximateSize
     }
 
-
     fun verifyTransactions(): Boolean {
         return merkleTree.verifyBlockTransactions(coinbase, data)
     }
 
-    override fun toString(): String {
-        val sb = StringBuilder()
-        sb.append('{')
-            .append(' ')
-            .append(header.toString())
-            .append("Transactions: [")
-            .append(System.lineSeparator())
-        data.forEach { sb.append(it) }
-        sb.append(" ]")
-            .append(System.lineSeparator())
-            .append('}')
-        return sb.toString()
+    override fun toString(): String =
+        StringBuilder().let { sb: StringBuilder
+            ->
+            sb.append(
+                """
+                | Block: {
+                |   $coinbase
+                |   $header
+                |   Transactions: [
+                """.trimMargin()
+            )
+            data.forEach {
+                sb.append(
+                    """
+                    |       $it
+                    """.trimMargin()
+                )
+            }
+            sb.append(
+                """
+                |   ]
+                | }
+                """.trimMargin()
+            )
+            sb.toString()
+        }
+
+    companion object : KLogging() {
+        private var origins: MutableMap<BlockChainId, Block> = mutableMapOf()
+
+        const val MAX_BLOCK_SIZE = 500
+        const val MAX_MEM = 2097152
     }
+
 }
