@@ -31,9 +31,9 @@ class BlockChain(
         blockChainId,
         MAX_DIFFICULTY,
         0,
-        "0",
-        "0",
-        "",
+        emptyHash(),
+        emptyHash(),
+        emptyHash(),
         ZonedDateTime
             .of(
                 2018,
@@ -98,6 +98,7 @@ class BlockChain(
     ): SideChain? =
         sidechains[clazz]
 
+    @Suppress("UNCHECKED_CAST")
     fun <T : BlockChainData> getLoaderOf(
         clazz: Class<T>
     ): Loadable<T>? =

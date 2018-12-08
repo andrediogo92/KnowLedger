@@ -12,26 +12,36 @@ class SHA256Encrypter : Crypter {
      */
     override fun applyHash(input: String): Hash =
         try {
-            val digest = MessageDigest.getInstance("SHA-256")
+            val digest = MessageDigest.getInstance(
+                "SHA-256"
+            )
             //Applies sha256 to our input,
-            digest
-                .digest(input.toByteArray(Charsets.UTF_8))
-                .toString()
+            val rs = digest
+                .digest(input.toByteArray())
+            rs
         } catch (e: Exception) {
             logger.error(e) {}
-            throw RuntimeException("Apply SHA256 problem", e)
+            throw RuntimeException(
+                "Apply SHA256 problem",
+                e
+            )
         }
 
     override fun applyHash(input: ByteArray): Hash =
         try {
-            val digest = MessageDigest.getInstance("SHA-256")
+            val digest = MessageDigest.getInstance(
+                "SHA-256"
+            )
             //Applies sha256 to our input,
-            digest
+            val rs = digest
                 .digest(input)
-                .toString()
+            rs
         } catch (e: Exception) {
             logger.error(e) {}
-            throw RuntimeException("Apply SHA256 problem", e)
+            throw RuntimeException(
+                "Apply SHA256 problem",
+                e
+            )
         }
 
     override val hashSize: Long = 32

@@ -1,9 +1,9 @@
 package pt.um.lei.masb.blockchain
 
+import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import pt.um.lei.masb.blockchain.Ident.KeyGenerationException
-import pt.um.lei.masb.blockchain.persistance.IDENT
 import pt.um.lei.masb.blockchain.utils.stringToPrivateKey
 import pt.um.lei.masb.blockchain.utils.stringToPublicKey
 import java.security.GeneralSecurityException
@@ -26,6 +26,17 @@ object Ident : KLogging() {
 
     lateinit var publicKey: PublicKey
         private set
+
+    val keygen = KeyPairGenerator.getInstance(
+        "ECDSA",
+        "BC"
+    )
+
+    val random = SecureRandom.getInstanceStrong()
+
+    val ecSpec = ECGenParameterSpec(
+        "P-521"
+    )
 
 
     init {
@@ -53,7 +64,7 @@ object Ident : KLogging() {
 
 
     private fun loadFromDB(): Boolean = let {
-        val id = IDENT
+        val id: OElement? = null//IDENT
         if (id == null) {
             false
         } else {
@@ -71,16 +82,6 @@ object Ident : KLogging() {
 
 
     fun generateNewIdent(): Pair<PrivateKey, PublicKey> {
-        val keygen = KeyPairGenerator.getInstance(
-            "ECDSA",
-            "BC"
-        )
-        val random = SecureRandom.getInstance(
-            "SHA256PRNG"
-        )
-        val ecSpec = ECGenParameterSpec(
-            "prime512v1"
-        )
         // Initialize the key generator and generate a KeyPair
         keygen.initialize(ecSpec, random)
         //256 bytes provides an acceptable security level

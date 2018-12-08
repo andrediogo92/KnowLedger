@@ -9,6 +9,7 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.Security
 import java.security.Signature
+import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
 
@@ -52,7 +53,7 @@ fun applyECDSASig(privateKey: PrivateKey, input: String): ByteArray =
         dsa.update(strByte)
         dsa.sign()
     } catch (e: GeneralSecurityException) {
-        logger.error("", e.message)
+        logger.error(e) {}
         throw RuntimeException("ECDSA Signature problem", e)
     }
 
@@ -66,7 +67,7 @@ fun verifyECDSASig(publicKey: PublicKey, data: String, signature: ByteArray): Bo
         ecdsaVerify.update(data.toByteArray())
         ecdsaVerify.verify(signature)
     } catch (e: GeneralSecurityException) {
-        logger.error("", e.message)
+        logger.error(e) {}
         throw RuntimeException("ECDSA Verification problem", e)
     }
 
@@ -97,7 +98,7 @@ fun stringToPublicKey(s: String): PublicKey =
         val x509KeySpec = X509EncodedKeySpec(c)
         keyFact.generatePublic(x509KeySpec)
     } catch (e: GeneralSecurityException) {
-        logger.error("", e.message)
+        logger.error(e) {}
         throw e
     }
 
@@ -116,9 +117,9 @@ fun stringToPrivateKey(s: String): PrivateKey =
                 "ECDSA",
                 "BC"
             )
-        val x509KeySpec = X509EncodedKeySpec(c)
-        keyFact.generatePrivate(x509KeySpec)
+        val pkcs8KeySpec = PKCS8EncodedKeySpec(c)
+        keyFact.generatePrivate(pkcs8KeySpec)
     } catch (e: GeneralSecurityException) {
-        logger.error("", e.message)
+        logger.error(e) {}
         throw e
     }

@@ -42,12 +42,11 @@ data class TransactionOutput(
     ) : this(
         publicKey,
         prevCoinbase,
-        "",
+        emptyHash(),
         BigDecimal("0"),
         mutableSetOf<Hash>()
     ) {
         addToPayout(cumUTXO, newT, prev)
-        _hashId = digest(crypter)
     }
 
     override fun store(): OElement {
@@ -74,7 +73,7 @@ data class TransactionOutput(
                 $prevCoinbase
                 $hashId
                 $payout
-                ${tx.joinToString("") { it }}
+                ${tx.joinToString("") { it.print() }}
                 """.trimIndent()
         )
 

@@ -25,7 +25,7 @@ import java.time.temporal.ChronoField
 class Coinbase(
     private val _payoutTXO: MutableSet<TransactionOutput>,
     private var coinbase: Payout,
-    private var _hashId: String,
+    private var _hashId: Hash,
     @Transient
     private val payoutFormula: DataFormula
 ) : Sizeable, Hashed, Hashable, Storable {
@@ -34,7 +34,7 @@ class Coinbase(
     val payoutTXO: Set<TransactionOutput>
         get() = _payoutTXO
 
-    override val hashId: String
+    override val hashId: Hash
         get() = _hashId
 
     val coinbasePayout: Payout
@@ -50,14 +50,14 @@ class Coinbase(
 
 
     init {
-        if (_hashId == "") _hashId = digest(crypter)
+        if (_hashId.contentEquals(emptyHash())) _hashId = digest(crypter)
     }
 
 
     constructor() : this(
         mutableSetOf(),
         BigDecimal.ZERO,
-        "",
+        emptyHash(),
         ::calculateDiff
     )
 
@@ -96,8 +96,8 @@ class Coinbase(
         latestUTXO: TransactionOutput?
     ) {
         val payout: Payout
-        val lkHash: String
-        val lUTXOHash: String = latestUTXO?.hashId ?: ""
+        val lkHash: Hash
+        val lUTXOHash: Hash = latestUTXO?.hashId ?: emptyHash()
         //None are known for this area.
         if (latestKnown == null) {
             payout = payoutFormula(
@@ -110,7 +110,7 @@ class Coinbase(
                 THRESHOLD,
                 MATH_CONTEXT
             )
-            lkHash = ""
+            lkHash = emptyHash()
         } else {
             payout = calculatePayout(
                 newT.data,
@@ -156,9 +156,9 @@ class Coinbase(
      */
     private fun addToOutputs(
         publicKey: PublicKey,
-        prevUTXO: String,
-        newT: String,
-        prev: String,
+        prevUTXO: Hash,
+        newT: Hash,
+        prev: Hash,
         payout: Payout
     ) {
         _payoutTXO
@@ -200,7 +200,9 @@ class Coinbase(
         c.applyHash(
             """
             $coinbase
-            ${payoutTXO.joinToString("") { it.hashId }}
+            ${payoutTXO.joinToString("") {
+                it.hashId.print()
+            }}
         """.trimIndent()
         )
 

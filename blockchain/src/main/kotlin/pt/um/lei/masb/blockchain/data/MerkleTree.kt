@@ -24,7 +24,7 @@ class MerkleTree(
 
         //levelIndex[index] points to leftmost node at level index of the tree
         while (i >= levelIndex[(levelIndex.size - 1)]) {
-            if (collapsedTree[i] == hash) {
+            if (collapsedTree[i].contentEquals(hash)) {
                 res = true
                 break
             }
@@ -39,7 +39,7 @@ class MerkleTree(
 
         //levelIndex[index] points to leftmost node at level index of the tree.
         while (i >= levelIndex[levelIndex.size - 1]) {
-            if (collapsedTree[i] == hash) {
+            if (collapsedTree[i].contentEquals(hash)) {
                 res = i
                 break
             }
@@ -70,7 +70,7 @@ class MerkleTree(
         hash: Hash,
         level: Int
     ): Boolean {
-        var res: Boolean = hash == (collapsedTree[index])
+        var res: Boolean = hash.contentEquals((collapsedTree[index]))
         var index = index
         var level = level
         var hash: Hash
@@ -109,7 +109,7 @@ class MerkleTree(
             //Index of parent is at the start of the last level
             // + the distance from start of this level / 2
             index = levelIndex[level] + (delta / 2)
-            res = hash == (collapsedTree[index])
+            res = hash.contentEquals((collapsedTree[index]))
         }
         return res
     }
@@ -164,12 +164,12 @@ class MerkleTree(
                 if ((level + 2 != levelIndex.size && delta + 1 == levelIndex[level + 2])
                     || delta + 1 == collapsedTree.size
                 ) {
-                    if (collapsedTree[i] != (
-                                crypter.applyHash(
-                                    collapsedTree[delta] +
-                                            collapsedTree[delta]
-                                )
-                                )
+                    if (!collapsedTree[i].contentEquals(
+                            (crypter.applyHash(
+                                collapsedTree[delta] +
+                                        collapsedTree[delta]
+                            ))
+                        )
                     ) {
                         res = false
                         break
@@ -178,12 +178,12 @@ class MerkleTree(
 
                 //Then it's a regular left leaf.
                 else {
-                    if (collapsedTree[i] != (
-                                crypter.applyHash(
-                                    collapsedTree[delta] +
-                                            collapsedTree[delta + 1]
-                                )
-                                )
+                    if (!collapsedTree[i].contentEquals(
+                            (crypter.applyHash(
+                                collapsedTree[delta] +
+                                        collapsedTree[delta + 1]
+                            ))
+                        )
                     ) {
                         res = false
                         break
@@ -203,13 +203,13 @@ class MerkleTree(
         var i = levelIndex[levelIndex.size - 1] + 1
         var res = true
         val arr = data.map(Hashed::hashId)
-        if (collapsedTree[i - 1] == coinbase.hashId) {
+        if (collapsedTree[i - 1].contentEquals(coinbase.hashId)) {
             for (it in arr) {
 
                 //There are at least as many transactions.
                 //They match the ones in the merkle tree.
                 if (i < collapsedTree.size &&
-                    it == collapsedTree[i]
+                    it.contentEquals(collapsedTree[i])
                 ) {
                     i++
                 } else {
@@ -244,7 +244,9 @@ class MerkleTree(
          */
         fun buildMerkleTree(data: List<Hashed>): MerkleTree {
             val treeLayer = mutableListOf<Array<Hash>>()
-            treeLayer.add(data.map(Hashed::hashId).toTypedArray())
+            treeLayer.add(
+                data.map(Hashed::hashId).toTypedArray()
+            )
             return buildLoop(treeLayer)
         }
 
@@ -264,7 +266,12 @@ class MerkleTree(
             data: List<Hashed>
         ): MerkleTree {
             val treeLayer = mutableListOf<Array<Hash>>()
-            treeLayer.add(arrayOf(coinbase.hashId, *data.map(Hashed::hashId).toTypedArray()))
+            treeLayer.add(
+                arrayOf(
+                    coinbase.hashId,
+                    *data.map(Hashed::hashId).toTypedArray()
+                )
+            )
             return buildLoop(treeLayer)
         }
 

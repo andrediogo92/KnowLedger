@@ -1,6 +1,7 @@
 package pt.um.lei.masb.blockchain.data
 
 import org.openjdk.jol.info.ClassLayout
+import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.Sizeable
 import pt.um.lei.masb.blockchain.utils.Crypter
 import pt.um.lei.masb.blockchain.utils.GeoCoords
@@ -66,7 +67,7 @@ data class PhysicalData(
         data
     )
 
-    override fun digest(c: Crypter): String =
+    override fun digest(c: Crypter): Hash =
         c.applyHash(
             """
                 $instant

@@ -1,15 +1,17 @@
 package pt.um.lei.masb.blockchain
 
+import mu.KotlinLogging
 import java.math.BigDecimal
 import java.math.BigInteger
-import kotlin.experimental.or
+
+val logger = KotlinLogging.logger {}
 
 /**
- * Hash simbolizes a **unique identifier** for
+ * Hash symbolizes a **unique identifier** for
  * a data structure instance which subsumes its data
  * into an index.
  */
-typealias Hash = String
+typealias Hash = ByteArray
 
 
 /**
@@ -42,21 +44,21 @@ val INIT_DIFFICULTY: Difficulty = BigInteger(ByteArray(32).let {
 val MIN_DIFFICULTY: Difficulty = BigInteger.ZERO
 
 
-fun emptyHash(): Hash = ""
+fun emptyHash(): Hash = ByteArray(0)
 
 fun Difficulty.print(): String = this.toString(HEXR)
 
 fun Hash.print(): String {
     // Only convert on print.
     val hexString = StringBuilder()
-    for (bHash in this.toByteArray()) {
-        val hex = (0xff.toByte() or bHash).toString(HEXR)
-        if (hex.length == 1) {
-            hexString.append('0')
-        }
+    for (bHash in this) {
+        val hex = String.format(
+            "%02X",
+            bHash
+        )
         hexString.append(hex)
     }
     return hexString.toString()
 }
 
-fun Hash.toDifficulty(): Difficulty = BigInteger(this.toByteArray())
+fun Hash.toDifficulty(): Difficulty = BigInteger(this)
