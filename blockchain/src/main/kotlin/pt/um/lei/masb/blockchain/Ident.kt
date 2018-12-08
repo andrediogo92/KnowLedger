@@ -37,7 +37,9 @@ object Ident : KLogging() {
         }
         if (!loadFromDB()) {
             try {
-                generateNewIdent()
+                val (prKey, pubKey) = generateNewIdent()
+                privateKey = prKey
+                publicKey = pubKey
             } catch (e: GeneralSecurityException) {
                 logger.error(e) {}
                 throw KeyGenerationException(
@@ -68,7 +70,7 @@ object Ident : KLogging() {
     }
 
 
-    private fun generateNewIdent() {
+    fun generateNewIdent(): Pair<PrivateKey, PublicKey> {
         val keygen = KeyPairGenerator.getInstance(
             "ECDSA",
             "BC"
@@ -84,9 +86,7 @@ object Ident : KLogging() {
         //256 bytes provides an acceptable security level
         val keyPair = keygen.generateKeyPair()
         // Set the public and private keys from the keyPair
-        privateKey = keyPair.private
-        publicKey = keyPair.public
-
+        return Pair(keyPair.private, keyPair.public)
     }
 
     class KeyGenerationException(
