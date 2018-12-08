@@ -1,23 +1,29 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+plugins {
+    kotlin("jvm")
+    id("org.jetbrains.kotlin.plugin.noarg")
+    id("kotlinx-serialization")
+}
 
 dependencies {
-    implementation(kotlin("reflect", project.extra["kotlin_version"] as String))
-    implementation(kotlin("stdlib", project.extra["kotlin_version"] as String))
-    implementation("com.orientechnologies", "orientdb-client", project.extra["orientDBVersion"] as String)
-    implementation("com.orientechnologies", "orientdb-core", project.extra["orientDBVersion"] as String)
-    implementation("com.orientechnologies", "orientdb-commons", project.extra["orientDBVersion"] as String)
-    implementation("com.orientechnologies", "orientdb-enterprise", project.extra["orientDBVersion"] as String)
-    implementation("com.orientechnologies", "orientdb-nativeos", project.extra["orientDBVersion"] as String)
-    implementation("com.orientechnologies", "orientdb-server", project.extra["orientDBVersion"] as String)
-    testRuntime("org.junit.platform", "junit-platform-runner", project.extra["junitRunnerVersion"] as String)
-    testImplementation("org.junit.jupiter", "junit-jupiter-api", project.extra["junitVersion"] as String)
-    testRuntimeOnly("org.junit.jupiter", "junit-jupiter-engine", project.extra["junitVersion"] as String)
-    testRuntimeOnly("org.junit.jupiter", "junit-jupiter-params", project.extra["junitVersion"] as String)
-    implementation("com.google.code.gson", "gson", project.extra["gsonVersion"] as String)
-    implementation("io.github.microutils", "kotlin-logging", extra["kotlinlog_version"] as String)
-    implementation("org.bouncycastle", "bcprov-jdk15on", project.extra["bouncyCastleVersion"] as String)
-    implementation("org.openjdk.jol", "jol-core", project.extra["jolVersion"] as String)
-    implementation("org.slf4j", "slf4j-api", extra["slf4j_version"] as String)
-    runtime("org.slf4j", "slf4j-simple", extra["slf4j_version"] as String)
+    implementation(kotlin("reflect", Versions.kotlin))
+    implementation(kotlin("stdlib", Versions.kotlin))
+    implementation(Libs.serialization)
+    Libs.orientDB.forEach {
+        implementation(it)
+    }
+    implementation(Libs.klog)
+    implementation(Libs.bouncyCastle)
+    implementation(Libs.jol)
+    Libs.slf4j.forEach {
+        implementation(it)
+    }
+    testImplementation(project(":blockchain"))
+    testImplementation(Libs.jUnitApi)
+    Libs.jUnitRuntime.forEach {
+        testRuntimeOnly(it)
+    }
 }
 
 
@@ -31,7 +37,12 @@ tasks.withType<Test> {
     }
 }
 
-repositories {
-    mavenCentral()
-}
 
+val compileKotlin: KotlinCompile by tasks
+compileKotlin.kotlinOptions {
+    jvmTarget = "1.8"
+}
+val compileTestKotlin: KotlinCompile by tasks
+compileTestKotlin.kotlinOptions {
+    jvmTarget = "1.8"
+}
