@@ -1,7 +1,16 @@
 package pt.um.lei.masb.blockchain.utils
 
+import pt.um.lei.masb.blockchain.Hash
+
+/**
+ * A simple interface for hashing a unique string
+ * representation of data.
+ */
 interface Crypter {
-    fun applyHash(input: String): String
 
     val hashSize: Long
+
+    fun applyHash(input: String): Hash
+
+    fun applyHash(input: ByteArray): Hash
 }
