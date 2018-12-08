@@ -19,6 +19,7 @@ dependencies {
     Libs.slf4j.forEach {
         implementation(it)
     }
+    testImplementation(Libs.bouncyCastle)
     testImplementation(project(":blockchain"))
     testImplementation(Libs.jUnitApi)
     Libs.jUnitRuntime.forEach {

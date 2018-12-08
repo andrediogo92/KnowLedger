@@ -29,11 +29,15 @@ data class LuminosityData(
         }
 
 
-    override fun calculateDiff(previous: SelfInterval): BigDecimal =
+    override fun calculateDiff(
+        previous: SelfInterval
+    ): BigDecimal =
         when (previous) {
             is LuminosityData -> calculateDiffLum(previous)
             else ->
-                throw InvalidClassException("SelfInterval supplied is not ${this::class.simpleName}")
+                throw InvalidClassException(
+                    "SelfInterval supplied is not ${this::class.simpleName}"
+                )
         }
 
     private fun calculateDiffLum(previous: LuminosityData): BigDecimal =

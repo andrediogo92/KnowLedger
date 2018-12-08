@@ -1,5 +1,5 @@
 object Versions {
-    val bouncyCastle = "1.59"
+    val bouncyCastle = "1.60"
     val coroutines = "1.0.1"
     val eclipsePaho = "1.2.0"
     val jade = "4.5.0"
