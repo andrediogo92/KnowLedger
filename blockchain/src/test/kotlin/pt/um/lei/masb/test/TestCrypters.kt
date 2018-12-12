@@ -11,7 +11,7 @@ class TestCrypters {
     companion object : KLogging()
 
     @Test
-    fun testSHA256Encrypter() {
+    fun `Test SHA256 encryption and base64 encoding`() {
         val shaer = SHA256Encrypter()
         val check = shaer.applyHash(
             "thisissampletext"

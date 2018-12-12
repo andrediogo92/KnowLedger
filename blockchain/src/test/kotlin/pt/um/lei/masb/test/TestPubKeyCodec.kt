@@ -15,11 +15,12 @@ import java.security.Key
  * Tests for encoding/decoding [Key]s.
  */
 class TestPubKeyCodec {
-    companion object : KLogging()
+    val pair = Ident.generateNewIdent()
+    val pr = pair.first
+    val pub = pair.second
 
     @Test
-    fun testEncodeDecode() {
-        val (pr, pub) = Ident.generateNewIdent()
+    fun `Test encode and decode of private and public keys`() {
         val encpr = getStringFromKey(pr)
         val encpub = getStringFromKey(pub)
         val decpr = stringToPrivateKey(encpr)
@@ -57,4 +58,8 @@ class TestPubKeyCodec {
             """.trimMargin()
         }
     }
+
+
+    companion object : KLogging()
+
 }
