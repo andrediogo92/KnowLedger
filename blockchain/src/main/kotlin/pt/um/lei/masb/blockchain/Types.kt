@@ -29,7 +29,7 @@ typealias Payout = BigDecimal
 typealias Difficulty = BigInteger
 
 
-val HEXR = 16
+const val HEXR = 16
 
 val MAX_DIFFICULTY: Difficulty = BigInteger(ByteArray(32) { 0xFF.toByte() }.let {
     it[0] = 0x7F.toByte()
@@ -48,17 +48,32 @@ fun emptyHash(): Hash = ByteArray(0)
 
 fun Difficulty.print(): String = this.toString(HEXR)
 
-fun Hash.print(): String {
-    // Only convert on print.
-    val hexString = StringBuilder()
-    for (bHash in this) {
-        val hex = String.format(
-            "%02X",
-            bHash
-        )
-        hexString.append(hex)
+fun Hash.print(): String =
+// Only convert on print.
+    StringBuilder().let {
+        for (bHash in this) {
+            val hex = String.format(
+                "%02X",
+                bHash
+            )
+            it.append(hex)
+        }
+        it.toString()
     }
-    return hexString.toString()
-}
+
+
+fun Hash.truncated(): String =
+// Only convert on truncation.
+    StringBuilder().let {
+        for (bHash in this.slice(0 until 10)) {
+            val hex = String.format(
+                "%02X",
+                bHash
+            )
+            it.append(hex)
+        }
+        it.toString()
+    }
+
 
 fun Hash.toDifficulty(): Difficulty = BigInteger(this)
