@@ -2,7 +2,6 @@ package pt.um.lei.masb.blockchain.utils
 
 import mu.KotlinLogging
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import java.security.GeneralSecurityException
 import java.security.Key
 import java.security.KeyFactory
 import java.security.PrivateKey
@@ -36,50 +35,117 @@ fun generateSignature(
 ): ByteArray =
     applyECDSASig(
         privateKey,
-        getStringFromKey(publicKey) +
-                //Marshall first.
-                data.digest(DEFAULT_CRYPTER)
+        publicKey.encoded + data.digest(DEFAULT_CRYPTER)
     )
 
 
 /**
  * Applies ECDSA Signature and returns the result (as bytes).
  */
-fun applyECDSASig(privateKey: PrivateKey, input: String): ByteArray =
-    try {
-        val dsa = Signature.getInstance("ECDSA", "BC")
-        dsa.initSign(privateKey)
-        val strByte = input.toByteArray()
-        dsa.update(strByte)
-        dsa.sign()
-    } catch (e: GeneralSecurityException) {
-        logger.error(e) {}
-        throw RuntimeException("ECDSA Signature problem", e)
-    }
+fun applyECDSASig(
+    privateKey: PrivateKey, input: String
+): ByteArray =
+    applyECDSASig(
+        privateKey,
+        input.toByteArray()
+    )
+
+
+/**
+ * Applies ECDSA Signature and returns the result (as bytes).
+ */
+fun applyECDSASig(
+    privateKey: PrivateKey,
+    input: ByteArray
+): ByteArray {
+    val dsa = Signature.getInstance(
+        "ECDSA",
+        "BC"
+    )
+    dsa.initSign(privateKey)
+    dsa.update(input)
+    return dsa.sign()
+}
 
 /**
  * Verifies a String signature.
  */
-fun verifyECDSASig(publicKey: PublicKey, data: String, signature: ByteArray): Boolean =
-    try {
-        val ecdsaVerify = Signature.getInstance("ECDSA", "BC")
-        ecdsaVerify.initVerify(publicKey)
-        ecdsaVerify.update(data.toByteArray())
-        ecdsaVerify.verify(signature)
-    } catch (e: GeneralSecurityException) {
-        logger.error(e) {}
-        throw RuntimeException("ECDSA Verification problem", e)
-    }
-
-fun base64encode(toEncode: ByteArray): String =
-    Base64.getEncoder().encodeToString(toEncode)
-
-fun base64decode(toDecode: String): ByteArray =
-    Base64.getDecoder().decode(toDecode)
+fun verifyECDSASig(
+    publicKey: PublicKey,
+    data: String,
+    signature: ByteArray
+): Boolean =
+    verifyECDSASig(
+        publicKey,
+        data.toByteArray(),
+        signature
+    )
 
 
-fun getStringFromKey(key: Key): String =
-    Base64.getEncoder().encodeToString(key.encoded)
+/**
+ * Verifies a ByteArray signature.
+ */
+fun verifyECDSASig(
+    publicKey: PublicKey,
+    data: ByteArray,
+    signature: ByteArray
+): Boolean {
+    val ecdsaVerify = Signature.getInstance(
+        "ECDSA",
+        "BC"
+    )
+    ecdsaVerify.initVerify(publicKey)
+    ecdsaVerify.update(data)
+    return ecdsaVerify.verify(signature)
+}
+
+
+fun base64encode(
+    toEncode: ByteArray
+): String =
+    Base64
+        .getEncoder()
+        .encodeToString(toEncode)
+
+fun base64decode(
+    toDecode: String
+): ByteArray =
+    Base64
+        .getDecoder()
+        .decode(toDecode)
+
+
+fun getStringFromKey(
+    key: Key
+): String =
+    base64encode(key.encoded)
+
+
+/**
+ * Accepts a [bytes] [ByteArray] encoded [PublicKey]
+ * and returns the resulting ECDSA [PublicKey] via
+ * an [X509EncodedKeySpec].
+ */
+fun byteEncodeToPublicKey(bytes: ByteArray): PublicKey =
+    KeyFactory.getInstance(
+        "ECDSA",
+        "BC"
+    ).generatePublic(
+        X509EncodedKeySpec(bytes)
+    )
+
+
+/**
+ * Accepts a [bytes] [ByteArray] encoded [PublicKey]
+ * and returns the resulting ECDSA [PrivateKey] via an [X509EncodedKeySpec].
+ */
+fun byteEncodeToPrivateKey(bytes: ByteArray): PrivateKey =
+    KeyFactory.getInstance(
+        "ECDSA",
+        "BC"
+    ).generatePrivate(
+        PKCS8EncodedKeySpec(bytes)
+    )
 
 
 /**
@@ -87,20 +153,7 @@ fun getStringFromKey(key: Key): String =
  * a ECDSA [PublicKey] via an [X509EncodedKeySpec].
  */
 fun stringToPublicKey(s: String): PublicKey =
-    try {
-        val c = Base64
-            .getDecoder()
-            .decode(s)
-        val keyFact = KeyFactory.getInstance(
-            "ECDSA",
-            "BC"
-        )
-        val x509KeySpec = X509EncodedKeySpec(c)
-        keyFact.generatePublic(x509KeySpec)
-    } catch (e: GeneralSecurityException) {
-        logger.error(e) {}
-        throw e
-    }
+    byteEncodeToPublicKey(base64decode(s))
 
 
 /**
@@ -108,18 +161,4 @@ fun stringToPublicKey(s: String): PublicKey =
  * a ECDSA [PrivateKey] via an [X509EncodedKeySpec].
  */
 fun stringToPrivateKey(s: String): PrivateKey =
-    try {
-        val c = Base64
-            .getDecoder()
-            .decode(s)
-        val keyFact =
-            KeyFactory.getInstance(
-                "ECDSA",
-                "BC"
-            )
-        val pkcs8KeySpec = PKCS8EncodedKeySpec(c)
-        keyFact.generatePrivate(pkcs8KeySpec)
-    } catch (e: GeneralSecurityException) {
-        logger.error(e) {}
-        throw e
-    }
+    byteEncodeToPrivateKey(base64decode(s))
