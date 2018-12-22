@@ -1,8 +1,8 @@
 package pt.um.lei.masb.test
 
 import mu.KLogging
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 import pt.um.lei.masb.blockchain.print
 import pt.um.lei.masb.blockchain.utils.SHA256Encrypter
 import pt.um.lei.masb.blockchain.utils.base64encode
