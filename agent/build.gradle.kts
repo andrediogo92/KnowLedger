@@ -13,7 +13,7 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib", Versions.kotlin))
+    compile(kotlin("stdlib", Versions.kotlin))
     implementation(Libs.coroutines)
     implementation(Libs.serialization)
     Libs.ktor.forEach {
@@ -28,6 +28,9 @@ dependencies {
     Libs.slf4j.forEach {
         runtimeOnly(it)
     }
+    testCompile(kotlin("test"))
+    testCompile(kotlin("test-junit"))
+    testCompile(Libs.assertK)
     testImplementation(Libs.jUnitApi)
     Libs.jUnitRuntime.forEach {
         testRuntimeOnly(it)
