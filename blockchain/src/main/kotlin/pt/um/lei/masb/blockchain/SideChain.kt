@@ -2,25 +2,23 @@ package pt.um.lei.masb.blockchain
 
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
-import pt.um.lei.masb.blockchain.data.Storable
-import pt.um.lei.masb.blockchain.persistance.getBlockByBlockHeight
-import pt.um.lei.masb.blockchain.persistance.getBlockByHeaderHash
-import pt.um.lei.masb.blockchain.persistance.getBlockByPrevHeaderHash
-import pt.um.lei.masb.blockchain.persistance.getBlockHeaderByPrevHeaderHash
-import pt.um.lei.masb.blockchain.persistance.getLatestBlock
-import pt.um.lei.masb.blockchain.persistance.getLatestBlockHeader
-import pt.um.lei.masb.blockchain.persistance.persistEntity
+import pt.um.lei.masb.blockchain.data.MerkleTree
+import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.persistance.PersistenceWrapper
+import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
 import pt.um.lei.masb.blockchain.utils.RingBuffer
 import java.math.BigDecimal
 import java.math.BigInteger
-import kotlin.reflect.KClass
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 class SideChain(
-    val clazz: KClass<*>,
-    val blockChainId: BlockChainId
-) : Storable {
-
+    val pw: PersistenceWrapper =
+        PersistenceWrapper.DEFAULT_DB,
+    val clazz: String,
+    val blockChainId: Hash
+) : Storable, BlockChainContract {
 
     @Transient
     private var cache: RingBuffer<Block> = RingBuffer(BlockChain.CACHE_SIZE)
@@ -29,12 +27,14 @@ class SideChain(
 
     private var lastRecalc: Int = 0
 
+    private var currentBlockheight = 0L
 
     /**
      * @return The tail-end block of the blockchain.
      */
     val lastBlock: Block?
-        get() = cache.peek() ?: getLatestBlock()
+        get() = cache.peek()
+            ?: pw.getLatestBlock(blockChainId)
 
 
     /**
@@ -43,12 +43,54 @@ class SideChain(
     val lastBlockHeader: BlockHeader?
         get() = cache.peek()
             ?.header
-            ?: getLatestBlockHeader()
+            ?: pw.getLatestBlockHeader(blockChainId)
 
 
-    override fun store(): OElement {
-        TODO("store not implemented")
+    constructor(
+        pw: PersistenceWrapper,
+        clazz: String,
+        blockChainId: Hash,
+        difficulty: Difficulty,
+        lastRecalc: Int,
+        currentBlockheight: Long
+    ) : this(
+        pw,
+        clazz,
+        blockChainId
+    ) {
+        this.difficultyTarget = difficulty
+        this.lastRecalc = lastRecalc
+        this.currentBlockheight = currentBlockheight
     }
+
+    override fun store(
+        session: NewInstanceSession
+    ): OElement =
+        session
+            .newInstance("SideChain")
+            .apply {
+                this.setProperty(
+                    "clazz",
+                    clazz
+                )
+                this.setProperty(
+                    "hash",
+                    blockChainId
+                )
+                this.setProperty(
+                    "difficultyTarget",
+                    difficultyTarget.toByteArray()
+                )
+                this.setProperty(
+                    "lastRecalc",
+                    lastRecalc
+                )
+                this.setProperty(
+                    "currentBlockheight",
+                    currentBlockheight
+                )
+            }
+
 
     /**
      * Checks integrity of the entire cached blockchain.
@@ -68,7 +110,7 @@ class SideChain(
             val curHeader = currentBlock.header
             val cmpHash = curHeader.digest(crypter)
             // compare registered hash and calculated hash:
-            if (curHeader.currentHash != cmpHash) {
+            if (!curHeader.currentHash.contentEquals(cmpHash)) {
                 logger.debug {
                     """
                     |Current Hashes not equal:
@@ -113,8 +155,12 @@ class SideChain(
      */
     fun getBlock(hash: Hash): Block? =
         cache.find {
-            it.header.currentHash == hash
-        } ?: getBlockByHeaderHash(hash)
+            it.header.currentHash
+                .contentEquals(hash)
+        } ?: pw.getBlockByHeaderHash(
+            blockChainId,
+            hash
+        )
 
     /**
      * @param blockheight Block height of block to fetch.
@@ -123,7 +169,10 @@ class SideChain(
     fun getBlockByHeight(blockheight: Long): Block? =
         cache.find {
             it.header.blockheight == blockheight
-        } ?: getBlockByBlockHeight(blockheight)
+        } ?: pw.getBlockByBlockHeight(
+            blockChainId,
+            blockheight
+        )
 
     /**
      * @param hash  Hash of block.
@@ -131,34 +180,50 @@ class SideChain(
      */
     fun getBlockHeaderByHash(hash: Hash): BlockHeader? =
         cache.find {
-            it.header.currentHash == hash
+            it.header.currentHash
+                .contentEquals(hash)
         }?.header
-            ?: getBlockHeaderByHash(hash)
+            ?: pw.getBlockHeaderByHash(
+                blockChainId,
+                hash
+            )
 
     /**
      * Checks whether the block with [hash] exists.
      */
     fun hasBlock(hash: Hash): Boolean =
         cache.any {
-            it.header.currentHash == hash
-        } || getBlockByHeaderHash(hash) != null
+            it.header.currentHash
+                .contentEquals(hash)
+        } || pw.getBlockByHeaderHash(
+            blockChainId,
+            hash
+        ) != null
 
     /**
      * Gets the block previous to that which has [hash].
      */
     fun getPrevBlock(hash: Hash): Block? =
         cache.find { h ->
-            h.header.currentHash != hash
-        } ?: getBlockByPrevHeaderHash(hash)
+            !h.header.currentHash
+                .contentEquals(hash)
+        } ?: pw.getBlockByPrevHeaderHash(
+            blockChainId,
+            hash
+        )
 
     /**
      * Gets the blockheader of the block previous to that which has [hash].
      */
     fun getPrevBlockHeaderByHash(hash: Hash): BlockHeader? =
         cache.find { h ->
-            h.header.currentHash != hash
+            !h.header.currentHash
+                .contentEquals(hash)
         }?.header
-            ?: getBlockHeaderByPrevHeaderHash(hash)
+            ?: pw.getBlockHeaderByPrevHeaderHash(
+                blockChainId,
+                hash
+            )
 
     /**
      * Add [block] to blockchain if block is valid.
@@ -170,18 +235,24 @@ class SideChain(
      * @return Whether block was successfully added.
      */
     fun addBlock(block: Block): Boolean {
-        if (block.header.previousHash == lastBlockHeader?.currentHash) {
-            if (block.header.currentHash.toDifficulty() <=
-                block.header.difficulty
+        lastBlockHeader?.currentHash?.let {
+            if (block.header.previousHash
+                    .contentEquals(it)
             ) {
-                if (block.verifyTransactions()) {
-                    if (lastRecalc == BlockChain.RECALC_TRIGGER) {
-                        recalculateDifficulty(block)
-                        lastRecalc = 0
-                    } else {
-                        lastRecalc++
+                if (block.header.currentHash.toDifficulty() <=
+                    block.header.difficulty
+                ) {
+                    if (block.verifyTransactions()) {
+                        if (lastRecalc == BlockChain.RECALC_TRIGGER) {
+                            recalculateDifficulty(block)
+                            lastRecalc = 0
+                        } else {
+                            lastRecalc++
+                        }
+                        return pw.persistEntity(
+                            block
+                        ) && cache.add(block)
                     }
-                    return persistEntity(block.store()) && cache.add(block)
                 }
             }
         }
@@ -191,16 +262,18 @@ class SideChain(
     /**
      * Difficulty is recalculated based on timestamp
      * difference between [triggerBlock] at current blockheight
-     * and Block at current blockheight - [RECALC_TRIGGER].
+     * and Block at current blockheight - [BlockChain.RECALC_TRIGGER].
      *
      * This difference is measured as a percentage of
-     * [RECALC_TIME] which is used to multiply by current
+     * [BlockChain.RECALC_TIME] which is used to multiply by current
      * difficulty target.
      *
      * @returns The recalculated difficulty or the same
      *          difficulty if re-triggered erroneously.
      */
-    private fun recalculateDifficulty(triggerBlock: Block): Difficulty {
+    private fun recalculateDifficulty(
+        triggerBlock: Block
+    ): Difficulty {
         val cmp = triggerBlock.header.blockheight
         val cstamp = triggerBlock.header.timestamp.epochSecond
         val fromHeight = cmp - BlockChain.RECALC_TRIGGER
@@ -271,17 +344,30 @@ class SideChain(
      *
      */
     fun newBlock(): Block? {
-        return if (lastBlock != null) {
-            val lh = lastBlock!!.header
-            Block(
-                blockChainId,
-                lh.currentHash,
-                difficultyTarget,
-                lh.blockheight + 1
-            )
-        } else {
-            logger.error { "Failure to fetch last block." }
-            null
+        return when {
+            (lastBlockHeader != null && currentBlockheight != 0L) -> {
+                val lh = lastBlockHeader
+                currentBlockheight++
+                Block(
+                    blockChainId,
+                    lh!!.currentHash,
+                    difficultyTarget,
+                    lh.blockheight + 1
+                )
+            }
+            (lastBlockHeader == null && currentBlockheight == 0L) -> {
+                currentBlockheight++
+                Block(
+                    blockChainId,
+                    getOriginHeader(blockChainId).currentHash,
+                    difficultyTarget,
+                    currentBlockheight
+                )
+            }
+            else -> {
+                logger.error { "Failure to fetch last block." }
+                null
+            }
         }
     }
 
@@ -306,5 +392,41 @@ class SideChain(
 
     companion object : KLogging() {
         val crypter = DEFAULT_CRYPTER
+
+        fun getOriginHeader(
+            blockChainId: Hash
+        ): BlockHeader =
+            BlockHeader(
+                blockChainId,
+                MAX_DIFFICULTY,
+                0,
+                emptyHash(),
+                emptyHash(),
+                emptyHash(),
+                ZonedDateTime
+                    .of(
+                        2018,
+                        3,
+                        13,
+                        0,
+                        0,
+                        0,
+                        0,
+                        ZoneOffset.UTC
+                    )
+                    .toInstant(),
+                0.toLong()
+            )
+
+        fun getOriginBlock(
+            blockChainId: Hash
+        ): Block =
+            Block(
+                mutableListOf(),
+                Coinbase(),
+                getOriginHeader(blockChainId),
+                MerkleTree()
+            )
+
     }
 }

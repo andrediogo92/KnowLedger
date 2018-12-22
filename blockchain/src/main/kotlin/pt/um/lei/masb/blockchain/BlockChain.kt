@@ -2,13 +2,18 @@ package pt.um.lei.masb.blockchain
 
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
-import pt.um.lei.masb.blockchain.data.*
-import pt.um.lei.masb.blockchain.persistance.getBlockChain
+import pt.um.lei.masb.blockchain.data.BlockChainData
+import pt.um.lei.masb.blockchain.data.HumidityData
+import pt.um.lei.masb.blockchain.data.LuminosityData
+import pt.um.lei.masb.blockchain.data.NoiseData
+import pt.um.lei.masb.blockchain.data.OtherData
+import pt.um.lei.masb.blockchain.data.TemperatureData
+import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.persistance.PersistenceWrapper
+import pt.um.lei.masb.blockchain.persistance.Storable
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Instant
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
 import java.util.*
 
 
@@ -16,108 +21,123 @@ import java.util.*
  * Create a geographically unbounded blockchain.
  */
 class BlockChain(
-    val id: String
-) : Storable {
-
-
-    val blockChainId = BlockChainId(
-        UUID.randomUUID(),
-        Instant.now(),
-        id
-    )
-
-
-    val originHeader = BlockHeader(
-        blockChainId,
-        MAX_DIFFICULTY,
-        0,
-        emptyHash(),
-        emptyHash(),
-        emptyHash(),
-        ZonedDateTime
-            .of(
-                2018,
-                3,
-                13,
-                0,
-                0,
-                0,
-                0,
-                ZoneOffset.UTC
+    val pw: PersistenceWrapper =
+        PersistenceWrapper.DEFAULT_DB,
+    val blockChainId: BlockChainId,
+    private val categories: MutableMap<String, CategoryTypes> =
+        mutableMapOf(
+            "Noise" to CategoryTypes(
+                mutableListOf(
+                    NoiseData::class.qualifiedName as String
+                )
+            ),
+            "Temperature" to CategoryTypes(
+                mutableListOf(
+                    TemperatureData::class.qualifiedName as String
+                )
+            ),
+            "Humidity" to CategoryTypes(
+                mutableListOf(
+                    HumidityData::class.qualifiedName as String
+                )
+            ),
+            "Luminosity" to CategoryTypes(
+                mutableListOf(
+                    LuminosityData::class.qualifiedName as String
+                )
+            ),
+            "Other" to CategoryTypes(
+                mutableListOf(
+                    OtherData::class.qualifiedName as String
+                )
             )
-            .toInstant(),
-        0.toLong()
-    )
+        ),
+    private val internalSidechains: MutableMap<String, SideChain> =
+        mutableMapOf()
+) : Storable, BlockChainContract {
 
-
-    val origin: Block = Block(
-        mutableListOf(),
-        Coinbase(),
-        originHeader,
-        MerkleTree()
-    )
-
-
-    private val categories = mutableMapOf(
-        "Noise" to mutableListOf(NoiseData::class.java),
-        "Temperature" to mutableListOf(TemperatureData::class.java),
-        "Humidity" to mutableListOf(HumidityData::class.java),
-        "Luminosity" to mutableListOf(LuminosityData::class.java),
-        "Other" to mutableListOf(OtherData::class.java)
-    )
-
-
-    private val _sidechains = mutableMapOf<Class<*>, SideChain>()
-    val sidechains: Map<Class<*>, SideChain>
-        get() = _sidechains
-
-
-    private val _loaders = mutableMapOf<Class<*>, Loadable<*>>()
-    val loaders: Map<Class<*>, Loadable<*>>
-        get() = _loaders
-
-
-    override fun store(): OElement {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    init {
+        pw.registerDefaultClusters(
+            blockChainId.hash
+        )
     }
+
+
+    val sidechains: Map<String, SideChain>
+        get() = internalSidechains
+
+    constructor(
+        pw: PersistenceWrapper =
+            PersistenceWrapper.DEFAULT_DB,
+        id: String
+    ) : this(
+        pw,
+        BlockChainId(
+            UUID.randomUUID(),
+            Instant.now(),
+            id
+        )
+    )
+
+    override fun store(
+        session: NewInstanceSession
+    ): OElement =
+        session
+            .newInstance("BlockChain")
+            .apply {
+                this.setProperty(
+                    "blockChainId",
+                    blockChainId.store(session)
+                )
+                this.setProperty(
+                    "categories",
+                    categories
+                )
+                this.setProperty(
+                    "sidechains",
+                    sidechains.mapValues {
+                        it.value.store(session)
+                    }
+                )
+            }
 
     fun <T : BlockChainData> getCategoryOf(
         s: Class<T>
-    ): String? =
-        categories.keys.find { cat ->
-            categories[cat]?.any { it == s } ?: false
+    ): String? {
+        val name = s::class.qualifiedName
+        return categories.keys.find { cat ->
+            categories[cat]?.categoryTypes?.any {
+                it == name
+            } ?: false
         }
+    }
 
     fun getClassesInCategory(
         s: String
-    ): List<Class<*>> =
-        categories[s] ?: emptyList()
+    ): List<String> =
+        categories[s]?.categoryTypes ?: emptyList()
 
     fun <T : BlockChainData> getSideChainOf(
         clazz: Class<T>
     ): SideChain? =
-        sidechains[clazz]
+        sidechains[clazz.name]
 
-    @Suppress("UNCHECKED_CAST")
-    fun <T : BlockChainData> getLoaderOf(
-        clazz: Class<T>
-    ): Loadable<T>? =
-        loaders[clazz] as Loadable<T>?
 
     fun <T : BlockChainData> registerSideChainOf(
         clazz: Class<T>,
-        category: String = "Misc",
-        loadable: Loadable<T>
+        category: String = "Misc"
     ): BlockChain =
-        if (!sidechains.keys.contains(clazz)) {
-            _sidechains[clazz] =
-                    SideChain(clazz.kotlin, blockChainId)
-            _loaders[clazz] =
-                    loadable
+        if (!sidechains.keys.contains(clazz.name)) {
+            internalSidechains[clazz.name] = SideChain(
+                pw,
+                clazz.name,
+                blockChainId.hash
+            )
             this
         } else {
             logger.info {
-                "Attempt to insert class already existent: ${clazz.canonicalName}"
+                """Attempt to insert class already existent:
+                 |  ${clazz.canonicalName}""".trimMargin()
             }
             this
         }
@@ -131,11 +151,19 @@ class BlockChain(
         const val RECALC_TRIGGER = 2048
 
         //Get a specific blockchain from DB
-        fun getBlockChainById(id: BlockChainId): BlockChain? =
-            getBlockChain(id)
+        fun getBlockChainById(
+            pw: PersistenceWrapper =
+                PersistenceWrapper.DEFAULT_DB,
+            id: BlockChainId
+        ): BlockChain? =
+            pw.getBlockChain(id)
 
-        fun getBlockChainByHash(hash: Hash): BlockChain? =
-            getBlockChain(hash)
+        fun getBlockChainByHash(
+            pw: PersistenceWrapper =
+                PersistenceWrapper.DEFAULT_DB,
+            hash: Hash
+        ): BlockChain? =
+            pw.getBlockChain(hash)
     }
 
 }
