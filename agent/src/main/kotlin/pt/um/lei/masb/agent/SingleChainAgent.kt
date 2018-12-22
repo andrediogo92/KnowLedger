@@ -18,7 +18,6 @@ import pt.um.lei.masb.blockchain.BlockChain
 import pt.um.lei.masb.blockchain.Ident
 import pt.um.lei.masb.blockchain.Transaction
 import pt.um.lei.masb.blockchain.data.BlockChainData
-import pt.um.lei.masb.blockchain.data.Loadable
 import pt.um.lei.masb.blockchain.utils.RingBuffer
 import java.util.*
 
@@ -46,7 +45,7 @@ class SingleChainAgent<T : BlockChainData> : Agent() {
 
         val cl = arguments[1] as Class<T>
         val sc = bc.getSideChainOf(cl)
-            ?: bc.registerSideChainOf(cl, arguments[2] as String, arguments[3] as Loadable<T>)
+            ?: bc.registerSideChainOf(cl, arguments[2] as String)
                 .getSideChainOf(cl)
             ?: throw ClassNotFoundException("SideChain failed to be materialized")
 

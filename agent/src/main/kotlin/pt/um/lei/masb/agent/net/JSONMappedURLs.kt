@@ -27,25 +27,23 @@ data class JSONMappedURLs(
          *
          * @param file the path string to a resource in the classpath.
          */
-        fun JSONFileUrlParser(file: String): JSONMappedURLs =
+        fun jsonFileUrlParser(file: String): JSONMappedURLs =
             InputStreamReader(
                 Container::class.java
                     .getResourceAsStream(file)
-            )
-                .use {
-                    JSON.parse(this.serializer(), it.readText())
-                }
+            ).use {
+                JSON.parse(this.serializer(), it.readText())
+            }
 
         /**
          * A parser for a file at the specified URI.
          *
          * @param file
          */
-        fun JSONFileUrlParser(file: URI): JSONMappedURLs =
-            FileReader(File(file))
-                .use {
-                    JSON.parse(this.serializer(), it.readText())
-                }
+        fun jsonFileUrlParser(file: URI): JSONMappedURLs =
+            FileReader(File(file)).use {
+                JSON.parse(this.serializer(), it.readText())
+            }
 
 
     }

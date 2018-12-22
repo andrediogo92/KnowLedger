@@ -64,7 +64,6 @@ class Container {
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
     }
 
     companion object : KLogging() {
@@ -73,8 +72,8 @@ class Container {
 
             val a = Container()
             val bc =
-                BlockChain.getBlockChainByHash(emptyHash())
-                    ?: BlockChain("smarthub")
+                BlockChain.getBlockChainByHash(hash = emptyHash())
+                    ?: BlockChain(id = "smarthub")
 
             a.initMainContainerInPlatform(
                 "localhost",

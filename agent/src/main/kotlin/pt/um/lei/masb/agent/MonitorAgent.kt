@@ -18,16 +18,15 @@ import pt.um.lei.masb.blockchain.Block
 import pt.um.lei.masb.blockchain.BlockChain
 import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.Transaction
-import pt.um.lei.masb.blockchain.data.BlockChainData
 import pt.um.lei.masb.blockchain.data.PhysicalData
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
 class MonitorAgent(
     id: Hash,
-    private val reduxers: Map<Class<BlockChainData>, Reduxer>
+    private val reduxers: Map<String, Reduxer>
 ) : Agent() {
-    private val bc: BlockChain? = BlockChain.getBlockChainByHash(id)
+    private val bc: BlockChain? = BlockChain.getBlockChainByHash(hash = id)
     private var json: AdafruitPublishJSON = AdafruitPublishJSON()
     private val broker = "tcp://io.adafruit.com:1883"
     private val mqttClient: MqttAsyncClient = MqttAsyncClient(
@@ -67,7 +66,7 @@ class MonitorAgent(
     }
 
     @ImplicitReflectionSerializer
-    private fun publishToFeed(cl: Class<*>, bl: Block) {
+    private fun publishToFeed(cl: String, bl: Block) {
         if (reduxers.containsKey(cl)) {
             val redux = reduxers[cl]!!
             for (dt in bl.data) {
