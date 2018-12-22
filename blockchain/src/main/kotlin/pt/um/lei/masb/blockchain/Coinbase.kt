@@ -5,8 +5,9 @@ import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
 import pt.um.lei.masb.blockchain.data.DataFormula
 import pt.um.lei.masb.blockchain.data.PhysicalData
-import pt.um.lei.masb.blockchain.data.Storable
 import pt.um.lei.masb.blockchain.data.calculateDiff
+import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.Crypter
 import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
 import pt.um.lei.masb.blockchain.utils.Hashable
@@ -28,7 +29,7 @@ class Coinbase(
     private var _hashId: Hash,
     @Transient
     private val payoutFormula: DataFormula
-) : Sizeable, Hashed, Hashable, Storable {
+) : Sizeable, Hashed, Hashable, Storable, BlockChainContract {
 
 
     val payoutTXO: Set<TransactionOutput>
@@ -40,19 +41,26 @@ class Coinbase(
     val coinbasePayout: Payout
         get() = coinbase
 
-
     override val approximateSize: Long
-        get() = payoutTXO.fold(0) { acc: Long,
-                                    transactionOutput: TransactionOutput
-            ->
-            acc + transactionOutput.approximateSize
-        } + ClassLayout.parseClass(this::class.java).instanceSize()
-
+        get() {
+            val sum = payoutTXO
+                .fold(0) { acc: Long,
+                           tOut: TransactionOutput ->
+                    acc + tOut.approximateSize
+                }
+            return sum + ClassLayout
+                .parseClass(this::class.java)
+                .instanceSize()
+        }
 
     init {
-        if (_hashId.contentEquals(emptyHash())) _hashId = digest(crypter)
+        if (_hashId.contentEquals(
+                emptyHash()
+            )
+        ) {
+            _hashId = digest(crypter)
+        }
     }
-
 
     constructor() : this(
         mutableSetOf(),
@@ -72,10 +80,26 @@ class Coinbase(
         ::calculateDiff
     )
 
-
-    override fun store(): OElement {
-        TODO("store not implemented")
-    }
+    override fun store(
+        session: NewInstanceSession
+    ): OElement =
+        session
+            .newInstance("Coinbase")
+            .apply {
+                this.setProperty(
+                    "payoutTXOs",
+                    payoutTXO.map {
+                        it.store(session)
+                    })
+                this.setProperty(
+                    "coinbase",
+                    coinbase
+                )
+                this.setProperty(
+                    "hashId",
+                    hashId
+                )
+            }
 
     /**
      * Takes the new Transaction and attempts to calculate a fluctuation from
@@ -97,7 +121,9 @@ class Coinbase(
     ) {
         val payout: Payout
         val lkHash: Hash
-        val lUTXOHash: Hash = latestUTXO?.hashId ?: emptyHash()
+        val lUTXOHash: Hash = latestUTXO?.hashId
+            ?: emptyHash()
+
         //None are known for this area.
         if (latestKnown == null) {
             payout = payoutFormula(
@@ -213,14 +239,14 @@ class Coinbase(
                 """
                 |   Coinbase: {
                 |       Total: $coinbasePayout
-                |       Hash: $hashId
+                |       Hash: ${hashId.print()}
                 |       Payouts: [
                 """.trimMargin()
             )
             payoutTXO.forEach {
                 sb.append(
-                    """
-                    |           $it
+                    """$it,
+                    |
                     """.trimMargin()
                 )
             }
@@ -233,6 +259,27 @@ class Coinbase(
             sb.toString()
         }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Coinbase) return false
+
+        if (!_payoutTXO.containsAll(other._payoutTXO)) return false
+        if (_payoutTXO.size != other._payoutTXO.size) return false
+        if (coinbase != other.coinbase) return false
+        if (!_hashId.contentEquals(other._hashId)) return false
+        if (payoutFormula != other.payoutFormula) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = _payoutTXO.hashCode()
+        result = 31 * result + coinbase.hashCode()
+        result = 31 * result + _hashId.contentHashCode()
+        result = 31 * result + payoutFormula.hashCode()
+        return result
+    }
+
     companion object : KLogging() {
         const val TIME_BASE = 5
         const val VALUE_BASE = 2
@@ -240,7 +287,10 @@ class Coinbase(
         const val THRESHOLD = 100000
         const val OTHER = 50
         const val DATA = 5
-        val MATH_CONTEXT = MathContext(12, RoundingMode.HALF_EVEN)
+        val MATH_CONTEXT = MathContext(
+            12,
+            RoundingMode.HALF_EVEN
+        )
         val crypter = DEFAULT_CRYPTER
     }
 

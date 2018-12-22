@@ -3,7 +3,8 @@ package pt.um.lei.masb.blockchain
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
 import org.openjdk.jol.info.GraphLayout
-import pt.um.lei.masb.blockchain.data.Storable
+import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.Crypter
 import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
 import pt.um.lei.masb.blockchain.utils.Hashable
@@ -16,14 +17,15 @@ data class TransactionOutput(
     private var _hashId: Hash,
     private var payout: Payout,
     private var tx: MutableSet<Hash>
-) : Sizeable, Hashed, Hashable, Storable {
+) : Sizeable, Hashed, Hashable, Storable, BlockChainContract {
 
 
     override val hashId: Hash
         get() = _hashId
 
-    override val approximateSize: Long =
-        GraphLayout.parseInstance(this)
+    override val approximateSize: Long
+        get() = GraphLayout
+            .parseInstance(this)
             .totalSize()
 
     val payoutTX: Payout
@@ -49,9 +51,33 @@ data class TransactionOutput(
         addToPayout(cumUTXO, newT, prev)
     }
 
-    override fun store(): OElement {
-        TODO("not implemented")
-    }
+    override fun store(
+        session: NewInstanceSession
+    ): OElement =
+        session
+            .newInstance("TransactionOutput")
+            .apply {
+                this.setProperty(
+                    "publicKey",
+                    publicKey.encoded
+                )
+                this.setProperty(
+                    "prevCoinbase",
+                    prevCoinbase
+                )
+                this.setProperty(
+                    "hashId",
+                    hashId
+                )
+                this.setProperty(
+                    "payout",
+                    payout
+                )
+                this.setProperty(
+                    "txSet",
+                    txSet
+                )
+            }
 
     fun addToPayout(
         payout: Payout,
@@ -69,9 +95,9 @@ data class TransactionOutput(
     override fun digest(c: Crypter): Hash =
         c.applyHash(
             """
-                $publicKey
-                $prevCoinbase
-                $hashId
+                ${publicKey.encoded.print()}
+                ${prevCoinbase.print()}
+                ${hashId.print()}
                 $payout
                 ${tx.joinToString("") { it.print() }}
                 """.trimIndent()
@@ -83,9 +109,9 @@ data class TransactionOutput(
             sb.append(
                 """
                 |           TransactionOutput: {
-                |               PublicKey: $publicKey,
-                |               PrevCoinbase: $prevCoinbase,
-                |               HashId: $hashId,
+                |               PublicKey: ${publicKey.encoded.print()},
+                |               PrevCoinbase: ${prevCoinbase.print()},
+                |               HashId: ${hashId.print()},
                 |               Payout: $payout,
                 |               TXs: [
                 """.trimMargin()
@@ -93,7 +119,7 @@ data class TransactionOutput(
             txSet.forEach {
                 sb.append(
                     """
-                    |                   $it
+                    |                   ${it.print()},
                     """.trimIndent()
                 )
             }
@@ -105,6 +131,40 @@ data class TransactionOutput(
             )
             sb.toString()
         }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TransactionOutput)
+            return false
+
+        if (!publicKey.encoded!!.contentEquals(
+                other.publicKey.encoded
+            )
+        )
+            return false
+        if (!prevCoinbase.contentEquals(
+                other.prevCoinbase
+            )
+        )
+            return false
+        if (!_hashId.contentEquals(other._hashId))
+            return false
+        if (payout != other.payout)
+            return false
+        if (!tx.containsAll(other.tx)) return false
+        if (tx.size != other.tx.size) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = publicKey.hashCode()
+        result = 31 * result + prevCoinbase.contentHashCode()
+        result = 31 * result + _hashId.contentHashCode()
+        result = 31 * result + payout.hashCode()
+        result = 31 * result + tx.hashCode()
+        return result
+    }
 
     companion object : KLogging() {
         val crypter = DEFAULT_CRYPTER

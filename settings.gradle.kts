@@ -1,8 +1,9 @@
 rootProject.name = "blockchainMain"
 include(
-    "agent",
-    "blockchain"
+    "blockchain",
+    "agent"
 )
+
 
 pluginManagement {
     resolutionStrategy {
@@ -10,7 +11,11 @@ pluginManagement {
             if (requested.id.id ==
                 "kotlinx-serialization"
             ) {
-                useModule(Libs.serializationModule)
+                useModule(
+                    "org.jetbrains.kotlin:kotlin-serialization:${
+                    requested.version
+                    }"
+                )
             }
         }
     }

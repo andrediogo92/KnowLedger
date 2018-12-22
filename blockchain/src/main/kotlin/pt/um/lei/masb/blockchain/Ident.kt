@@ -3,10 +3,10 @@ package pt.um.lei.masb.blockchain
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import pt.um.lei.masb.blockchain.Ident.KeyGenerationException
+import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.stringToPrivateKey
 import pt.um.lei.masb.blockchain.utils.stringToPublicKey
-import java.security.GeneralSecurityException
 import java.security.KeyPairGenerator
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -14,27 +14,26 @@ import java.security.SecureRandom
 import java.security.Security
 import java.security.spec.ECGenParameterSpec
 
-/**
- * @throws KeyGenerationException When key generation fails.
- */
-object Ident : KLogging() {
+object Ident :
+    KLogging(),
+    Storable,
+    BlockChainContract {
 
 
     lateinit var privateKey: PrivateKey
         private set
 
-
     lateinit var publicKey: PublicKey
         private set
 
-    val keygen = KeyPairGenerator.getInstance(
+    private val keygen = KeyPairGenerator.getInstance(
         "ECDSA",
         "BC"
     )
 
-    val random = SecureRandom.getInstanceStrong()
+    private val random = SecureRandom.getInstanceStrong()
 
-    val ecSpec = ECGenParameterSpec(
+    private val ecSpec = ECGenParameterSpec(
         "P-521"
     )
 
@@ -47,24 +46,33 @@ object Ident : KLogging() {
             )
         }
         if (!loadFromDB()) {
-            try {
-                val (prKey, pubKey) = generateNewIdent()
-                privateKey = prKey
-                publicKey = pubKey
-            } catch (e: GeneralSecurityException) {
-                logger.error(e) {}
-                throw KeyGenerationException(
-                    "Keygen problem",
-                    e
-                )
-            }
+            val (prKey, pubKey) = generateNewIdent()
+            privateKey = prKey
+            publicKey = pubKey
 
         }
     }
 
 
+    override fun store(
+        session: NewInstanceSession
+    ): OElement =
+        session
+            .newInstance("Ident")
+            .apply {
+                this.setProperty(
+                    "publicKey",
+                    publicKey.encoded
+                )
+                this.setProperty(
+                    "privateKey",
+                    privateKey.encoded
+                )
+            }
+
+
     private fun loadFromDB(): Boolean = let {
-        val id: OElement? = null//IDENT
+        val id: OElement? = null//ident
         if (id == null) {
             false
         } else {
@@ -80,7 +88,6 @@ object Ident : KLogging() {
         }
     }
 
-
     fun generateNewIdent(): Pair<PrivateKey, PublicKey> {
         // Initialize the key generator and generate a KeyPair
         keygen.initialize(ecSpec, random)
@@ -89,9 +96,4 @@ object Ident : KLogging() {
         // Set the public and private keys from the keyPair
         return Pair(keyPair.private, keyPair.public)
     }
-
-    class KeyGenerationException(
-        message: String,
-        cause: Exception
-    ) : Exception(message, cause)
 }

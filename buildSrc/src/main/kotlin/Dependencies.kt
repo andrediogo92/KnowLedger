@@ -1,4 +1,5 @@
 object Versions {
+    val assertK = "0.12"
     val bouncyCastle = "1.60"
     val coroutines = "1.0.1"
     val eclipsePaho = "1.2.0"
@@ -16,7 +17,11 @@ object Versions {
 }
 
 object Libs {
-
+    val assertK = mapOf(
+        "group" to "com.willowtreeapps.assertk",
+        "name" to "assertk-jvm",
+        "version" to Versions.assertK
+    )
 
     val bouncyCastle =
         mapOf(
@@ -127,13 +132,6 @@ object Libs {
             "version" to Versions.serial
         )
 
-    val serializationModule =
-        mapOf(
-            "group" to "org.jetbrains.kotlin",
-            "name" to "kotlin-serialization",
-            "version" to Versions.kotlin
-        )
-
 
     val slf4j = listOf(
         mapOf(
@@ -153,21 +151,6 @@ object Libs {
         mapOf(
             "group" to "com.orientechnologies",
             "name" to "orientdb-client",
-            "version" to Versions.orientDB
-        ),
-        mapOf(
-            "group" to "com.orientechnologies",
-            "name" to "orientdb-commons",
-            "version" to Versions.orientDB
-        ),
-        mapOf(
-            "group" to "com.orientechnologies",
-            "name" to "orientdb-enterprise",
-            "version" to Versions.orientDB
-        ),
-        mapOf(
-            "group" to "com.orientechnologies",
-            "name" to "orientdb-nativeos",
             "version" to Versions.orientDB
         ),
         mapOf(
