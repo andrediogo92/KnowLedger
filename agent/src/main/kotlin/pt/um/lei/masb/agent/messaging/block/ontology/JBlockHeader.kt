@@ -3,7 +3,7 @@ package pt.um.lei.masb.agent.messaging.block.ontology
 import jade.content.Concept
 
 data class JBlockHeader(
-    val blid: JBlockChainId,
+    val blid: String,
     val difficulty: String,
     val blockheight: Long,
     val hash: String,

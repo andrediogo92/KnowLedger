@@ -15,7 +15,7 @@ constructor() : BeanOntology(ONTOLOGY_NAME, BasicOntology.getInstance()) {
     }
 
     companion object : KLogging() {
-        private val ONTOLOGY_NAME = "JBlock-Ontology"
+        private const val ONTOLOGY_NAME = "JBlock-Ontology"
 
         // The singleton instance of this ontology
         // This is the method to access the singleton music shop ontology object

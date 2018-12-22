@@ -15,7 +15,7 @@ constructor() : BeanOntology(ONTOLOGY_NAME, BasicOntology.getInstance()) {
     }
 
     companion object : KLogging() {
-        val ONTOLOGY_NAME = "JTransaction-Ontology"
+        const val ONTOLOGY_NAME = "JTransaction-Ontology"
 
         // The singleton instance of this ontology
         // This is the method to access the singleton transaction ontology object
