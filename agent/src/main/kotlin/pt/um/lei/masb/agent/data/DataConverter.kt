@@ -73,7 +73,7 @@ fun convertToJadeMerkleTree(merkleTree: MerkleTree): JMerkleTree =
 
 fun convertToJadeBlockHeader(header: BlockHeader): JBlockHeader =
     JBlockHeader(
-        convertToJadeBlockChainId(header.blockChainId),
+        base64encode(header.blockChainId),
         header.difficulty.toString(),
         header.blockheight,
         base64encode(header.currentHash),
@@ -132,7 +132,7 @@ fun <T : BlockChainData> convertToJadeTransaction(
         base64encode(t.hashId),
         getStringFromKey(t.publicKey),
         convertToJadePhysicalData<T>(t.data),
-        base64encode(t.byteSignature)
+        base64encode(t.signature)
     )
 
 fun <T : BlockChainData> convertToJadeTransaction(
@@ -144,7 +144,7 @@ fun <T : BlockChainData> convertToJadeTransaction(
         base64encode(t.hashId),
         getStringFromKey(t.publicKey),
         convertToJadePhysicalData(t.data, srl),
-        base64encode(t.byteSignature)
+        base64encode(t.signature)
     )
 
 
@@ -157,7 +157,7 @@ fun <T : BlockChainData> convertToJadeTransaction(
         base64encode(t.hashId),
         getStringFromKey(t.publicKey),
         convertToJadePhysicalData<T>(t.data),
-        base64encode(t.byteSignature)
+        base64encode(t.signature)
     )
 
 fun <T : BlockChainData> convertToJadeTransaction(
@@ -170,7 +170,7 @@ fun <T : BlockChainData> convertToJadeTransaction(
         base64encode(t.hashId),
         getStringFromKey(t.publicKey),
         convertToJadePhysicalData(t.data, srl),
-        base64encode(t.byteSignature)
+        base64encode(t.signature)
     )
 
 
@@ -250,7 +250,7 @@ fun convertFromJadeMerkleTree(merkleTree: JMerkleTree): MerkleTree =
 
 fun convertFromJadeBlockHeader(header: JBlockHeader): BlockHeader =
     BlockHeader(
-        convertFromJadeBlockChainId(header.blid),
+        base64decode(header.blid),
         BigInteger(header.difficulty),
         header.blockheight,
         base64decode(header.hash),
