@@ -1,21 +1,42 @@
 package pt.um.lei.masb.blockchain.data
 
 
+import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
+import pt.um.lei.masb.blockchain.BlockChainContract
 import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.Hashed
 import pt.um.lei.masb.blockchain.Sizeable
 import pt.um.lei.masb.blockchain.emptyHash
+import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
 
 class MerkleTree(
     val collapsedTree: List<Hash> = emptyList(),
     val levelIndex: List<Int> = emptyList()
-) : Sizeable {
+) : Sizeable, Storable, BlockChainContract {
+
     /**
      * The root hash.
      */
     val root: Hash get() = collapsedTree[0]
+
+    override fun store(
+        session: NewInstanceSession
+    ): OElement =
+        session
+            .newInstance("merkleTree")
+            .apply {
+                this.setProperty(
+                    "collapsedTree",
+                    collapsedTree
+                )
+                this.setProperty(
+                    "levelIndex",
+                    levelIndex
+                )
+            }
 
 
     fun hasTransaction(hash: Hash): Boolean {

@@ -1,43 +1,63 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
-import com.orientechnologies.orient.core.record.impl.ODocument
 import com.orientechnologies.orient.core.record.impl.ORecordBytes
+import kotlinx.serialization.Serializable
+import pt.um.lei.masb.blockchain.Hash
+import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.utils.Crypter
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.math.BigDecimal
 
-@kotlinx.serialization.Serializable
+@Serializable
 data class OtherData(
     val data: java.io.Serializable
 ) : BlockChainData {
+    override fun digest(c: Crypter): Hash {
+        val bao = ByteArrayOutputStream(256)
+        ObjectOutputStream(bao).use {
+            it.writeObject(data)
+        }
+        return c.applyHash(
+            bao.toByteArray()
+        )
+    }
 
 
     override val dataConstant: Int
-        get() = DATA_DEFAULTS.DEFAULT_UNKNOWN
+        get() = DataDefaults.DEFAULT_UNKNOWN
 
-    override fun store(): OElement =
-        ODocument("Other").let { doc ->
-            val byteStream =
-                ByteArrayOutputStream(approximateSize.toInt())
-            try {
-                val oos =
-                    ObjectOutputStream(byteStream)
-                oos.writeObject(data)
-                val blob = ORecordBytes(byteStream.toByteArray())
-                doc.setProperty("data", blob)
-            } catch (ex: Exception) {
-                logger.error(ex) {
-                    "Serialization error for $data"
+    override fun store(
+        session: NewInstanceSession
+    ): OElement =
+        session
+            .newInstance("Other")
+            .let { doc ->
+                val byteStream =
+                    ByteArrayOutputStream(
+                        approximateSize.toInt()
+                    )
+                ObjectOutputStream(
+                    byteStream
+                ).use {
+                    it.writeObject(data)
+                    val blob = ORecordBytes(
+                        byteStream.toByteArray()
+                    )
+                    doc.setProperty(
+                        "data",
+                        blob
+                    )
                 }
-                doc.setProperty("data", ByteArray(1))
+                doc
             }
-            doc
-        }
 
-    override fun calculateDiff(previous: SelfInterval): BigDecimal =
+    override fun calculateDiff(
+        previous: SelfInterval
+    ): BigDecimal =
         BigDecimal.ONE
 
     override fun toString(): String =
-        "OtherData(data=$data)"
+        "OtherData(data = $data)"
 }

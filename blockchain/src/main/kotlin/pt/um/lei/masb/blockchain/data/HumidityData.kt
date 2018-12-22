@@ -1,32 +1,51 @@
 package pt.um.lei.masb.blockchain.data
 
-import com.orientechnologies.orient.core.record.impl.ODocument
+import com.orientechnologies.orient.core.record.OElement
 import kotlinx.serialization.Serializable
 import pt.um.lei.masb.blockchain.Coinbase
+import pt.um.lei.masb.blockchain.Hash
+import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.utils.Crypter
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
 
 /**
- * Humidity data can be expressed in Absolute/Volumetric or Relative humidity.
- * As such possible measurements can be in g/kg, Kg/kg or percentage expressed by the [unit].
+ * Humidity data can be expressed in Absolute/Volumetric
+ * or Relative humidity. As such possible measurements
+ * can be in g/Kg ([HUnit.G_BY_KG]), Kg/Kg ([HUnit.KG_BY_KG])
+ * or percentage ([HUnit.RELATIVE]) expressed by the [unit].
  */
 @Serializable
 data class HumidityData(
     val hum: BigDecimal,
     val unit: HUnit
 ) : BlockChainData {
-    override fun store(): ODocument =
-        ODocument("Humidity").let {
-            it.setProperty("hum", hum)
-            val hUnit = when (unit) {
-                HUnit.G_BY_KG -> 0x00.toByte()
-                HUnit.KG_BY_KG -> 0x01.toByte()
-                HUnit.RELATIVE -> 0x02.toByte()
+    override fun digest(c: Crypter): Hash =
+        c.applyHash(
+            """
+            $hum
+            ${unit.name}
+            ${unit.ordinal}
+            """.trimIndent()
+        )
+
+
+    override fun store(
+        session: NewInstanceSession
+    ): OElement =
+        session
+            .newInstance("Humidity")
+            .let {
+                it.setProperty("hum", hum)
+                val hUnit = when (unit) {
+                    HUnit.G_BY_KG -> 0x00.toByte()
+                    HUnit.KG_BY_KG -> 0x01.toByte()
+                    HUnit.RELATIVE -> 0x02.toByte()
+                }
+                it.setProperty("unit", hUnit)
+                it
             }
-            it.setProperty("unit", hUnit)
-            it
-        }
 
 
     override fun calculateDiff(previous: SelfInterval): BigDecimal =
@@ -53,7 +72,7 @@ data class HumidityData(
 
 
     override fun toString(): String {
-        return "HumidityData(hum=$hum, unit=$unit)"
+        return "HumidityData(hum = $hum, unit = $unit)"
     }
 
 }

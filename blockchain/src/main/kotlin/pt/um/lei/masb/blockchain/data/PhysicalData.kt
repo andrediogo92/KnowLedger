@@ -1,8 +1,12 @@
 package pt.um.lei.masb.blockchain.data
 
+import com.orientechnologies.orient.core.record.OElement
 import org.openjdk.jol.info.ClassLayout
+import pt.um.lei.masb.blockchain.BlockChainContract
 import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.Sizeable
+import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.Crypter
 import pt.um.lei.masb.blockchain.utils.GeoCoords
 import pt.um.lei.masb.blockchain.utils.Hashable
@@ -23,6 +27,8 @@ data class PhysicalData(
     val data: BlockChainData
 ) : Sizeable,
     Hashable,
+    Storable,
+    BlockChainContract,
     DataCategory by data,
     SelfInterval by data {
 
@@ -31,10 +37,20 @@ data class PhysicalData(
             .parseClass(this::class.java)
             .instanceSize() + data.approximateSize
 
-    constructor(data: BlockChainData) : this(
+    constructor(
+        data: BlockChainData
+    ) : this(
         Instant.now(),
         null,
         data
+    )
+
+    constructor(
+        instant: Instant,
+        data: BlockChainData
+    ) : this(
+        instant,
+        null, data
     )
 
     constructor(
@@ -67,10 +83,45 @@ data class PhysicalData(
         data
     )
 
+    override fun store(
+        session: NewInstanceSession
+    ): OElement =
+        session
+            .newInstance("PhysicalData")
+            .apply {
+                this.setProperty(
+                    "seconds",
+                    instant.epochSecond
+                )
+                this.setProperty(
+                    "nanos",
+                    instant.nano
+                )
+                this.setProperty(
+                    "data",
+                    data.store(session)
+                )
+                geoCoords?.let {
+                    this.setProperty(
+                        "latitude",
+                        it.latitude
+                    )
+                    this.setProperty(
+                        "longitude",
+                        it.longitude
+                    )
+                    this.setProperty(
+                        "altitude",
+                        it.altitude
+                    )
+                }
+            }
+
     override fun digest(c: Crypter): Hash =
         c.applyHash(
             """
-                $instant
+                ${instant.epochSecond}
+                ${instant.nano}
                 ${geoCoords?.latitude}
                 ${geoCoords?.longitude}
                 ${geoCoords?.altitude}

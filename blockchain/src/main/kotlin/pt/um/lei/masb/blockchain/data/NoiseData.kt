@@ -1,9 +1,11 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
-import com.orientechnologies.orient.core.record.impl.ODocument
 import kotlinx.serialization.Serializable
 import pt.um.lei.masb.blockchain.Coinbase
+import pt.um.lei.masb.blockchain.Hash
+import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.utils.Crypter
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -27,38 +29,70 @@ data class NoiseData(
     val peakOrBase: BigDecimal,
     val unit: NUnit
 ) : BlockChainData {
-    override fun store(): OElement =
-        ODocument("Noise").let {
-            it.setProperty("noiseLevel", noiseLevel)
-            it.setProperty("peakOrBase", peakOrBase)
-            it.setProperty(
-                "unit", when (unit) {
-                    NUnit.DBSPL -> 0x00.toByte()
-                    NUnit.RMS -> 0x01.toByte()
-                }
-            )
-            it
-        }
+    override fun digest(c: Crypter): Hash =
+        c.applyHash(
+            """
+            $noiseLevel
+            $peakOrBase
+            ${unit.name}
+            ${unit.ordinal}
+            """.trimIndent()
+        )
+
+    override fun store(
+        session: NewInstanceSession
+    ): OElement =
+        session
+            .newInstance("Noise")
+            .let {
+                it.setProperty(
+                    "noiseLevel",
+                    noiseLevel
+                )
+                it.setProperty(
+                    "peakOrBase",
+                    peakOrBase
+                )
+                it.setProperty(
+                    "unit", when (unit) {
+                        NUnit.DBSPL -> 0x00.toByte()
+                        NUnit.RMS -> 0x01.toByte()
+                    }
+                )
+                it
+            }
 
 
-    override fun calculateDiff(previous: SelfInterval): BigDecimal =
+    override fun calculateDiff(
+        previous: SelfInterval
+    ): BigDecimal =
         when (previous) {
             is NoiseData -> calculateDiffNoise(previous)
             else ->
-                throw InvalidClassException("SelfInterval supplied is not ${this::class.simpleName}")
+                throw InvalidClassException(
+                    "SelfInterval supplied is not ${
+                    this::class.simpleName
+                    }"
+                )
         }
 
 
-    private fun calculateDiffNoise(previous: NoiseData): BigDecimal {
+    private fun calculateDiffNoise(
+        previous: NoiseData
+    ): BigDecimal {
         val newN = noiseLevel.add(peakOrBase)
             .abs()
-        val oldN = previous.noiseLevel.add(previous.peakOrBase)
+        val oldN = previous.noiseLevel
+            .add(previous.peakOrBase)
             .abs()
         return newN.subtract(oldN)
-            .divide(oldN, Coinbase.MATH_CONTEXT)
+            .divide(
+                oldN,
+                Coinbase.MATH_CONTEXT
+            )
     }
 
     override fun toString(): String =
-        "NoiseData(noiseLevel=$noiseLevel, peakOrBase=$peakOrBase, unit=$unit)"
+        "NoiseData(noiseLevel = $noiseLevel, peakOrBase = $peakOrBase, unit = $unit)"
 
 }

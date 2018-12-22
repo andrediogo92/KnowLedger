@@ -42,7 +42,7 @@ fun calculateDiff(
         .add(baseFactor)
 }
 
-object DATA_DEFAULTS {
-    val DEFAULT_VALUABLE: Int = 5
-    val DEFAULT_UNKNOWN: Int = 50
+object DataDefaults {
+    const val DEFAULT_VALUABLE: Int = 5
+    const val DEFAULT_UNKNOWN: Int = 50
 }

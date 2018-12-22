@@ -7,8 +7,9 @@ plugins {
 }
 
 dependencies {
-    implementation(kotlin("reflect", Versions.kotlin))
-    implementation(kotlin("stdlib", Versions.kotlin))
+    compile(kotlin("reflect", Versions.kotlin))
+    compile(kotlin("stdlib", Versions.kotlin))
+    implementation(Libs.coroutines)
     implementation(Libs.serialization)
     Libs.orientDB.forEach {
         implementation(it)
@@ -19,9 +20,12 @@ dependencies {
     Libs.slf4j.forEach {
         implementation(it)
     }
+    testCompile(kotlin("test"))
+    testCompile(kotlin("test-junit"))
+    testCompile(Libs.assertK)
     testImplementation(Libs.bouncyCastle)
-    testImplementation(project(":blockchain"))
     testImplementation(Libs.jUnitApi)
+    testImplementation(project(":blockchain"))
     Libs.jUnitRuntime.forEach {
         testRuntimeOnly(it)
     }
@@ -41,6 +45,7 @@ tasks.withType<Test> {
 
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.kotlinOptions {
+    freeCompilerArgs += "-XXLanguage:+InlineClasses"
     jvmTarget = "1.8"
 }
 val compileTestKotlin: KotlinCompile by tasks
