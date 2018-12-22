@@ -1,10 +1,11 @@
 package pt.um.lei.masb.test
 
+import assertk.assert
+import assertk.assertions.containsAll
+import assertk.assertions.isEqualTo
+import assertk.assertions.isNotNull
+import assertk.assertions.isTrue
 import mu.KLogging
-import org.junit.jupiter.api.Assertions.assertArrayEquals
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import pt.um.lei.masb.blockchain.Coinbase
@@ -94,52 +95,66 @@ class TestMerkleTree {
             logMerkle(ts, tree)
 
             //Root is present
-            assertNotNull(tree.root)
+            assert(tree.root).isNotNull { }
             val nakedTree = tree.collapsedTree
             //Three levels to the left is first transaction.
-            assertArrayEquals(nakedTree[7], ts[0].hashId)
-            assertArrayEquals(nakedTree[8], ts[1].hashId)
-            assertArrayEquals(nakedTree[9], ts[2].hashId)
-            assertArrayEquals(nakedTree[10], ts[3].hashId)
-            assertArrayEquals(nakedTree[11], ts[4].hashId)
-            assertArrayEquals(nakedTree[12], ts[5].hashId)
-            assertArrayEquals(nakedTree[13], ts[6].hashId)
-            assertArrayEquals(nakedTree[14], ts[7].hashId)
+            assert(nakedTree[7]).containsAll(*ts[0].hashId)
+            assert(nakedTree[8]).containsAll(*ts[1].hashId)
+            assert(nakedTree[9]).containsAll(*ts[2].hashId)
+            assert(nakedTree[10]).containsAll(* ts[3].hashId)
+            assert(nakedTree[11]).containsAll(* ts[4].hashId)
+            assert(nakedTree[12]).containsAll(* ts[5].hashId)
+            assert(nakedTree[13]).containsAll(* ts[6].hashId)
+            assert(nakedTree[14]).containsAll(* ts[7].hashId)
             //Two levels in to the left is a hash of transaction 1 + 2.
-            assertArrayEquals(
-                nakedTree[3],
+            assert(
+                nakedTree[3]
+            ).containsAll(
+                *
                 crypter.applyHash(ts[0].hashId + ts[1].hashId)
             )
-            assertArrayEquals(
-                nakedTree[4],
+            assert(
+                nakedTree[4]
+            ).containsAll(
+                *
                 crypter.applyHash(ts[2].hashId + ts[3].hashId)
             )
-            assertArrayEquals(
-                nakedTree[5],
+            assert(
+                nakedTree[5]
+            ).containsAll(
+                *
                 crypter.applyHash(ts[4].hashId + ts[5].hashId)
             )
-            assertArrayEquals(
-                nakedTree[6],
+            assert(
+                nakedTree[6]
+            ).containsAll(
+                *
                 crypter.applyHash(ts[6].hashId + ts[7].hashId)
             )
             //One level to the left is a hash of the hash of transactions 1 + 2 + hash of transactions 3 + 4
-            assertArrayEquals(
-                nakedTree[1],
+            assert(
+                nakedTree[1]
+            ).containsAll(
+                *
                 crypter.applyHash(
                     crypter.applyHash(ts[0].hashId + ts[1].hashId) +
                             crypter.applyHash(ts[2].hashId + ts[3].hashId)
                 )
             )
             //One level to the left is a hash of the hash of transactions 1 + 2 + hash of transactions 3 + 4
-            assertArrayEquals(
-                nakedTree[2],
+            assert(
+                nakedTree[2]
+            ).containsAll(
+                *
                 crypter.applyHash(
                     crypter.applyHash(ts[4].hashId + ts[5].hashId) +
                             crypter.applyHash(ts[6].hashId + ts[7].hashId)
                 )
             )
-            assertArrayEquals(
-                tree.root,
+            assert(
+                tree.root
+            ).containsAll(
+                *
                 crypter.applyHash(
                     crypter.applyHash(
                         crypter.applyHash(ts[0].hashId + ts[1].hashId) +
@@ -163,13 +178,25 @@ class TestMerkleTree {
             //Log constructed merkle
             logMerkle(ts, tree)
 
-            assertNotNull(tree.root)
-            assertTrue(tree.verifyTransaction(ts[0].hashId))
-            assertTrue(tree.verifyTransaction(ts[1].hashId))
-            assertTrue(tree.verifyTransaction(ts[2].hashId))
-            assertTrue(tree.verifyTransaction(ts[3].hashId))
-            assertTrue(tree.verifyTransaction(ts[4].hashId))
-            assertTrue(tree.verifyTransaction(ts[5].hashId))
+            assert(tree.root).isNotNull {}
+            assert(
+                tree.verifyTransaction(ts[0].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[1].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[2].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[3].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[4].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[5].hashId)
+            ).isTrue()
 
             logger.debug {
                 "Balanced 8-transaction tree is correct"
@@ -186,8 +213,10 @@ class TestMerkleTree {
             //Log constructed merkle
             logMerkle(coinbase, ts, tree)
 
-            assertNotNull(tree.root)
-            assertTrue(tree.verifyBlockTransactions(coinbase, ts))
+            assert(tree.root).isNotNull {}
+            assert(
+                tree.verifyBlockTransactions(coinbase, ts)
+            ).isTrue()
 
             logger.debug {
                 "Balanced 8-transaction tree is correct"
@@ -208,47 +237,59 @@ class TestMerkleTree {
             logMerkle(ts, tree)
 
             //Root is present
-            assertNotNull(tree.root)
+            assert(tree.root).isNotNull {}
             val nakedTree = tree.collapsedTree
             //Three levels to the left is first transaction.
-            assertArrayEquals(nakedTree[6], ts[0].hashId)
-            assertArrayEquals(nakedTree[7], ts[1].hashId)
-            assertArrayEquals(nakedTree[8], ts[2].hashId)
-            assertArrayEquals(nakedTree[9], ts[3].hashId)
-            assertArrayEquals(nakedTree[10], ts[4].hashId)
-            assertArrayEquals(nakedTree[11], ts[5].hashId)
+            assert(nakedTree[6]).containsAll(* ts[0].hashId)
+            assert(nakedTree[7]).containsAll(* ts[1].hashId)
+            assert(nakedTree[8]).containsAll(* ts[2].hashId)
+            assert(nakedTree[9]).containsAll(* ts[3].hashId)
+            assert(nakedTree[10]).containsAll(* ts[4].hashId)
+            assert(nakedTree[11]).containsAll(* ts[5].hashId)
             //Two levels in to the left is a hash of transaction 1 + 2.
-            assertArrayEquals(
-                nakedTree[3],
+            assert(
+                nakedTree[3]
+            ).containsAll(
+                *
                 crypter.applyHash(ts[0].hashId + ts[1].hashId)
             )
-            assertArrayEquals(
-                nakedTree[4],
+            assert(
+                nakedTree[4]
+            ).containsAll(
+                *
                 crypter.applyHash(ts[2].hashId + ts[3].hashId)
             )
-            assertArrayEquals(
-                nakedTree[5],
+            assert(
+                nakedTree[5]
+            ).containsAll(
+                *
                 crypter.applyHash(ts[4].hashId + ts[5].hashId)
             )
             //One level to the left is a hash of the hash of transactions 1 + 2 + hash of transactions 3 + 4
-            assertArrayEquals(
-                nakedTree[1],
+            assert(
+                nakedTree[1]
+            ).containsAll(
+                *
                 crypter.applyHash(
                     crypter.applyHash(ts[0].hashId + ts[1].hashId) +
                             crypter.applyHash(ts[2].hashId + ts[3].hashId)
                 )
             )
             //One level to the right is a hash of the hash of transactions 1 + 2 * 2
-            assertArrayEquals(
-                nakedTree[2],
+            assert(
+                nakedTree[2]
+            ).containsAll(
+                *
                 crypter.applyHash(
                     crypter.applyHash(ts[4].hashId + ts[5].hashId) +
                             crypter.applyHash(ts[4].hashId + ts[5].hashId)
                 )
             )
             //Root is everything else.
-            assertArrayEquals(
-                tree.root,
+            assert(
+                tree.root
+            ).containsAll(
+                *
                 crypter.applyHash(
                     crypter.applyHash(
                         crypter.applyHash(ts[0].hashId + ts[1].hashId) +
@@ -272,49 +313,61 @@ class TestMerkleTree {
 
 
                 //Root is present
-                assertNotNull(tree.root)
+                assert(tree.root).isNotNull {}
                 val nakedTree = tree.collapsedTree
                 //Three levels to the left is first transaction.
                 //Said transaction is the coinbase
-                assertArrayEquals(nakedTree[6], coinbase.hashId)
-                assertArrayEquals(nakedTree[7], ts[0].hashId)
-                assertArrayEquals(nakedTree[8], ts[1].hashId)
-                assertArrayEquals(nakedTree[9], ts[2].hashId)
-                assertArrayEquals(nakedTree[10], ts[3].hashId)
-                assertArrayEquals(nakedTree[11], ts[4].hashId)
+                assert(nakedTree[6]).containsAll(* coinbase.hashId)
+                assert(nakedTree[7]).containsAll(* ts[0].hashId)
+                assert(nakedTree[8]).containsAll(* ts[1].hashId)
+                assert(nakedTree[9]).containsAll(* ts[2].hashId)
+                assert(nakedTree[10]).containsAll(* ts[3].hashId)
+                assert(nakedTree[11]).containsAll(* ts[4].hashId)
                 //Two levels in to the left is a hash of transaction 1 & 2.
-                assertArrayEquals(
-                    nakedTree[3],
+                assert(
+                    nakedTree[3]
+                ).containsAll(
+                    *
                     crypter.applyHash(coinbase.hashId + ts[0].hashId)
                 )
-                assertArrayEquals(
-                    nakedTree[4],
+                assert(
+                    nakedTree[4]
+                ).containsAll(
+                    *
                     crypter.applyHash(ts[1].hashId + ts[2].hashId)
                 )
-                assertArrayEquals(
-                    nakedTree[5],
+                assert(
+                    nakedTree[5]
+                ).containsAll(
+                    *
                     crypter.applyHash(ts[3].hashId + ts[4].hashId)
                 )
                 //One level to the left is a hash of the hash of transactions 1 & 2
                 // + the hash of transactions 3 & 4
-                assertArrayEquals(
-                    nakedTree[1],
+                assert(
+                    nakedTree[1]
+                ).containsAll(
+                    *
                     crypter.applyHash(
                         crypter.applyHash(coinbase.hashId + ts[0].hashId) +
                                 crypter.applyHash(ts[1].hashId + ts[2].hashId)
                     )
                 )
                 //One level to the right is a hash of the hash of transactions 5 + 6 * 2
-                assertArrayEquals(
-                    nakedTree[2],
+                assert(
+                    nakedTree[2]
+                ).containsAll(
+                    *
                     crypter.applyHash(
                         crypter.applyHash(ts[3].hashId + ts[4].hashId) +
                                 crypter.applyHash(ts[3].hashId + ts[4].hashId)
                     )
                 )
                 //Root is everything else.
-                assertArrayEquals(
-                    tree.root,
+                assert(
+                    tree.root
+                ).containsAll(
+                    *
                     crypter.applyHash(
                         crypter.applyHash(
                             crypter.applyHash(coinbase.hashId + ts[0].hashId) +
@@ -339,12 +392,22 @@ class TestMerkleTree {
             //Log constructed merkle
             logMerkle(ts, tree)
 
-            assertNotNull(tree.root)
-            assertTrue(tree.verifyTransaction(ts[0].hashId))
-            assertTrue(tree.verifyTransaction(ts[1].hashId))
-            assertTrue(tree.verifyTransaction(ts[2].hashId))
-            assertTrue(tree.verifyTransaction(ts[3].hashId))
-            assertTrue(tree.verifyTransaction(ts[4].hashId))
+            assert(tree.root).isNotNull {}
+            assert(
+                tree.verifyTransaction(ts[0].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[1].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[2].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[3].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[4].hashId)
+            ).isTrue()
 
             logger.debug {
                 "Unbalanced 5-transaction tree is correct"
@@ -358,14 +421,28 @@ class TestMerkleTree {
             logMerkle(ts, tree)
 
 
-            assertNotNull(tree.root)
-            assertTrue(tree.verifyTransaction(ts[0].hashId))
-            assertTrue(tree.verifyTransaction(ts[1].hashId))
-            assertTrue(tree.verifyTransaction(ts[2].hashId))
-            assertTrue(tree.verifyTransaction(ts[3].hashId))
-            assertTrue(tree.verifyTransaction(ts[4].hashId))
-            assertTrue(tree.verifyTransaction(ts[5].hashId))
-            assertTrue(tree.verifyTransaction(ts[6].hashId))
+            assert(tree.root).isNotNull {}
+            assert(
+                tree.verifyTransaction(ts[0].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[1].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[2].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[3].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[4].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[5].hashId)
+            ).isTrue()
+            assert(
+                tree.verifyTransaction(ts[6].hashId)
+            ).isTrue()
 
             logger.debug {
                 "Unbalanced 7-transaction tree is correct"
@@ -382,8 +459,10 @@ class TestMerkleTree {
             //Log constructed merkle
             logMerkle(coinbase, ts, tree)
 
-            assertNotNull(tree.root)
-            assertTrue(tree.verifyBlockTransactions(coinbase, ts))
+            assert(tree.root).isNotNull {}
+            assert(
+                tree.verifyBlockTransactions(coinbase, ts)
+            ).isTrue()
 
             logger.debug {
                 "Unbalanced 7-transaction tree is correct"
@@ -396,8 +475,10 @@ class TestMerkleTree {
             //Log constructed merkle
             logMerkle(coinbase, ts, tree)
 
-            assertNotNull(tree.root)
-            assertTrue(tree.verifyBlockTransactions(coinbase, ts))
+            assert(tree.root).isNotNull {}
+            assert(
+                tree.verifyBlockTransactions(coinbase, ts)
+            ).isTrue()
 
             logger.debug {
                 "Unbalanced 6-transaction tree is correct"
@@ -429,10 +510,10 @@ class TestMerkleTree {
         //Log constructed merkle
         logMerkle(ts, tree)
 
-        assertNotNull(tree.root)
+        assert(tree.root).isNotNull {}
         //Root matches the only transaction.
-        assertArrayEquals(tree.root, ts[0].hashId)
-        assertEquals(1, tree.collapsedTree.size)
+        assert(tree.root).containsAll(* ts[0].hashId)
+        assert(tree.collapsedTree.size).isEqualTo(1)
     }
 
     companion object : KLogging()

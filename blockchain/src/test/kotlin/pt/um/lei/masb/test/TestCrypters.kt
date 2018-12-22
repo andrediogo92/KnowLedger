@@ -1,7 +1,8 @@
 package pt.um.lei.masb.test
 
+import assertk.assert
+import assertk.assertions.isEqualTo
 import mu.KLogging
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import pt.um.lei.masb.blockchain.print
 import pt.um.lei.masb.blockchain.utils.SHA256Encrypter
@@ -18,12 +19,14 @@ class TestCrypters {
         )
         val print = check.print()
         val base64 = base64encode(check)
-        assertEquals(
-            print,
+        assert(
+            print
+        ).isEqualTo(
             "EBA03E5F71E9C15C63BC9114AE14ABB7475C73FDBB4A92FACA6877B0CE601F5B"
         )
-        assertEquals(
-            base64,
+        assert(
+            base64
+        ).isEqualTo(
             "66A+X3HpwVxjvJEUrhSrt0dcc/27SpL6ymh3sM5gH1s="
         )
 

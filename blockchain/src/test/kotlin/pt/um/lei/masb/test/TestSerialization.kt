@@ -1,5 +1,7 @@
 package pt.um.lei.masb.test
 
+import assertk.assert
+import assertk.assertions.isEqualTo
 import kotlinx.serialization.cbor.CBOR
 import org.junit.jupiter.api.Test
 import pt.um.lei.masb.blockchain.data.Loadable
@@ -8,7 +10,6 @@ import pt.um.lei.masb.blockchain.data.TemperatureData
 import pt.um.lei.masb.blockchain.persistance.loaders.LoaderManager
 import pt.um.lei.masb.blockchain.persistance.loaders.PreConfiguredLoaders
 import java.math.BigDecimal
-import kotlin.test.assertEquals
 
 /**
  * Serialization tests are not supported in IDE.
@@ -35,8 +36,9 @@ class TestSerialization {
 
     @Test
     fun `Try Serialize loader`() {
-        assertEquals(
-            loaderT,
+        assert(
+            loaderT
+        ).isEqualTo(
             CBOR.load(
                 loadSerial,
                 CBOR.dump(loadSerial, loaderT)
@@ -46,8 +48,9 @@ class TestSerialization {
 
     @Test
     fun `Try Serialize data`() {
-        assertEquals(
-            temp,
+        assert(
+            temp
+        ).isEqualTo(
             CBOR.load(
                 tempSerial,
                 CBOR.dump(tempSerial, temp)

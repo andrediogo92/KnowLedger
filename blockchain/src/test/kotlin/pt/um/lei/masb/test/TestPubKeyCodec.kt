@@ -1,7 +1,8 @@
 package pt.um.lei.masb.test
 
+import assertk.assert
+import assertk.assertions.isEqualTo
 import mu.KLogging
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import pt.um.lei.masb.blockchain.Ident
 import pt.um.lei.masb.blockchain.print
@@ -26,17 +27,33 @@ class TestPubKeyCodec {
         val decpr = stringToPrivateKey(encpr)
         val decpub = stringToPublicKey(encpub)
         //Decode of encode matches decode
-        assertEquals(stringToPublicKey(encpub), decpub)
-        assertEquals(stringToPrivateKey(encpr), decpr)
+        assert(
+            stringToPublicKey(encpub)
+        ).isEqualTo(decpub)
+        assert(
+            stringToPrivateKey(encpr)
+        ).isEqualTo(decpr)
         //Re-encode matches original encode.
-        assertEquals(getStringFromKey(decpub), encpub)
-        assertEquals(getStringFromKey(decpr), encpr)
+        assert(
+            getStringFromKey(decpub)
+        ).isEqualTo(encpub)
+        assert(
+            getStringFromKey(decpr)
+        ).isEqualTo(encpr)
         //Encode matches Re-encode
-        assertEquals(getStringFromKey(decpub), getStringFromKey(pub))
-        assertEquals(getStringFromKey(decpr), getStringFromKey(pr))
+        assert(
+            getStringFromKey(decpub)
+        ).isEqualTo(
+            getStringFromKey(pub)
+        )
+        assert(
+            getStringFromKey(decpr)
+        ).isEqualTo(
+            getStringFromKey(pr)
+        )
         //Keys match.
-        assertEquals(decpub, pub)
-        assertEquals(decpr, pr)
+        assert(decpub).isEqualTo(pub)
+        assert(decpr).isEqualTo(pr)
 
         logger.debug {
             """
