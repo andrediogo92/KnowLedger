@@ -2,23 +2,20 @@ package pt.um.lei.masb.agent.data
 
 import kotlinx.io.ByteArrayInputStream
 import kotlinx.io.ByteArrayOutputStream
-import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.SerializationStrategy
-import kotlinx.serialization.cbor.CBOR
 import mu.KotlinLogging
-import pt.um.lei.masb.agent.messaging.block.ontology.JBlock
-import pt.um.lei.masb.agent.messaging.block.ontology.JBlockChainId
-import pt.um.lei.masb.agent.messaging.block.ontology.JBlockHeader
-import pt.um.lei.masb.agent.messaging.block.ontology.JCoinbase
-import pt.um.lei.masb.agent.messaging.block.ontology.JMerkleTree
-import pt.um.lei.masb.agent.messaging.block.ontology.JTransactionOutput
-import pt.um.lei.masb.agent.messaging.transaction.ontology.JPhysicalData
-import pt.um.lei.masb.agent.messaging.transaction.ontology.JTransaction
+import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JBlock
+import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JBlockChainId
+import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JBlockHeader
+import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JCoinbase
+import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JMerkleTree
+import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JTransactionOutput
+import pt.um.lei.masb.agent.messaging.transaction.ontology.concepts.JPhysicalData
+import pt.um.lei.masb.agent.messaging.transaction.ontology.concepts.JTransaction
 import pt.um.lei.masb.blockchain.Block
 import pt.um.lei.masb.blockchain.BlockChainId
 import pt.um.lei.masb.blockchain.BlockHeader
 import pt.um.lei.masb.blockchain.Coinbase
+import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.Transaction
 import pt.um.lei.masb.blockchain.TransactionOutput
 import pt.um.lei.masb.blockchain.data.BlockChainData
@@ -37,33 +34,36 @@ import java.time.Instant
 import java.util.*
 
 
+fun convertToJadeBlock(
+    b: Block,
+    clazz: Class<out BlockChainData>
+): JBlock =
+    JBlock(
+        b.data
+            .map { convertToJadeTransaction(it) }
+            .toList(),
+        convertToJadeCoinbase(b.coinbase),
+        convertToJadeBlockHeader(b.header),
+        convertToJadeMerkleTree(b.merkleTree),
+        clazz.simpleName
+    )
+
+/*
 fun <T : BlockChainData> convertToJadeBlock(
     b: Block,
+    srl: SerializationStrategy<T>,
     clazz: Class<T>
 ): JBlock =
     JBlock(
         b.data
-            .map { convertToJadeTransaction<T>(it) }
+            .map { convertToJadeTransaction(it, srl) }
             .toList(),
         convertToJadeCoinbase<T>(b.coinbase),
         convertToJadeBlockHeader(b.header),
         convertToJadeMerkleTree(b.merkleTree),
         clazz.simpleName
     )
-
-fun <T : BlockChainData> convertToJadeBlock(
-    b: Block,
-    srl: SerializationStrategy<T>,
-    clazz: Class<T>
-): JBlock =
-    JBlock(b.data
-               .map { convertToJadeTransaction(it, srl) }
-               .toList(),
-           convertToJadeCoinbase<T>(b.coinbase),
-           convertToJadeBlockHeader(b.header),
-           convertToJadeMerkleTree(b.merkleTree),
-           clazz.simpleName)
-
+*/
 
 fun convertToJadeMerkleTree(merkleTree: MerkleTree): JMerkleTree =
     JMerkleTree(
@@ -91,7 +91,7 @@ fun convertToJadeBlockChainId(blid: BlockChainId): JBlockChainId =
     )
 
 
-fun <T : BlockChainData> convertToJadeCoinbase(coinbase: Coinbase): JCoinbase =
+fun convertToJadeCoinbase(coinbase: Coinbase): JCoinbase =
     JCoinbase(
         null,
         coinbase.payoutTXO
@@ -101,7 +101,7 @@ fun <T : BlockChainData> convertToJadeCoinbase(coinbase: Coinbase): JCoinbase =
         base64encode(coinbase.hashId)
     )
 
-fun <T : BlockChainData> convertToJadeCoinbase(
+fun convertToJadeCoinbase(
     blid: BlockChainId,
     coinbase: Coinbase
 ): JCoinbase =
@@ -124,17 +124,19 @@ private fun convertToJadeTransactionOutput(txo: TransactionOutput): JTransaction
     )
 
 
-fun <T : BlockChainData> convertToJadeTransaction(
+fun convertToJadeTransaction(
     t: Transaction
 ): JTransaction =
     JTransaction(
-        null,
-        base64encode(t.hashId),
-        getStringFromKey(t.publicKey),
-        convertToJadePhysicalData<T>(t.data),
-        base64encode(t.signature)
+        transactionId = base64encode(t.hashId),
+        publicKey = getStringFromKey(t.publicKey),
+        data = convertToJadePhysicalData(
+            t.data
+        ),
+        signature = base64encode(t.signature)
     )
 
+/*
 fun <T : BlockChainData> convertToJadeTransaction(
     t: Transaction,
     srl: SerializationStrategy<T>
@@ -146,20 +148,34 @@ fun <T : BlockChainData> convertToJadeTransaction(
         convertToJadePhysicalData(t.data, srl),
         base64encode(t.signature)
     )
+*/
 
-
-fun <T : BlockChainData> convertToJadeTransaction(
+fun convertToJadeTransaction(
     blid: BlockChainId,
     t: Transaction
 ): JTransaction =
     JTransaction(
-        convertToJadeBlockChainId(blid),
-        base64encode(t.hashId),
-        getStringFromKey(t.publicKey),
-        convertToJadePhysicalData<T>(t.data),
-        base64encode(t.signature)
+        blockChainId = convertToJadeBlockChainId(blid),
+        transactionId = base64encode(t.hashId),
+        publicKey = getStringFromKey(t.publicKey),
+        data = convertToJadePhysicalData(t.data),
+        signature = base64encode(t.signature)
     )
 
+fun convertToJadeTransaction(
+    blid: Hash,
+    t: Transaction
+): JTransaction =
+    JTransaction(
+        blockChainHash = base64encode(blid),
+        transactionId = base64encode(t.hashId),
+        publicKey = getStringFromKey(t.publicKey),
+        data = convertToJadePhysicalData(t.data),
+        signature = base64encode(t.signature)
+    )
+
+
+/*
 fun <T : BlockChainData> convertToJadeTransaction(
     blid: BlockChainId,
     t: Transaction,
@@ -172,9 +188,9 @@ fun <T : BlockChainData> convertToJadeTransaction(
         convertToJadePhysicalData(t.data, srl),
         base64encode(t.signature)
     )
+*/
 
-
-fun <T : BlockChainData> convertToJadePhysicalData(data: PhysicalData): JPhysicalData {
+fun convertToJadePhysicalData(data: PhysicalData): JPhysicalData {
     val byteStream = ByteArrayOutputStream(data.approximateSize.toInt())
     ObjectOutputStream(byteStream).use {
         it.writeObject(data.data)
@@ -187,7 +203,7 @@ fun <T : BlockChainData> convertToJadePhysicalData(data: PhysicalData): JPhysica
     )
 }
 
-
+/*
 @Suppress("UNCHECKED_CAST")
 fun <T : BlockChainData> convertToJadePhysicalData(
     data: PhysicalData,
@@ -199,19 +215,19 @@ fun <T : BlockChainData> convertToJadePhysicalData(
         data.geoCoords?.latitude.toString(),
         data.geoCoords?.longitude.toString()
     )
-
+*/
 
 //Conversions from Jade Types
 
-fun <T : BlockChainData> convertFromJadeBlock(
+fun convertFromJadeBlock(
     b: JBlock,
-    clazz: Class<T>
+    clazz: Class<out BlockChainData>
 ): Block =
     if (clazz.simpleName == b.clazz) {
         Block(b.data
-                  .map { convertFromJadeTransaction<T>(it) }
+                  .map { convertFromJadeTransaction(it) }
                   .toMutableList(),
-              convertFromJadeCoinbase<T>(b.coinbase),
+              convertFromJadeCoinbase(b.coinbase),
               convertFromJadeBlockHeader(b.header),
               convertFromJadeMerkleTree(b.merkleTree))
     } else {
@@ -221,6 +237,7 @@ fun <T : BlockChainData> convertFromJadeBlock(
         throw InvalidClassException(err)
     }
 
+/*
 fun <T : BlockChainData> convertFromJadeBlock(
     b: JBlock,
     srl: DeserializationStrategy<T>,
@@ -239,7 +256,7 @@ fun <T : BlockChainData> convertFromJadeBlock(
             .error { err }
         throw InvalidClassException(err)
     }
-
+*/
 
 fun convertFromJadeMerkleTree(merkleTree: JMerkleTree): MerkleTree =
     MerkleTree(
@@ -268,7 +285,7 @@ fun convertFromJadeBlockChainId(blid: JBlockChainId): BlockChainId =
     )
 
 
-fun <T : BlockChainData> convertFromJadeCoinbase(
+fun convertFromJadeCoinbase(
     coinbase: JCoinbase
 ): Coinbase =
     Coinbase(
@@ -291,15 +308,16 @@ private fun convertFromJadeTransactionOutput(
     )
 
 
-fun <T : BlockChainData> convertFromJadeTransaction(
+fun convertFromJadeTransaction(
     t: JTransaction
 ): Transaction =
     Transaction(
         stringToPublicKey(t.publicKey),
-        convertFromJadePhysicalData<T>(t.data),
+        convertFromJadePhysicalData(t.data),
         base64decode(t.signature)
     )
 
+/*
 fun <T : BlockChainData> convertFromJadeTransaction(
     t: JTransaction,
     srl: DeserializationStrategy<T>
@@ -315,41 +333,29 @@ fun <T : BlockChainData> convertFromJadePhysicalData(
     data: JPhysicalData,
     srl: DeserializationStrategy<T>
 ): PhysicalData =
-    try {
-        PhysicalData(
-            Instant.parse(data.instant),
-            BigDecimal(data.lat),
-            BigDecimal(data.lng),
-            CBOR.load(srl, base64decode(data.data))
-        )
-    } catch (ex: SerializationException) {
-        val err = "${srl::class.simpleName} failed to deserialize via CBOR"
-        KotlinLogging.logger {}
-            .error(err, ex)
-        throw InvalidClassException(err)
-    }
+    PhysicalData(
+        Instant.parse(data.instant),
+        BigDecimal(data.lat),
+        BigDecimal(data.lng),
+        CBOR.load(srl, base64decode(data.data))
+    )
+*/
 
-@Suppress("UNCHECKED_CAST")
-fun <T : BlockChainData> convertFromJadePhysicalData(
+fun convertFromJadePhysicalData(
     data: JPhysicalData
-): PhysicalData =
-    try {
-        val b = ByteArrayInputStream(base64decode(data.data))
-        val t = ObjectInputStream(b).use {
-            it.readObject() as T
-        }
-
-        PhysicalData(
-            Instant.parse(data.instant),
-            BigDecimal(data.lat),
-            BigDecimal(data.lng),
-            t
-        )
-    } catch (ex: SerializationException) {
-        KotlinLogging.logger {}
-            .error("", ex)
-        throw ex
+): PhysicalData {
+    val b = ByteArrayInputStream(base64decode(data.data))
+    val t = ObjectInputStream(b).use {
+        it.readObject() as BlockChainData
     }
+
+    return PhysicalData(
+        Instant.parse(data.instant),
+        BigDecimal(data.lat),
+        BigDecimal(data.lng),
+        t
+    )
+}
 
 
 
