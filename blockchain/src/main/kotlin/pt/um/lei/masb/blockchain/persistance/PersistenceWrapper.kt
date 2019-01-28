@@ -460,7 +460,6 @@ class PersistenceWrapper(
         "BlockChain".let {
             queryUniqueResult(
                 it,
-                hash,
                 ClusterSelect(
                     it,
                     hash
