@@ -234,6 +234,51 @@ class PersistenceWrapper(
      * - The [session] in which to execute the query.
      * - A [query] with the command to execute
      * and it's arguments.
+     * - A [DefaultLoadable]<[T]> to load a [T]
+     * type object from the a database element.
+     * [DefaultLoadable]s apply *exclusively*
+     * to [BlockChainContract] classes.
+     *
+     *
+     * *Note:* One extra argument is required for any query
+     * over a [DefaultLoadable]:
+     * - A [BlockChainId]'s hash
+     *
+     *
+     * Returns an optional result as [T]?
+     */
+    private fun <T : BlockChainContract> getUniqueResult(
+        session: ODatabaseDocument,
+        query: GenericQuery,
+        loader: ChainLoadable<T>
+    ): T? =
+        try {
+            val rs = session.query(
+                query.query,
+                query.params
+            )
+            if (rs.hasNext()) {
+                (loader.load)(
+                    this,
+                    rs.next().toElement()
+                )
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            logger.warn(e) {}
+            null
+        }
+
+
+    /**
+     * Not to be used directly.
+     * Requires knowledge of inner workings of DB.
+     *
+     * Requires:
+     * - The [session] in which to execute the query.
+     * - A [query] with the command to execute
+     * and it's arguments.
      *
      *
      * Returns an optional result as a potentially empty
@@ -342,6 +387,19 @@ class PersistenceWrapper(
             )
         }
 
+    private fun <R : BlockChainContract> queryUniqueResult(
+        id: String,
+        query: GenericQuery
+    ): R? =
+        executeInSessionAndReturn {
+            getUniqueResult(
+                it,
+                query,
+                LoaderManager.getFromChains(id)
+            )
+        }
+
+
     private fun <R : BlockChainContract> queryResults(
         id: String,
         blockChainId: Hash,
@@ -384,7 +442,6 @@ class PersistenceWrapper(
         "BlockChain".let {
             queryUniqueResult(
                 it,
-                blockChainId.hash,
                 ClusterSelect(
                     it,
                     blockChainId.hash
