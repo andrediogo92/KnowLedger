@@ -1,7 +1,6 @@
 package pt.um.lei.masb.agent.net
 
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JSON
 import mu.KLogging
 import pt.um.lei.masb.agent.Container
 import pt.um.lei.masb.agent.data.DataSource
@@ -32,7 +31,8 @@ data class JSONMappedURLs(
                 Container::class.java
                     .getResourceAsStream(file)
             ).use {
-                JSON.parse(this.serializer(), it.readText())
+                //JSON.parse(this.serializer(), it.readText())
+                TODO()
             }
 
         /**
@@ -42,7 +42,8 @@ data class JSONMappedURLs(
          */
         fun jsonFileUrlParser(file: URI): JSONMappedURLs =
             FileReader(File(file)).use {
-                JSON.parse(this.serializer(), it.readText())
+                //JSON.parse(this.serializer(), it.readText())
+                TODO()
             }
 
 
