@@ -123,7 +123,7 @@ class SideChain(
             }
             val prevHeader = previousBlock.header
             // compare previous hash and registered previous hash
-            if (prevHeader.currentHash != curHeader.previousHash) {
+            if (!prevHeader.currentHash.contentEquals(curHeader.previousHash)) {
                 logger.debug {
                     """
                     |Previous Hashes not equal:

@@ -21,7 +21,7 @@ import java.security.PublicKey
  * for the blockchain library.
  */
 class PersistenceWrapper(
-    private val db: ManagedDatabase
+    private val db: ManagedDatabase = PluggableDatabase(ManagedDatabaseInfo())
 ) {
 
     private val dbSchema = db.session.metadata.schema
@@ -75,7 +75,6 @@ class PersistenceWrapper(
         }
     }
 
-    @Synchronized
     fun registerSchema(
         schemaProvider: SchemaProvider
     ) {
@@ -85,7 +84,6 @@ class PersistenceWrapper(
         )
     }
 
-    @Synchronized
     internal fun registerDefaultClusters(
         blockChainId: Hash
     ) {
@@ -739,10 +737,7 @@ class PersistenceWrapper(
         }
 
     companion object : KLogging() {
-        val DEFAULT_DB by lazy {
-            PersistenceWrapper(
-                BlockChainDatabase
-            )
-        }
+        val DEFAULT_DB
+            get() = PersistenceWrapper()
     }
 }
