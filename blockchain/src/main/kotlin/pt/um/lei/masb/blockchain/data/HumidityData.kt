@@ -1,7 +1,6 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
-import kotlinx.serialization.Serializable
 import pt.um.lei.masb.blockchain.Coinbase
 import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
@@ -16,7 +15,6 @@ import java.math.BigDecimal
  * can be in g/Kg ([HUnit.G_BY_KG]), Kg/Kg ([HUnit.KG_BY_KG])
  * or percentage ([HUnit.RELATIVE]) expressed by the [unit].
  */
-@Serializable
 data class HumidityData(
     val hum: BigDecimal,
     val unit: HUnit

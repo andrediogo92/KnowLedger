@@ -1,7 +1,6 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
-import kotlinx.serialization.Serializable
 import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
@@ -10,7 +9,6 @@ import java.math.BigDecimal
 /**
  * Dummy data type used for the origin block.
  */
-@Serializable
 class DummyData : BlockChainData {
 
     override val approximateSize: Long = 0

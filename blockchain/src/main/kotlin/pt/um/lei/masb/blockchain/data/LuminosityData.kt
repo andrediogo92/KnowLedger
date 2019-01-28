@@ -1,7 +1,6 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
-import kotlinx.serialization.Serializable
 import pt.um.lei.masb.blockchain.Coinbase
 import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
@@ -15,7 +14,6 @@ import java.math.BigDecimal
  * outputting a specific amount of lumens ([LUnit.LUMENS]),
  * according to [unit].
  */
-@Serializable
 data class LuminosityData(
     val lum: BigDecimal,
     val unit: LUnit

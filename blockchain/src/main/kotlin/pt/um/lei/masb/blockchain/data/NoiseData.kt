@@ -1,7 +1,6 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
-import kotlinx.serialization.Serializable
 import pt.um.lei.masb.blockchain.Coinbase
 import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
@@ -23,7 +22,6 @@ import java.math.BigDecimal
  * Thus care should be taken to understand which unit to use,
  * as specified in [NUnit]
  **/
-@Serializable
 data class NoiseData(
     val noiseLevel: BigDecimal,
     val peakOrBase: BigDecimal,

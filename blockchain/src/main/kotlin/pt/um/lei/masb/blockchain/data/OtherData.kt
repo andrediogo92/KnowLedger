@@ -2,7 +2,6 @@ package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
 import com.orientechnologies.orient.core.record.impl.ORecordBytes
-import kotlinx.serialization.Serializable
 import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
@@ -10,7 +9,6 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.math.BigDecimal
 
-@Serializable
 data class OtherData(
     val data: java.io.Serializable
 ) : BlockChainData {
