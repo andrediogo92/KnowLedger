@@ -1,16 +1,16 @@
-package pt.um.lei.masb.agent.messaging.block.ontology
+package pt.um.lei.masb.agent.messaging.block.ontology.concepts
 
 import jade.content.Concept
 
 data class JBlockHeader(
-    val blid: String,
-    val difficulty: String,
-    val blockheight: Long,
-    val hash: String,
-    val merkleRoot: String,
-    val previousHash: String,
-    val timeStamp: String,
-    val nonce: Long
+    var blid: String,
+    var difficulty: String,
+    var blockheight: Long,
+    var hash: String,
+    var merkleRoot: String,
+    var previousHash: String,
+    var timeStamp: String,
+    var nonce: Long
 ) : Concept {
 
     override fun toString(): String {
