@@ -65,7 +65,7 @@ fun Hash.print(): String =
 fun Hash.truncated(): String =
 // Only convert on truncation.
     StringBuilder().let {
-        for (bHash in this.slice(0 until 10)) {
+        for (bHash in this.take(10)) {
             val hex = String.format(
                 "%02X",
                 bHash
