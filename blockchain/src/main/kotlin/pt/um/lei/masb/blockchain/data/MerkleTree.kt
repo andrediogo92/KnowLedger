@@ -20,7 +20,11 @@ class MerkleTree(
     /**
      * The root hash.
      */
-    val root: Hash get() = collapsedTree[0]
+    val root: Hash
+        get() =
+            if (collapsedTree.isEmpty())
+                collapsedTree[0] else
+                emptyHash()
 
     override fun store(
         session: NewInstanceSession
@@ -147,7 +151,7 @@ class MerkleTree(
         data: List<Hashed>
     ): Boolean =
         if (checkAllTransactionsPresent(coinbase, data)) {
-            if (collapsedTree.size != 1) {
+            if (collapsedTree.size > 1) {
                 loopUpAllVerification(levelIndex.size - 2)
             } else {
                 true
