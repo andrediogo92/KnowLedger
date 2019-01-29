@@ -235,24 +235,34 @@ class SideChain(
      * @return Whether block was successfully added.
      */
     fun addBlock(block: Block): Boolean {
-        lastBlockHeader?.currentHash?.let {
-            if (block.header.previousHash
-                    .contentEquals(it)
+        //Blockheight is 1.
+        val lh = if (currentBlockheight == 1L) {
+            return validateBlock(getOriginHeader(blockChainId).currentHash, block)
+        } else {
+            lastBlockHeader?.currentHash?.let {
+                return validateBlock(it, block)
+            }
+        }
+        return false
+    }
+
+    private fun validateBlock(hash: Hash, block: Block): Boolean {
+        if (block.header.previousHash
+                .contentEquals(hash)
+        ) {
+            if (block.header.currentHash.toDifficulty() <=
+                block.header.difficulty
             ) {
-                if (block.header.currentHash.toDifficulty() <=
-                    block.header.difficulty
-                ) {
-                    if (block.verifyTransactions()) {
-                        if (lastRecalc == BlockChain.RECALC_TRIGGER) {
-                            recalculateDifficulty(block)
-                            lastRecalc = 0
-                        } else {
-                            lastRecalc++
-                        }
-                        return pw.persistEntity(
-                            block
-                        ) && cache.add(block)
+                if (block.verifyTransactions()) {
+                    if (lastRecalc == BlockChain.RECALC_TRIGGER) {
+                        recalculateDifficulty(block)
+                        lastRecalc = 0
+                    } else {
+                        lastRecalc++
                     }
+                    return pw.persistEntity(
+                        block
+                    ) && cache.add(block)
                 }
             }
         }
