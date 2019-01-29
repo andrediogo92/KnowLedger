@@ -1,11 +1,12 @@
 package pt.um.lei.masb.test
 
-import assertk.assert
 import assertk.assertAll
+import assertk.assertThat
 import assertk.assertions.containsAll
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
+import com.orientechnologies.orient.core.db.ODatabaseType
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
 import org.junit.jupiter.api.Nested
@@ -13,8 +14,10 @@ import org.junit.jupiter.api.Test
 import pt.um.lei.masb.blockchain.BlockChain
 import pt.um.lei.masb.blockchain.Ident
 import pt.um.lei.masb.blockchain.data.TemperatureData
-import pt.um.lei.masb.blockchain.persistance.ManagedDatabase
+import pt.um.lei.masb.blockchain.persistance.DatabaseMode
 import pt.um.lei.masb.blockchain.persistance.ManagedDatabaseInfo
+import pt.um.lei.masb.blockchain.persistance.ManagedSession
+import pt.um.lei.masb.blockchain.persistance.ManagedSessionInfo
 import pt.um.lei.masb.blockchain.persistance.PersistenceWrapper
 import pt.um.lei.masb.blockchain.persistance.PluggableDatabase
 import pt.um.lei.masb.blockchain.persistance.loaders.LoaderManager
@@ -23,11 +26,15 @@ import pt.um.lei.masb.blockchain.print
 import pt.um.lei.masb.blockchain.truncated
 import pt.um.lei.masb.test.utils.logActualToExpectedLists
 import pt.um.lei.masb.test.utils.makeXTransactions
-import kotlin.streams.toList
 
 class TestDatabase {
-    val database: ManagedDatabase = PluggableDatabase(
-        ManagedDatabaseInfo(dbName = "test")
+    val database: ManagedSession = PluggableDatabase(
+        ManagedDatabaseInfo(
+            modeOpen = DatabaseMode.MEMORY,
+            path = "./test"
+        )
+    ).newManagedSession(
+        ManagedSessionInfo(mode = ODatabaseType.MEMORY)
     )
 
     val pw = PersistenceWrapper(database)
@@ -68,7 +75,7 @@ class TestDatabase {
                 """.trimMargin()
                 clusterNames
             }
-            assert(
+            assertThat(
                 clusterNames
             ).containsAll(
                 "Transaction$trunc".toLowerCase(),
@@ -90,20 +97,20 @@ class TestDatabase {
                 trunc.toLowerCase()
                 }"
             ).let { set ->
-                val l = set.stream().toList()
+                val l = set.asSequence().toList()
                 l.forEach { res ->
                     logger.info {
                         res.toJSON()
                     }
                 }
                 assertAll {
-                    assert(l.size).isEqualTo(testTransactions.size)
+                    assertThat(l.size).isEqualTo(testTransactions.size)
                     l.map {
                         it.toElement().getProperty<ByteArray>(
                             "hashId"
                         )
                     }.forEachIndexed { i, hash ->
-                        assert(hash.print()).isEqualTo(
+                        assertThat(hash.print()).isEqualTo(
                             testTransactions[i].hashId.print()
                         )
                     }
@@ -121,7 +128,7 @@ class TestDatabase {
             ).next().toElement().getProperty<ByteArray>(
                 "hashId"
             )
-            assert(binary).containsAll(
+            assertThat(binary).containsAll(
                 *testTransactions[0].hashId
             )
         }
@@ -163,7 +170,7 @@ class TestDatabase {
                     testTransactions.map { it.hashId.print() },
                     logger
                 )
-                assert(
+                assertThat(
                     present.size
                 ).isEqualTo(10)
             }
@@ -182,9 +189,9 @@ class TestDatabase {
                     logger
                 )
                 assertAll {
-                    assert(transactions.size).isEqualTo(testTransactions.size)
+                    assertThat(transactions.size).isEqualTo(testTransactions.size)
                     transactions.forEachIndexed { i, it ->
-                        assert(it).isEqualTo(testTransactions[i])
+                        assertThat(it).isEqualTo(testTransactions[i])
                     }
                 }
             }
@@ -203,11 +210,11 @@ class TestDatabase {
                     logger
                 )
                 assertAll {
-                    assert(transactions.size).isEqualTo(
+                    assertThat(transactions.size).isEqualTo(
                         testTransactions.size
                     )
                     transactions.forEachIndexed { i, it ->
-                        assert(it).isEqualTo(reversed[i])
+                        assertThat(it).isEqualTo(reversed[i])
                     }
                 }
             }
@@ -226,9 +233,9 @@ class TestDatabase {
                     logger
                 )
                 assertAll {
-                    assert(transactions.size).isEqualTo(testTransactions.size)
+                    assertThat(transactions.size).isEqualTo(testTransactions.size)
                     transactions.forEachIndexed { i, it ->
-                        assert(it).isEqualTo(testTransactions[i])
+                        assertThat(it).isEqualTo(testTransactions[i])
                     }
                 }
 
@@ -243,9 +250,9 @@ class TestDatabase {
                 logger.info {
                     transaction.toString()
                 }
-                assert(transaction).isNotNull {
-                    it.isEqualTo(testTransactions[2])
-                }
+                assertThat(transaction)
+                    .isNotNull()
+                    .isEqualTo(testTransactions[2])
             }
 
         }
@@ -259,14 +266,14 @@ class TestDatabase {
 
             @Test
             fun `Test simple insertion`() {
-                assert(sidechain).isNotNull {}
+                assertThat(sidechain).isNotNull()
                 val block = sidechain!!.newBlock()
-                assert(block).isNotNull {}
-                assert(block!!.addTransaction(testTransactions[0]))
+                assertThat(block).isNotNull()
+                assertThat(block!!.addTransaction(testTransactions[0]))
                     .isTrue()
-                assert(block.data[0]).isNotNull {
-                    it.isEqualTo(testTransactions[0])
-                }
+                assertThat(block.data[0])
+                    .isNotNull()
+                    .isEqualTo(testTransactions[0])
             }
         }
     }
