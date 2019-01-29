@@ -120,7 +120,7 @@ class BlockHeader(
 
     override fun toString(): String = """
         |   Header: {
-        |$blockChainId
+        |       BlockChainHash: ${blockChainId.print()}
         |       Difficulty: ${difficulty.print()}
         |       Blockheight: $blockheight
         |       PrevHash: ${previousHash.print()}

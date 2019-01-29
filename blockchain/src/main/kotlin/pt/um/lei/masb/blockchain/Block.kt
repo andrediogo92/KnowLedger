@@ -232,6 +232,7 @@ class Block(
                 |$coinbase
                 |$header
                 |   Transactions: [
+                |
                 """.trimMargin()
             )
             data.forEach {

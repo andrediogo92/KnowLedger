@@ -5,7 +5,6 @@ import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
 import java.math.BigDecimal
-import java.util.*
 
 /**
  *
@@ -130,29 +129,74 @@ class TrafficIncident(
         }
     }
 
-    override fun toString(): String {
-        val sb = StringBuilder()
-        sb.append("******** Traffic Incident Id - ").append(this.id).append(" ********")
-            .append(System.getProperty("line.separator"))
-        sb.append("Date: ").append(Date(this.date)).append(System.getProperty("line.separator"))
-        sb.append("Traffic Model Id: ").append(this.trafficModelId).append(System.getProperty("line.separator"))
-        sb.append("Incident Latitude: ").append(this.trafficLat).append(System.getProperty("line.separator"))
-        sb.append("Incident Longitude: ").append(this.trafficLon).append(System.getProperty("line.separator"))
-        sb.append("Icon Latitude: ").append(this.iconLat).append(System.getProperty("line.separator"))
-        sb.append("Icon Longitude: ").append(this.iconLon).append(System.getProperty("line.separator"))
-        sb.append("Incident Category Id: ").append(this.incidentCategory).append(System.getProperty("line.separator"))
-        sb.append("Incident Category: ").append(this.incidentCategoryDesc).append(System.getProperty("line.separator"))
-        sb.append("Magnitude of Delay Id: ").append(this.magnitudeOfDelay).append(System.getProperty("line.separator"))
-        sb.append("Magnitude of Delay: ").append(this.magnitudeOfDelayDesc).append(System.getProperty("line.separator"))
-        sb.append("Cluster Size: ").append(this.clusterSize).append(System.getProperty("line.separator"))
-        sb.append("Description: ").append(this.description).append(System.getProperty("line.separator"))
-        sb.append("Cause of Accident: ").append(this.causeOfAccident).append(System.getProperty("line.separator"))
-        sb.append("From: ").append(this.from).append(System.getProperty("line.separator"))
-        sb.append("To: ").append(this.to).append(System.getProperty("line.separator"))
-        sb.append("Length in meters: ").append(this.length).append(System.getProperty("line.separator"))
-        sb.append("Delay in seconds: ").append(this.delayInSeconds).append(System.getProperty("line.separator"))
-        sb.append("Affected Roads: ").append(this.affectedRoads).append(System.getProperty("line.separator"))
-        return sb.toString()
+
+    override fun toString(): String =
+        """
+        |TrafficIncident {
+        |                   Id: $id,
+        |                   Date: $date,
+        |                   Traffic Model Id: $id,
+        |                   Incident Latitude: $trafficLat
+        |                   Incident Longitude: $trafficLon
+        |                   Icon Latitude: $iconLat
+        |                   Icon Longitude: $iconLon
+        |                   Incident Category Id: $incidentCategory
+        |                   Incident Category: $incidentCategoryDesc
+        |                   Magnitude of Delay Id: $magnitudeOfDelay
+        |                   Magnitude of Delay: $magnitudeOfDelayDesc
+        |                   Cluster Size: $clusterSize
+        |                   Description: $description
+        |                   Cause of Accident: $causeOfAccident
+        |                   From: $from
+        |                   To: $to
+        |                   Length in meters: $length
+        |                   Delay in seconds: $delayInSeconds
+        |                   Affected Roads: $affectedRoads
+        |               }
+        """.trimMargin()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TrafficIncident) return false
+
+        if (trafficModelId != other.trafficModelId) return false
+        if (id != other.id) return false
+        if (iconLat != other.iconLat) return false
+        if (iconLon != other.iconLon) return false
+        if (incidentCategory != other.incidentCategory) return false
+        if (magnitudeOfDelay != other.magnitudeOfDelay) return false
+        if (clusterSize != other.clusterSize) return false
+        if (description != other.description) return false
+        if (causeOfAccident != other.causeOfAccident) return false
+        if (from != other.from) return false
+        if (to != other.to) return false
+        if (length != other.length) return false
+        if (delayInSeconds != other.delayInSeconds) return false
+        if (affectedRoads != other.affectedRoads) return false
+        if (incidentCategoryDesc != other.incidentCategoryDesc) return false
+        if (magnitudeOfDelayDesc != other.magnitudeOfDelayDesc) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = trafficModelId.hashCode()
+        result = 31 * result + id.hashCode()
+        result = 31 * result + iconLat.hashCode()
+        result = 31 * result + iconLon.hashCode()
+        result = 31 * result + incidentCategory
+        result = 31 * result + magnitudeOfDelay
+        result = 31 * result + clusterSize
+        result = 31 * result + description.hashCode()
+        result = 31 * result + causeOfAccident.hashCode()
+        result = 31 * result + from.hashCode()
+        result = 31 * result + to.hashCode()
+        result = 31 * result + length
+        result = 31 * result + delayInSeconds
+        result = 31 * result + affectedRoads.hashCode()
+        result = 31 * result + incidentCategoryDesc.hashCode()
+        result = 31 * result + magnitudeOfDelayDesc.hashCode()
+        return result
     }
 
     companion object {

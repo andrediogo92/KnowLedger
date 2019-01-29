@@ -5,7 +5,6 @@ import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
 import java.math.BigDecimal
-import java.util.*
 
 
 class PollutionOWM(
@@ -172,30 +171,31 @@ class PollutionOWM(
     }
 
 
-    override fun toString(): String {
-        val sb = StringBuilder()
-        sb.append("********  Pollution Measurement - ").append(this.parameter.toString()).append(" - ")
-            .append(this.parameter.name).append(" ********").append(System.getProperty("line.separator"))
-        sb.append("Latitude: ").append(this.lat).append(System.getProperty("line.separator"))
-        sb.append("Longitude: ").append(this.lon).append(System.getProperty("line.separator"))
-        sb.append("Date: ").append(Date(this.date)).append(System.getProperty("line.separator"))
-
-        if (this.parameter === PollutionType.NA) {
-            return sb.toString()
-        } else if (this.parameter === PollutionType.O3 || this.parameter === PollutionType.UV) {
-            sb.append("Value: ").append(this.value).append(" ").append(this.unit)
-                .append(System.getProperty("line.separator"))
-        } else {
-            for (d in this.data) {
-                sb.append("Value: ").append(d[0]).append(" ").append(this.unit)
-                    .append(System.getProperty("line.separator"))
-                sb.append("Precision: ").append(d[1]).append(System.getProperty("line.separator"))
-                sb.append("---").append(System.getProperty("line.separator"))
-            }
+    override fun toString(): String =
+        """
+        |PollutionOWM {
+        |                   Pollution Measurement: $parameter - ${parameter.name}
+        |                   Latitude: $lat
+        |                   Longitude: $lon
+        |                   Date: $date
+        |                   ${
+        when (parameter) {
+            PollutionType.O3, PollutionType.UV -> "Value: $value $unit"
+            PollutionType.NA -> "Value: NA"
+            else ->
+                """Data {
+                |${data.joinToString(
+                    ","
+                ) {
+                    """
+                    |Value: ${data[0]} $unit
+                    |Precision: ${data[1]}
+                    """.trimMargin()
+                }}"""
         }
-
-        return sb.toString()
-    }
+        }
+        |               }
+        """.trimMargin()
 
 
     companion object {

@@ -6,7 +6,6 @@ import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
 import java.math.BigDecimal
-import java.util.*
 
 /**
  *
@@ -117,25 +116,49 @@ class TrafficFlow(
         }
 
 
-    override fun toString(): String {
-        val sb = StringBuilder()
-        sb.append("******** Traffic Flow ********").append(System.getProperty("line.separator"))
-        sb.append("Date: ").append(Date(this.date)).append(System.getProperty("line.separator"))
-        sb.append("Incident Latitude: ").append(this.trafficLat).append(System.getProperty("line.separator"))
-        sb.append("Incident Longitude: ").append(this.trafficLon).append(System.getProperty("line.separator"))
-        sb.append("Functional Road Class Id: ").append(this.functionalRoadClass)
-            .append(System.getProperty("line.separator"))
-        sb.append("Functional Road Class: ").append(this.functionalRoadClassDesc)
-            .append(System.getProperty("line.separator"))
-        sb.append("Current Speed: ").append(this.currentSpeed).append(System.getProperty("line.separator"))
-        sb.append("Current Travel Time: ").append(this.currentTravelTime).append(System.getProperty("line.separator"))
-        sb.append("Free Flow Speed: ").append(this.freeFlowSpeed).append(System.getProperty("line.separator"))
-        sb.append("Free Flow Travel Time: ").append(this.freeFlowTravelTime)
-            .append(System.getProperty("line.separator"))
-        sb.append("Confidence: ").append(this.confidence).append(System.getProperty("line.separator"))
-        sb.append("Ratio between live and the historical data: ").append(this.realtimeRatio)
-            .append(System.getProperty("line.separator"))
-        return sb.toString()
+    override fun toString(): String =
+        """
+        |Traffic Flow {
+        |                   Date: $date,
+        |                   Incident Latitude: $trafficLat,
+        |                   Incident Longitude: $trafficLon,
+        |                   Functional Road Class Id: $functionalRoadClass,
+        |                   Functional Road Class: $functionalRoadClassDesc,
+        |                   Current Speed: $currentSpeed
+        |                   Current Travel Time: $currentTravelTime
+        |                   Free Flow Speed: $freeFlowSpeed
+        |                   Free Flow Travel Time: $freeFlowTravelTime
+        |                   Confidence: $confidence
+        |                   Ratio between live and the historical data: $realtimeRatio
+        |               }
+        """.trimMargin()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is TrafficFlow) return false
+
+        if (functionalRoadClass != other.functionalRoadClass) return false
+        if (currentSpeed != other.currentSpeed) return false
+        if (freeFlowSpeed != other.freeFlowSpeed) return false
+        if (currentTravelTime != other.currentTravelTime) return false
+        if (freeFlowTravelTime != other.freeFlowTravelTime) return false
+        if (confidenceInternal != other.confidenceInternal) return false
+        if (realtimeRatioInternal != other.realtimeRatioInternal) return false
+        if (functionalRoadClassDesc != other.functionalRoadClassDesc) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = functionalRoadClass.hashCode()
+        result = 31 * result + currentSpeed
+        result = 31 * result + freeFlowSpeed
+        result = 31 * result + currentTravelTime
+        result = 31 * result + freeFlowTravelTime
+        result = 31 * result + confidenceInternal.hashCode()
+        result = 31 * result + realtimeRatioInternal.hashCode()
+        result = 31 * result + functionalRoadClassDesc.hashCode()
+        return result
     }
 
     companion object {

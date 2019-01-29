@@ -5,7 +5,6 @@ import pt.um.lei.masb.blockchain.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
 import java.math.BigDecimal
-import java.util.*
 
 class PollutionAQ(
     lat: Double,
@@ -162,19 +161,38 @@ class PollutionAQ(
         }
     }
 
-    override fun toString(): String {
-        val sb = StringBuilder()
-        sb.append("******** Pollution Measurement - ").append(this.parameter.toString()).append(" - ")
-            .append(this.parameter.name).append(" ********").append(System.getProperty("line.separator"))
-        sb.append("Latitude: ").append(this.lat).append(System.getProperty("line.separator"))
-        sb.append("Longitude: ").append(this.lon).append(System.getProperty("line.separator"))
-        sb.append("Date: ").append(Date(this.date)).append(System.getProperty("line.separator"))
-        sb.append("Last Update Date: ").append(this.lastUpdated).append(System.getProperty("line.separator"))
-        sb.append("Parameter: ").append(this.parameter.toString()).append(System.getProperty("line.separator"))
-        sb.append("Value: ").append(this.value).append(" ").append(this.unit)
-            .append(System.getProperty("line.separator"))
-        sb.append("Data Source: ").append(this.sourceName).append(System.getProperty("line.separator"))
-        return sb.toString()
+
+    override fun toString(): String =
+        """
+        |PollutionAQ {
+        |                   Pollution Measurement: $parameter - ${parameter.name}
+        |                   Latitude: $lat
+        |                   Longitude: $lon
+        |                   Date: $date
+        |                   Last Update: $lastUpdated
+        |                   Value: $value
+        |                   Data Source: $sourceName
+        |               }
+        """.trimMargin()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PollutionAQ) return false
+
+        if (lastUpdated != other.lastUpdated) return false
+        if (parameter != other.parameter) return false
+        if (sourceName != other.sourceName) return false
+        if (valueInternal != other.valueInternal) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = lastUpdated.hashCode()
+        result = 31 * result + parameter.hashCode()
+        result = 31 * result + sourceName.hashCode()
+        result = 31 * result + valueInternal.hashCode()
+        return result
     }
 
 }

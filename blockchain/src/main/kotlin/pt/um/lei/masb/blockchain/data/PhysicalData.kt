@@ -131,11 +131,11 @@ data class PhysicalData(
 
     override fun toString(): String = """
         |           Physical Data: {
-        |               $instant
-        |               ${geoCoords?.latitude}
-        |               ${geoCoords?.longitude}
-        |               ${geoCoords?.altitude}
-        |               $data
+        |               Instant: $instant
+        |               Latitude: ${geoCoords?.latitude}
+        |               Longitude: ${geoCoords?.longitude}
+        |               Altitude: ${geoCoords?.altitude}
+        |               Payload: $data
         |           }
         """.trimMargin()
 
