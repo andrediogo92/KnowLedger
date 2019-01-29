@@ -15,7 +15,7 @@ import java.util.*
 private val logger = KotlinLogging.logger {}
 
 //Ugly hack to ensure BC is loaded.
-internal val DEFAULT_CRYPTER: Crypter =
+val DEFAULT_CRYPTER: Crypter =
     if (Security.getProvider("BC") == null) {
         Security.addProvider(BouncyCastleProvider())
         SHA256Encrypter()

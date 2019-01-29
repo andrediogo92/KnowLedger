@@ -7,42 +7,21 @@ import java.security.MessageDigest
 class SHA256Encrypter : Crypter {
     companion object : KLogging()
 
+    val digester = MessageDigest.getInstance(
+        "SHA-256"
+    )
+
     /**
      * Applies Sha256 to a string [input] and returns the resulting [Hash].
      */
     override fun applyHash(input: String): Hash =
-        try {
-            val digest = MessageDigest.getInstance(
-                "SHA-256"
-            )
-            //Applies sha256 to our input,
-            val rs = digest
-                .digest(input.toByteArray())
-            rs
-        } catch (e: Exception) {
-            logger.error(e) {}
-            throw RuntimeException(
-                "Apply SHA256 problem",
-                e
-            )
-        }
+        digester.digest(input.toByteArray())
 
+    /**
+     * Applies Sha256 to a string [input] and returns the resulting [Hash].
+     */
     override fun applyHash(input: ByteArray): Hash =
-        try {
-            val digest = MessageDigest.getInstance(
-                "SHA-256"
-            )
-            //Applies sha256 to our input,
-            val rs = digest
-                .digest(input)
-            rs
-        } catch (e: Exception) {
-            logger.error(e) {}
-            throw RuntimeException(
-                "Apply SHA256 problem",
-                e
-            )
-        }
+        digester.digest(input)
 
     override val hashSize: Long = 32
 }
