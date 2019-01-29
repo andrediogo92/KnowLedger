@@ -13,15 +13,54 @@ class PollutionOWM(
     lon: Double,
     date: Long,
     unit: String,
-    parameter: String,
+    var parameter: PollutionType,
     value: Double,
-    data: List<List<Double>>
+    var data: List<List<Double>>,
+    city: String = "",
+    citySeqNum: Int = 1
 ) : AbstractPollution(
     lat,
     lon,
     date * 1000,
-    unit
+    unit,
+    city,
+    citySeqNum
 ) {
+    constructor(
+        lat: Double,
+        lon: Double,
+        date: Long,
+        unit: String,
+        parameter: String,
+        value: Double,
+        data: List<List<Double>>,
+        city: String = "",
+        citySeqNum: Int = 1
+    ) : this(
+        lat,
+        lon,
+        date,
+        unit,
+        when (parameter) {
+            "O3" -> PollutionType.O3
+            "UV" -> PollutionType.UV
+            "CO" -> PollutionType.CO
+            "SO2" -> PollutionType.SO2
+            "NO2" -> PollutionType.NO2
+            else -> PollutionType.NA
+        },
+        when (parameter) {
+            "O3", "UV" -> value
+            else -> -99.0
+        },
+        when (parameter) {
+            "CO", "SO2", "NO2" -> clone(data)
+            else -> emptyList()
+        },
+        city,
+        citySeqNum
+    )
+
     override fun calculateDiff(previous: SelfInterval): BigDecimal {
         TODO("calculateDiff not implemented")
     }
@@ -34,6 +73,8 @@ class PollutionOWM(
             $unit
             $parameter
             $valueInternal
+            $city
+            $citySeqNum
             ${
         data.joinToString { ld ->
             ld.joinToString {
@@ -48,14 +89,23 @@ class PollutionOWM(
             it.setProperty("lat", lat)
             it.setProperty("lon", lon)
             it.setProperty("date", date)
-            it.setProperty("parameter", parameter)
+            val byte = when (parameter) {
+                PollutionType.O3 -> 0x00
+                PollutionType.UV -> 0x01
+                PollutionType.CO -> 0x02
+                PollutionType.SO2 -> 0x03
+                PollutionType.NO2 -> 0x04
+                PollutionType.NA -> 0x05
+            }
+            it.setProperty("parameter", byte)
             it.setProperty("valueInternal", valueInternal)
-            it.setProperty("data", data)
             it.setProperty("unit", unit)
+            it.setProperty("city", city)
+            it.setProperty("data", emptyList<List<Double>>())
+            it.setProperty("citySeqNum", citySeqNum)
             it
         }
 
-    var parameter: PollutionType
     var valueInternal = value
     var value: Double
         get() = if (!valueInternal.isNaN())
@@ -66,8 +116,6 @@ class PollutionOWM(
             valueInternal = v
         }
 
-    //Lists of Value and Precision to be used
-    var data: List<List<Double>>
 
     //mean of Value/Precision
     //Value
@@ -78,7 +126,7 @@ class PollutionOWM(
             var validElements = 0
             if (value == -99.0) {
                 for (values in data) {
-                    if (!java.lang.Double.isNaN(values[0]) && !java.lang.Double.isNaN(values[1])) {
+                    if (!values[0].isNaN() && !values[1].isNaN()) {
                         mean[0] += values[0]
                         mean[1] += values[1]
                         validElements++
@@ -123,53 +171,6 @@ class PollutionOWM(
         }
     }
 
-    init {
-        when (parameter) {
-            "O3" -> {
-                this.parameter = PollutionType.O3
-                this.value = value
-                this.data = emptyList()
-            }
-            "UV" -> {
-                this.parameter = PollutionType.UV
-                this.value = value
-                this.data = emptyList()
-            }
-            "CO" -> {
-                this.parameter = PollutionType.CO
-                this.value = -99.0
-                this.data = clone(data)
-            }
-            "SO2" -> {
-                this.parameter = PollutionType.SO2
-                this.value = -99.0
-                this.data = clone(data)
-            }
-            "NO2" -> {
-                this.parameter = PollutionType.NO2
-                this.value = -99.0
-                this.data = clone(data)
-            }
-            else -> {
-                this.parameter = PollutionType.NA
-                this.value = -99.0
-                this.data = emptyList()
-            }
-        }
-    }
-
-    private fun clone(data: List<List<Double>>): List<List<Double>> {
-        val cloned = ArrayList<List<Double>>()
-
-        for (d in data) {
-            val inner = ArrayList<Double>()
-            for (i in d.indices)
-                inner.add(d[i])
-            cloned.add(inner)
-        }
-
-        return cloned
-    }
 
     override fun toString(): String {
         val sb = StringBuilder()
@@ -196,4 +197,20 @@ class PollutionOWM(
         return sb.toString()
     }
 
+
+    companion object {
+        private fun clone(data: List<List<Double>>): List<List<Double>> {
+            val cloned = mutableListOf<List<Double>>()
+
+            for (d in data) {
+                val inner = mutableListOf<Double>()
+                for (i in d.indices)
+                    inner.add(d[i])
+                cloned.add(inner)
+            }
+
+            return cloned
+        }
+
+    }
 }

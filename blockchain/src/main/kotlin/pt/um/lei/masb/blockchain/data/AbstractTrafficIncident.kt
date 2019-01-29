@@ -4,9 +4,9 @@ abstract class AbstractTrafficIncident(
     var trafficLat: Double,
     var trafficLon: Double,
     var date: Long,
-    var cityName: String
+    var cityName: String,
+    var citySeqNum: Int
 ) : BlockChainData {
-    var citySeqNum: Int = 1
 
     abstract override fun toString(): String
 }

@@ -23,14 +23,21 @@ class TrafficFlow(
     var freeFlowSpeed: Int, //Free flow speed expected under ideal conditions
     var currentTravelTime: Int, //Current travel time in sec based on fused real-time measurements
     var freeFlowTravelTime: Int,    //The travel time in sec which would be expected under ideal free flow conditions
-    private var confidenceInternal: Double,   //Measure of the quality of the provided travel time and speed
-    private var realtimeRatioInternal: Double   //The ratio between live and the historical data used to provide the response
+    confidence: Double,   //Measure of the quality of the provided travel time and speed
+    realtimeRatio: Double,   //The ratio between live and the historical data used to provide the response
+    city: String = "TBD",
+    citySeqNum: Int = 1
 ) : AbstractTrafficIncident(
     trafficLat,
     trafficLon,
     date,
-    "TBD"
+    city,
+    citySeqNum
 ) {
+    private var confidenceInternal: Double = confidence   //Measure of the quality of the provided travel time and speed
+    private var realtimeRatioInternal: Double =
+        realtimeRatio   //The ratio between live and the historical data used to provide the response
+
     override fun calculateDiff(previous: SelfInterval): BigDecimal {
         TODO("calculateDiff not implemented")
     }

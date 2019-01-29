@@ -31,12 +31,15 @@ class TrafficIncident(
     var to: String, //The name of the intersection or location where the traffic due to the incident ends
     var length: Int,    //Length of the incident in meters
     var delayInSeconds: Int,    //Delay caused by the incident in seconds (except in road closures)
-    var affectedRoads: String   //The road number/s affected by the incident. Multiple road numbers will delimited by slashes.
+    var affectedRoads: String,   //The road number/s affected by the incident. Multiple road numbers will delimited by slashes.
+    city: String = "TBD",
+    citySeqNum: Int = 1
 ) : AbstractTrafficIncident(
     trafficLat,
     trafficLon,
     date,
-    "TBD"
+    city,
+    citySeqNum
 ) {
     override fun calculateDiff(previous: SelfInterval): BigDecimal {
         TODO("calculateDiff not implemented")

@@ -47,6 +47,76 @@ internal object PreConfiguredSchemas {
                 )
             ),
             PreConfiguredSchemaProvider(
+                "PollutionAQ",
+                mapOf(
+                    "lat" to OType.DOUBLE,
+                    "lon" to OType.DOUBLE,
+                    "lastUpdated" to OType.STRING,
+                    "unit" to OType.STRING,
+                    "parameter" to OType.BYTE,
+                    "value" to OType.DOUBLE,
+                    "sourceName" to OType.STRING,
+                    "date" to OType.LONG,
+                    "city" to OType.STRING,
+                    "citySeqNum" to OType.INTEGER
+                )
+            ),
+            PreConfiguredSchemaProvider(
+                "PollutionOWM",
+                mapOf(
+                    "lat" to OType.DOUBLE,
+                    "lon" to OType.DOUBLE,
+                    "date" to OType.LONG,
+                    "unit" to OType.STRING,
+                    "parameter" to OType.BYTE,
+                    "value" to OType.DOUBLE,
+                    "data" to OType.EMBEDDEDLIST,
+                    "city" to OType.STRING,
+                    "citySeqNum" to OType.STRING
+                )
+            ),
+            PreConfiguredSchemaProvider(
+                "TrafficFlow",
+                mapOf(
+                    "trafficLat" to OType.DOUBLE,
+                    "trafficLon" to OType.DOUBLE,
+                    "date" to OType.LONG,
+                    "functionalRoadClass" to OType.STRING,
+                    "currentSpeed" to OType.INTEGER,
+                    "freeFlowSpeed" to OType.INTEGER,
+                    "currentTravelTime" to OType.INTEGER,
+                    "freeFlowTravelTime" to OType.INTEGER,
+                    "confidence" to OType.DOUBLE,
+                    "realtimeRatio" to OType.DOUBLE,
+                    "city" to OType.STRING,
+                    "citySeqNum" to OType.INTEGER
+                )
+            ),
+            PreConfiguredSchemaProvider(
+                "TrafficIncident",
+                mapOf(
+                    "trafficLat" to OType.DOUBLE,
+                    "trafficLon" to OType.DOUBLE,
+                    "date" to OType.LONG,
+                    "trafficModelId" to OType.STRING,
+                    "id" to OType.INTEGER,
+                    "iconLat" to OType.DOUBLE,
+                    "iconLon" to OType.DOUBLE,
+                    "incidentCategory" to OType.INTEGER,
+                    "magnitudeOfDelay" to OType.INTEGER,
+                    "clusterSize" to OType.INTEGER,
+                    "description" to OType.STRING,
+                    "causeOfAccident" to OType.STRING,
+                    "from" to OType.STRING,
+                    "to" to OType.STRING,
+                    "length" to OType.INTEGER,
+                    "delayInSeconds" to OType.INTEGER,
+                    "affectedRoads" to OType.STRING,
+                    "city" to OType.STRING,
+                    "citySeqNum" to OType.INTEGER
+                )
+            ),
+            PreConfiguredSchemaProvider(
                 "PhysicalData",
                 mapOf(
                     "seconds" to OType.LONG,

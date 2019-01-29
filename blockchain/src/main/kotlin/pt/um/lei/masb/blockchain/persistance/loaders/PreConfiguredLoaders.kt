@@ -140,6 +140,126 @@ object PreConfiguredLoaders : Loaders {
                         )
                     }
                 }
+            },
+            "PollutionAQ" to Loadable {
+                commonLoad(
+                    it,
+                    "PollutionAQ"
+                ) {
+                    val byteP = it.getProperty<Byte>("parameter")
+                    val parameter = when (byteP) {
+                        0x00.toByte() -> PollutionAQ.PollutionType.PM25
+                        0x01.toByte() -> PollutionAQ.PollutionType.PM10
+                        0x02.toByte() -> PollutionAQ.PollutionType.SO2
+                        0x03.toByte() -> PollutionAQ.PollutionType.NO2
+                        0x04.toByte() -> PollutionAQ.PollutionType.O3
+                        0x05.toByte() -> PollutionAQ.PollutionType.CO
+                        0x06.toByte() -> PollutionAQ.PollutionType.BC
+                        0x07.toByte() -> PollutionAQ.PollutionType.NA
+                        else -> null
+                    }
+                    if (parameter == null) {
+                        throw LoadFailedException(
+                            "Parameter is not one of the expected: $byteP"
+                        )
+                    } else {
+                        PollutionAQ(
+                            it.getProperty("lat"),
+                            it.getProperty("lon"),
+                            it.getProperty("lastUpdated"),
+                            it.getProperty("unit"),
+                            parameter,
+                            it.getProperty("value"),
+                            it.getProperty("sourceName"),
+                            it.getProperty("date"),
+                            it.getProperty("city"),
+                            it.getProperty("citySeqNum")
+                        )
+                    }
+                }
+            },
+            "PollutionOWM" to Loadable {
+                commonLoad(
+                    it,
+                    "PollutionOWM"
+                ) {
+                    val byteP = it.getProperty<Byte>("parameter")
+                    val parameter = when (byteP) {
+                        0x00.toByte() -> PollutionOWM.PollutionType.O3
+                        0x01.toByte() -> PollutionOWM.PollutionType.UV
+                        0x02.toByte() -> PollutionOWM.PollutionType.CO
+                        0x03.toByte() -> PollutionOWM.PollutionType.SO2
+                        0x04.toByte() -> PollutionOWM.PollutionType.NO2
+                        0x05.toByte() -> PollutionOWM.PollutionType.NA
+                        else -> null
+                    }
+                    if (parameter == null) {
+                        throw LoadFailedException(
+                            "Parameter is not one of the expected: $byteP"
+                        )
+                    } else {
+
+                        PollutionOWM(
+                            it.getProperty("lat"),
+                            it.getProperty("lon"),
+                            it.getProperty("date"),
+                            it.getProperty("unit"),
+                            parameter,
+                            it.getProperty("value"),
+                            it.getProperty("data"),
+                            it.getProperty("city"),
+                            it.getProperty("citySeqNum")
+                        )
+                    }
+                }
+            },
+            "TrafficFlow" to Loadable {
+                commonLoad(
+                    it,
+                    "TrafficFlow"
+                ) {
+                    TrafficFlow(
+                        it.getProperty("trafficLat"),
+                        it.getProperty("trafficLon"),
+                        it.getProperty("date"),
+                        it.getProperty("functionalRoadClass"),
+                        it.getProperty("currentSpeed"),
+                        it.getProperty("freeFlowSpeed"),
+                        it.getProperty("currentTravelTime"),
+                        it.getProperty("freeFlowTravelTime"),
+                        it.getProperty("confidence"),
+                        it.getProperty("realtimeRatio"),
+                        it.getProperty("city"),
+                        it.getProperty("citySeqNum")
+                    )
+                }
+            },
+            "TrafficIncident" to Loadable {
+                commonLoad(
+                    it,
+                    "TrafficIncident"
+                ) {
+                    TrafficIncident(
+                        it.getProperty("trafficLat"),
+                        it.getProperty("trafficLon"),
+                        it.getProperty("date"),
+                        it.getProperty("trafficModelId"),
+                        it.getProperty("id"),
+                        it.getProperty("iconLat"),
+                        it.getProperty("iconLon"),
+                        it.getProperty("incidentCategory"),
+                        it.getProperty("magnitudeOfDelay"),
+                        it.getProperty("description"),
+                        it.getProperty("causeOfAccident"),
+                        it.getProperty("from"),
+                        it.getProperty("to"),
+                        it.getProperty("length"),
+                        it.getProperty("delayInSeconds"),
+                        it.getProperty("affectedRoads"),
+                        it.getProperty("city"),
+                        it.getProperty("citySeqNum")
+                    )
+                }
             }
         )
     }
