@@ -20,41 +20,73 @@ import java.security.PublicKey
  * A Thread-safe wrapper into a DB context
  * for the blockchain library.
  */
-class PersistenceWrapper(
-    private val db: ManagedSession =
-        DEFAULT_MANAGED_DB.newManagedSession()
+internal class PersistenceWrapper(
+    private val db: ManagedSession
 ) {
 
     private val dbSchema = db.session.metadata.schema
 
     init {
-        registerDefaultSchemas(dbSchema)
+        registerDefaultSchemas()
+    }
+
+    private fun registerDefaultSchemas(
+    ) {
+        PreConfiguredSchemas
+            .chainSchemas
+            .forEach {
+                registerSchema(
+                    it
+                )
+            }
+    }
+
+    fun registerSchema(
+        schemaProvider: SchemaProvider
+    ) {
+        if (!dbSchema.existsClass(schemaProvider.id)) {
+            createSchema(
+                dbSchema,
+                schemaProvider
+            )
+        } else {
+            replaceSchema(
+                dbSchema,
+                schemaProvider
+            )
+        }
     }
 
     private fun createSchema(
         schema: OSchema,
         provider: SchemaProvider
     ) {
-        if (!schema.existsClass(provider.id)) {
-            val cl = schema.createClass(provider.id)
-            provider.properties.forEach {
-                cl.createProperty(it.key, it.value)
+        val cl = schema.createClass(provider.id)
+        provider.properties.forEach {
+            cl.createProperty(it.key, it.value)
+        }
+    }
+
+
+    private fun replaceSchema(schema: OSchema, provider: SchemaProvider) {
+        val cl = schema.getClass(provider.id)
+        val (propsIn, propsNotIn) = cl
+            .declaredProperties()
+            .partition {
+                it.name in provider.properties.keys
             }
-        } else {
-            val cl = schema.getClass(provider.id)
-            val (propsNotIn, propsIn) = cl
-                .declaredProperties()
-                .partition {
-                    it.name !in provider.properties.keys
-                }
+
+        if (propsNotIn.isNotEmpty()) {
+            //Drop properties that no longer exist in provider.
             propsNotIn.forEach {
                 cl.dropProperty(it.name)
             }
-            val intersect = propsIn
-                .map { it.name }
-                .intersect(provider.properties.keys)
-            val toAdd = provider.properties.keys.filter {
-                it !in intersect
+        }
+
+        if (propsIn.size != provider.properties.keys.size) {
+            //New properties are those in provider that are not already present.
+            val toAdd = provider.properties.keys.filter { elem ->
+                elem !in propsIn.map { it.name }
             }
             toAdd.forEach {
                 cl.createProperty(
@@ -65,37 +97,17 @@ class PersistenceWrapper(
         }
     }
 
-    private fun registerDefaultSchemas(
-        schema: OSchema
-    ) {
-        PreConfiguredSchemas.schemas.forEach {
-            createSchema(
-                schema,
-                it
-            )
-        }
-    }
-
-    fun registerSchema(
-        schemaProvider: SchemaProvider
-    ) {
-        createSchema(
-            dbSchema,
-            schemaProvider
-        )
-    }
-
     internal fun registerDefaultClusters(
         blockChainId: Hash
-    ) {
-        PreConfiguredSchemas.schemas.forEach {
+    ) =
+    //For all schemas except Ident add a new chain-specific cluster.
+        PreConfiguredSchemas.chainSchemas.forEach {
             dbSchema.getClass(
                 it.id
             ).addCluster(
                 "${it.id}${blockChainId.truncated()}"
             )
         }
-    }
 
 
     @Synchronized
@@ -628,7 +640,8 @@ class PersistenceWrapper(
                 blockChainId,
                 ClusterSelect(
                     it,
-                    blockChainId,
+                    blockChainId
+                ).withProjection(
                     "max(header.blockheight), *"
                 )
             )
@@ -636,13 +649,14 @@ class PersistenceWrapper(
 
 
     // ------------------------------
-// Ident transaction.
-//
-// ------------------------------
-    internal val ident: OElement?
-        get() = executeInSessionAndReturn {
+    // Ident transaction.
+    //
+    // ------------------------------
+    internal fun getIdent(id: String): OElement? =
+        executeInSessionAndReturn {
             val rs = it.query(
-                "SELECT FROM ident"
+                "SELECT * FROM ident WHERE id = :id",
+                id
             )
             if (rs.hasNext()) {
                 rs.next().toElement()
@@ -737,11 +751,5 @@ class PersistenceWrapper(
             )
         }
 
-    companion object : KLogging() {
-        val DEFAULT_DB
-            get() = PersistenceWrapper()
-        val DEFAULT_MANAGED_DB by lazy {
-            PluggableDatabase(ManagedDatabaseInfo())
-        }
-    }
+    companion object : KLogging()
 }
