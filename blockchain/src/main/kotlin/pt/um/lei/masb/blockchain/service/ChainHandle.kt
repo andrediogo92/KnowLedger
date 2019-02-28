@@ -1,8 +1,11 @@
-package pt.um.lei.masb.blockchain
+package pt.um.lei.masb.blockchain.service
 
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
+import pt.um.lei.masb.blockchain.data.DummyData
 import pt.um.lei.masb.blockchain.data.MerkleTree
+import pt.um.lei.masb.blockchain.data.PhysicalData
+import pt.um.lei.masb.blockchain.ledger.*
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.persistance.PersistenceWrapper
 import pt.um.lei.masb.blockchain.persistance.Storable
@@ -13,17 +16,17 @@ import java.math.BigInteger
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
-class SideChain(
-    val pw: PersistenceWrapper =
-        PersistenceWrapper.DEFAULT_DB,
+class ChainHandle internal constructor(
+    private val pw: PersistenceWrapper,
     val clazz: String,
     val blockChainId: Hash
 ) : Storable, BlockChainContract {
 
     @Transient
-    private var cache: RingBuffer<Block> = RingBuffer(BlockChain.CACHE_SIZE)
+    private var cache: RingBuffer<Block> = RingBuffer(LedgerHandle.CACHE_SIZE)
 
-    private var difficultyTarget: Difficulty = INIT_DIFFICULTY
+    private var difficultyTarget: Difficulty =
+        INIT_DIFFICULTY
 
     private var lastRecalc: Int = 0
 
@@ -46,7 +49,7 @@ class SideChain(
             ?: pw.getLatestBlockHeader(blockChainId)
 
 
-    constructor(
+    internal constructor(
         pw: PersistenceWrapper,
         clazz: String,
         blockChainId: Hash,
@@ -67,7 +70,7 @@ class SideChain(
         session: NewInstanceSession
     ): OElement =
         session
-            .newInstance("SideChain")
+            .newInstance("ChainHandle")
             .apply {
                 this.setProperty(
                     "clazz",
@@ -96,7 +99,7 @@ class SideChain(
      * Checks integrity of the entire cached blockchain.
      *
      * TODO: actually check entire blockchain in
-     * ranges of [BlockChain.CACHE_SIZE] blocks.
+     * ranges of [LedgerHandle.CACHE_SIZE] blocks.
      * @return Whether the chain is valid.
      */
     fun isChainValid(): Boolean {
@@ -254,7 +257,7 @@ class SideChain(
                 block.header.difficulty
             ) {
                 if (block.verifyTransactions()) {
-                    if (lastRecalc == BlockChain.RECALC_TRIGGER) {
+                    if (lastRecalc == LedgerHandle.RECALC_TRIGGER) {
                         recalculateDifficulty(block)
                         lastRecalc = 0
                     } else {
@@ -262,7 +265,7 @@ class SideChain(
                     }
                     return pw.persistEntity(
                         block
-                    ) && cache.add(block)
+                    ) && cache.offer(block)
                 }
             }
         }
@@ -272,10 +275,10 @@ class SideChain(
     /**
      * Difficulty is recalculated based on timestamp
      * difference between [triggerBlock] at current blockheight
-     * and Block at current blockheight - [BlockChain.RECALC_TRIGGER].
+     * and Block at current blockheight - [LedgerHandle.RECALC_TRIGGER].
      *
      * This difference is measured as a percentage of
-     * [BlockChain.RECALC_TIME] which is used to multiply by current
+     * [LedgerHandle.RECALC_TIME] which is used to multiply by current
      * difficulty target.
      *
      * @returns The recalculated difficulty or the same
@@ -286,7 +289,7 @@ class SideChain(
     ): Difficulty {
         val cmp = triggerBlock.header.blockheight
         val cstamp = triggerBlock.header.timestamp.epochSecond
-        val fromHeight = cmp - BlockChain.RECALC_TRIGGER
+        val fromHeight = cmp - LedgerHandle.RECALC_TRIGGER
         val recalcBlock = lastBlock
         //BlockTransactions().getBlockByBlockHeight(fromHeight)
         return if (recalcBlock != null) {
@@ -320,13 +323,13 @@ class SideChain(
         recalcBlock: Block,
         deltaStamp: Long
     ): Difficulty {
-        val deltax = BigDecimal(BlockChain.RECALC_TIME - deltaStamp)
-        val deltadiv = (deltax * BlockChain.RECALC_MULT)
-            .divideToIntegralValue(BigDecimal(BlockChain.RECALC_TIME))
+        val deltax = BigDecimal(LedgerHandle.RECALC_TIME - deltaStamp)
+        val deltadiv = (deltax * LedgerHandle.RECALC_MULT)
+            .divideToIntegralValue(BigDecimal(LedgerHandle.RECALC_TIME))
             .toBigInteger()
         val difficulty = BigInteger(difficultyTarget.toByteArray())
         val newDiff = difficulty + (difficulty * deltadiv)
-        return padOrMax(newDiff / BlockChain.RECALC_DIV)
+        return padOrMax(newDiff / LedgerHandle.RECALC_DIV)
     }
 
     /**
@@ -436,7 +439,14 @@ class SideChain(
                 Coinbase(),
                 getOriginHeader(blockChainId),
                 MerkleTree()
-            )
+            ).apply {
+                this.addTransaction(
+                    Transaction(
+                        Ident(""),
+                        PhysicalData(DummyData())
+                    )
+                )
+            }
 
     }
 }

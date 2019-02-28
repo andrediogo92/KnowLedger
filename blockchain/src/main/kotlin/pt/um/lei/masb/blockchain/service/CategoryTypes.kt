@@ -1,6 +1,7 @@
-package pt.um.lei.masb.blockchain
+package pt.um.lei.masb.blockchain.service
 
 import com.orientechnologies.orient.core.record.OElement
+import pt.um.lei.masb.blockchain.ledger.BlockChainContract
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.persistance.Storable
 
