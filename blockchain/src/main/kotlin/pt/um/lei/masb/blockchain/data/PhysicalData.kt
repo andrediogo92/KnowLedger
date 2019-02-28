@@ -2,9 +2,9 @@ package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
 import org.openjdk.jol.info.ClassLayout
-import pt.um.lei.masb.blockchain.BlockChainContract
-import pt.um.lei.masb.blockchain.Hash
-import pt.um.lei.masb.blockchain.Sizeable
+import pt.um.lei.masb.blockchain.ledger.BlockChainContract
+import pt.um.lei.masb.blockchain.ledger.Hash
+import pt.um.lei.masb.blockchain.ledger.Sizeable
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.Crypter

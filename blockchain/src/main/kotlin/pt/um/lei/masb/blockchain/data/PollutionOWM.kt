@@ -1,16 +1,13 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
-import pt.um.lei.masb.blockchain.Hash
+import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
 import java.math.BigDecimal
 
 
 class PollutionOWM(
-    lat: Double,
-    lon: Double,
-    date: Long,
     unit: String,
     var parameter: PollutionType,
     value: Double,
@@ -18,17 +15,11 @@ class PollutionOWM(
     city: String = "",
     citySeqNum: Int = 1
 ) : AbstractPollution(
-    lat,
-    lon,
-    date * 1000,
     unit,
     city,
     citySeqNum
 ) {
     constructor(
-        lat: Double,
-        lon: Double,
-        date: Long,
         unit: String,
         parameter: String,
         value: Double,
@@ -36,9 +27,6 @@ class PollutionOWM(
         city: String = "",
         citySeqNum: Int = 1
     ) : this(
-        lat,
-        lon,
-        date,
         unit,
         when (parameter) {
             "O3" -> PollutionType.O3
@@ -66,9 +54,6 @@ class PollutionOWM(
 
     override fun digest(c: Crypter): Hash =
         c.applyHash("""
-            $lat
-            $lon
-            $date
             $unit
             $parameter
             $valueInternal
@@ -85,9 +70,6 @@ class PollutionOWM(
 
     override fun store(session: NewInstanceSession): OElement =
         session.newInstance("PollutionOWM").let {
-            it.setProperty("lat", lat)
-            it.setProperty("lon", lon)
-            it.setProperty("date", date)
             val byte = when (parameter) {
                 PollutionType.O3 -> 0x00
                 PollutionType.UV -> 0x01
@@ -95,6 +77,7 @@ class PollutionOWM(
                 PollutionType.SO2 -> 0x03
                 PollutionType.NO2 -> 0x04
                 PollutionType.NA -> 0x05
+                else -> 0xFF
             }
             it.setProperty("parameter", byte)
             it.setProperty("valueInternal", valueInternal)
@@ -137,47 +120,12 @@ class PollutionOWM(
             return mean
         }
 
-    enum class PollutionType {
-        O3 {
-            override fun toString(): String {
-                return "Ozone"
-            }
-        },
-        UV {
-            override fun toString(): String {
-                return "Ultraviolet"
-            }
-        },
-        CO {
-            override fun toString(): String {
-                return "Carbon Monoxide"
-            }
-        },
-        SO2 {
-            override fun toString(): String {
-                return "Sulfur Dioxide"
-            }
-        },
-        NO2 {
-            override fun toString(): String {
-                return "Nitrogen Dioxide"
-            }
-        },
-        NA {
-            override fun toString(): String {
-                return "Non Available"
-            }
-        }
-    }
 
 
     override fun toString(): String =
         """
         |PollutionOWM {
         |                   Pollution Measurement: $parameter - ${parameter.name}
-        |                   Latitude: $lat
-        |                   Longitude: $lon
-        |                   Date: $date
         |                   ${
         when (parameter) {
             PollutionType.O3, PollutionType.UV -> "Value: $value $unit"

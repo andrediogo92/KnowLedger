@@ -2,7 +2,7 @@ package pt.um.lei.masb.blockchain.data
 
 
 import com.orientechnologies.orient.core.record.OElement
-import pt.um.lei.masb.blockchain.Hash
+import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
 import java.math.BigDecimal
@@ -14,9 +14,6 @@ import java.math.BigDecimal
  *
  **/
 class TrafficFlow(
-    trafficLat: Double,
-    trafficLon: Double,
-    date: Long,
     var functionalRoadClass: String,    //Indicates the road type
     var currentSpeed: Int,  //Current speed
     var freeFlowSpeed: Int, //Free flow speed expected under ideal conditions
@@ -27,9 +24,6 @@ class TrafficFlow(
     city: String = "TBD",
     citySeqNum: Int = 1
 ) : AbstractTrafficIncident(
-    trafficLat,
-    trafficLon,
-    date,
     city,
     citySeqNum
 ) {
@@ -44,9 +38,6 @@ class TrafficFlow(
     override fun digest(c: Crypter): Hash =
         c.applyHash(
             """
-            $trafficLat
-            $trafficLon
-            $date
             $functionalRoadClass
             $currentSpeed
             $freeFlowSpeed
@@ -63,9 +54,6 @@ class TrafficFlow(
         session: NewInstanceSession
     ): OElement =
         session.newInstance("TrafficFlow").let {
-            it.setProperty("trafficLat", trafficLat)
-            it.setProperty("trafficLon", trafficLon)
-            it.setProperty("date", date)
             it.setProperty("functionalRoadClass", functionalRoadClass)
             it.setProperty("currentSpeed", currentSpeed)
             it.setProperty("freeFlowSpeed", freeFlowSpeed)
@@ -119,9 +107,6 @@ class TrafficFlow(
     override fun toString(): String =
         """
         |Traffic Flow {
-        |                   Date: $date,
-        |                   Incident Latitude: $trafficLat,
-        |                   Incident Longitude: $trafficLon,
         |                   Functional Road Class Id: $functionalRoadClass,
         |                   Functional Road Class: $functionalRoadClassDesc,
         |                   Current Speed: $currentSpeed

@@ -1,8 +1,8 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
-import pt.um.lei.masb.blockchain.Coinbase
-import pt.um.lei.masb.blockchain.Hash
+import pt.um.lei.masb.blockchain.ledger.Coinbase
+import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
 import java.io.InvalidClassException
