@@ -1,4 +1,4 @@
-package pt.um.lei.masb.blockchain
+package pt.um.lei.masb.blockchain.ledger
 
 import pt.um.lei.masb.blockchain.data.MerkleTree
 import pt.um.lei.masb.blockchain.data.PhysicalData

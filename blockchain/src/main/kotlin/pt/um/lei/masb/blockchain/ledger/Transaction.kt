@@ -1,4 +1,4 @@
-package pt.um.lei.masb.blockchain
+package pt.um.lei.masb.blockchain.ledger
 
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
@@ -6,6 +6,7 @@ import org.openjdk.jol.info.ClassLayout
 import pt.um.lei.masb.blockchain.data.PhysicalData
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.persistance.Storable
+import pt.um.lei.masb.blockchain.service.Ident
 import pt.um.lei.masb.blockchain.utils.Crypter
 import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
 import pt.um.lei.masb.blockchain.utils.Hashable

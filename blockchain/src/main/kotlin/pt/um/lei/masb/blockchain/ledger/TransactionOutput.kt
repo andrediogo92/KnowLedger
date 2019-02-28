@@ -1,4 +1,4 @@
-package pt.um.lei.masb.blockchain
+package pt.um.lei.masb.blockchain.ledger
 
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
@@ -17,7 +17,8 @@ data class TransactionOutput(
     private var _hashId: Hash,
     private var payout: Payout,
     private var tx: MutableSet<Hash>
-) : Sizeable, Hashed, Hashable, Storable, BlockChainContract {
+) : Sizeable, Hashed, Hashable, Storable,
+    BlockChainContract {
 
 
     override val hashId: Hash

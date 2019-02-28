@@ -1,7 +1,7 @@
 package pt.um.lei.masb.blockchain.utils
 
 import mu.KLogging
-import pt.um.lei.masb.blockchain.Hash
+import pt.um.lei.masb.blockchain.ledger.Hash
 import java.security.MessageDigest
 
 class SHA256Encrypter : Crypter {

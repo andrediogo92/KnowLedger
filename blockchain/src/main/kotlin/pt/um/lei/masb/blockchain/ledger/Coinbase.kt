@@ -1,4 +1,4 @@
-package pt.um.lei.masb.blockchain
+package pt.um.lei.masb.blockchain.ledger
 
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
@@ -29,7 +29,8 @@ class Coinbase(
     private var _hashId: Hash,
     @Transient
     private val payoutFormula: DataFormula
-) : Sizeable, Hashed, Hashable, Storable, BlockChainContract {
+) : Sizeable, Hashed, Hashable, Storable,
+    BlockChainContract {
 
 
     val payoutTXO: Set<TransactionOutput>

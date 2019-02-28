@@ -1,4 +1,4 @@
-package pt.um.lei.masb.blockchain
+package pt.um.lei.masb.blockchain.ledger
 
 import mu.KotlinLogging
 import java.math.BigDecimal

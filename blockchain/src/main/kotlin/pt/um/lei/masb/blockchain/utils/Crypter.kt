@@ -1,6 +1,6 @@
 package pt.um.lei.masb.blockchain.utils
 
-import pt.um.lei.masb.blockchain.Hash
+import pt.um.lei.masb.blockchain.ledger.Hash
 
 /**
  * A simple interface for hashing a unique string

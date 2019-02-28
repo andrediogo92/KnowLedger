@@ -1,6 +1,6 @@
 package pt.um.lei.masb.blockchain.utils
 
-import pt.um.lei.masb.blockchain.Hash
+import pt.um.lei.masb.blockchain.ledger.Hash
 
 /**
  * Indicates capability to produce
