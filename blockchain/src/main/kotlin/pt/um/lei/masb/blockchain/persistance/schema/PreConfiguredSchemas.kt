@@ -3,7 +3,18 @@ package pt.um.lei.masb.blockchain.persistance.schema
 import com.orientechnologies.orient.core.metadata.schema.OType
 
 internal object PreConfiguredSchemas {
-    val schemas by lazy {
+    val ident by lazy {
+        PreConfiguredSchemaProvider(
+            "Ident",
+            mapOf(
+                "id" to OType.STRING,
+                "privateKey" to OType.BINARY,
+                "publicKey" to OType.BINARY
+            )
+        )
+    }
+
+    val chainSchemas by lazy {
         listOf(
             PreConfiguredSchemaProvider(
                 "Humidity",
@@ -176,13 +187,6 @@ internal object PreConfiguredSchemas {
                     "payoutTXOs" to OType.LINKSET,
                     "coinbase" to OType.DECIMAL,
                     "hashId" to OType.BINARY
-                )
-            ),
-            PreConfiguredSchemaProvider(
-                "Ident",
-                mapOf(
-                    "privateKey" to OType.BINARY,
-                    "publicKey" to OType.BINARY
                 )
             ),
             PreConfiguredSchemaProvider(
