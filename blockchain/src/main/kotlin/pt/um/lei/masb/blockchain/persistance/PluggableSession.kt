@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument
 
 class PluggableSession(
     val db: OrientDB,
-    val dbInfo: ManagedSessionInfo
+    val dbInfo: ManagedDatabaseInfo
 ) : ManagedSession {
     private var _session: ODatabaseDocument =
         openSession()

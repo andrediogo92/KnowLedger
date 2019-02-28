@@ -2,21 +2,12 @@ package pt.um.lei.masb.blockchain.persistance
 
 import com.orientechnologies.orient.core.db.OrientDB
 
-class PluggableDatabase(dbInfo: ManagedDatabaseInfo) : ManagedDatabase {
+class PluggableDatabase(val dbInfo: ManagedDatabaseInfo) : ManagedDatabase {
     override fun newManagedSession(): ManagedSession =
         PluggableSession(
             instance,
-            ManagedSessionInfo()
+            dbInfo
         )
-
-    override fun newManagedSession(
-        dbSessionInfo: ManagedSessionInfo
-    ): ManagedSession =
-        PluggableSession(
-            instance,
-            dbSessionInfo
-        )
-
 
     override val instance: OrientDB =
         OrientDB(
