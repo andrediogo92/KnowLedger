@@ -1,162 +1,84 @@
 object Versions {
-    val assertK = "0.12"
-    val bouncyCastle = "1.60"
-    val coroutines = "1.0.1"
-    val eclipsePaho = "1.2.0"
-    val jade = "4.5.0"
-    val jadeMisc = "2.8.0"
-    val jol = "0.9"
-    val jUnit = "5.2.0"
-    val jUnitRunner = "1.2.0"
-    val klog = "1.5.4"
-    val kotlin = "1.3.11"
-    val ktor = "1.0.0"
-    val orientDB = "3.0.7"
-    val slf4j = "1.8.0-beta2"
-    val serial = "0.9.1"
+    const val arrowK = "0.8.2"
+    const val assertK = "0.13"
+    const val bouncyCastle = "1.61"
+    const val coroutines = "1.1.1"
+    const val eclipsePaho = "1.2.0"
+    const val jade = "4.5.0"
+    const val jadeMisc = "2.8.0"
+    const val jol = "0.9"
+    const val jUnit = "5.4.0"
+    const val jUnitRunner = "1.4.0"
+    const val klog = "1.6.24"
+    const val kotlin = "1.3.21"
+    const val ktor = "1.1.2"
+    const val moshi = "1.8.0"
+    const val orientDB = "3.0.14"
+    const val slf4j = "1.8.0-beta2"
+    const val serial = "0.10.0"
 }
 
 object Libs {
-    val assertK = mapOf(
-        "group" to "com.willowtreeapps.assertk",
-        "name" to "assertk-jvm",
-        "version" to Versions.assertK
-    )
+    val arrowK =
+        "io.arrow-kt:arrow-core:${Versions.arrowK}"
+
+    val assertK =
+        "com.willowtreeapps.assertk:assertk-jvm:${Versions.assertK}"
 
     val bouncyCastle =
-        mapOf(
-            "group" to "org.bouncycastle",
-            "name" to "bcprov-jdk15on",
-            "version" to Versions.bouncyCastle
-        )
-
+        "org.bouncycastle:bcprov-jdk15on:${Versions.bouncyCastle}"
 
     val coroutines =
-        mapOf(
-            "group" to "org.jetbrains.kotlinx",
-            "name" to "kotlinx-coroutines-core",
-            "version" to Versions.coroutines
-        )
+        "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}"
 
-
-    val eclipsePaho = mapOf(
-        "group" to "org.eclipse.paho",
-        "name" to "org.eclipse.paho.client.mqttv3",
-        "version" to Versions.eclipsePaho
-    )
-
+    val eclipsePaho =
+        "org.eclipse.paho:org.eclipse.paho.client.mqttv3:${Versions.eclipsePaho}"
 
     val jade = listOf(
-        mapOf(
-            "group" to "com.tilab.jade",
-            "name" to "jade",
-            "version" to Versions.jade
-        ),
-        mapOf(
-            "group" to "com.tilab.jade",
-            "name" to "jade-misc",
-            "version" to Versions.jadeMisc
-        )
+        "com.tilab.jade:jade:${Versions.jade}",
+        "com.tilab.jade:jade-misc:${Versions.jadeMisc}"
     )
 
-
-    val jUnitApi = mapOf(
-        "group" to "org.junit.jupiter",
-        "name" to "junit-jupiter-api",
-        "version" to Versions.jUnit
-    )
+    val jUnitApi =
+        "org.junit.jupiter:junit-jupiter-api:${Versions.jUnit}"
 
 
     val jUnitRuntime = listOf(
-        mapOf(
-            "group" to "org.junit.jupiter",
-            "name" to "junit-jupiter-engine",
-            "version" to Versions.jUnit
-        ),
-        mapOf(
-            "group" to "org.junit.jupiter",
-            "name" to "junit-jupiter-params",
-            "version" to Versions.jUnit
-        ),
-        mapOf(
-            "group" to "org.junit.platform",
-            "name" to "junit-platform-runner",
-            "version" to Versions.jUnitRunner
-        )
+        "org.junit.jupiter:junit-jupiter-engine:${Versions.jUnit}",
+        "org.junit.jupiter:junit-jupiter-params:${Versions.jUnit}",
+        "org.junit.platform:junit-platform-runner:${Versions.jUnitRunner}"
     )
 
-
-    val klog = mapOf(
-        "group" to "io.github.microutils",
-        "name" to "kotlin-logging",
-        "version" to Versions.klog
-    )
-
+    val klog = "io.github.microutils:kotlin-logging:${Versions.klog}"
 
     val ktor = listOf(
-        mapOf(
-            "group" to "io.ktor",
-            "name" to "ktor-client-core",
-            "version" to Versions.ktor
-        ),
-        mapOf(
-            "group" to "io.ktor",
-            "name" to "ktor-client-cio",
-            "version" to Versions.ktor
-        ),
-        mapOf(
-            "group" to "io.ktor",
-            "name" to "ktor-client-json",
-            "version" to Versions.ktor
-        ),
-        mapOf(
-            "group" to "io.ktor",
-            "name" to "ktor-client-json-jvm",
-            "version" to Versions.ktor
-        )
+        "io.ktor:ktor-client-core:${Versions.ktor}",
+        "io.ktor:ktor-client-cio:${Versions.ktor}",
+        "io.ktor:ktor-client-json:${Versions.ktor}",
+        "io.ktor:ktor-client-json-jvm:${Versions.ktor}"
     )
 
-
     val jol =
-        mapOf(
-            "group" to "org.openjdk.jol",
-            "name" to "jol-core",
-            "version" to Versions.jol
-        )
+        "org.openjdk.jol:jol-core:${Versions.jol}"
 
+    val moshi =
+        "com.squareup.moshi:moshi:${Versions.moshi}"
+
+    val moshiCodeGen =
+        "com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}"
+
+    val orientDB = listOf(
+        "com.orientechnologies:orientdb-client:${Versions.orientDB}",
+        "com.orientechnologies:orientdb-server:${Versions.orientDB}"
+    )
 
     val serialization =
-        mapOf(
-            "group" to "org.jetbrains.kotlinx",
-            "name" to "kotlinx-serialization-runtime",
-            "version" to Versions.serial
-        )
+        "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serial}"
 
 
     val slf4j = listOf(
-        mapOf(
-            "group" to "org.slf4j",
-            "name" to "slf4j-api",
-            "version" to Versions.slf4j
-        ),
-        mapOf(
-            "group" to "org.slf4j",
-            "name" to "slf4j-simple",
-            "version" to Versions.slf4j
-        )
+        "org.slf4j:slf4j-api:${Versions.slf4j}",
+        "org.slf4j:slf4j-simple:${Versions.slf4j}"
     )
 
-
-    val orientDB = listOf(
-        mapOf(
-            "group" to "com.orientechnologies",
-            "name" to "orientdb-client",
-            "version" to Versions.orientDB
-        ),
-        mapOf(
-            "group" to "com.orientechnologies",
-            "name" to "orientdb-server",
-            "version" to Versions.orientDB
-        )
-    )
 }

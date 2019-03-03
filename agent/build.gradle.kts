@@ -4,7 +4,7 @@ plugins {
     application
     kotlin("jvm")
     id("org.jetbrains.kotlin.plugin.noarg")
-    id("kotlinx-serialization")
+//    id("kotlinx-serialization")
 }
 
 repositories {
@@ -13,24 +13,26 @@ repositories {
 }
 
 dependencies {
-    compile(kotlin("stdlib", Versions.kotlin))
+    //Regular dependencies
+    implementation(kotlin("stdlib", Versions.kotlin))
+    implementation(project(":blockchain"))
+    //implementation(Libs.arrowK)
     implementation(Libs.coroutines)
-    implementation(Libs.serialization)
-    Libs.ktor.forEach {
-        implementation(it)
-    }
     implementation(Libs.eclipsePaho)
     Libs.jade.forEach {
         implementation(it)
     }
     implementation(Libs.klog)
-    implementation(project(":blockchain"))
+    Libs.ktor.forEach {
+        implementation(it)
+    }
+    //implementation(Libs.serialization)
     Libs.slf4j.forEach {
         runtimeOnly(it)
     }
-    testCompile(kotlin("test"))
-    testCompile(kotlin("test-junit"))
-    testCompile(Libs.assertK)
+
+    //Test dependencies
+    testImplementation(Libs.assertK)
     testImplementation(Libs.jUnitApi)
     Libs.jUnitRuntime.forEach {
         testRuntimeOnly(it)

@@ -2,30 +2,38 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
+    kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.noarg")
-    id("kotlinx-serialization")
+//    id("kotlinx-serialization")
 }
 
 dependencies {
-    compile(kotlin("reflect", Versions.kotlin))
-    compile(kotlin("stdlib", Versions.kotlin))
+    //Annotation Processing
+    kapt(Libs.moshiCodeGen)
+
+
+    //Regular dependencies
+    implementation(kotlin("stdlib", Versions.kotlin))
+    //implementation(Libs.arrowK)
+    implementation(Libs.bouncyCastle)
     implementation(Libs.coroutines)
-    implementation(Libs.serialization)
+    implementation(Libs.klog)
+    implementation(Libs.jol)
+    implementation(Libs.moshi)
     Libs.orientDB.forEach {
         implementation(it)
     }
-    implementation(Libs.klog)
-    implementation(Libs.bouncyCastle)
-    implementation(Libs.jol)
+    //implementation(Libs.serialization)
     Libs.slf4j.forEach {
         implementation(it)
     }
-    testCompile(kotlin("test"))
-    testCompile(kotlin("test-junit"))
-    testCompile(Libs.assertK)
+
+
+    //Test dependencies
+    testImplementation(project(":blockchain"))
+    testImplementation(Libs.assertK)
     testImplementation(Libs.bouncyCastle)
     testImplementation(Libs.jUnitApi)
-    testImplementation(project(":blockchain"))
     Libs.jUnitRuntime.forEach {
         testRuntimeOnly(it)
     }
@@ -45,7 +53,7 @@ tasks.withType<Test> {
 
 val compileKotlin: KotlinCompile by tasks
 compileKotlin.kotlinOptions {
-    freeCompilerArgs += "-XXLanguage:+InlineClasses"
+    freeCompilerArgs = freeCompilerArgs + "-XXLanguage:+InlineClasses"
     jvmTarget = "1.8"
 }
 val compileTestKotlin: KotlinCompile by tasks
