@@ -13,4 +13,6 @@ interface Crypter {
     fun applyHash(input: String): Hash
 
     fun applyHash(input: ByteArray): Hash
+
+    val id: Hash
 }

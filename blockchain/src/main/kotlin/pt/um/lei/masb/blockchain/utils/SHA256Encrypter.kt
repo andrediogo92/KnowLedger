@@ -23,5 +23,9 @@ class SHA256Encrypter : Crypter {
     override fun applyHash(input: ByteArray): Hash =
         digester.digest(input)
 
+
     override val hashSize: Long = 32
+
+    override val id: Hash
+        get() = digester.digest(digester.algorithm.toByteArray())
 }
