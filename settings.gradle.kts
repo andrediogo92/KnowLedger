@@ -1,6 +1,6 @@
-rootProject.name = "blockchainMain"
+rootProject.name = "KnowledgerMAS"
 include(
-    "blockchain",
+    "ledger",
     "agent"
 )
 

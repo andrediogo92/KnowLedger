@@ -9,13 +9,13 @@ import pt.um.lei.masb.agent.data.AgentPeers
 import pt.um.lei.masb.agent.data.convertToJadeTransaction
 import pt.um.lei.masb.agent.messaging.transaction.TransactionOntology
 import pt.um.lei.masb.agent.messaging.transaction.ontology.actions.DiffuseTransaction
-import pt.um.lei.masb.blockchain.SideChain
-import pt.um.lei.masb.blockchain.Transaction
 import pt.um.lei.masb.blockchain.data.BlockChainData
+import pt.um.lei.masb.blockchain.ledger.Transaction
+import pt.um.lei.masb.blockchain.service.ChainHandle
 import pt.um.lei.masb.blockchain.utils.RingBuffer
 
 class SendMessages(
-    private val sc: SideChain,
+    private val sc: ChainHandle,
     private val rb: RingBuffer<Transaction>,
     private val agentPeers: AgentPeers,
     private val clazz: Class<out BlockChainData>
@@ -35,7 +35,7 @@ class SendMessages(
                         msg,
                         DiffuseTransaction(
                             convertToJadeTransaction(
-                                sc.blockChainId,
+                                sc.ledgerId,
                                 t
                             )
                         )

@@ -3,20 +3,20 @@ package pt.um.lei.masb.agent.behaviours
 import jade.core.behaviours.Behaviour
 import mu.KLogging
 import pt.um.lei.masb.agent.data.captureSound
-import pt.um.lei.masb.blockchain.Block
-import pt.um.lei.masb.blockchain.Ident
-import pt.um.lei.masb.blockchain.SideChain
-import pt.um.lei.masb.blockchain.Transaction
 import pt.um.lei.masb.blockchain.data.NUnit
 import pt.um.lei.masb.blockchain.data.NoiseData
 import pt.um.lei.masb.blockchain.data.PhysicalData
+import pt.um.lei.masb.blockchain.ledger.Block
+import pt.um.lei.masb.blockchain.ledger.Transaction
+import pt.um.lei.masb.blockchain.service.ChainHandle
+import pt.um.lei.masb.blockchain.service.Ident
 import pt.um.lei.masb.blockchain.utils.RingBuffer
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*
 
 class CaptureData(
-    private val sc: SideChain,
+    private val sc: ChainHandle,
     private val id: Ident,
     private val blockQueue: Queue<Block>,
     private val toSend: RingBuffer<Transaction>
@@ -24,10 +24,15 @@ class CaptureData(
 
     override fun action() {
         if (blockQueue.isEmpty()) {
-            /**
-             * TODO arrange queuing logic.
-             */
+            //Generate new block
+            val block = sc.newBlock()
+            if (block != null) {
+                blockQueue.offer(block)
+            }
         }
+
+        val currentBlock = blockQueue.peek()
+
 
         val sc = captureSound()
 
@@ -46,20 +51,18 @@ class CaptureData(
                 BigDecimal(-8.4257831),
                 noise
             )
-            /**
-             * TODO transaction posting to next block in line.
-             *
-             * val t = Transaction(,id, sd)
-             * toSend.offer(t)
-             * blockQueue.add(bl)
-             */
 
+            val t = Transaction(id, sd)
+
+            currentBlock.addTransaction(t)
+
+            toSend.offer(t)
         }
     }
 
 
     override fun done(): Boolean {
-        return true
+        return false
     }
 
     companion object : KLogging()

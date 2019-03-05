@@ -11,16 +11,14 @@ import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JMerkleTree
 import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JTransactionOutput
 import pt.um.lei.masb.agent.messaging.transaction.ontology.concepts.JPhysicalData
 import pt.um.lei.masb.agent.messaging.transaction.ontology.concepts.JTransaction
-import pt.um.lei.masb.blockchain.Block
-import pt.um.lei.masb.blockchain.BlockChainId
-import pt.um.lei.masb.blockchain.BlockHeader
-import pt.um.lei.masb.blockchain.Coinbase
-import pt.um.lei.masb.blockchain.Hash
-import pt.um.lei.masb.blockchain.Transaction
-import pt.um.lei.masb.blockchain.TransactionOutput
 import pt.um.lei.masb.blockchain.data.BlockChainData
 import pt.um.lei.masb.blockchain.data.MerkleTree
 import pt.um.lei.masb.blockchain.data.PhysicalData
+import pt.um.lei.masb.blockchain.ledger.Block
+import pt.um.lei.masb.blockchain.ledger.BlockHeader
+import pt.um.lei.masb.blockchain.ledger.Hash
+import pt.um.lei.masb.blockchain.ledger.LedgerId
+import pt.um.lei.masb.blockchain.ledger.Transaction
 import pt.um.lei.masb.blockchain.utils.base64decode
 import pt.um.lei.masb.blockchain.utils.base64encode
 import pt.um.lei.masb.blockchain.utils.getStringFromKey
@@ -83,7 +81,7 @@ fun convertToJadeBlockHeader(header: BlockHeader): JBlockHeader =
         header.nonce
     )
 
-fun convertToJadeBlockChainId(blid: BlockChainId): JBlockChainId =
+fun convertToJadeBlockChainId(blid: LedgerId): JBlockChainId =
     JBlockChainId(
         blid.uuid.toString(),
         blid.timestamp.toString(),
@@ -102,7 +100,7 @@ fun convertToJadeCoinbase(coinbase: Coinbase): JCoinbase =
     )
 
 fun convertToJadeCoinbase(
-    blid: BlockChainId,
+    blid: LedgerId,
     coinbase: Coinbase
 ): JCoinbase =
     JCoinbase(
@@ -151,7 +149,7 @@ fun <T : BlockChainData> convertToJadeTransaction(
 */
 
 fun convertToJadeTransaction(
-    blid: BlockChainId,
+    blid: LedgerId,
     t: Transaction
 ): JTransaction =
     JTransaction(
@@ -177,7 +175,7 @@ fun convertToJadeTransaction(
 
 /*
 fun <T : BlockChainData> convertToJadeTransaction(
-    blid: BlockChainId,
+    blid: ledgerId,
     t: Transaction,
     srl: SerializationStrategy<T>
 ): JTransaction =
@@ -277,8 +275,8 @@ fun convertFromJadeBlockHeader(header: JBlockHeader): BlockHeader =
         header.nonce
     )
 
-fun convertFromJadeBlockChainId(blid: JBlockChainId): BlockChainId =
-    BlockChainId(
+fun convertFromJadeBlockChainId(blid: JBlockChainId): LedgerId =
+    LedgerId(
         UUID.fromString(blid.uuid),
         Instant.parse(blid.timestamp),
         blid.id

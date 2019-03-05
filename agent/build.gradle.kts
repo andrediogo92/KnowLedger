@@ -15,7 +15,7 @@ repositories {
 dependencies {
     //Regular dependencies
     implementation(kotlin("stdlib", Versions.kotlin))
-    implementation(project(":blockchain"))
+    implementation(project(":ledger"))
     //implementation(Libs.arrowK)
     implementation(Libs.coroutines)
     implementation(Libs.eclipsePaho)

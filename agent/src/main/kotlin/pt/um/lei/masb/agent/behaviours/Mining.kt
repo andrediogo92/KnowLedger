@@ -2,16 +2,17 @@ package pt.um.lei.masb.agent.behaviours
 
 import jade.core.behaviours.Behaviour
 import mu.KLogging
-import pt.um.lei.masb.blockchain.Block
-import pt.um.lei.masb.blockchain.SideChain
+import pt.um.lei.masb.blockchain.ledger.Block
+import pt.um.lei.masb.blockchain.service.ChainHandle
 import java.util.*
 
 
 class Mining(
-    private val sc: SideChain,
+    private val sc: ChainHandle,
     private val blockQueue: Queue<Block>
 ) : Behaviour() {
     private var block: Block? = null
+    private val mined: Boolean = false
 
     override fun action() {
         var mining = true
@@ -47,7 +48,7 @@ class Mining(
         } else {
             logger.debug { "No block" }
         }
-        return false
+        return mined
     }
 
     companion object : KLogging()

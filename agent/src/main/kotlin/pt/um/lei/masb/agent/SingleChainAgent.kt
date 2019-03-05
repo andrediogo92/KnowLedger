@@ -7,16 +7,15 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription
 import jade.domain.FIPAException
 import mu.KLogging
 import pt.um.lei.masb.agent.behaviours.CaptureData
-import pt.um.lei.masb.agent.behaviours.GetMissingBlocks
 import pt.um.lei.masb.agent.behaviours.Mining
 import pt.um.lei.masb.agent.behaviours.ReceiveMessages
 import pt.um.lei.masb.agent.behaviours.SendMessages
 import pt.um.lei.masb.agent.data.AgentPeers
-import pt.um.lei.masb.blockchain.Block
-import pt.um.lei.masb.blockchain.BlockChain
-import pt.um.lei.masb.blockchain.Ident
-import pt.um.lei.masb.blockchain.Transaction
 import pt.um.lei.masb.blockchain.data.BlockChainData
+import pt.um.lei.masb.blockchain.ledger.Block
+import pt.um.lei.masb.blockchain.ledger.Transaction
+import pt.um.lei.masb.blockchain.service.Ident
+import pt.um.lei.masb.blockchain.service.LedgerHandle
 import pt.um.lei.masb.blockchain.utils.RingBuffer
 import java.util.*
 
@@ -25,8 +24,8 @@ class SingleChainAgent : Agent() {
 
     //agent will try maximizing reward
     //sessionRewards could later be translated into user reward
-    private var sessionRewards: Double = 0.toDouble()
-    private val bc: BlockChain = arguments[0] as BlockChain
+    private var sessionRewards: Double = 0.0
+    private val bc: LedgerHandle = arguments[0] as LedgerHandle
     private var bl: Queue<Block> = ArrayDeque<Block>(6)
     private val toSend: RingBuffer<Transaction> = RingBuffer(3)
     private val agentPeers = AgentPeers(this)
@@ -44,10 +43,8 @@ class SingleChainAgent : Agent() {
         sessionRewards = 0.0
 
         val cl = arguments[1] as Class<out BlockChainData>
-        val sc = bc.getSideChainOf(cl)
-            ?: bc.registerSideChainOf(cl, arguments[2] as String)
-                .getSideChainOf(cl)
-            ?: throw ClassNotFoundException("SideChain failed to be materialized")
+        val sc = bc.getChainHandleOf(cl)
+            ?: throw ClassNotFoundException("ChainHandle failed to be materialized")
 
         val b = object : ParallelBehaviour(this, ParallelBehaviour.WHEN_ALL) {
             override fun onEnd(): Int {
@@ -55,7 +52,9 @@ class SingleChainAgent : Agent() {
                 return 0
             }
         }
-        b.addSubBehaviour(GetMissingBlocks(sc, agentPeers))
+
+
+//        b.addSubBehaviour(GetMissingBlocks(sc, agentPeers))
         b.addSubBehaviour(ReceiveMessages(sc, agentPeers, cl))
         b.addSubBehaviour(CaptureData(sc, i, bl, toSend))
         b.addSubBehaviour(Mining(sc, bl))

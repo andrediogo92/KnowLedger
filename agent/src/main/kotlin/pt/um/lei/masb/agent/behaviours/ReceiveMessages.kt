@@ -10,17 +10,17 @@ import pt.um.lei.masb.agent.data.convertToJadeBlock
 import pt.um.lei.masb.agent.messaging.block.BlockOntology
 import pt.um.lei.masb.agent.messaging.block.ontology.actions.DiffuseBlock
 import pt.um.lei.masb.agent.messaging.transaction.TransactionOntology
-import pt.um.lei.masb.blockchain.Block
-import pt.um.lei.masb.blockchain.SideChain
-import pt.um.lei.masb.blockchain.Transaction
 import pt.um.lei.masb.blockchain.data.BlockChainData
+import pt.um.lei.masb.blockchain.ledger.Block
+import pt.um.lei.masb.blockchain.ledger.Transaction
+import pt.um.lei.masb.blockchain.service.ChainHandle
 
 /**
  * Behaviour for handling incoming messages related to Transactions and Blocks.
  * TODO: Split into behaviours for each.
  */
 class ReceiveMessages(
-    private val sc: SideChain,
+    private val sc: ChainHandle,
     private val agentPeers: AgentPeers,
     private val clazz: Class<out BlockChainData>
 //    private val srl: SerializationStrategy<T>

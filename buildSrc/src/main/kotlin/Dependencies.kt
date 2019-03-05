@@ -61,8 +61,10 @@ object Libs {
     val jol =
         "org.openjdk.jol:jol-core:${Versions.jol}"
 
-    val moshi =
-        "com.squareup.moshi:moshi:${Versions.moshi}"
+    val moshi = listOf(
+        "com.squareup.moshi:moshi:${Versions.moshi}",
+        "com.squareup.moshi:moshi-kotlin:${Versions.moshi}"
+    )
 
     val moshiCodeGen =
         "com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}"

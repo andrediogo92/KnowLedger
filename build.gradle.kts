@@ -19,11 +19,9 @@ plugins {
     id("org.jetbrains.kotlin.plugin.noarg") version
             Versions.kotlin apply
             false
-/*    
     id("kotlinx-serialization") version
             Versions.kotlin apply
             false
-*/
 }
 
 allprojects {

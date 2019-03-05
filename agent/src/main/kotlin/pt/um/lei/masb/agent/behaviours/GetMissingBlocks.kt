@@ -9,12 +9,12 @@ import jade.lang.acl.MessageTemplate
 import mu.KLogging
 import pt.um.lei.masb.agent.data.AgentPeers
 import pt.um.lei.masb.agent.messaging.block.BlockOntology
-import pt.um.lei.masb.blockchain.SideChain
+import pt.um.lei.masb.blockchain.service.ChainHandle
 import kotlin.random.Random
 
 
 class GetMissingBlocks(
-    private val bc: SideChain,
+    private val bc: ChainHandle,
     private val agentPeers: AgentPeers
 ) : Behaviour() {
     private val codec = SLCodec()

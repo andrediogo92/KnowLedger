@@ -2,7 +2,6 @@ package pt.um.lei.masb.agent
 
 import jade.core.Agent
 import kotlinx.serialization.ImplicitReflectionSerializer
-import kotlinx.serialization.json.JSON
 import kotlinx.serialization.serializer
 import mu.KLogging
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
@@ -14,11 +13,11 @@ import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import pt.um.lei.masb.agent.data.feed.AdafruitPublishJSON
 import pt.um.lei.masb.agent.data.feed.Reduxer
-import pt.um.lei.masb.blockchain.Block
-import pt.um.lei.masb.blockchain.BlockChain
-import pt.um.lei.masb.blockchain.Hash
-import pt.um.lei.masb.blockchain.Transaction
 import pt.um.lei.masb.blockchain.data.PhysicalData
+import pt.um.lei.masb.blockchain.ledger.Block
+import pt.um.lei.masb.blockchain.ledger.Hash
+import pt.um.lei.masb.blockchain.ledger.Transaction
+import pt.um.lei.masb.blockchain.service.LedgerHandle
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
@@ -26,7 +25,7 @@ class MonitorAgent(
     id: Hash,
     private val reduxers: Map<String, Reduxer>
 ) : Agent() {
-    private val bc: BlockChain? = BlockChain.getBlockChainByHash(hash = id)
+    private val bc: LedgerHandle? = LedgerHandle.getBlockChainByHash(hash = id)
     private var json: AdafruitPublishJSON = AdafruitPublishJSON()
     private val broker = "tcp://io.adafruit.com:1883"
     private val mqttClient: MqttAsyncClient = MqttAsyncClient(
@@ -52,7 +51,7 @@ class MonitorAgent(
                 val sc = bc.sidechains[cl]
                 var i = 0L
                 do {
-                    val bl = sc?.getBlockByHeight(i)?.let {
+                    val bl = sc.getBlockByHeight(i).let {
                         publishToFeed(cl, it)
                         it
                     }

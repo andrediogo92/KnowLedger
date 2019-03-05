@@ -5,8 +5,8 @@ import jade.core.ProfileImpl
 import jade.core.Runtime
 import jade.wrapper.ContainerController
 import mu.KLogging
-import pt.um.lei.masb.blockchain.BlockChain
-import pt.um.lei.masb.blockchain.emptyHash
+import pt.um.lei.masb.blockchain.ledger.emptyHash
+import pt.um.lei.masb.blockchain.service.LedgerHandle
 
 class Container {
     private lateinit var rt: Runtime
@@ -55,7 +55,7 @@ class Container {
     fun startAEInPlatform(
         name: String,
         classpath: String,
-        bc: BlockChain
+        bc: LedgerHandle
     ) {
 
         try {
@@ -68,12 +68,12 @@ class Container {
 
     companion object : KLogging() {
         @JvmStatic
-        fun main(args: Array<String>) {
+        fun main() {
 
             val a = Container()
             val bc =
-                BlockChain.getBlockChainByHash(hash = emptyHash())
-                    ?: BlockChain(id = "smarthub")
+                LedgerHandle.getBlockChainByHash(hash = emptyHash())
+                    ?: LedgerHandle(id = "smarthub")
 
             a.initMainContainerInPlatform(
                 "localhost",
