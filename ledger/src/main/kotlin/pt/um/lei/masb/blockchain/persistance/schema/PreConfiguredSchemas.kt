@@ -20,20 +20,20 @@ internal object PreConfiguredSchemas {
                 "Humidity",
                 mapOf(
                     "hum" to OType.DECIMAL,
-                    "unit" to OType.BYTE
+                    "unit" to OType.INTEGER
                 )
             ),
             PreConfiguredSchemaProvider(
                 "Dummy",
                 mapOf(
-                    "origin" to OType.BYTE
+                    "origin" to OType.INTEGER
                 )
             ),
             PreConfiguredSchemaProvider(
                 "Luminosity",
                 mapOf(
                     "lum" to OType.DECIMAL,
-                    "unit" to OType.BYTE
+                    "unit" to OType.INTEGER
                 )
             ),
             PreConfiguredSchemaProvider(
@@ -41,7 +41,7 @@ internal object PreConfiguredSchemas {
                 mapOf(
                     "noiseLevel" to OType.DECIMAL,
                     "peakOrBase" to OType.DECIMAL,
-                    "unit" to OType.BYTE
+                    "unit" to OType.INTEGER
                 )
             ),
             PreConfiguredSchemaProvider(
@@ -54,7 +54,7 @@ internal object PreConfiguredSchemas {
                 "Temperature",
                 mapOf(
                     "temperature" to OType.DECIMAL,
-                    "unit" to OType.BYTE
+                    "unit" to OType.INTEGER
                 )
             ),
             PreConfiguredSchemaProvider(
@@ -62,7 +62,7 @@ internal object PreConfiguredSchemas {
                 mapOf(
                     "lastUpdated" to OType.STRING,
                     "unit" to OType.STRING,
-                    "parameter" to OType.BYTE,
+                    "parameter" to OType.INTEGER,
                     "value" to OType.DOUBLE,
                     "sourceName" to OType.STRING,
                     "city" to OType.STRING,
@@ -73,7 +73,7 @@ internal object PreConfiguredSchemas {
                 "PollutionOWM",
                 mapOf(
                     "unit" to OType.STRING,
-                    "parameter" to OType.BYTE,
+                    "parameter" to OType.INTEGER,
                     "value" to OType.DOUBLE,
                     "data" to OType.EMBEDDEDLIST,
                     "city" to OType.STRING,
@@ -133,26 +133,6 @@ internal object PreConfiguredSchemas {
                 )
             ),
             PreConfiguredSchemaProvider(
-                "LedgerId",
-                mapOf(
-                    "uuid" to OType.STRING,
-                    "timestamp" to OType.STRING,
-                    "id" to OType.STRING,
-                    "hash" to OType.BINARY,
-                    "params" to OType.LINK
-                )
-            ),
-            PreConfiguredSchemaProvider(
-                "LedgerParams",
-                mapOf(
-                    "crypter" to OType.STRING,
-                    "recalcTime" to OType.LONG,
-                    "recalcTrigger" to OType.LONG,
-                    "blockMemSize" to OType.LONG,
-                    "blockLength" to OType.LONG
-                )
-            ),
-            PreConfiguredSchemaProvider(
                 "BlockHeader",
                 mapOf(
                     "ledgerId" to OType.BINARY,
@@ -161,9 +141,17 @@ internal object PreConfiguredSchemas {
                     "hash" to OType.BINARY,
                     "merkleRoot" to OType.BINARY,
                     "previousHash" to OType.BINARY,
+                    "params" to OType.LINK,
                     "seconds" to OType.LONG,
                     "nanos" to OType.INTEGER,
                     "nonce" to OType.LONG
+                )
+            ),
+            PreConfiguredSchemaProvider(
+                "BlockParams",
+                mapOf(
+                    "blockMemSize" to OType.LONG,
+                    "blockLength" to OType.LONG
                 )
             ),
             PreConfiguredSchemaProvider(
@@ -183,6 +171,25 @@ internal object PreConfiguredSchemas {
                     "payoutTXOs" to OType.LINKSET,
                     "coinbase" to OType.DECIMAL,
                     "hashId" to OType.BINARY
+                )
+            ),
+            PreConfiguredSchemaProvider(
+                "LedgerId",
+                mapOf(
+                    "uuid" to OType.STRING,
+                    "timestamp" to OType.STRING,
+                    "id" to OType.STRING,
+                    "hash" to OType.BINARY,
+                    "params" to OType.LINK
+                )
+            ),
+            PreConfiguredSchemaProvider(
+                "LedgerParams",
+                mapOf(
+                    "crypter" to OType.STRING,
+                    "recalcTime" to OType.LONG,
+                    "recalcTrigger" to OType.LONG,
+                    "blockParams" to OType.LINK
                 )
             ),
             PreConfiguredSchemaProvider(
