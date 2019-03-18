@@ -1,6 +1,7 @@
 package pt.um.lei.masb.blockchain.service.results
 
 import pt.um.lei.masb.blockchain.service.ServiceHandle
+import pt.um.lei.masb.blockchain.utils.Failable
 
 sealed class LedgerResult<T : ServiceHandle> {
     data class Success<T : ServiceHandle>(
@@ -8,19 +9,19 @@ sealed class LedgerResult<T : ServiceHandle> {
     ) : LedgerResult<T>()
 
     data class QueryFailure<T : ServiceHandle>(
-        val cause: String,
-        val exception: Exception?
-    ) : LedgerResult<T>()
+        override val cause: String,
+        val exception: Exception? = null
+    ) : Failable, LedgerResult<T>()
 
-    data class InexistentFailure<T : ServiceHandle>(
-        val at: String
-    ) : LedgerResult<T>()
+    data class NonExistentData<T : ServiceHandle>(
+        override val cause: String
+    ) : Failable, LedgerResult<T>()
 
     data class NonMatchingCrypter<T : ServiceHandle>(
-        val at: String
-    ) : LedgerResult<T>()
+        override val cause: String
+    ) : Failable, LedgerResult<T>()
 
     data class UnregisteredCrypter<T : ServiceHandle>(
-        val at: String
-    ) : LedgerResult<T>()
+        override val cause: String
+    ) : Failable, LedgerResult<T>()
 }
