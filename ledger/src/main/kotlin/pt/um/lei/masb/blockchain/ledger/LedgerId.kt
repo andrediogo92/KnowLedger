@@ -6,41 +6,41 @@ import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.Crypter
 import pt.um.lei.masb.blockchain.utils.Hashable
+import pt.um.lei.masb.blockchain.utils.bytes
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.time.Instant
 import java.util.*
 
-data class LedgerId internal constructor(
+data class LedgerId(
+    val id: String,
     val uuid: UUID,
     val timestamp: Instant,
-    val id: String,
     val params: LedgerParams,
-    private var internalHash: Hash
+    var hash: Hash
 ) : Hashable, Storable, LedgerContract {
-    val hash: Hash
-        get() = internalHash
 
     internal constructor(
-        uuid: UUID,
-        timestamp: Instant,
         id: String,
-        params: LedgerParams
-    ) : this(uuid, timestamp, id, params, emptyHash()) {
-        internalHash = digest(params.crypter)
+        uuid: UUID = UUID.randomUUID(),
+        timestamp: Instant = Instant.now(),
+        params: LedgerParams = LedgerParams()
+    ) : this(id, uuid, timestamp, params, emptyHash()) {
+        hash = digest(params.crypter)
     }
 
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-            $uuid
-            ${timestamp.epochSecond}
-            ${timestamp.nano}
-            $id
-            ${params.crypter.id}
-            ${params.blockLength}
-            ${params.blockMemSize}
-            ${params.recalcTrigger}
-            ${params.recalcTime}
-        """.trimIndent()
+            flattenBytes(
+                uuid.toString().toByteArray(),
+                timestamp.epochSecond.bytes(),
+                timestamp.nano.bytes(),
+                id.toByteArray(),
+                params.crypter.id,
+                params.blockParams.blockLength.bytes(),
+                params.blockParams.blockMemSize.bytes(),
+                params.recalcTrigger.bytes(),
+                params.recalcTime.bytes()
+            )
         )
 
     override fun store(
@@ -52,7 +52,7 @@ data class LedgerId internal constructor(
                 setProperty("uuid", uuid.toString())
                 setProperty("timestamp", timestamp.toString())
                 setProperty("id", id)
-                setProperty("internalHash", internalHash)
+                setProperty("hash", hash)
                 setProperty("params", params.store(session))
             }
 
@@ -61,7 +61,7 @@ data class LedgerId internal constructor(
         |           UUID: $uuid
         |           Timestamp: $timestamp
         |           Id: $id
-        |           Hash: ${internalHash.print()}
+        |           Hash: ${hash.print()}
         |
         |       }
     """.trimMargin()
@@ -74,7 +74,7 @@ data class LedgerId internal constructor(
         if (timestamp != other.timestamp) return false
         if (id != other.id) return false
         if (params != other.params) return false
-        if (!internalHash.contentEquals(other.internalHash)) return false
+        if (!hash.contentEquals(other.hash)) return false
 
         return true
     }
@@ -84,7 +84,7 @@ data class LedgerId internal constructor(
         result = 31 * result + timestamp.hashCode()
         result = 31 * result + id.hashCode()
         result = 31 * result + params.hashCode()
-        result = 31 * result + internalHash.contentHashCode()
+        result = 31 * result + hash.contentHashCode()
         return result
     }
 

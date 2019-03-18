@@ -11,8 +11,7 @@ data class LedgerParams(
     val crypter: Crypter = DEFAULT_CRYPTER,
     val recalcTime: Long = 1228800000,
     val recalcTrigger: Long = 2048,
-    val blockMemSize: Long = 2097152,
-    val blockLength: Long = 512
+    val blockParams: BlockParams = BlockParams()
 ) : Storable, Hashable, LedgerContract {
     override fun store(session: NewInstanceSession): OElement =
         session
@@ -21,8 +20,7 @@ data class LedgerParams(
                 setProperty("crypter", crypter.id)
                 setProperty("recalcTime", recalcTime)
                 setProperty("recalcTrigger", recalcTrigger)
-                setProperty("blockMemSize", blockMemSize)
-                setProperty("blockLength", blockLength)
+                setProperty("blockParams", blockParams.store(session))
             }
 
 
@@ -32,8 +30,8 @@ data class LedgerParams(
                 ${crypter.id}
                 $recalcTime
                 $recalcTrigger
-                $blockMemSize
-                $blockLength
+                ${blockParams.blockMemSize}
+                ${blockParams.blockLength}
             """.trimIndent()
         )
 }
