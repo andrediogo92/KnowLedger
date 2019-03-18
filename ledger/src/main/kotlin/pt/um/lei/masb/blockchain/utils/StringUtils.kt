@@ -1,6 +1,5 @@
 package pt.um.lei.masb.blockchain.utils
 
-import mu.KotlinLogging
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.Key
 import java.security.KeyFactory
@@ -11,8 +10,6 @@ import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
-
-private val logger = KotlinLogging.logger {}
 
 //Ugly hack to ensure BC is loaded.
 val DEFAULT_CRYPTER: Crypter =
