@@ -1,17 +1,14 @@
 package pt.um.lei.masb.blockchain.ledger
 
-import mu.KotlinLogging
 import java.math.BigDecimal
 import java.math.BigInteger
-
-val logger = KotlinLogging.logger {}
 
 /**
  * Hash symbolizes a **unique identifier** for
  * a data structure instance which subsumes its data
  * into an index.
  */
-inline class Hash(val hash: ByteArray)
+typealias Hash = ByteArray
 
 
 /**
@@ -44,14 +41,14 @@ val INIT_DIFFICULTY: Difficulty = BigInteger(ByteArray(32).let {
 val MIN_DIFFICULTY: Difficulty = BigInteger.ZERO
 
 
-fun emptyHash(): Hash = Hash(ByteArray(0))
+fun emptyHash(): Hash = ByteArray(0)
 
 fun Difficulty.print(): String = this.toString(HEXR)
 
 fun Hash.print(): String =
 // Only convert on print.
     StringBuilder().let {
-        for (bHash in this.hash) {
+        for (bHash in this) {
             val hex = String.format(
                 "%02X",
                 bHash
@@ -60,12 +57,11 @@ fun Hash.print(): String =
         }
         it.toString()
     }
-
 
 fun Hash.truncated(): String =
 // Only convert on truncation.
     StringBuilder().let {
-        for (bHash in this.hash.take(10)) {
+        for (bHash in this.take(10)) {
             val hex = String.format(
                 "%02X",
                 bHash
@@ -76,4 +72,5 @@ fun Hash.truncated(): String =
     }
 
 
-fun Hash.toDifficulty(): Difficulty = BigInteger(this.hash)
+fun Hash.toDifficulty(): Difficulty =
+    BigInteger(this)
