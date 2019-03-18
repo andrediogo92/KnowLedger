@@ -9,8 +9,6 @@ import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.persistance.PersistenceWrapper
 import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.service.results.LedgerResult
-import java.time.Instant
-import java.util.*
 
 
 /**
@@ -18,12 +16,13 @@ import java.util.*
  */
 class LedgerHandle internal constructor(
     private val pw: PersistenceWrapper,
-    val blockChainId: LedgerId
+    val ledgerId: LedgerId
 ) : Storable, ServiceHandle {
+    val knownChainTypes: List<Class<BlockChainData>> = TODO()
 
     init {
         pw.registerDefaultClusters(
-            blockChainId.hash
+            ledgerId.hash
         )
     }
 
@@ -33,12 +32,7 @@ class LedgerHandle internal constructor(
         id: String
     ) : this(
         pw,
-        LedgerId(
-            UUID.randomUUID(),
-            Instant.now(),
-            id,
-            LedgerParams()
-        )
+        LedgerId(id)
     )
 
     internal constructor(
@@ -47,30 +41,25 @@ class LedgerHandle internal constructor(
         params: LedgerParams
     ) : this(
         pw,
-        LedgerId(
-            UUID.randomUUID(),
-            Instant.now(),
-            id,
-            params
-        )
+        LedgerId(id, params = params)
     )
 
 
     override fun store(
         session: NewInstanceSession
     ): OElement =
-        blockChainId.store(session)
+        ledgerId.store(session)
 
 
     fun <T : BlockChainData> getChainHandleOf(
         clazz: Class<T>
     ): LedgerResult<ChainHandle> =
-        pw.getChainHandle()
-
+        pw.getChainHandle(clazz, ledgerId)
+ 
     fun <T : BlockChainData> registerNewChainHandleOf(
         clazz: Class<T>
     ): LedgerResult<ChainHandle> =
-        pw.tryAddChainHandle()
+        pw.tryAddChainHandle(clazz, ledgerId)
 
     companion object : KLogging()
 }
