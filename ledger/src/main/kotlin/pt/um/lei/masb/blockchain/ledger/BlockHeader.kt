@@ -3,37 +3,29 @@ package pt.um.lei.masb.blockchain.ledger
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
+import pt.um.lei.masb.blockchain.data.MerkleTree
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.Crypter
 import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
 import pt.um.lei.masb.blockchain.utils.Hashable
+import pt.um.lei.masb.blockchain.utils.bytes
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.time.Instant
 
 class BlockHeader(
-    val blockChainId: Hash,
+    val ledgerId: Hash,
     // Difficulty is fixed at block generation time.
     val difficulty: Difficulty,
     val blockheight: Long,
-    private var hash: Hash,
-    internal var _merkleRoot: Hash,
+    var hash: Hash,
+    var merkleRoot: Hash,
     val previousHash: Hash,
-    internal var _timestamp: Instant = Instant.now(),
-    var _nonce: Long = 0
+    val params: BlockParams,
+    var timestamp: Instant = Instant.now(),
+    var nonce: Long = 0
 ) : Sizeable, Hashable, Storable, LedgerContract {
 
-
-    val merkleRoot
-        get() = _merkleRoot
-
-    val currentHash
-        get() = hash
-
-    val timestamp
-        get() = _timestamp
-
-    val nonce
-        get() = _nonce
 
     override val approximateSize: Long =
         ClassLayout
@@ -45,14 +37,16 @@ class BlockHeader(
         blockChainId: Hash,
         previousHash: Hash,
         difficulty: Difficulty,
-        blockheight: Long
+        blockheight: Long,
+        blockParams: BlockParams
     ) : this(
         blockChainId,
         difficulty,
         blockheight,
         emptyHash(),
         emptyHash(),
-        previousHash
+        previousHash,
+        blockParams
     )
 
 
@@ -62,65 +56,32 @@ class BlockHeader(
         session
             .newInstance("BlockHeader")
             .apply {
-                this.setProperty(
-                    "ledgerId",
-                    blockChainId
-                )
-                this.setProperty(
-                    "difficulty",
-                    difficulty.toByteArray()
-                )
-                this.setProperty(
-                    "blockheight",
-                    blockheight
-                )
-                this.setProperty(
-                    "hash",
-                    hash
-                )
-                this.setProperty(
-                    "merkleRoot",
-                    merkleRoot
-                )
-                this.setProperty(
-                    "previousHash",
-                    previousHash
-                )
-                this.setProperty(
-                    "seconds",
-                    timestamp.epochSecond
-                )
-                this.setProperty(
-                    "nanos",
-                    timestamp.nano
-                )
-                this.setProperty(
-                    "nonce",
-                    nonce
-                )
+                setProperty("ledgerId", ledgerId)
+                setProperty("difficulty", difficulty.toByteArray())
+                setProperty("blockheight", blockheight)
+                setProperty("hash", hash)
+                setProperty("merkleRoot", merkleRoot)
+                setProperty("previousHash", previousHash)
+                setProperty("params", params)
+                setProperty("seconds", timestamp.epochSecond)
+                setProperty("nanos", timestamp.nano)
+                setProperty("nonce", nonce)
             }
 
 
     /**
-     * Hash is a cryptographic digest calculated from previous hash, _nonce, _timestamp,
-     * {@link MerkleTree}'s root and each {@link Transaction}'s hash.
-     *
+     * Hash is a cryptographic digest calculated from previous hash,
+     * internalNonce, internalTimestamp, [MerkleTree]'s root
+     * and each [Transaction]'s hash.
      */
     fun updateHash() {
         hash = digest(crypter)
     }
 
-    fun zeroNonce() {
-        _nonce = 0
-    }
-
-    fun incNonce() {
-        _nonce++
-    }
 
     override fun toString(): String = """
         |   Header: {
-        |       BlockChainHash: ${blockChainId.print()}
+        |       BlockChainHash: ${ledgerId.print()}
         |       Difficulty: ${difficulty.print()}
         |       Blockheight: $blockheight
         |       PrevHash: ${previousHash.print()}
@@ -132,16 +93,18 @@ class BlockHeader(
 
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-            ${blockChainId.print()}
-            ${difficulty.print()}
-            $blockheight
-            ${previousHash.print()}
-            $nonce
-            ${timestamp.epochSecond}
-            ${timestamp.nano}
-            ${merkleRoot.print()}
-            """.trimIndent()
+            flattenBytes(
+                ledgerId,
+                difficulty.toByteArray(),
+                blockheight.bytes(),
+                previousHash,
+                nonce.bytes(),
+                timestamp.epochSecond.bytes(),
+                timestamp.nano.bytes(),
+                merkleRoot,
+                params.blockLength.bytes(),
+                params.blockMemSize.bytes()
+            )
         )
 
     override fun equals(other: Any?): Boolean {
@@ -149,8 +112,8 @@ class BlockHeader(
             return true
         if (other !is BlockHeader)
             return false
-        if (!blockChainId.contentEquals(
-                other.blockChainId
+        if (!ledgerId.contentEquals(
+                other.ledgerId
             )
         )
             return false
@@ -163,8 +126,8 @@ class BlockHeader(
             )
         )
             return false
-        if (!_merkleRoot.contentEquals(
-                other._merkleRoot
+        if (!merkleRoot.contentEquals(
+                other.merkleRoot
             )
         )
             return false
@@ -173,23 +136,23 @@ class BlockHeader(
             )
         )
             return false
-        if (_timestamp != other._timestamp)
+        if (timestamp != other.timestamp)
             return false
-        if (_nonce != other._nonce)
+        if (nonce != other.nonce)
             return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = blockChainId.contentHashCode()
+        var result = ledgerId.contentHashCode()
         result = 31 * result + difficulty.hashCode()
         result = 31 * result + blockheight.hashCode()
         result = 31 * result + hash.contentHashCode()
-        result = 31 * result + _merkleRoot.contentHashCode()
+        result = 31 * result + merkleRoot.contentHashCode()
         result = 31 * result + previousHash.contentHashCode()
-        result = 31 * result + _timestamp.hashCode()
-        result = 31 * result + _nonce.hashCode()
+        result = 31 * result + timestamp.hashCode()
+        result = 31 * result + nonce.hashCode()
         return result
     }
 

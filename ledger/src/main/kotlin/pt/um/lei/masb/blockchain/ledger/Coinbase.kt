@@ -11,6 +11,7 @@ import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.Crypter
 import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
 import pt.um.lei.masb.blockchain.utils.Hashable
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
@@ -24,23 +25,14 @@ import java.time.temporal.ChronoField
  * to reflect changes to the block.
  */
 class Coinbase(
-    private val _payoutTXO: MutableSet<TransactionOutput>,
-    private var coinbase: Payout,
-    private var _hashId: Hash,
+    val payoutTXO: MutableSet<TransactionOutput>,
+    var coinbase: Payout,
+    override var hashId: Hash,
     @Transient
     private val payoutFormula: DataFormula
 ) : Sizeable, Hashed, Hashable, Storable,
     LedgerContract {
 
-
-    val payoutTXO: Set<TransactionOutput>
-        get() = _payoutTXO
-
-    override val hashId: Hash
-        get() = _hashId
-
-    val coinbasePayout: Payout
-        get() = coinbase
 
     override val approximateSize: Long
         get() {
@@ -55,11 +47,11 @@ class Coinbase(
         }
 
     init {
-        if (_hashId.contentEquals(
+        if (hashId.contentEquals(
                 emptyHash()
             )
         ) {
-            _hashId = digest(crypter)
+            hashId = digest(crypter)
         }
     }
 
@@ -87,16 +79,16 @@ class Coinbase(
         session
             .newInstance("Coinbase")
             .apply {
-                this.setProperty(
+                setProperty(
                     "payoutTXOs",
                     payoutTXO.map {
                         it.store(session)
                     })
-                this.setProperty(
+                setProperty(
                     "coinbase",
                     coinbase
                 )
-                this.setProperty(
+                setProperty(
                     "hashId",
                     hashId
                 )
@@ -153,7 +145,7 @@ class Coinbase(
             lkHash,
             payout
         )
-        _hashId = digest(crypter)
+        hashId = digest(crypter)
     }
 
     private fun getTimeDelta(
@@ -188,7 +180,7 @@ class Coinbase(
         prev: Hash,
         payout: Payout
     ) {
-        _payoutTXO
+        payoutTXO
             .firstOrNull { it.publicKey == publicKey }
             .let {
                 it?.addToPayout(
@@ -196,7 +188,7 @@ class Coinbase(
                     newT,
                     prev
                 )
-                    ?: _payoutTXO.add(
+                    ?: payoutTXO.add(
                         TransactionOutput(
                             publicKey,
                             prevUTXO,
@@ -225,12 +217,12 @@ class Coinbase(
 
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-            $coinbase
-            ${payoutTXO.joinToString("") {
-                it.hashId.print()
-            }}
-        """.trimIndent()
+            flattenBytes(
+                payoutTXO.map {
+                    it.digest(c)
+                },
+                coinbase.unscaledValue().toByteArray()
+            )
         )
 
     override fun toString(): String =
@@ -239,7 +231,7 @@ class Coinbase(
             sb.append(
                 """
                 |   Coinbase: {
-                |       Total: $coinbasePayout
+                |       Total: $coinbase
                 |       Hash: ${hashId.print()}
                 |       Payouts: [
                 """.trimMargin()
@@ -264,19 +256,19 @@ class Coinbase(
         if (this === other) return true
         if (other !is Coinbase) return false
 
-        if (!_payoutTXO.containsAll(other._payoutTXO)) return false
-        if (_payoutTXO.size != other._payoutTXO.size) return false
+        if (!payoutTXO.containsAll(other.payoutTXO)) return false
+        if (payoutTXO.size != other.payoutTXO.size) return false
         if (coinbase != other.coinbase) return false
-        if (!_hashId.contentEquals(other._hashId)) return false
+        if (!hashId.contentEquals(other.hashId)) return false
         if (payoutFormula != other.payoutFormula) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = _payoutTXO.hashCode()
+        var result = payoutTXO.hashCode()
         result = 31 * result + coinbase.hashCode()
-        result = 31 * result + _hashId.contentHashCode()
+        result = 31 * result + hashId.contentHashCode()
         result = 31 * result + payoutFormula.hashCode()
         return result
     }
@@ -296,3 +288,4 @@ class Coinbase(
     }
 
 }
+

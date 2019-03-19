@@ -8,32 +8,24 @@ import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.Crypter
 import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
 import pt.um.lei.masb.blockchain.utils.Hashable
+import pt.um.lei.masb.blockchain.utils.asHex
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
 import java.security.PublicKey
 
 data class TransactionOutput(
     val publicKey: PublicKey,
     val prevCoinbase: Hash,
-    private var _hashId: Hash,
-    private var payout: Payout,
-    private var tx: MutableSet<Hash>
+    override var hashId: Hash,
+    var payout: Payout,
+    var tx: MutableSet<Hash>
 ) : Sizeable, Hashed, Hashable, Storable,
     LedgerContract {
-
-
-    override val hashId: Hash
-        get() = _hashId
 
     override val approximateSize: Long
         get() = GraphLayout
             .parseInstance(this)
             .totalSize()
-
-    val payoutTX: Payout
-        get() = payout
-
-    val txSet: Set<Hash>
-        get() = tx
 
 
     constructor(
@@ -58,26 +50,11 @@ data class TransactionOutput(
         session
             .newInstance("TransactionOutput")
             .apply {
-                this.setProperty(
-                    "publicKey",
-                    publicKey.encoded
-                )
-                this.setProperty(
-                    "prevCoinbase",
-                    prevCoinbase
-                )
-                this.setProperty(
-                    "hashId",
-                    hashId
-                )
-                this.setProperty(
-                    "payout",
-                    payout
-                )
-                this.setProperty(
-                    "txSet",
-                    txSet
-                )
+                setProperty("publicKey", publicKey.encoded)
+                setProperty("prevCoinbase", prevCoinbase)
+                setProperty("hashId", hashId)
+                setProperty("payout", payout)
+                setProperty("txSet", tx)
             }
 
     fun addToPayout(
@@ -87,7 +64,7 @@ data class TransactionOutput(
     ) {
         this.tx.add(prev + tx)
         this.payout = this.payout.add(payout)
-        _hashId = digest(crypter)
+        hashId = digest(crypter)
     }
 
     /**
@@ -95,13 +72,13 @@ data class TransactionOutput(
      */
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-                ${publicKey.encoded.print()}
-                ${prevCoinbase.print()}
-                ${hashId.print()}
-                $payout
-                ${tx.joinToString("") { it.print() }}
-                """.trimIndent()
+            flattenBytes(
+                tx,
+                publicKey.encoded,
+                prevCoinbase,
+                hashId,
+                payout.unscaledValue().toByteArray()
+            )
         )
 
     override fun toString(): String =
@@ -110,14 +87,14 @@ data class TransactionOutput(
             sb.append(
                 """
                 |           TransactionOutput: {
-                |               PublicKey: ${publicKey.encoded.print()},
+                |               PublicKey: ${publicKey.encoded.asHex()},
                 |               PrevCoinbase: ${prevCoinbase.print()},
                 |               HashId: ${hashId.print()},
                 |               Payout: $payout,
                 |               TXs: [
                 """.trimMargin()
             )
-            txSet.forEach {
+            tx.forEach {
                 sb.append(
                     """
                     |                   ${it.print()},
@@ -148,7 +125,7 @@ data class TransactionOutput(
             )
         )
             return false
-        if (!_hashId.contentEquals(other._hashId))
+        if (!hashId.contentEquals(other.hashId))
             return false
         if (payout != other.payout)
             return false
@@ -161,7 +138,7 @@ data class TransactionOutput(
     override fun hashCode(): Int {
         var result = publicKey.hashCode()
         result = 31 * result + prevCoinbase.contentHashCode()
-        result = 31 * result + _hashId.contentHashCode()
+        result = 31 * result + hashId.contentHashCode()
         result = 31 * result + payout.hashCode()
         result = 31 * result + tx.hashCode()
         return result

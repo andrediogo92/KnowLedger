@@ -10,18 +10,11 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 class Block(
-    private val internalData: MutableList<Transaction>,
+    val data: MutableList<Transaction>,
     val coinbase: Coinbase,
     val header: BlockHeader,
-    private var internalMerkleTree: MerkleTree
+    var merkleTree: MerkleTree
 ) : Sizeable, Storable, LedgerContract {
-
-
-    val data: List<Transaction>
-        get() = internalData
-
-    val merkleTree
-        get() = internalMerkleTree
 
     @Transient
     private val classSize: Long =
@@ -53,18 +46,20 @@ class Block(
 
 
     constructor(
-        blockChainId: Hash,
+        ledgerId: Hash,
         previousHash: Hash,
         difficulty: Difficulty,
-        blockheight: Long
+        blockheight: Long,
+        params: BlockParams
     ) : this(
         mutableListOf(),
         Coinbase(),
         BlockHeader(
-            blockChainId,
+            ledgerId,
             previousHash,
             difficulty,
-            blockheight
+            blockheight,
+            params
         ),
         MerkleTree()
     ) {
@@ -109,44 +104,44 @@ class Block(
         time: Boolean
     ): Boolean {
         //Can't mine origin block.
-        if (this == origins[header.blockChainId]) {
+        if (this == origins[header.ledgerId]) {
             return false
         }
         if (invalidate && time) {
-            internalMerkleTree = MerkleTree.buildMerkleTree(
+            merkleTree = MerkleTree.buildMerkleTree(
                 coinbase,
                 data
             )
-            header._merkleRoot = merkleTree.root
-            header._timestamp = ZonedDateTime
+            header.merkleRoot = merkleTree.root
+            header.timestamp = ZonedDateTime
                 .now(ZoneOffset.UTC)
                 .toInstant()
-            header.zeroNonce()
+            header.nonce = 0
         } else if (invalidate) {
-            internalMerkleTree = MerkleTree.buildMerkleTree(
+            merkleTree = MerkleTree.buildMerkleTree(
                 coinbase,
                 data
             )
-            header._merkleRoot = merkleTree.root
-            header.zeroNonce()
+            header.merkleRoot = merkleTree.root
+            header.nonce = 0
         } else if (time) {
-            header._timestamp = ZonedDateTime
+            header.timestamp = ZonedDateTime
                 .now(ZoneOffset.UTC)
                 .toInstant()
-            header.zeroNonce()
+            header.nonce = 0
         }
         header.updateHash()
-        val curDiff = header.currentHash.toDifficulty()
+        val curDiff = header.hash.toDifficulty()
         return if (curDiff < header.difficulty) {
             logger.info {
-                "Block Mined!!! : ${header.currentHash}"
+                "Block Mined!!! : ${header.hash}"
             }
             logger.info {
                 "Block contains: ${toString()}"
             }
             true
         } else {
-            header.incNonce()
+            header.nonce++
             false
         }
     }
@@ -164,9 +159,9 @@ class Block(
     fun addTransaction(transaction: Transaction): Boolean {
         val transactionSize = transaction.approximateSize
         if (approximateSize +
-            transactionSize < MAX_MEM
+            transactionSize < header.params.blockMemSize
         ) {
-            if (data.size < MAX_BLOCK_SIZE) {
+            if (data.size < header.params.blockLength) {
                 if (transaction.processTransaction()) {
                     insertSorted(transaction)
                     transactionsSize += transactionSize
@@ -184,16 +179,16 @@ class Block(
     }
 
     /**
-     * Transactions are sorted in descending order of data _timestamp.
+     * Transactions are sorted in descending order of data internalTimestamp.
      *
      * @param transaction Transaction to insert in descending order.
      */
     private fun insertSorted(
         transaction: Transaction
     ) {
-        internalData.add(transaction)
-        internalData.sortByDescending { t ->
-            t.data.instant
+        data.add(transaction)
+        data.sortByDescending {
+            it.data.instant
         }
     }
 
@@ -202,8 +197,8 @@ class Block(
      *
      * Is somewhat time consuming and only necessary if:
      *
-     *      1. There is a need to calculate the effective block size after deserialization
-     *      2. There is a need to calculate the effective block size after retrieval
+     * 1. There is a need to calculate the effective block size after deserialization;
+     * 2. There is a need to calculate the effective block size after retrieval
      *         of a block from a database.
      */
     fun resetApproximateSize() {
@@ -257,37 +252,34 @@ class Block(
         if (other !is Block)
             return false
 
-        if (!internalData.containsAll(
-                other.internalData
+        if (!data.containsAll(
+                other.data
             )
         )
             return false
-        if (internalData.size != other.internalData.size)
+        if (data.size != other.data.size)
             return false
         if (coinbase != other.coinbase)
             return false
         if (header != other.header)
             return false
-        if (internalMerkleTree != other.internalMerkleTree)
+        if (merkleTree != other.merkleTree)
             return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = internalData.hashCode()
+        var result = data.hashCode()
         result = 31 * result + coinbase.hashCode()
         result = 31 * result + header.hashCode()
-        result = 31 * result + internalMerkleTree.hashCode()
+        result = 31 * result + merkleTree.hashCode()
         return result
     }
 
     companion object : KLogging() {
         private var origins =
             mutableMapOf<Hash, Block>()
-
-        const val MAX_BLOCK_SIZE = 512
-        const val MAX_MEM = 2097152
     }
 
 }

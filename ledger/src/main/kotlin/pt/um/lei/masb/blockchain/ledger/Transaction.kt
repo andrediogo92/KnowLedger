@@ -10,6 +10,8 @@ import pt.um.lei.masb.blockchain.service.Ident
 import pt.um.lei.masb.blockchain.utils.Crypter
 import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
 import pt.um.lei.masb.blockchain.utils.Hashable
+import pt.um.lei.masb.blockchain.utils.asHex
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import pt.um.lei.masb.blockchain.utils.generateSignature
 import pt.um.lei.masb.blockchain.utils.verifyECDSASig
 import java.security.PrivateKey
@@ -75,24 +77,15 @@ data class Transaction(
         session
             .newInstance("Transaction")
             .apply {
-                this.setProperty(
-                    "publicKey",
-                    publicKey.encoded
-                )
-                this.setProperty(
-                    "data",
-                    data.store(session)
-                )
-                this.setProperty(
+                setProperty("publicKey", publicKey.encoded)
+                setProperty("data", data.store(session))
+                setProperty(
                     "signature",
                     session.newInstance(
                         signature
                     )
                 )
-                this.setProperty(
-                    "hashId",
-                    hashId
-                )
+                setProperty("hashId", hashId)
             }
 
     /**
@@ -105,8 +98,7 @@ data class Transaction(
     fun verifySignature(): Boolean =
         verifyECDSASig(
             publicKey,
-            publicKey.encoded +
-                    data.digest(crypter),
+            publicKey.encoded + data.digest(crypter),
             signature
         )
 
@@ -122,20 +114,21 @@ data class Transaction(
     override fun toString(): String = """
             |       Transaction {
             |           Transaction id: ${hashId.print()},
-            |           Public Key: ${publicKey.encoded.print()},
+            |           Public Key: ${publicKey.encoded.asHex()},
             |$data,
-            |           Signature: ${signature.print()}
+            |           Signature: ${signature.asHex()}
             |       }
             """.trimMargin()
 
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-            ${publicKey.encoded.print()}
-            ${data.digest(c).print()}
-            ${signature.print()}
-            """.trimIndent()
+            flattenBytes(
+                publicKey.encoded,
+                data.digest(c),
+                signature
+            )
         )
+
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
