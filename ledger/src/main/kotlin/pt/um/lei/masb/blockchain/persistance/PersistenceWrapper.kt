@@ -6,16 +6,36 @@ import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
 import pt.um.lei.masb.blockchain.data.BlockChainData
 import pt.um.lei.masb.blockchain.data.Loadable
-import pt.um.lei.masb.blockchain.ledger.*
+import pt.um.lei.masb.blockchain.ledger.Block
+import pt.um.lei.masb.blockchain.ledger.BlockHeader
+import pt.um.lei.masb.blockchain.ledger.Hash
+import pt.um.lei.masb.blockchain.ledger.LedgerContract
+import pt.um.lei.masb.blockchain.ledger.LedgerId
+import pt.um.lei.masb.blockchain.ledger.Transaction
+import pt.um.lei.masb.blockchain.ledger.truncated
+import pt.um.lei.masb.blockchain.persistance.loaders.BlockChainLoaders
 import pt.um.lei.masb.blockchain.persistance.loaders.ChainLoadable
 import pt.um.lei.masb.blockchain.persistance.loaders.DefaultLoadable
-import pt.um.lei.masb.blockchain.persistance.loaders.LoaderManager
 import pt.um.lei.masb.blockchain.persistance.query.ClusterSelect
 import pt.um.lei.masb.blockchain.persistance.query.Filters
 import pt.um.lei.masb.blockchain.persistance.query.GenericQuery
+import pt.um.lei.masb.blockchain.persistance.results.DataListResult
+import pt.um.lei.masb.blockchain.persistance.results.DataResult
+import pt.um.lei.masb.blockchain.persistance.results.PersistResult
 import pt.um.lei.masb.blockchain.persistance.schema.PreConfiguredSchemas
 import pt.um.lei.masb.blockchain.persistance.schema.SchemaProvider
+import pt.um.lei.masb.blockchain.service.ChainHandle
+import pt.um.lei.masb.blockchain.service.LedgerHandle
+import pt.um.lei.masb.blockchain.service.ServiceHandle
 import pt.um.lei.masb.blockchain.service.results.LedgerResult
+import pt.um.lei.masb.blockchain.service.results.LoadListResult
+import pt.um.lei.masb.blockchain.service.results.LoadResult
+import pt.um.lei.masb.blockchain.utils.collapse
+import pt.um.lei.masb.blockchain.utils.tryOrDataQueryFailure
+import pt.um.lei.masb.blockchain.utils.tryOrLedgerQueryFailure
+import pt.um.lei.masb.blockchain.utils.tryOrLoadListQueryFailure
+import pt.um.lei.masb.blockchain.utils.tryOrLoadQueryFailure
+import pt.um.lei.masb.blockchain.utils.tryOrPersistQueryFailure
 import java.security.PublicKey
 
 
@@ -71,7 +91,10 @@ internal class PersistenceWrapper(
     }
 
 
-    private fun replaceSchema(schema: OSchema, provider: SchemaProvider) {
+    private fun replaceSchema(
+        schema: OSchema,
+        provider: SchemaProvider
+    ) {
         val cl = schema.getClass(provider.id)
         val (propsIn, propsNotIn) = cl
             .declaredProperties()
@@ -114,7 +137,7 @@ internal class PersistenceWrapper(
 
 
     @Synchronized
-    internal fun executeWithSuccessInCurrentSession(
+    internal inline fun executeWithSuccessInCurrentSession(
         executable: (
             ODatabaseDocument
         ) -> Boolean
@@ -126,7 +149,7 @@ internal class PersistenceWrapper(
 
 
     @Synchronized
-    internal fun executeInCurrentSession(
+    internal inline fun executeInCurrentSession(
         executable: (
             ODatabaseDocument
         ) -> Unit
@@ -138,7 +161,7 @@ internal class PersistenceWrapper(
 
 
     @Synchronized
-    internal fun <R> executeInSessionAndReturn(
+    internal inline fun <R> executeInSessionAndReturn(
         function: (
             ODatabaseDocument
         ) -> R
@@ -178,20 +201,14 @@ internal class PersistenceWrapper(
         session: ODatabaseDocument,
         query: GenericQuery,
         loader: Loadable<T>
-    ): T? =
-        try {
-            val rs = session.query(
+    ): DataResult<T> =
+        tryOrDataQueryFailure {
+            session.query(
                 query.query,
                 query.params
-            )
-            if (rs.hasNext()) {
-                (loader.load)(rs.next().toElement())
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            logger.warn(e) {}
-            null
+            ).asSequence().firstOrNull()?.let {
+                loader.load(it.toElement())
+            } ?: DataResult.NonExistentData("Empty ResultSet for ${query.query}")
         }
 
     /**
@@ -220,25 +237,18 @@ internal class PersistenceWrapper(
         blockChainId: Hash,
         query: GenericQuery,
         loader: DefaultLoadable<T>
-    ): T? =
-        try {
-            val rs = session.query(
+    ): LoadResult<T> =
+        tryOrLoadQueryFailure {
+            session.query(
                 query.query,
                 query.params
-            )
-            if (rs.hasNext()) {
+            ).asSequence().firstOrNull()?.let {
                 (loader.load)(
                     blockChainId,
-                    rs.next().toElement()
+                    it.toElement()
                 )
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            logger.warn(e) {}
-            null
+            } ?: LoadResult.NonExistentData("Empty ResultSet for ${query.query}")
         }
-
 
     /**
      * Not to be used directly.
@@ -261,27 +271,23 @@ internal class PersistenceWrapper(
      *
      * Returns an optional result as [T]?
      */
-    private fun <T : LedgerContract> getUniqueResult(
+    private fun <T : ServiceHandle> getUniqueResult(
         session: ODatabaseDocument,
+        crypterHash: Hash,
         query: GenericQuery,
         loader: ChainLoadable<T>
-    ): T? =
-        try {
-            val rs = session.query(
+    ): LedgerResult<T> =
+        tryOrLedgerQueryFailure {
+            session.query(
                 query.query,
                 query.params
-            )
-            if (rs.hasNext()) {
+            ).asSequence().firstOrNull()?.let {
                 (loader.load)(
+                    crypterHash,
                     this,
-                    rs.next().toElement()
+                    it.toElement()
                 )
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            logger.warn(e) {}
-            null
+            } ?: LedgerResult.NonExistentData("Empty ResultSet for ${query.query}")
         }
 
 
@@ -302,23 +308,20 @@ internal class PersistenceWrapper(
         session: ODatabaseDocument,
         query: GenericQuery,
         loader: Loadable<T>
-    ): List<T> =
+    ): DataListResult<T> =
         try {
-            val ls = mutableListOf<T>()
             session.query(
                 query.query,
                 query.params
-            ).forEach { r ->
-                r.element.map {
-                    (loader.load)(it)
-                }.ifPresent {
-                    ls.add(it)
-                }
-            }
-            ls
+            ).asSequence().map {
+                (loader.load)(it.toElement())
+            }.collapse()
         } catch (e: Exception) {
             logger.warn(e) {}
-            emptyList()
+            DataListResult.QueryFailure(
+                e.message ?: "",
+                e
+            )
         }
 
     /**
@@ -342,23 +345,15 @@ internal class PersistenceWrapper(
         blockChainId: Hash,
         query: GenericQuery,
         loader: DefaultLoadable<T>
-    ): List<T> =
-        try {
+    ): LoadListResult<T> =
+        tryOrLoadListQueryFailure {
             val ls = mutableListOf<T>()
             session.query(
                 query.query,
                 query.params
-            ).forEach { r ->
-                r.element.map {
-                    (loader.load)(blockChainId, it)
-                }.ifPresent {
-                    ls.add(it)
-                }
-            }
-            ls
-        } catch (e: Exception) {
-            logger.warn(e) {}
-            emptyList()
+            ).asSequence().map {
+                (loader.load)(blockChainId, it.toElement())
+            }.collapse()
         }
 
 
@@ -371,13 +366,16 @@ internal class PersistenceWrapper(
     private fun persistEntity(
         session: ODatabaseDocument,
         element: OElement
-    ): Boolean =
-        try {
+    ): PersistResult =
+        tryOrPersistQueryFailure {
             val r = session.save<OElement>(element)
-            r == element
-        } catch (e: Exception) {
-            logger.error { e.message }
-            false
+            if (r != null) {
+                PersistResult.Success(r)
+            } else {
+                PersistResult.NonExistentData(
+                    "Failed to save element ${element.toJSON()}"
+                )
+            }
         }
 
 
@@ -388,51 +386,53 @@ internal class PersistenceWrapper(
         closeCurrentSession()
 
     private fun <R : LedgerContract> queryUniqueResult(
-        id: String,
+        id: DefaultLoadable<R>,
         blockChainId: Hash,
         query: GenericQuery
-    ): R? =
+    ): LoadResult<R> =
         executeInSessionAndReturn {
             getUniqueResult(
                 it,
                 blockChainId,
                 query,
-                LoaderManager.getFromDefault(id)
+                id
             )
         }
 
-    private fun <R : LedgerContract> queryUniqueResult(
-        id: String,
+    private fun <R : ServiceHandle> queryUniqueResult(
+        crypterHash: Hash,
+        id: ChainLoadable<R>,
         query: GenericQuery
-    ): R? =
+    ): LedgerResult<R> =
         executeInSessionAndReturn {
             getUniqueResult(
                 it,
+                crypterHash,
                 query,
-                LoaderManager.getFromChains(id)
+                id
             )
         }
 
 
     private fun <R : LedgerContract> queryResults(
-        id: String,
+        id: DefaultLoadable<R>,
         blockChainId: Hash,
         query: GenericQuery
-    ): List<R> =
+    ): LoadListResult<R> =
         executeInSessionAndReturn {
             getResults(
                 it,
                 blockChainId,
                 query,
-                LoaderManager.getFromDefault(id)
+                id
             )
         }
 
 
     internal fun persistEntity(
         element: Storable
-    ): Boolean =
-        executeWithSuccessInCurrentSession {
+    ): PersistResult =
+        executeInSessionAndReturn {
             persistEntity(
                 db.session,
                 element.store(
@@ -452,39 +452,39 @@ internal class PersistenceWrapper(
      */
     internal fun getBlockChain(
         blockChainId: LedgerId
-    ): LedgerResult =
-        "LedgerHandle".let {
-            queryUniqueResult(
-                it,
-                ClusterSelect(
-                    it,
-                    blockChainId.hash
-                ).withSimpleFilter(
-                    Filters.WHERE,
-                    "ledgerId.hash",
-                    "hash",
-                    blockChainId.hash
-                )
+    ): LedgerResult<LedgerHandle> =
+        queryUniqueResult(
+            blockChainId.params.crypter.id,
+            BlockChainLoaders.ledgerLoader,
+            ClusterSelect(
+                "LedgerHandle",
+                blockChainId.hash
+            ).withSimpleFilter(
+                Filters.WHERE,
+                "ledgerId.hash",
+                "hash",
+                blockChainId.hash
             )
-        }
+        )
 
     internal fun getBlockChain(
+        crypterHash: Hash,
         hash: Hash
-    ): LedgerResult =
-        "LedgerHandle".let {
-            queryUniqueResult(
-                it,
-                ClusterSelect(
-                    it,
-                    hash
-                ).withSimpleFilter(
-                    Filters.WHERE,
-                    "ledgerId.hash",
-                    "hash",
-                    hash
-                )
+    ): LedgerResult<LedgerHandle> =
+        queryUniqueResult(
+            crypterHash,
+            BlockChainLoaders.ledgerLoader,
+            ClusterSelect(
+                "LedgerHandle",
+                hash
+            ).withSimpleFilter(
+                Filters.WHERE,
+                "ledgerId.hash",
+                "hash",
+                hash
             )
-        }
+        )
+
 
     // ------------------------------
 // Blockheader transactions.
@@ -493,79 +493,70 @@ internal class PersistenceWrapper(
     internal fun getBlockHeaderByHash(
         blockChainId: Hash,
         hash: Hash
-    ): BlockHeader? =
-        "BlockHeader".let {
-            queryUniqueResult(
-                it,
-                blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId
-                ).withSimpleFilter(
-                    Filters.WHERE,
-                    "hash",
-                    "hash",
-                    hash
-                )
+    ): LoadResult<BlockHeader> =
+        queryUniqueResult(
+            BlockChainLoaders.blockHeaderLoader,
+            blockChainId,
+            ClusterSelect(
+                "BlockHeader",
+                blockChainId
+            ).withSimpleFilter(
+                Filters.WHERE,
+                "hash",
+                "hash",
+                hash
             )
-        }
+        )
 
 
     internal fun getBlockHeaderByBlockHeight(
         blockChainId: Hash,
         height: Long
-    ): BlockHeader? =
-        "BlockHeader".let {
-            queryUniqueResult(
-                it,
-                blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId
-                ).withSimpleFilter(
-                    Filters.WHERE, "blockheight",
-                    "blockheight",
-                    height
-                )
+    ): LoadResult<BlockHeader> =
+        queryUniqueResult(
+            BlockChainLoaders.blockHeaderLoader,
+            blockChainId,
+            ClusterSelect(
+                "BlockHeader",
+                blockChainId
+            ).withSimpleFilter(
+                Filters.WHERE, "blockheight",
+                "blockheight",
+                height
             )
-        }
+        )
 
 
     internal fun getBlockHeaderByPrevHeaderHash(
         blockChainId: Hash,
         hash: Hash
-    ): BlockHeader? =
-        "BlockHeader".let {
-            queryUniqueResult(
-                it,
-                blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId
-                ).withSimpleFilter(
-                    Filters.WHERE,
-                    "previousHash",
-                    "hash",
-                    hash
-                )
+    ): LoadResult<BlockHeader> =
+        queryUniqueResult(
+            BlockChainLoaders.blockHeaderLoader,
+            blockChainId,
+            ClusterSelect(
+                "BlockHeader",
+                blockChainId
+            ).withSimpleFilter(
+                Filters.WHERE,
+                "previousHash",
+                "hash",
+                hash
             )
-
-        }
+        )
 
     internal fun getLatestBlockHeader(
         blockChainId: Hash
-    ): BlockHeader? =
-        "BlockHeader".let {
-            queryUniqueResult(
-                it,
+    ): LoadResult<BlockHeader> =
+        queryUniqueResult(
+            BlockChainLoaders.blockHeaderLoader,
+            blockChainId,
+            ClusterSelect(
+                "BlockHeader",
                 blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId,
-                    "max(blockheight), *"
-                )
+                "max(blockheight), *"
             )
-        }
+        )
 
     // ------------------------------
 // Block transactions.
@@ -574,81 +565,73 @@ internal class PersistenceWrapper(
     internal fun getBlockByBlockHeight(
         blockChainId: Hash,
         blockheight: Long
-    ): Block? =
-        "Block".let {
-            queryUniqueResult(
-                it,
-                blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId
-                ).withSimpleFilter(
-                    Filters.WHERE,
-                    "header.blockheight",
-                    "blockheight",
-                    blockheight
-                )
+    ): LoadResult<Block> =
+        queryUniqueResult(
+            BlockChainLoaders.blockLoader,
+            blockChainId,
+            ClusterSelect(
+                "Block",
+                blockChainId
+            ).withSimpleFilter(
+                Filters.WHERE,
+                "header.blockheight",
+                "blockheight",
+                blockheight
             )
-        }
+        )
 
 
     internal fun getBlockByHeaderHash(
         blockChainId: Hash,
         hash: Hash
-    ): Block? =
-        "Block".let {
-            queryUniqueResult(
-                it,
-                blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId
-                ).withSimpleFilter(
-                    Filters.WHERE,
-                    "header.hash",
-                    "hash",
-                    hash
-                )
+    ): LoadResult<Block> =
+        queryUniqueResult(
+            BlockChainLoaders.blockLoader,
+            blockChainId,
+            ClusterSelect(
+                "Block",
+                blockChainId
+            ).withSimpleFilter(
+                Filters.WHERE,
+                "header.hash",
+                "hash",
+                hash
             )
-        }
+        )
 
 
     internal fun getBlockByPrevHeaderHash(
         blockChainId: Hash,
         hash: Hash
-    ): Block? =
-        "Block".let {
-            queryUniqueResult(
-                it,
-                blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId
-                ).withSimpleFilter(
-                    Filters.WHERE,
-                    "header.previousHash",
-                    "hash",
-                    hash
-                )
+    ): LoadResult<Block> =
+        queryUniqueResult(
+            BlockChainLoaders.blockLoader,
+            blockChainId,
+            ClusterSelect(
+                "Block",
+                blockChainId
+            ).withSimpleFilter(
+                Filters.WHERE,
+                "header.previousHash",
+                "hash",
+                hash
             )
-        }
+        )
 
 
     internal fun getLatestBlock(
         blockChainId: Hash
-    ): Block? =
-        "Block".let {
-            queryUniqueResult(
-                it,
-                blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId
-                ).withProjection(
-                    "max(header.blockheight), *"
-                )
+    ): LoadResult<Block> =
+        queryUniqueResult(
+            BlockChainLoaders.blockLoader,
+            blockChainId,
+            ClusterSelect(
+                "Block",
+                blockChainId
+            ).withProjection(
+                "max(header.blockheight), *"
             )
-        }
+        )
 
 
     // ------------------------------
@@ -678,81 +661,81 @@ internal class PersistenceWrapper(
     fun getTransactionsFromAgent(
         blockChainId: Hash,
         publicKey: PublicKey
-    ): List<Transaction> =
-        "Transaction".let {
-            queryResults(
-                it,
-                blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId
-                ).withSimpleFilter(
-                    Filters.WHERE,
-                    "publicKey",
-                    "publicKey",
-                    publicKey.encoded
-                )
+    ): LoadListResult<Transaction> =
+        queryResults(
+            BlockChainLoaders.transactionLoader,
+            blockChainId,
+            ClusterSelect(
+                "Transaction",
+                blockChainId
+            ).withSimpleFilter(
+                Filters.WHERE,
+                "publicKey",
+                "publicKey",
+                publicKey.encoded
             )
-        }
+        )
 
     fun getTransactionByHash(
         blockChainId: Hash,
         hash: Hash
-    ): Transaction? =
-        "Transaction".let {
-            queryUniqueResult(
-                it,
-                blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId
-                ).withSimpleFilter(
-                    Filters.WHERE,
-                    "hashId",
-                    "hash",
-                    hash
-                )
+    ): LoadResult<Transaction> =
+        queryUniqueResult(
+            BlockChainLoaders.transactionLoader,
+            blockChainId,
+            ClusterSelect(
+                "Transaction",
+                blockChainId
+            ).withSimpleFilter(
+                Filters.WHERE,
+                "hashId",
+                "hash",
+                hash
             )
-        }
+        )
 
 
     //Execution must be runtime determined.
     fun getTransactionsOrderedByTimestamp(
         blockChainId: Hash
-    ): List<Transaction> =
-        "Transaction".let {
-            queryResults(
-                it,
-                blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId
-                ).withSimpleFilter(
-                    Filters.ORDER,
-                    "data.seconds DESC, data.nanos DESC"
-                )
+    ): LoadListResult<Transaction> =
+        queryResults(
+            BlockChainLoaders.transactionLoader,
+            blockChainId,
+            ClusterSelect(
+                "Transaction",
+                blockChainId
+            ).withSimpleFilter(
+                Filters.ORDER,
+                "data.seconds DESC, data.nanos DESC"
             )
-        }
+        )
 
     fun getTransactionsByClass(
         blockChainId: Hash,
         typeName: String
-    ): List<Transaction> =
-        "Transaction".let {
-            queryResults(
-                it,
-                blockChainId,
-                ClusterSelect(
-                    it,
-                    blockChainId
-                ).withSimpleFilter(
-                    Filters.WHERE,
-                    "data.data.@class",
-                    "typeName",
-                    typeName
-                )
+    ): LoadListResult<Transaction> =
+        queryResults(
+            BlockChainLoaders.transactionLoader,
+            blockChainId,
+            ClusterSelect(
+                "Transaction",
+                blockChainId
+            ).withSimpleFilter(
+                Filters.WHERE,
+                "data.data.@class",
+                "typeName",
+                typeName
             )
-        }
+        )
+
+    fun <T> getChainHandle(clazz: Class<T>, ledgerId: LedgerId): LedgerResult<ChainHandle> {
+        TODO()
+    }
+
+    fun <T> tryAddChainHandle(clazz: Class<T>, ledgerId: LedgerId): LedgerResult<ChainHandle> {
+        TODO()
+    }
 
     companion object : KLogging()
 }
