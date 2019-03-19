@@ -9,6 +9,9 @@ import pt.um.lei.masb.blockchain.ledger.*
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.persistance.PersistenceWrapper
 import pt.um.lei.masb.blockchain.persistance.Storable
+import pt.um.lei.masb.blockchain.persistance.results.PersistResult
+import pt.um.lei.masb.blockchain.service.results.LoadResult
+import pt.um.lei.masb.blockchain.utils.Failable
 import pt.um.lei.masb.blockchain.utils.RingBuffer
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -35,18 +38,20 @@ class ChainHandle internal constructor(
     /**
      * @return The tail-end block of the blockchain.
      */
-    val lastBlock: Block?
-        get() = cache.peek()
-            ?: pw.getLatestBlock(ledgerId)
+    val lastBlock: LoadResult<Block>
+        get() = cache.peek()?.let {
+            LoadResult.Success(it)
+        } ?: pw.getLatestBlock(ledgerId)
 
 
     /**
      * @return The tail-end blockheader in the blockchain.
      */
-    val lastBlockHeader: BlockHeader?
+    val lastBlockHeader: LoadResult<BlockHeader>
         get() = cache.peek()
-            ?.header
-            ?: pw.getLatestBlockHeader(ledgerId)
+            ?.header?.let {
+            LoadResult.Success(it)
+        } ?: pw.getLatestBlockHeader(ledgerId)
 
 
     internal constructor(
@@ -101,7 +106,7 @@ class ChainHandle internal constructor(
      * Checks integrity of the entire cached blockchain.
      *
      * TODO: actually check entire blockchain in
-     * ranges of [LedgerHandle.CACHE_SIZE] blocks.
+     * ranges of [ChainHandle.CACHE_SIZE] blocks.
      * @return Whether the chain is valid.
      */
     fun isChainValid(): Boolean {
@@ -115,36 +120,36 @@ class ChainHandle internal constructor(
             val curHeader = currentBlock.header
             val cmpHash = curHeader.digest(params.crypter)
             // compare registered hash and calculated hash:
-            if (!curHeader.currentHash.contentEquals(cmpHash)) {
+            if (!curHeader.hash.contentEquals(cmpHash)) {
                 logger.debug {
                     """
                     |Current Hashes not equal:
-                    |   ${curHeader.currentHash}
+                    |   ${curHeader.hash.print()}
                     |   -- and --
-                    |   $cmpHash
+                    |   ${cmpHash.print()}
                     """.trimMargin()
                 }
                 return false
             }
             val prevHeader = previousBlock.header
             // compare previous hash and registered previous hash
-            if (!prevHeader.currentHash.contentEquals(curHeader.previousHash)) {
+            if (!prevHeader.hash.contentEquals(curHeader.previousHash)) {
                 logger.debug {
                     """
                     |Previous Hashes not equal:
-                    |   ${prevHeader.currentHash}
+                    |   ${prevHeader.hash.print()}
                     |   -- and --
-                    |   ${curHeader.previousHash}
+                    |   ${curHeader.previousHash.print()}
                     """.trimMargin()
                 }
                 return false
             }
 
             val hashTarget = curHeader.difficulty
-            val curDiff = curHeader.currentHash.toDifficulty()
+            val curDiff = curHeader.hash.toDifficulty()
             if (curDiff > hashTarget) {
                 logger.debug {
-                    "Unmined block: ${curHeader.currentHash}"
+                    "Unmined block: ${curHeader.hash.print()}"
                 }
                 return false
             }
@@ -158,10 +163,12 @@ class ChainHandle internal constructor(
      * @param hash  Hash of block.
      * @return Block with provided hash if exists, else null.
      */
-    fun getBlock(hash: Hash): Block? =
+    fun getBlock(hash: Hash): LoadResult<Block> =
         cache.find {
-            it.header.currentHash
+            it.header.hash
                 .contentEquals(hash)
+        }?.let {
+            LoadResult.Success(it)
         } ?: pw.getBlockByHeaderHash(
             ledgerId,
             hash
@@ -171,9 +178,11 @@ class ChainHandle internal constructor(
      * @param blockheight Block height of block to fetch.
      * @return Block with provided blockheight, if it exists, else the null block.
      */
-    fun getBlockByHeight(blockheight: Long): Block? =
+    fun getBlockByHeight(blockheight: Long): LoadResult<Block> =
         cache.find {
             it.header.blockheight == blockheight
+        }?.let {
+            LoadResult.Success(it)
         } ?: pw.getBlockByBlockHeight(
             ledgerId,
             blockheight
@@ -183,35 +192,36 @@ class ChainHandle internal constructor(
      * @param hash  Hash of block.
      * @return Block with provided hash if exists, else null.
      */
-    fun getBlockHeaderByHash(hash: Hash): BlockHeader? =
+    fun getBlockHeaderByHash(hash: Hash): LoadResult<BlockHeader> =
         cache.find {
-            it.header.currentHash
+            it.header.hash
                 .contentEquals(hash)
-        }?.header
-            ?: pw.getBlockHeaderByHash(
-                ledgerId,
-                hash
-            )
+        }?.header?.let {
+            LoadResult.Success(it)
+        } ?: pw.getBlockHeaderByHash(
+            ledgerId,
+            hash
+        )
 
     /**
      * Checks whether the block with [hash] exists.
      */
     fun hasBlock(hash: Hash): Boolean =
         cache.any {
-            it.header.currentHash
-                .contentEquals(hash)
-        } || pw.getBlockByHeaderHash(
+            it.header.hash.contentEquals(hash)
+        } || (pw.getBlockByHeaderHash(
             ledgerId,
             hash
-        ) != null
+        ) is LoadResult.Success)
 
     /**
      * Gets the block previous to that which has [hash].
      */
-    fun getPrevBlock(hash: Hash): Block? =
+    fun getPrevBlock(hash: Hash): LoadResult<Block> =
         cache.find { h ->
-            !h.header.currentHash
-                .contentEquals(hash)
+            !h.header.hash.contentEquals(hash)
+        }?.let {
+            LoadResult.Success(it)
         } ?: pw.getBlockByPrevHeaderHash(
             ledgerId,
             hash
@@ -220,15 +230,15 @@ class ChainHandle internal constructor(
     /**
      * Gets the blockheader of the block previous to that which has [hash].
      */
-    fun getPrevBlockHeaderByHash(hash: Hash): BlockHeader? =
+    fun getPrevBlockHeaderByHash(hash: Hash): LoadResult<BlockHeader> =
         cache.find { h ->
-            !h.header.currentHash
-                .contentEquals(hash)
-        }?.header
-            ?: pw.getBlockHeaderByPrevHeaderHash(
-                ledgerId,
-                hash
-            )
+            !h.header.hash.contentEquals(hash)
+        }?.header?.let {
+            LoadResult.Success(it)
+        } ?: pw.getBlockHeaderByPrevHeaderHash(
+            ledgerId,
+            hash
+        )
 
     /**
      * Add [block] to blockchain if block is valid.
@@ -241,21 +251,29 @@ class ChainHandle internal constructor(
      */
     fun addBlock(block: Block): Boolean {
         //Blockheight is 1.
-        val lh = if (currentBlockheight == 1L) {
-            return validateBlock(getOriginHeader(ledgerId).currentHash, block)
+        return if (currentBlockheight == 1L) {
+            validateBlock(getOriginHeader(ledgerId).hash, block)
         } else {
-            lastBlockHeader?.currentHash?.let {
-                return validateBlock(it, block)
+            when (lastBlockHeader) {
+                is LoadResult.Success ->
+                    validateBlock(
+                        (lastBlockHeader as LoadResult.Success<BlockHeader>).data.hash,
+                        block
+                    )
+                is LoadResult.QueryFailure -> false
+                is LoadResult.NonExistentData -> false
+                is LoadResult.NonMatchingCrypter -> false
+                is LoadResult.UnregisteredCrypter -> false
+                is LoadResult.UnrecognizedDataType -> false
             }
         }
-        return false
     }
 
     private fun validateBlock(hash: Hash, block: Block): Boolean {
         if (block.header.previousHash
                 .contentEquals(hash)
         ) {
-            if (block.header.currentHash.toDifficulty() <=
+            if (block.header.hash.toDifficulty() <=
                 block.header.difficulty
             ) {
                 if (block.verifyTransactions()) {
@@ -267,7 +285,7 @@ class ChainHandle internal constructor(
                     }
                     return pw.persistEntity(
                         block
-                    ) && cache.offer(block)
+                    ) is PersistResult.Success && cache.offer(block)
                 }
             }
         }
@@ -277,10 +295,10 @@ class ChainHandle internal constructor(
     /**
      * Difficulty is recalculated based on timestamp
      * difference between [triggerBlock] at current blockheight
-     * and Block at current blockheight - [LedgerHandle.RECALC_TRIGGER].
+     * and Block at current blockheight - [params]'s recalcTrigger.
      *
      * This difference is measured as a percentage of
-     * [LedgerHandle.RECALC_TIME] which is used to multiply by current
+     * [params]'s recalcTime which is used to multiply by current
      * difficulty target.
      *
      * @returns The recalculated difficulty or the same
@@ -292,20 +310,33 @@ class ChainHandle internal constructor(
         val cmp = triggerBlock.header.blockheight
         val cstamp = triggerBlock.header.timestamp.epochSecond
         val fromHeight = cmp - params.recalcTrigger
-        val recalcBlock = lastBlock
-        //BlockTransactions().getBlockByBlockHeight(fromHeight)
-        return if (recalcBlock != null) {
-            val pstamp = recalcBlock.header.timestamp.epochSecond
-            val deltaStamp = cstamp - pstamp
-            recalc(triggerBlock, recalcBlock, deltaStamp)
-        } else {
-            logger.error {
-                """
-                | Difficulty retrigger without 2048 blocks existent?
-                |   Grab from Index: $fromHeight
-                """.trimMargin()
+        val recalcBlock = pw.getBlockByBlockHeight(ledgerId, fromHeight)
+        return when (recalcBlock) {
+            is LoadResult.Success -> {
+                val pstamp = recalcBlock.data.header.timestamp.epochSecond
+                val deltaStamp = cstamp - pstamp
+                recalc(triggerBlock, recalcBlock.data, deltaStamp)
             }
-            difficultyTarget
+            is Failable -> {
+                logger.error {
+                    """
+                    | Difficulty retrigger without 2048 blocks existent?
+                    |   Grab from Index: $fromHeight
+                    |   Cause: ${recalcBlock.cause}
+                    """.trimMargin()
+                }
+                difficultyTarget
+            }
+            else -> {
+                logger.error {
+                    """
+                    | Difficulty retrigger without 2048 blocks existent?
+                    |   Grab from Index: $fromHeight
+                    """.trimMargin()
+                }
+                difficultyTarget
+            }
+
         }
     }
 
@@ -351,59 +382,10 @@ class ChainHandle internal constructor(
         }
     }
 
-    /**
-     * Creates new empty [Block] with appropriate difficulty target
-     * referencing the last known block.
-     *
-     * TODO: Rework logic to allow multiple concurrent blocks.
-     *
-     */
-    fun newBlock(): Block? {
-        return when {
-            (lastBlockHeader != null && currentBlockheight != 0L) -> {
-                val lh = lastBlockHeader
-                currentBlockheight++
-                Block(
-                    ledgerId,
-                    lh!!.currentHash,
-                    difficultyTarget,
-                    lh.blockheight + 1
-                )
-            }
-            (lastBlockHeader == null && currentBlockheight == 0L) -> {
-                currentBlockheight++
-                Block(
-                    ledgerId,
-                    getOriginHeader(ledgerId).currentHash,
-                    difficultyTarget,
-                    currentBlockheight
-                )
-            }
-            else -> {
-                logger.error { "QueryFailure to fetch last block." }
-                null
-            }
-        }
+    fun addTransaction(t: Transaction) {
+        TODO()
     }
 
-    /**
-     * Creates new empty [Block] with appropriate difficulty target
-     * referencing the block with [prevHash].
-     */
-    fun newBlock(prevHash: Hash): Block? {
-        val block = getBlock(prevHash)
-        return if (block != null) {
-            Block(
-                ledgerId,
-                prevHash,
-                difficultyTarget,
-                block.header.blockheight + 1
-            )
-        } else {
-            logger.error { "QueryFailure to fetch last block $prevHash." }
-            null
-        }
-    }
 
     companion object : KLogging() {
         const val CACHE_SIZE = 40
@@ -422,6 +404,7 @@ class ChainHandle internal constructor(
                 emptyHash(),
                 emptyHash(),
                 emptyHash(),
+                BlockParams(),
                 ZonedDateTime
                     .of(
                         2018,
@@ -456,3 +439,4 @@ class ChainHandle internal constructor(
 
     }
 }
+
