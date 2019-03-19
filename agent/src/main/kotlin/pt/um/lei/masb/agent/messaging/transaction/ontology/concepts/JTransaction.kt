@@ -2,13 +2,13 @@ package pt.um.lei.masb.agent.messaging.transaction.ontology.concepts
 
 
 import jade.content.Concept
-import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JBlockChainId
+import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JLedgerId
 
 /**
  * JTransaction in ontology bean form.
  */
 data class JTransaction(
-    var blockChainId: JBlockChainId? = null,
+    var ledgerId: JLedgerId? = null,
     var blockChainHash: String? = null,
     var transactionId: String,
     var publicKey: String,

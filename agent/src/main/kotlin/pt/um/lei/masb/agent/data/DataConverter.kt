@@ -4,9 +4,9 @@ import kotlinx.io.ByteArrayInputStream
 import kotlinx.io.ByteArrayOutputStream
 import mu.KotlinLogging
 import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JBlock
-import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JBlockChainId
 import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JBlockHeader
 import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JCoinbase
+import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JLedgerId
 import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JMerkleTree
 import pt.um.lei.masb.agent.messaging.block.ontology.concepts.JTransactionOutput
 import pt.um.lei.masb.agent.messaging.transaction.ontology.concepts.JPhysicalData
@@ -16,9 +16,11 @@ import pt.um.lei.masb.blockchain.data.MerkleTree
 import pt.um.lei.masb.blockchain.data.PhysicalData
 import pt.um.lei.masb.blockchain.ledger.Block
 import pt.um.lei.masb.blockchain.ledger.BlockHeader
+import pt.um.lei.masb.blockchain.ledger.Coinbase
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.ledger.LedgerId
 import pt.um.lei.masb.blockchain.ledger.Transaction
+import pt.um.lei.masb.blockchain.ledger.TransactionOutput
 import pt.um.lei.masb.blockchain.utils.base64decode
 import pt.um.lei.masb.blockchain.utils.base64encode
 import pt.um.lei.masb.blockchain.utils.getStringFromKey
@@ -71,20 +73,23 @@ fun convertToJadeMerkleTree(merkleTree: MerkleTree): JMerkleTree =
 
 fun convertToJadeBlockHeader(header: BlockHeader): JBlockHeader =
     JBlockHeader(
-        base64encode(header.blockChainId),
+        base64encode(header.ledgerId),
         header.difficulty.toString(),
         header.blockheight,
-        base64encode(header.currentHash),
+        base64encode(header.hash),
         base64encode(header.merkleRoot),
         base64encode(header.previousHash),
+        header.params,
         header.timestamp.toString(),
         header.nonce
     )
 
-fun convertToJadeBlockChainId(blid: LedgerId): JBlockChainId =
-    JBlockChainId(
+fun convertToJadeBlockChainId(blid: LedgerId): JLedgerId =
+    JLedgerId(
         blid.uuid.toString(),
         blid.timestamp.toString(),
+        blid.params.copy(),
+        blid.id,
         base64encode(blid.hash)
     )
 
@@ -95,7 +100,7 @@ fun convertToJadeCoinbase(coinbase: Coinbase): JCoinbase =
         coinbase.payoutTXO
             .map(::convertToJadeTransactionOutput)
             .toSet(),
-        coinbase.coinbasePayout.toString(),
+        coinbase.coinbase.toString(),
         base64encode(coinbase.hashId)
     )
 
@@ -108,7 +113,7 @@ fun convertToJadeCoinbase(
         coinbase.payoutTXO
             .map(::convertToJadeTransactionOutput)
             .toSet(),
-        coinbase.coinbasePayout.toString(),
+        coinbase.coinbase.toString(),
         base64encode(coinbase.hashId)
     )
 
@@ -117,8 +122,8 @@ private fun convertToJadeTransactionOutput(txo: TransactionOutput): JTransaction
         getStringFromKey(txo.publicKey),
         base64encode(txo.hashId),
         base64encode(txo.prevCoinbase),
-        txo.payoutTX.toString(),
-        txo.txSet.map { base64encode(it) }.toSet()
+        txo.payout.toString(),
+        txo.tx.map { base64encode(it) }.toSet()
     )
 
 
@@ -153,7 +158,7 @@ fun convertToJadeTransaction(
     t: Transaction
 ): JTransaction =
     JTransaction(
-        blockChainId = convertToJadeBlockChainId(blid),
+        ledgerId = convertToJadeBlockChainId(blid),
         transactionId = base64encode(t.hashId),
         publicKey = getStringFromKey(t.publicKey),
         data = convertToJadePhysicalData(t.data),
@@ -271,15 +276,18 @@ fun convertFromJadeBlockHeader(header: JBlockHeader): BlockHeader =
         base64decode(header.hash),
         base64decode(header.merkleRoot),
         base64decode(header.previousHash),
+        header.params,
         Instant.parse(header.timeStamp),
         header.nonce
     )
 
-fun convertFromJadeBlockChainId(blid: JBlockChainId): LedgerId =
+fun convertFromJadeBlockChainId(blid: JLedgerId): LedgerId =
     LedgerId(
+        blid.id,
         UUID.fromString(blid.uuid),
         Instant.parse(blid.timestamp),
-        blid.id
+        blid.params,
+        base64decode(blid.hash)
     )
 
 
