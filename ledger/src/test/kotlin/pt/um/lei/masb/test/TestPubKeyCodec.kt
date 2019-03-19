@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import mu.KLogging
 import org.junit.jupiter.api.Test
+import pt.um.lei.masb.blockchain.ledger.print
 import pt.um.lei.masb.blockchain.service.Ident
 import pt.um.lei.masb.blockchain.utils.getStringFromKey
 import pt.um.lei.masb.blockchain.utils.stringToPrivateKey

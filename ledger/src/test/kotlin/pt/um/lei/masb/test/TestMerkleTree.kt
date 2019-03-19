@@ -1,7 +1,6 @@
 package pt.um.lei.masb.test
 
 import assertk.assertThat
-import assertk.assertions.containsAll
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
@@ -17,6 +16,7 @@ import pt.um.lei.masb.blockchain.ledger.Coinbase
 import pt.um.lei.masb.blockchain.ledger.Transaction
 import pt.um.lei.masb.blockchain.ledger.print
 import pt.um.lei.masb.blockchain.service.Ident
+import pt.um.lei.masb.test.utils.applyHashInPairs
 import pt.um.lei.masb.test.utils.crypter
 import pt.um.lei.masb.test.utils.generateCoinbase
 import pt.um.lei.masb.test.utils.makeXTransactions
@@ -99,73 +99,67 @@ class TestMerkleTree {
             assertThat(tree.root).isNotNull()
             val nakedTree = tree.collapsedTree
             //Three levels to the left is first transaction.
-            assertThat(nakedTree[7]).containsAll(*ts[0].hashId)
-            assertThat(nakedTree[8]).containsAll(*ts[1].hashId)
-            assertThat(nakedTree[9]).containsAll(*ts[2].hashId)
-            assertThat(nakedTree[10]).containsAll(* ts[3].hashId)
-            assertThat(nakedTree[11]).containsAll(* ts[4].hashId)
-            assertThat(nakedTree[12]).containsAll(* ts[5].hashId)
-            assertThat(nakedTree[13]).containsAll(* ts[6].hashId)
-            assertThat(nakedTree[14]).containsAll(* ts[7].hashId)
+            assertThat(nakedTree[7]).containsExactly(*ts[0].hashId)
+            assertThat(nakedTree[8]).containsExactly(*ts[1].hashId)
+            assertThat(nakedTree[9]).containsExactly(*ts[2].hashId)
+            assertThat(nakedTree[10]).containsExactly(* ts[3].hashId)
+            assertThat(nakedTree[11]).containsExactly(* ts[4].hashId)
+            assertThat(nakedTree[12]).containsExactly(* ts[5].hashId)
+            assertThat(nakedTree[13]).containsExactly(* ts[6].hashId)
+            assertThat(nakedTree[14]).containsExactly(* ts[7].hashId)
             //Two levels in to the left is a hash of transaction 1 + 2.
-            assertThat(
-                nakedTree[3]
-            ).containsAll(
-                *
-                crypter.applyHash(ts[0].hashId + ts[1].hashId)
+            assertThat(nakedTree[3]).containsExactly(
+                *crypter.applyHash(ts[0].hashId + ts[1].hashId)
             )
-            assertThat(
-                nakedTree[4]
-            ).containsAll(
-                *
-                crypter.applyHash(ts[2].hashId + ts[3].hashId)
+            assertThat(nakedTree[4]).containsExactly(
+                *crypter.applyHash(ts[2].hashId + ts[3].hashId)
             )
-            assertThat(
-                nakedTree[5]
-            ).containsAll(
-                *
-                crypter.applyHash(ts[4].hashId + ts[5].hashId)
+            assertThat(nakedTree[5]).containsExactly(
+                *crypter.applyHash(ts[4].hashId + ts[5].hashId)
             )
-            assertThat(
-                nakedTree[6]
-            ).containsAll(
-                *
-                crypter.applyHash(ts[6].hashId + ts[7].hashId)
+            assertThat(nakedTree[6]).containsExactly(
+                *crypter.applyHash(ts[6].hashId + ts[7].hashId)
             )
             //One level to the left is a hash of the hash of transactions 1 + 2 + hash of transactions 3 + 4
-            assertThat(
-                nakedTree[1]
-            ).containsAll(
-                *
-                crypter.applyHash(
-                    crypter.applyHash(ts[0].hashId + ts[1].hashId) +
-                            crypter.applyHash(ts[2].hashId + ts[3].hashId)
+            assertThat(nakedTree[1]).containsExactly(
+                *applyHashInPairs(
+                    crypter,
+                    arrayOf(
+                        ts[0].hashId,
+                        ts[1].hashId,
+                        ts[2].hashId,
+                        ts[3].hashId
+                    )
                 )
             )
             //One level to the left is a hash of the hash of transactions 1 + 2 + hash of transactions 3 + 4
-            assertThat(
-                nakedTree[2]
-            ).containsAll(
-                *
-                crypter.applyHash(
-                    crypter.applyHash(ts[4].hashId + ts[5].hashId) +
-                            crypter.applyHash(ts[6].hashId + ts[7].hashId)
+            assertThat(nakedTree[2]).containsExactly(
+                *applyHashInPairs(
+                    crypter,
+                    arrayOf(
+                        ts[4].hashId,
+                        ts[5].hashId,
+                        ts[6].hashId,
+                        ts[7].hashId
+                    )
                 )
+
             )
-            assertThat(
-                tree.root
-            ).containsAll(
-                *
-                crypter.applyHash(
-                    crypter.applyHash(
-                        crypter.applyHash(ts[0].hashId + ts[1].hashId) +
-                                crypter.applyHash(ts[2].hashId + ts[3].hashId)
-                    ) +
-                            crypter.applyHash(
-                                crypter.applyHash(ts[4].hashId + ts[5].hashId) +
-                                        crypter.applyHash(ts[6].hashId + ts[7].hashId)
-                            )
+            assertThat(tree.root).containsExactly(
+                *applyHashInPairs(
+                    crypter,
+                    arrayOf(
+                        ts[0].hashId,
+                        ts[1].hashId,
+                        ts[2].hashId,
+                        ts[3].hashId,
+                        ts[4].hashId,
+                        ts[5].hashId,
+                        ts[6].hashId,
+                        ts[7].hashId
+                    )
                 )
+
             )
         }
 
@@ -241,65 +235,58 @@ class TestMerkleTree {
             assertThat(tree.root).isNotNull()
             val nakedTree = tree.collapsedTree
             //Three levels to the left is first transaction.
-            assertThat(nakedTree[6]).containsAll(* ts[0].hashId)
-            assertThat(nakedTree[7]).containsAll(* ts[1].hashId)
-            assertThat(nakedTree[8]).containsAll(* ts[2].hashId)
-            assertThat(nakedTree[9]).containsAll(* ts[3].hashId)
-            assertThat(nakedTree[10]).containsAll(* ts[4].hashId)
-            assertThat(nakedTree[11]).containsAll(* ts[5].hashId)
+            assertThat(nakedTree[6]).containsExactly(*ts[0].hashId)
+            assertThat(nakedTree[7]).containsExactly(*ts[1].hashId)
+            assertThat(nakedTree[8]).containsExactly(*ts[2].hashId)
+            assertThat(nakedTree[9]).containsExactly(*ts[3].hashId)
+            assertThat(nakedTree[10]).containsExactly(*ts[4].hashId)
+            assertThat(nakedTree[11]).containsExactly(*ts[5].hashId)
             //Two levels in to the left is a hash of transaction 1 + 2.
-            assertThat(
-                nakedTree[3]
-            ).containsAll(
-                *
-                crypter.applyHash(ts[0].hashId + ts[1].hashId)
+            assertThat(nakedTree[3]).containsExactly(
+                *crypter.applyHash(ts[0].hashId + ts[1].hashId)
             )
-            assertThat(
-                nakedTree[4]
-            ).containsAll(
-                *
-                crypter.applyHash(ts[2].hashId + ts[3].hashId)
+            assertThat(nakedTree[4]).containsExactly(
+                *crypter.applyHash(ts[2].hashId + ts[3].hashId)
             )
-            assertThat(
-                nakedTree[5]
-            ).containsAll(
-                *
-                crypter.applyHash(ts[4].hashId + ts[5].hashId)
+            assertThat(nakedTree[5]).containsExactly(
+                *crypter.applyHash(ts[4].hashId + ts[5].hashId)
             )
             //One level to the left is a hash of the hash of transactions 1 + 2 + hash of transactions 3 + 4
-            assertThat(
-                nakedTree[1]
-            ).containsAll(
-                *
-                crypter.applyHash(
-                    crypter.applyHash(ts[0].hashId + ts[1].hashId) +
-                            crypter.applyHash(ts[2].hashId + ts[3].hashId)
+            assertThat(nakedTree[1]).containsExactly(
+                *applyHashInPairs(
+                    crypter,
+                    arrayOf(
+                        ts[0].hashId,
+                        ts[1].hashId,
+                        ts[2].hashId,
+                        ts[3].hashId
+                    )
                 )
             )
             //One level to the right is a hash of the hash of transactions 1 + 2 * 2
-            assertThat(
-                nakedTree[2]
-            ).containsAll(
-                *
-                crypter.applyHash(
-                    crypter.applyHash(ts[4].hashId + ts[5].hashId) +
-                            crypter.applyHash(ts[4].hashId + ts[5].hashId)
+            assertThat(nakedTree[2]).containsExactly(
+                *applyHashInPairs(
+                    crypter,
+                    arrayOf(
+                        ts[4].hashId,
+                        ts[5].hashId,
+                        ts[4].hashId,
+                        ts[5].hashId
+                    )
                 )
             )
             //Root is everything else.
-            assertThat(
-                tree.root
-            ).containsAll(
-                *
-                crypter.applyHash(
-                    crypter.applyHash(
-                        crypter.applyHash(ts[0].hashId + ts[1].hashId) +
-                                crypter.applyHash(ts[2].hashId + ts[3].hashId)
-                    ) +
-                            crypter.applyHash(
-                                crypter.applyHash(ts[4].hashId + ts[5].hashId) +
-                                        crypter.applyHash(ts[4].hashId + ts[5].hashId)
-                            )
+            assertThat(tree.root).containsExactly(
+                *applyHashInPairs(
+                    crypter,
+                    arrayOf(
+                        ts[0].hashId,
+                        ts[1].hashId,
+                        ts[2].hashId,
+                        ts[3].hashId,
+                        ts[4].hashId,
+                        ts[5].hashId
+                    )
                 )
             )
 
@@ -318,66 +305,59 @@ class TestMerkleTree {
                 val nakedTree = tree.collapsedTree
                 //Three levels to the left is first transaction.
                 //Said transaction is the coinbase
-                assertThat(nakedTree[6]).containsAll(* coinbase.hashId)
-                assertThat(nakedTree[7]).containsAll(* ts[0].hashId)
-                assertThat(nakedTree[8]).containsAll(* ts[1].hashId)
-                assertThat(nakedTree[9]).containsAll(* ts[2].hashId)
-                assertThat(nakedTree[10]).containsAll(* ts[3].hashId)
-                assertThat(nakedTree[11]).containsAll(* ts[4].hashId)
+                assertThat(nakedTree[6]).containsExactly(*coinbase.hashId)
+                assertThat(nakedTree[7]).containsExactly(*ts[0].hashId)
+                assertThat(nakedTree[8]).containsExactly(*ts[1].hashId)
+                assertThat(nakedTree[9]).containsExactly(*ts[2].hashId)
+                assertThat(nakedTree[10]).containsExactly(*ts[3].hashId)
+                assertThat(nakedTree[11]).containsExactly(*ts[4].hashId)
                 //Two levels in to the left is a hash of transaction 1 & 2.
-                assertThat(
-                    nakedTree[3]
-                ).containsAll(
-                    *
-                    crypter.applyHash(coinbase.hashId + ts[0].hashId)
+                assertThat(nakedTree[3]).containsExactly(
+                    *crypter.applyHash(coinbase.hashId + ts[0].hashId)
                 )
-                assertThat(
-                    nakedTree[4]
-                ).containsAll(
-                    *
-                    crypter.applyHash(ts[1].hashId + ts[2].hashId)
+                assertThat(nakedTree[4]).containsExactly(
+                    *crypter.applyHash(ts[1].hashId + ts[2].hashId)
                 )
-                assertThat(
-                    nakedTree[5]
-                ).containsAll(
-                    *
-                    crypter.applyHash(ts[3].hashId + ts[4].hashId)
+                assertThat(nakedTree[5]).containsExactly(
+                    *crypter.applyHash(ts[3].hashId + ts[4].hashId)
                 )
                 //One level to the left is a hash of the hash of transactions 1 & 2
                 // + the hash of transactions 3 & 4
-                assertThat(
-                    nakedTree[1]
-                ).containsAll(
-                    *
-                    crypter.applyHash(
-                        crypter.applyHash(coinbase.hashId + ts[0].hashId) +
-                                crypter.applyHash(ts[1].hashId + ts[2].hashId)
+                assertThat(nakedTree[1]).containsExactly(
+                    *applyHashInPairs(
+                        crypter,
+                        arrayOf(
+                            coinbase.hashId,
+                            ts[0].hashId,
+                            ts[1].hashId,
+                            ts[2].hashId
+                        )
                     )
                 )
                 //One level to the right is a hash of the hash of transactions 5 + 6 * 2
-                assertThat(
-                    nakedTree[2]
-                ).containsAll(
-                    *
-                    crypter.applyHash(
-                        crypter.applyHash(ts[3].hashId + ts[4].hashId) +
-                                crypter.applyHash(ts[3].hashId + ts[4].hashId)
+                assertThat(nakedTree[2]).containsExactly(
+                    *applyHashInPairs(
+                        crypter,
+                        arrayOf(
+                            ts[3].hashId,
+                            ts[4].hashId,
+                            ts[3].hashId,
+                            ts[4].hashId
+                        )
                     )
                 )
                 //Root is everything else.
-                assertThat(
-                    tree.root
-                ).containsAll(
-                    *
-                    crypter.applyHash(
-                        crypter.applyHash(
-                            crypter.applyHash(coinbase.hashId + ts[0].hashId) +
-                                    crypter.applyHash(ts[1].hashId + ts[2].hashId)
-                        ) +
-                                crypter.applyHash(
-                                    crypter.applyHash(ts[3].hashId + ts[4].hashId) +
-                                            crypter.applyHash(ts[3].hashId + ts[4].hashId)
-                                )
+                assertThat(tree.root).containsExactly(
+                    *applyHashInPairs(
+                        crypter,
+                        arrayOf(
+                            coinbase.hashId,
+                            ts[0].hashId,
+                            ts[1].hashId,
+                            ts[2].hashId,
+                            ts[3].hashId,
+                            ts[4].hashId
+                        )
                     )
                 )
             }
