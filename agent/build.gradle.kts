@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
     application
     kotlin("jvm")
+    kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.noarg")
 //    id("kotlinx-serialization")
 }
@@ -13,6 +14,10 @@ repositories {
 }
 
 dependencies {
+    //Annotation Processing
+    kapt(Libs.moshiCodeGen)
+
+
     //Regular dependencies
     implementation(kotlin("stdlib", Versions.kotlin))
     implementation(project(":ledger"))
@@ -24,6 +29,9 @@ dependencies {
     }
     implementation(Libs.klog)
     Libs.ktor.forEach {
+        implementation(it)
+    }
+    Libs.moshi.forEach {
         implementation(it)
     }
     //implementation(Libs.serialization)

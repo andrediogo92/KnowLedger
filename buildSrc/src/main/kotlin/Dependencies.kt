@@ -11,7 +11,7 @@ object Versions {
     const val jUnitRunner = "1.4.0"
     const val klog = "1.6.24"
     const val kotlin = "1.3.21"
-    const val ktor = "1.1.2"
+    const val ktor = "1.1.3"
     const val moshi = "1.8.0"
     const val orientDB = "3.0.14"
     const val slf4j = "1.8.0-beta2"
