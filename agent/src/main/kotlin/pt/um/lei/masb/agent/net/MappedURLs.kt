@@ -1,6 +1,6 @@
 package pt.um.lei.masb.agent.net
 
-import kotlinx.serialization.Serializable
+import com.squareup.moshi.JsonClass
 import mu.KLogging
 import pt.um.lei.masb.agent.Container
 import pt.um.lei.masb.agent.data.DataSource
@@ -10,8 +10,8 @@ import java.io.InputStreamReader
 import java.net.URI
 
 
-@Serializable
-data class JSONMappedURLs(
+@JsonClass(generateAdapter = true)
+data class MappedURLs(
     val apis: List<DataSource> = emptyList(),
     val tcp: List<DataSource> = emptyList(),
     val jade: List<DataSource> = emptyList()
@@ -26,7 +26,7 @@ data class JSONMappedURLs(
          *
          * @param file the path string to a resource in the classpath.
          */
-        fun jsonFileUrlParser(file: String): JSONMappedURLs =
+        fun jsonFileUrlParser(file: String): MappedURLs =
             InputStreamReader(
                 Container::class.java
                     .getResourceAsStream(file)
@@ -40,7 +40,7 @@ data class JSONMappedURLs(
          *
          * @param file
          */
-        fun jsonFileUrlParser(file: URI): JSONMappedURLs =
+        fun jsonFileUrlParser(file: URI): MappedURLs =
             FileReader(File(file)).use {
                 //JSON.parse(this.serializer(), it.readText())
                 TODO()
