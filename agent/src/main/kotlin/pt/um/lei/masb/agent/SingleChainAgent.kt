@@ -11,13 +11,13 @@ import pt.um.lei.masb.agent.behaviours.Mining
 import pt.um.lei.masb.agent.behaviours.ReceiveMessages
 import pt.um.lei.masb.agent.behaviours.SendMessages
 import pt.um.lei.masb.agent.data.AgentPeers
+import pt.um.lei.masb.agent.utils.unpackOrThrow
+import pt.um.lei.masb.agent.utils.unpackOrThrowAndDoOnNonExistent
 import pt.um.lei.masb.blockchain.data.BlockChainData
-import pt.um.lei.masb.blockchain.ledger.Block
 import pt.um.lei.masb.blockchain.ledger.Transaction
-import pt.um.lei.masb.blockchain.service.Ident
 import pt.um.lei.masb.blockchain.service.LedgerHandle
+import pt.um.lei.masb.blockchain.service.LedgerService
 import pt.um.lei.masb.blockchain.utils.RingBuffer
-import java.util.*
 
 @Suppress("UNCHECKED_CAST")
 class SingleChainAgent : Agent() {
@@ -25,8 +25,8 @@ class SingleChainAgent : Agent() {
     //agent will try maximizing reward
     //sessionRewards could later be translated into user reward
     private var sessionRewards: Double = 0.0
-    private val bc: LedgerHandle = arguments[0] as LedgerHandle
-    private var bl: Queue<Block> = ArrayDeque<Block>(6)
+    private val service = arguments[0] as LedgerService
+    private val handle = arguments[1] as LedgerHandle
     private val toSend: RingBuffer<Transaction> = RingBuffer(3)
     private val agentPeers = AgentPeers(this)
 
@@ -39,12 +39,14 @@ class SingleChainAgent : Agent() {
             logger.error(fe) {}
         }
 
-        val i = Ident
+        val ident = service.getIdentById("agent0")
+
         sessionRewards = 0.0
 
-        val cl = arguments[1] as Class<out BlockChainData>
-        val sc = bc.getChainHandleOf(cl)
-            ?: throw ClassNotFoundException("ChainHandle failed to be materialized")
+        val cl = arguments[2] as Class<out BlockChainData>
+        val sc = handle.getChainHandleOf(cl).unpackOrThrowAndDoOnNonExistent {
+            handle.registerNewChainHandleOf(cl).unpackOrThrow()
+        }
 
         val b = object : ParallelBehaviour(this, ParallelBehaviour.WHEN_ALL) {
             override fun onEnd(): Int {
@@ -56,8 +58,10 @@ class SingleChainAgent : Agent() {
 
 //        b.addSubBehaviour(GetMissingBlocks(sc, agentPeers))
         b.addSubBehaviour(ReceiveMessages(sc, agentPeers, cl))
-        b.addSubBehaviour(CaptureData(sc, i, bl, toSend))
-        b.addSubBehaviour(Mining(sc, bl))
+        ident?.apply {
+            b.addSubBehaviour(CaptureData(sc, this, toSend))
+        }
+        b.addSubBehaviour(Mining(sc))
         b.addSubBehaviour(SendMessages(sc, toSend, agentPeers, cl))
         addBehaviour(b)
     }

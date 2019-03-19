@@ -14,6 +14,7 @@ import pt.um.lei.masb.blockchain.data.BlockChainData
 import pt.um.lei.masb.blockchain.ledger.Block
 import pt.um.lei.masb.blockchain.ledger.Transaction
 import pt.um.lei.masb.blockchain.service.ChainHandle
+import pt.um.lei.masb.blockchain.service.results.LoadResult
 
 /**
  * Behaviour for handling incoming messages related to Transactions and Blocks.
@@ -70,34 +71,42 @@ class ReceiveMessages(
             var rHeight = java.lang.Long.parseLong(blocksReq.content)
             //Send number of missing blocks
             val sendMissingNum = blocksReq.createReply()
-            var missingNum = sc.lastBlock?.header?.blockheight?.minus(rHeight) ?: 0
-            sendMissingNum.content = (if (missingNum <= 0) -1 else missingNum).toString()
+            var missingNum = sc.lastBlockHeader.let {
+                when (it) {
+                    is LoadResult.Success -> it.data.blockheight - rHeight
+                    else -> -1
+                }
+            }
+            sendMissingNum.content = (if (missingNum < 0) -1 else missingNum).toString()
             agent.send(sendMissingNum)
 
             //Send missing blocks
-            while (missingNum > 0) {
+            loop@ while (missingNum > 0) {
                 val codec = SLCodec()
                 val blmsg = ACLMessage(ACLMessage.INFORM)
                 val blk = sc.getBlockByHeight(rHeight)
-                if (blk == null) {
-                    logger.error {
-                        "Inexistent block referenced at height: $rHeight"
-                    }
-                    break
-                } else {
-                    myAgent.contentManager
-                        .fillContent(
-                            blmsg,
-                            DiffuseBlock(
-                                convertToJadeBlock(blk, clazz),
-                                blocksReq.sender
+                when (blk) {
+                    is LoadResult.Success -> {
+                        myAgent.contentManager
+                            .fillContent(
+                                blmsg,
+                                DiffuseBlock(
+                                    convertToJadeBlock(blk.data, clazz),
+                                    blocksReq.sender
+                                )
                             )
-                        )
-                    blmsg.addReceiver(blocksReq.sender)
-                    blmsg.language = codec.name
-                    blmsg.ontology = BlockOntology.name
-                    rHeight++
-                    missingNum--
+                        blmsg.addReceiver(blocksReq.sender)
+                        blmsg.language = codec.name
+                        blmsg.ontology = BlockOntology.name
+                        rHeight++
+                        missingNum--
+                    }
+                    else -> {
+                        logger.error {
+                            "Nonexistent block referenced at height: $rHeight"
+                        }
+                        break@loop
+                    }
                 }
             }
         }

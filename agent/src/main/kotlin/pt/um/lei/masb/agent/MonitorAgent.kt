@@ -1,8 +1,7 @@
 package pt.um.lei.masb.agent
 
+import com.squareup.moshi.Moshi
 import jade.core.Agent
-import kotlinx.serialization.ImplicitReflectionSerializer
-import kotlinx.serialization.serializer
 import mu.KLogging
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttToken
@@ -11,22 +10,27 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
-import pt.um.lei.masb.agent.data.feed.AdafruitPublishJSON
+import pt.um.lei.masb.agent.data.feed.AdafruitPublish
 import pt.um.lei.masb.agent.data.feed.Reduxer
 import pt.um.lei.masb.blockchain.data.PhysicalData
 import pt.um.lei.masb.blockchain.ledger.Block
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.ledger.Transaction
+import pt.um.lei.masb.blockchain.service.ChainHandle
 import pt.um.lei.masb.blockchain.service.LedgerHandle
+import pt.um.lei.masb.blockchain.service.results.LedgerResult
+import pt.um.lei.masb.blockchain.service.results.LoadResult
+import pt.um.lei.masb.blockchain.utils.Failable
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
 class MonitorAgent(
     id: Hash,
-    private val reduxers: Map<String, Reduxer>
+    private val reduxers: Map<String, Reduxer>,
+    private val ledgerHandle: LedgerHandle
 ) : Agent() {
-    private val bc: LedgerHandle? = LedgerHandle.getBlockChainByHash(hash = id)
-    private var json: AdafruitPublishJSON = AdafruitPublishJSON()
+    private var json: AdafruitPublish = AdafruitPublish()
+    private var moshi = Moshi.Builder().build()
     private val broker = "tcp://io.adafruit.com:1883"
     private val mqttClient: MqttAsyncClient = MqttAsyncClient(
         broker,
@@ -36,49 +40,72 @@ class MonitorAgent(
     private val guardCounter: AtomicLong = AtomicLong(0)
 
 
-    @ImplicitReflectionSerializer
     public override fun setup() {
-        if (bc != null) {
-            val connOpts = MqttConnectOptions()
-            connOpts.userName = "MASBlockchain"
-            connOpts.password = "312758ce04d64a6c80fa169860489b6d".toCharArray()
-            connOpts.sslProperties = Properties()
-            logger.info("Connecting to broker: $broker")
-            mqttClient.connect(connOpts, guardCounter, MonitorCallback())
-            logger.info("Connected")
-            val clazzes = bc.sidechains.keys
-            for (cl in clazzes) {
-                val sc = bc.sidechains[cl]
-                var i = 0L
-                do {
-                    val bl = sc.getBlockByHeight(i).let {
-                        publishToFeed(cl, it)
-                        it
+        val connOpts = MqttConnectOptions()
+        connOpts.userName = "MASBlockchain"
+        connOpts.password = "312758ce04d64a6c80fa169860489b6d".toCharArray()
+        connOpts.sslProperties = Properties()
+        logger.info("Connecting to broker: $broker")
+        mqttClient.connect(connOpts, guardCounter, MonitorCallback())
+        logger.info("Connected")
+        val clazzes = ledgerHandle.knownChainTypes
+        for (cl in clazzes) {
+            val sc = ledgerHandle.getChainHandleOf(cl)
+            when (sc) {
+                is LedgerResult.Success -> {
+                    var i = 0L
+                    var fail = false
+                    while (!fail) {
+                        fail = tryLoad(cl.kotlin.qualifiedName ?: "", sc, i, 0)
                     }
-                    i++
-                } while (bl != null)
-
+                }
+                else -> {
+                }
             }
+
         }
         mqttClient.disconnect()
         logger.info("Disconnected")
     }
 
-    @ImplicitReflectionSerializer
+    private tailrec fun tryLoad(cl: String, sc: LedgerResult.Success<ChainHandle>, i: Long, l: Int): Boolean =
+        if (l < 3) {
+            val bl = sc.data.getBlockByHeight(i)
+            when (bl) {
+                is LoadResult.NonExistentData ->
+                    false
+                is LoadResult.Success -> {
+                    publishToFeed(cl, bl.data)
+                    true
+                }
+                is LoadResult.QueryFailure -> {
+                    tryLoad(cl, sc, i, l + 1)
+                }
+                is Failable -> {
+                    logger.warn { bl.cause }
+                    true
+                }
+                else ->
+                    true
+            }
+        } else {
+            false
+        }
+
     private fun publishToFeed(cl: String, bl: Block) {
         if (reduxers.containsKey(cl)) {
-            val redux = reduxers[cl]!!
+            val redux = reduxers.getValue(cl)
             for (dt in bl.data) {
                 publishTransaction(redux, dt)
             }
         }
     }
 
-    @ImplicitReflectionSerializer
     private fun publishTransaction(rx: Reduxer, dt: Transaction) {
         val topic = "MASBlockchain/feeds/${rx.type()}/json"
         setData(rx, dt.data)
-        val content = JSON.stringify(AdafruitPublishJSON::class.serializer(), json)
+        val adapter = moshi.adapter<AdafruitPublish>(AdafruitPublish::class.java)
+        val content = adapter.toJson(json)
         val qos = 2
 
         while (guardCounter.get() >= 20) {
@@ -101,7 +128,7 @@ class MonitorAgent(
      * @param t The sensor data to fill in
      */
     private fun setData(rx: Reduxer, t: PhysicalData) {
-        json.createdAt = t.instant.toString()
+        json.created_at = t.instant.toString()
         json.lat = t.geoCoords?.latitude.toString()
         json.lon = t.geoCoords?.longitude.toString()
         json.alt = t.geoCoords?.altitude.toString()

@@ -10,6 +10,7 @@ import mu.KLogging
 import pt.um.lei.masb.agent.data.AgentPeers
 import pt.um.lei.masb.agent.messaging.block.BlockOntology
 import pt.um.lei.masb.blockchain.service.ChainHandle
+import pt.um.lei.masb.blockchain.service.results.LoadResult
 import kotlin.random.Random
 
 
@@ -35,7 +36,12 @@ class GetMissingBlocks(
                 val msg = ACLMessage(ACLMessage.REQUEST)
 
                 msg.addReceiver(agent)
-                msg.content = bc.lastBlock?.header?.blockheight.toString()
+                msg.content = bc.lastBlockHeader.let {
+                    when (it) {
+                        is LoadResult.Success -> it.data.blockheight.toString()
+                        else -> null
+                    }
+                }
 
                 //Receive number of missing blocks
                 val num = myAgent.blockingReceive(3000)

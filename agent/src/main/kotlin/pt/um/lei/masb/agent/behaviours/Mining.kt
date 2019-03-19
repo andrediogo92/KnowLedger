@@ -4,12 +4,10 @@ import jade.core.behaviours.Behaviour
 import mu.KLogging
 import pt.um.lei.masb.blockchain.ledger.Block
 import pt.um.lei.masb.blockchain.service.ChainHandle
-import java.util.*
 
 
 class Mining(
-    private val sc: ChainHandle,
-    private val blockQueue: Queue<Block>
+    private val sc: ChainHandle
 ) : Behaviour() {
     private var block: Block? = null
     private val mined: Boolean = false
@@ -17,24 +15,26 @@ class Mining(
     override fun action() {
         var mining = true
         //just for debugging
+        /**
         while (mining) {
-            if (block == null) {
-                if (blockQueue.isEmpty()) {
-                    mining = false
-                } else {
-                    block = blockQueue.remove()
-                    mining = !block!!.attemptMineBlock(
-                        invalidate = false,
-                        time = false
-                    )
-                }
-            } else {
-                mining = !block!!.attemptMineBlock(
-                    invalidate = false,
-                    time = false
-                )
-            }
+        if (block == null) {
+        if (blockQueue.isEmpty()) {
+        mining = false
+        } else {
+        block = blockQueue.remove()
+        mining = !block!!.attemptMineBlock(
+        invalidate = false,
+        time = false
+        )
         }
+        } else {
+        mining = !block!!.attemptMineBlock(
+        invalidate = false,
+        time = false
+        )
+        }
+        }
+         */
     }
 
 
