@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.record.OElement
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.utils.bytes
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
 
 class PollutionAQ(
@@ -55,39 +57,38 @@ class PollutionAQ(
 
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-            $lastUpdated
-            $unit
-            $parameter
-            $valueInternal
-            $sourceName
-            $city
-            $citySeqNum
-        """.trimIndent()
+            flattenBytes(
+                lastUpdated.toByteArray(),
+                unit.toByteArray(),
+                parameter.ordinal.bytes(),
+                valueInternal.bytes(),
+                sourceName.toByteArray(),
+                city.toByteArray(),
+                citySeqNum.bytes()
+            )
         )
 
     override fun store(session: NewInstanceSession): OElement =
-        session.newInstance("PollutionAQ").let {
-            it.setProperty("lastUpdated", lastUpdated)
-            it.setProperty("unit", unit)
+        session.newInstance("PollutionAQ").apply {
+            setProperty("lastUpdated", lastUpdated)
+            setProperty("unit", unit)
             val byte = when (parameter) {
-                PollutionType.PM25 -> 0x00
-                PollutionType.PM10 -> 0x01
-                PollutionType.SO2 -> 0x02
-                PollutionType.NO2 -> 0x03
-                PollutionType.O3 -> 0x04
-                PollutionType.CO -> 0x05
-                PollutionType.BC -> 0x06
-                PollutionType.NA -> 0x07
-                else -> 0xFF
+                PollutionType.PM25 -> PollutionType.PM25.ordinal
+                PollutionType.PM10 -> PollutionType.PM10.ordinal
+                PollutionType.SO2 -> PollutionType.SO2.ordinal
+                PollutionType.NO2 -> PollutionType.NO2.ordinal
+                PollutionType.O3 -> PollutionType.O3.ordinal
+                PollutionType.CO -> PollutionType.CO.ordinal
+                PollutionType.BC -> PollutionType.BC.ordinal
+                PollutionType.NA -> PollutionType.NA.ordinal
+                else -> Int.MAX_VALUE
             }
             //Byte encode the enum.
-            it.setProperty("parameter", byte)
-            it.setProperty("valueInternal", valueInternal)
-            it.setProperty("sourceName", sourceName)
-            it.setProperty("city", city)
-            it.setProperty("citySeqNum", citySeqNum)
-            it
+            setProperty("parameter", byte)
+            setProperty("valueInternal", valueInternal)
+            setProperty("sourceName", sourceName)
+            setProperty("city", city)
+            setProperty("citySeqNum", citySeqNum)
         }
 
     private var valueInternal = value
@@ -99,8 +100,6 @@ class PollutionAQ(
         set(v) {
             valueInternal = v
         }
-
-
 
 
     override fun toString(): String =

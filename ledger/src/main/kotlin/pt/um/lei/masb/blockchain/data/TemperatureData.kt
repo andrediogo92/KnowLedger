@@ -5,6 +5,8 @@ import pt.um.lei.masb.blockchain.ledger.Coinbase
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.utils.bytes
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -20,11 +22,12 @@ data class TemperatureData(
 ) : BlockChainData {
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-            $temperature
-            ${unit.name}
-            ${unit.ordinal}
-            """.trimIndent()
+            flattenBytes(
+                arrayOf(
+                    temperature.unscaledValue().toByteArray(),
+                    unit.ordinal.bytes()
+                )
+            )
         )
 
     override fun store(
@@ -32,21 +35,20 @@ data class TemperatureData(
     ): OElement =
         session
             .newInstance("Temperature")
-            .let {
-                it.setProperty(
+            .apply {
+                setProperty(
                     "temperature",
                     temperature
                 )
-                it.setProperty(
+                setProperty(
                     "unit",
                     when (unit) {
-                        TUnit.CELSIUS -> 0x00.toByte()
-                        TUnit.FAHRENHEIT -> 0x01.toByte()
-                        TUnit.KELVIN -> 0x02.toByte()
-                        TUnit.RANKINE -> 0x03.toByte()
+                        TUnit.CELSIUS -> TUnit.CELSIUS.ordinal
+                        TUnit.FAHRENHEIT -> TUnit.FAHRENHEIT.ordinal
+                        TUnit.KELVIN -> TUnit.KELVIN.ordinal
+                        TUnit.RANKINE -> TUnit.RANKINE.ordinal
                     }
                 )
-                it
             }
 
     override fun calculateDiff(

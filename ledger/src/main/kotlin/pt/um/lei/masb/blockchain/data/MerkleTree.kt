@@ -32,14 +32,8 @@ class MerkleTree(
         session
             .newInstance("merkleTree")
             .apply {
-                this.setProperty(
-                    "collapsedTree",
-                    collapsedTree
-                )
-                this.setProperty(
-                    "levelIndex",
-                    levelIndex
-                )
+                setProperty("collapsedTree", collapsedTree)
+                setProperty("levelIndex", levelIndex)
             }
 
 
@@ -111,13 +105,11 @@ class MerkleTree(
                             index + 1 == levelIndex[level + 1])
                 ) {
                     crypter.applyHash(
-                        collapsedTree[index] +
-                                collapsedTree[index]
+                        collapsedTree[index] + collapsedTree[index]
                     )
                 } else {
                     crypter.applyHash(
-                        collapsedTree[index] +
-                                collapsedTree[index + 1]
+                        collapsedTree[index] + collapsedTree[index + 1]
                     )
                 }
             }
@@ -125,8 +117,7 @@ class MerkleTree(
             //Is a right leaf
             else {
                 crypter.applyHash(
-                    collapsedTree[index - 1] +
-                            collapsedTree[index]
+                    collapsedTree[index - 1] + collapsedTree[index]
                 )
             }
             level--
@@ -152,7 +143,7 @@ class MerkleTree(
     ): Boolean =
     //Check if collapsedTree is empty.
         if (!collapsedTree.isEmpty() &&
-            levelIndex[levelIndex.size - 1] - levelIndex[0] == data.size + 1
+            collapsedTree.size - levelIndex[levelIndex.size - 1] == data.size + 1
         ) {
             if (checkAllTransactionsPresent(coinbase, data)) {
                 if (collapsedTree.size > 1) {
@@ -198,8 +189,7 @@ class MerkleTree(
                 ) {
                     if (!collapsedTree[i].contentEquals(
                             (crypter.applyHash(
-                                collapsedTree[delta] +
-                                        collapsedTree[delta]
+                                collapsedTree[delta] + collapsedTree[delta]
                             ))
                         )
                     ) {
@@ -212,8 +202,7 @@ class MerkleTree(
                 else {
                     if (!collapsedTree[i].contentEquals(
                             (crypter.applyHash(
-                                collapsedTree[delta] +
-                                        collapsedTree[delta + 1]
+                                collapsedTree[delta] + collapsedTree[delta + 1]
                             ))
                         )
                     ) {
@@ -336,8 +325,7 @@ class MerkleTree(
                     val tempIndex = mutableListOf<Int>()
                     tempTree.add(
                         crypter.applyHash(
-                            treeLayer[i][0]
-                                    + treeLayer[i][1]
+                            treeLayer[i][0] + treeLayer[i][1]
                         )
                     )
                     tempIndex.add(0)
@@ -349,8 +337,8 @@ class MerkleTree(
                         count += s.size
                     }
                     MerkleTree(
-                        tempTree.toList(),
-                        tempIndex.toList()
+                        tempTree,
+                        tempIndex
                     )
                 }
                 //If the previous layer was already length 1, that means we started at the root.
@@ -385,8 +373,7 @@ class MerkleTree(
             //While we're inside the bounds of this layer, calculate two by two the hash.
             while (i < previousTreeLayer.size) {
                 treeLayer[j] = crypter.applyHash(
-                    previousTreeLayer[i - 1] +
-                            previousTreeLayer[i]
+                    previousTreeLayer[i - 1] + previousTreeLayer[i]
                 )
                 i += 2
                 j += 1
@@ -394,8 +381,7 @@ class MerkleTree(
             //If we're still in the layer, there's one left, it's grouped and hashed with itself.
             if (j < treeLayer.size) {
                 treeLayer[j] = crypter.applyHash(
-                    previousTreeLayer[previousTreeLayer.size - 1] +
-                            previousTreeLayer[previousTreeLayer.size - 1]
+                    previousTreeLayer[previousTreeLayer.size - 1] + previousTreeLayer[previousTreeLayer.size - 1]
                 )
             }
             return treeLayer

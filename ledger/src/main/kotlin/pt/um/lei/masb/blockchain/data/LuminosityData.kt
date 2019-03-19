@@ -5,6 +5,7 @@ import pt.um.lei.masb.blockchain.ledger.Coinbase
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.utils.bytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -20,11 +21,7 @@ data class LuminosityData(
 ) : BlockChainData {
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-            $lum
-            ${unit.name}
-            ${unit.ordinal}
-            """.trimIndent()
+            lum.unscaledValue().toByteArray() + unit.ordinal.bytes()
         )
 
 
@@ -37,8 +34,8 @@ data class LuminosityData(
                 it.setProperty("lum", lum)
                 it.setProperty(
                     "unit", when (unit) {
-                        LUnit.LUMENS -> 0x00.toByte()
-                        LUnit.LUX -> 0x01.toByte()
+                        LUnit.LUMENS -> LUnit.LUMENS.ordinal
+                        LUnit.LUX -> LUnit.LUX.ordinal
                     }
                 )
                 it

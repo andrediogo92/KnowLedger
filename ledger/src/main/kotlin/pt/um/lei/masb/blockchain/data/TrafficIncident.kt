@@ -5,6 +5,8 @@ import mu.KLogging
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.utils.bytes
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
 
 /**
@@ -55,24 +57,24 @@ class TrafficIncident(
 
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-            $trafficModelId
-            $id
-            $iconLat
-            $iconLon
-            $incidentCategory
-            $magnitudeOfDelay
-            $clusterSize
-            $description
-            $causeOfAccident
-            $from
-            $to
-            $length
-            $delayInSeconds
-            $affectedRoads
-            $cityName
-            $citySeqNum
-            """.trimIndent()
+            flattenBytes(
+                trafficModelId.toByteArray(),
+                id.toByteArray(),
+                iconLat.bytes(),
+                iconLon.bytes(),
+                incidentCategory.bytes(),
+                magnitudeOfDelay.bytes(),
+                clusterSize.bytes(),
+                description.toByteArray(),
+                causeOfAccident.toByteArray(),
+                from.toByteArray(),
+                to.toByteArray(),
+                length.bytes(),
+                delayInSeconds.bytes(),
+                affectedRoads.toByteArray(),
+                cityName.toByteArray(),
+                citySeqNum.bytes()
+            )
         )
 
     override fun store(session: NewInstanceSession): OElement =

@@ -5,6 +5,7 @@ import pt.um.lei.masb.blockchain.ledger.Coinbase
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.utils.bytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -21,11 +22,7 @@ data class HumidityData(
 ) : BlockChainData {
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-            $hum
-            ${unit.name}
-            ${unit.ordinal}
-            """.trimIndent()
+            hum.unscaledValue().toByteArray() + unit.ordinal.bytes()
         )
 
 
@@ -34,15 +31,14 @@ data class HumidityData(
     ): OElement =
         session
             .newInstance("Humidity")
-            .let {
-                it.setProperty("hum", hum)
+            .apply {
+                setProperty("hum", hum)
                 val hUnit = when (unit) {
-                    HUnit.G_BY_KG -> 0x00.toByte()
-                    HUnit.KG_BY_KG -> 0x01.toByte()
-                    HUnit.RELATIVE -> 0x02.toByte()
+                    HUnit.G_BY_KG -> HUnit.G_BY_KG.ordinal
+                    HUnit.KG_BY_KG -> HUnit.KG_BY_KG.ordinal
+                    HUnit.RELATIVE -> HUnit.RELATIVE.ordinal
                 }
-                it.setProperty("unit", hUnit)
-                it
+                setProperty("unit", hUnit)
             }
 
 

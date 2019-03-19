@@ -10,6 +10,8 @@ import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.utils.Crypter
 import pt.um.lei.masb.blockchain.utils.GeoCoords
 import pt.um.lei.masb.blockchain.utils.Hashable
+import pt.um.lei.masb.blockchain.utils.bytes
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
@@ -89,28 +91,28 @@ data class PhysicalData(
         session
             .newInstance("PhysicalData")
             .apply {
-                this.setProperty(
+                setProperty(
                     "seconds",
                     instant.epochSecond
                 )
-                this.setProperty(
+                setProperty(
                     "nanos",
                     instant.nano
                 )
-                this.setProperty(
+                setProperty(
                     "data",
                     data.store(session)
                 )
                 geoCoords?.let {
-                    this.setProperty(
+                    setProperty(
                         "latitude",
                         it.latitude
                     )
-                    this.setProperty(
+                    setProperty(
                         "longitude",
                         it.longitude
                     )
-                    this.setProperty(
+                    setProperty(
                         "altitude",
                         it.altitude
                     )
@@ -119,14 +121,22 @@ data class PhysicalData(
 
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-                ${instant.epochSecond}
-                ${instant.nano}
-                ${geoCoords?.latitude}
-                ${geoCoords?.longitude}
-                ${geoCoords?.altitude}
-                $data
-            """.trimIndent()
+            if (geoCoords != null) {
+                flattenBytes(
+                    instant.epochSecond.bytes(),
+                    instant.nano.bytes(),
+                    geoCoords.latitude.unscaledValue().toByteArray(),
+                    geoCoords.longitude.unscaledValue().toByteArray(),
+                    geoCoords.altitude.unscaledValue().toByteArray(),
+                    data.digest(c)
+                )
+            } else {
+                flattenBytes(
+                    instant.epochSecond.bytes(),
+                    instant.nano.bytes(),
+                    data.digest(c)
+                )
+            }
         )
 
     override fun toString(): String = """

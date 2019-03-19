@@ -5,6 +5,8 @@ import pt.um.lei.masb.blockchain.ledger.Coinbase
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.utils.bytes
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -29,12 +31,11 @@ data class NoiseData(
 ) : BlockChainData {
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-            $noiseLevel
-            $peakOrBase
-            ${unit.name}
-            ${unit.ordinal}
-            """.trimIndent()
+            flattenBytes(
+                noiseLevel.unscaledValue().toByteArray(),
+                peakOrBase.unscaledValue().toByteArray(),
+                unit.ordinal.bytes()
+            )
         )
 
     override fun store(
@@ -42,22 +43,15 @@ data class NoiseData(
     ): OElement =
         session
             .newInstance("Noise")
-            .let {
-                it.setProperty(
-                    "noiseLevel",
-                    noiseLevel
-                )
-                it.setProperty(
-                    "peakOrBase",
-                    peakOrBase
-                )
-                it.setProperty(
+            .apply {
+                setProperty("noiseLevel", noiseLevel)
+                setProperty("peakOrBase", peakOrBase)
+                setProperty(
                     "unit", when (unit) {
-                        NUnit.DBSPL -> 0x00.toByte()
-                        NUnit.RMS -> 0x01.toByte()
+                        NUnit.DBSPL -> NUnit.DBSPL.ordinal.toByte()
+                        NUnit.RMS -> NUnit.RMS.ordinal.toByte()
                     }
                 )
-                it
             }
 
 

@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.record.OElement
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.utils.bytes
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
 
 
@@ -41,7 +43,9 @@ class PollutionOWM(
             else -> -99.0
         },
         when (parameter) {
-            "CO", "SO2", "NO2" -> clone(data)
+            "CO", "SO2", "NO2" -> data.asSequence().map {
+                it.asSequence().toList()
+            }.toList()
             else -> emptyList()
         },
         city,
@@ -53,39 +57,38 @@ class PollutionOWM(
     }
 
     override fun digest(c: Crypter): Hash =
-        c.applyHash("""
-            $unit
-            $parameter
-            $valueInternal
-            $city
-            $citySeqNum
-            ${
-        data.joinToString { ld ->
-            ld.joinToString {
-                it.toString()
-            }
-        }
-        }
-        """.trimIndent())
+        c.applyHash(
+            flattenBytes(
+                data.asIterable().flatMap { fl ->
+                    fl.asIterable().map {
+                        it.bytes()
+                    }
+                },
+                unit.toByteArray(),
+                value.bytes(),
+                city.toByteArray(),
+                citySeqNum.bytes(),
+                parameter.ordinal.bytes()
+            )
+        )
 
     override fun store(session: NewInstanceSession): OElement =
-        session.newInstance("PollutionOWM").let {
-            val byte = when (parameter) {
-                PollutionType.O3 -> 0x00
-                PollutionType.UV -> 0x01
-                PollutionType.CO -> 0x02
-                PollutionType.SO2 -> 0x03
-                PollutionType.NO2 -> 0x04
-                PollutionType.NA -> 0x05
-                else -> 0xFF
+        session.newInstance("PollutionOWM").apply {
+            val parameter = when (parameter) {
+                PollutionType.O3 -> PollutionType.O3.ordinal
+                PollutionType.UV -> PollutionType.UV.ordinal
+                PollutionType.CO -> PollutionType.CO.ordinal
+                PollutionType.SO2 -> PollutionType.SO2.ordinal
+                PollutionType.NO2 -> PollutionType.NO2.ordinal
+                PollutionType.NA -> PollutionType.NA.ordinal
+                else -> Int.MAX_VALUE
             }
-            it.setProperty("parameter", byte)
-            it.setProperty("valueInternal", valueInternal)
-            it.setProperty("unit", unit)
-            it.setProperty("city", city)
-            it.setProperty("data", emptyList<List<Double>>())
-            it.setProperty("citySeqNum", citySeqNum)
-            it
+            setProperty("parameter", parameter)
+            setProperty("valueInternal", valueInternal)
+            setProperty("unit", unit)
+            setProperty("city", city)
+            setProperty("data", emptyList<List<Double>>())
+            setProperty("citySeqNum", citySeqNum)
         }
 
     var valueInternal = value
@@ -119,7 +122,6 @@ class PollutionOWM(
             }
             return mean
         }
-
 
 
     override fun toString(): String =

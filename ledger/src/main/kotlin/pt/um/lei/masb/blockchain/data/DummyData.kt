@@ -14,19 +14,18 @@ class DummyData : BlockChainData {
     override val approximateSize: Long = 0
 
     override fun digest(c: Crypter): Hash =
-        c.applyHash("Dummy")
+        c.applyHash(ByteArray(1) { 0x01 })
 
     override fun store(
         session: NewInstanceSession
     ): OElement =
         session
             .newInstance("Dummy")
-            .let {
-                it.setProperty(
+            .apply {
+                setProperty(
                     "origin",
                     0x01.toByte()
                 )
-                it
             }
 
     override fun calculateDiff(

@@ -5,6 +5,8 @@ import com.orientechnologies.orient.core.record.OElement
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.utils.bytes
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
 
 /**
@@ -37,33 +39,32 @@ class TrafficFlow(
 
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-            $functionalRoadClass
-            $currentSpeed
-            $freeFlowSpeed
-            $currentTravelTime
-            $freeFlowTravelTime
-            $confidenceInternal
-            $realtimeRatioInternal
-            $cityName
-            $citySeqNum
-            """.trimIndent()
+            flattenBytes(
+                functionalRoadClass.toByteArray(),
+                currentSpeed.bytes(),
+                freeFlowSpeed.bytes(),
+                currentTravelTime.bytes(),
+                freeFlowTravelTime.bytes(),
+                confidenceInternal.bytes(),
+                realtimeRatioInternal.bytes(),
+                cityName.toByteArray(),
+                citySeqNum.bytes()
+            )
         )
 
     override fun store(
         session: NewInstanceSession
     ): OElement =
-        session.newInstance("TrafficFlow").let {
-            it.setProperty("functionalRoadClass", functionalRoadClass)
-            it.setProperty("currentSpeed", currentSpeed)
-            it.setProperty("freeFlowSpeed", freeFlowSpeed)
-            it.setProperty("currentTravelTime", currentTravelTime)
-            it.setProperty("freeFlowTravelTime", freeFlowTravelTime)
-            it.setProperty("confidenceInternal", confidenceInternal)
-            it.setProperty("realtimeRatioInternal", realtimeRatioInternal)
-            it.setProperty("cityName", cityName)
-            it.setProperty("citySeqNum", citySeqNum)
-            it
+        session.newInstance("TrafficFlow").apply {
+            setProperty("functionalRoadClass", functionalRoadClass)
+            setProperty("currentSpeed", currentSpeed)
+            setProperty("freeFlowSpeed", freeFlowSpeed)
+            setProperty("currentTravelTime", currentTravelTime)
+            setProperty("freeFlowTravelTime", freeFlowTravelTime)
+            setProperty("confidenceInternal", confidenceInternal)
+            setProperty("realtimeRatioInternal", realtimeRatioInternal)
+            setProperty("cityName", cityName)
+            setProperty("citySeqNum", citySeqNum)
         }
 
     var functionalRoadClassDesc: String        //Indicates the road type

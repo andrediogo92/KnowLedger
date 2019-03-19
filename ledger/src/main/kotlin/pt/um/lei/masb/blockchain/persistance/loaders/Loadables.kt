@@ -7,11 +7,11 @@ import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.ledger.LedgerContract
 import pt.um.lei.masb.blockchain.persistance.PersistenceWrapper
 import pt.um.lei.masb.blockchain.service.ServiceHandle
-import pt.um.lei.masb.blockchain.service.results.DataResult
 import pt.um.lei.masb.blockchain.service.results.LedgerResult
+import pt.um.lei.masb.blockchain.service.results.LoadResult
 
 internal inline class DefaultLoadable<T : LedgerContract>(
-    val load: (Hash, OElement) -> DataResult<T>
+    val load: (Hash, OElement) -> LoadResult<T>
 )
 
 internal inline class ChainLoadable<T : ServiceHandle>(
@@ -19,7 +19,3 @@ internal inline class ChainLoadable<T : ServiceHandle>(
 )
 
 typealias DataLoader = MutableMap<String, Loadable<out BlockChainData>>
-
-internal typealias BlockChainLoader = Map<String, DefaultLoadable<out LedgerContract>>
-
-internal typealias ChainLoader = Map<String, ChainLoadable<out ServiceHandle>>
