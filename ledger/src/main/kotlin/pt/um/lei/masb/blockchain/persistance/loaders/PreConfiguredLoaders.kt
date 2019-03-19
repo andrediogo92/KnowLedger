@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable
 import com.orientechnologies.orient.core.record.OElement
 import com.orientechnologies.orient.core.record.impl.ORecordBytes
 import pt.um.lei.masb.blockchain.data.*
+import pt.um.lei.masb.blockchain.persistance.results.DataResult
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
@@ -16,76 +17,89 @@ object PreConfiguredLoaders : Loaders {
                 commonLoad(
                     it,
                     "Dummy"
-                ) { DummyData() }
+                ) {
+                    DataResult.Success(
+                        DummyData()
+                    )
+                }
             },
+
             "Humidity" to Loadable {
-                commonLoad(
+                commonLoad<HumidityData>(
                     it,
                     "Humidity"
                 )
                 {
-                    val prop = it.getProperty<Byte>("unit")
+                    val prop = it.getProperty<Int>("unit")
                     val unit = when (prop) {
-                        0x00.toByte() -> HUnit.G_BY_KG
-                        0x01.toByte() -> HUnit.KG_BY_KG
-                        0x02.toByte() -> HUnit.RELATIVE
+                        HUnit.G_BY_KG.ordinal -> HUnit.G_BY_KG
+                        HUnit.KG_BY_KG.ordinal -> HUnit.KG_BY_KG
+                        HUnit.RELATIVE.ordinal -> HUnit.RELATIVE
                         else -> null
                     }
                     if (unit == null) {
-                        throw LoadFailedException(
+                        DataResult.UnrecognizedUnit(
                             "HUnit is not one of the expected: $prop"
                         )
                     } else {
-                        HumidityData(
-                            it.getProperty("hum"),
-                            unit
+                        DataResult.Success(
+                            HumidityData(
+                                it.getProperty("hum"),
+                                unit
+                            )
                         )
                     }
                 }
             },
+
             "Luminosity" to Loadable {
-                commonLoad(
+                commonLoad<LuminosityData>(
                     it,
                     "Luminosity"
                 ) {
-                    val prop = it.getProperty<Byte>("unit")
+                    val prop = it.getProperty<Int>("unit")
                     val unit = when (prop) {
-                        0x00.toByte() -> LUnit.LUMENS
-                        0x01.toByte() -> LUnit.LUX
+                        LUnit.LUMENS.ordinal -> LUnit.LUMENS
+                        LUnit.LUX.ordinal -> LUnit.LUX
                         else -> null
                     }
                     if (unit == null) {
-                        throw LoadFailedException(
+                        DataResult.UnrecognizedUnit(
                             "LUnit is not one of the expected: $prop"
                         )
                     } else {
-                        LuminosityData(
-                            it.getProperty("lum"),
-                            unit
+                        DataResult.Success(
+                            LuminosityData(
+                                it.getProperty("lum"),
+                                unit
+                            )
                         )
                     }
                 }
             },
+
             "Noise" to Loadable {
-                commonLoad(
+                commonLoad<NoiseData>(
                     it,
                     "Noise"
                 ) {
-                    val prop = it.getProperty<Byte>("unit")
+                    val prop = it.getProperty<Int>("unit")
                     val unit = when (prop) {
-                        0x00.toByte() -> NUnit.DBSPL
-                        0x01.toByte() -> NUnit.RMS
+                        NUnit.DBSPL.ordinal -> NUnit.DBSPL
+                        NUnit.RMS.ordinal -> NUnit.RMS
                         else -> null
                     }
                     if (unit == null) {
-                        throw LoadFailedException(
+                        DataResult.UnrecognizedUnit(
                             "Unit is not one of the expected: $prop"
                         )
                     } else {
-                        NoiseData(
-                            it.getProperty("noiseLevel"),
-                            it.getProperty("peakOrBase"),
-                            unit
+                        DataResult.Success(
+                            NoiseData(
+                                it.getProperty("noiseLevel"),
+                                it.getProperty("peakOrBase"),
+                                unit
+                            )
                         )
                     }
                 }
@@ -109,99 +123,108 @@ object PreConfiguredLoaders : Loaders {
                             bos.toByteArray()
                         )
                     ).use {
-                        OtherData(
-                            it.readObject() as Serializable
+                        DataResult.Success(
+                            OtherData(
+                                it.readObject() as Serializable
+                            )
                         )
                     }
                 }
             },
+
             "Temperature" to Loadable {
-                commonLoad(
+                commonLoad<TemperatureData>(
                     it,
                     "Temperature"
                 ) {
-                    val prop = it.getProperty<Byte>("unit")
+                    val prop = it.getProperty<Int>("unit")
                     val unit = when (prop) {
-                        0x00.toByte() -> TUnit.CELSIUS
-                        0x01.toByte() -> TUnit.FAHRENHEIT
-                        0x02.toByte() -> TUnit.KELVIN
-                        0x03.toByte() -> TUnit.RANKINE
+                        TUnit.CELSIUS.ordinal -> TUnit.CELSIUS
+                        TUnit.FAHRENHEIT.ordinal -> TUnit.FAHRENHEIT
+                        TUnit.KELVIN.ordinal -> TUnit.KELVIN
+                        TUnit.RANKINE.ordinal -> TUnit.RANKINE
                         else -> null
                     }
                     if (unit == null) {
-                        throw LoadFailedException(
+                        DataResult.UnrecognizedUnit(
                             "TUnit is not one of the expected: $prop"
                         )
                     } else {
-                        TemperatureData(
-                            it.getProperty("temperature"),
-                            unit
+                        DataResult.Success(
+                            TemperatureData(
+                                it.getProperty("temperature"),
+                                unit
+                            )
                         )
                     }
                 }
             },
             "PollutionAQ" to Loadable {
-                commonLoad(
+                commonLoad<PollutionAQ>(
                     it,
                     "PollutionAQ"
                 ) {
-                    val byteP = it.getProperty<Byte>("parameter")
+                    val byteP = it.getProperty<Int>("parameter")
                     val parameter = when (byteP) {
-                        0x00.toByte() -> PollutionType.PM25
-                        0x01.toByte() -> PollutionType.PM10
-                        0x02.toByte() -> PollutionType.SO2
-                        0x03.toByte() -> PollutionType.NO2
-                        0x04.toByte() -> PollutionType.O3
-                        0x05.toByte() -> PollutionType.CO
-                        0x06.toByte() -> PollutionType.BC
-                        0x07.toByte() -> PollutionType.NA
+                        PollutionType.PM25.ordinal -> PollutionType.PM25
+                        PollutionType.PM10.ordinal -> PollutionType.PM10
+                        PollutionType.SO2.ordinal -> PollutionType.SO2
+                        PollutionType.NO2.ordinal -> PollutionType.NO2
+                        PollutionType.O3.ordinal -> PollutionType.O3
+                        PollutionType.CO.ordinal -> PollutionType.CO
+                        PollutionType.BC.ordinal -> PollutionType.BC
+                        PollutionType.NA.ordinal -> PollutionType.NA
                         else -> null
                     }
                     if (parameter == null) {
-                        throw LoadFailedException(
+                        DataResult.UnrecognizedUnit(
                             "Parameter is not one of the expected: $byteP"
                         )
                     } else {
-                        PollutionAQ(
-                            it.getProperty("lastUpdated"),
-                            it.getProperty("unit"),
-                            parameter,
-                            it.getProperty("value"),
-                            it.getProperty("sourceName"),
-                            it.getProperty("city"),
-                            it.getProperty("citySeqNum")
+                        DataResult.Success(
+                            PollutionAQ(
+                                it.getProperty("lastUpdated"),
+                                it.getProperty("unit"),
+                                parameter,
+                                it.getProperty("value"),
+                                it.getProperty("sourceName"),
+                                it.getProperty("city"),
+                                it.getProperty("citySeqNum")
+                            )
                         )
                     }
                 }
             },
             "PollutionOWM" to Loadable {
-                commonLoad(
+                commonLoad<PollutionOWM>(
                     it,
                     "PollutionOWM"
                 ) {
-                    val byteP = it.getProperty<Byte>("parameter")
+                    val byteP = it.getProperty<Int>("parameter")
                     val parameter = when (byteP) {
-                        0x00.toByte() -> PollutionType.O3
-                        0x01.toByte() -> PollutionType.UV
-                        0x02.toByte() -> PollutionType.CO
-                        0x03.toByte() -> PollutionType.SO2
-                        0x04.toByte() -> PollutionType.NO2
-                        0x05.toByte() -> PollutionType.NA
+                        PollutionType.O3.ordinal -> PollutionType.O3
+                        PollutionType.UV.ordinal -> PollutionType.UV
+                        PollutionType.CO.ordinal -> PollutionType.CO
+                        PollutionType.SO2.ordinal -> PollutionType.SO2
+                        PollutionType.NO2.ordinal -> PollutionType.NO2
+                        PollutionType.NA.ordinal -> PollutionType.NA
                         else -> null
                     }
                     if (parameter == null) {
-                        throw LoadFailedException(
+                        DataResult.UnrecognizedUnit(
                             "Parameter is not one of the expected: $byteP"
                         )
                     } else {
 
-                        PollutionOWM(
-                            it.getProperty("unit"),
-                            parameter,
-                            it.getProperty("value"),
-                            it.getProperty("data"),
-                            it.getProperty("city"),
-                            it.getProperty("citySeqNum")
+                        DataResult.Success(
+                            PollutionOWM(
+                                it.getProperty("unit"),
+                                parameter,
+                                it.getProperty("value"),
+                                it.getProperty("data"),
+                                it.getProperty("city"),
+                                it.getProperty("citySeqNum")
+                            )
                         )
                     }
                 }
@@ -211,16 +234,18 @@ object PreConfiguredLoaders : Loaders {
                     it,
                     "TrafficFlow"
                 ) {
-                    TrafficFlow(
-                        it.getProperty("functionalRoadClass"),
-                        it.getProperty("currentSpeed"),
-                        it.getProperty("freeFlowSpeed"),
-                        it.getProperty("currentTravelTime"),
-                        it.getProperty("freeFlowTravelTime"),
-                        it.getProperty("confidence"),
-                        it.getProperty("realtimeRatio"),
-                        it.getProperty("city"),
-                        it.getProperty("citySeqNum")
+                    DataResult.Success(
+                        TrafficFlow(
+                            it.getProperty("functionalRoadClass"),
+                            it.getProperty("currentSpeed"),
+                            it.getProperty("freeFlowSpeed"),
+                            it.getProperty("currentTravelTime"),
+                            it.getProperty("freeFlowTravelTime"),
+                            it.getProperty("confidence"),
+                            it.getProperty("realtimeRatio"),
+                            it.getProperty("city"),
+                            it.getProperty("citySeqNum")
+                        )
                     )
                 }
             },
@@ -229,46 +254,54 @@ object PreConfiguredLoaders : Loaders {
                     it,
                     "TrafficIncident"
                 ) {
-                    TrafficIncident(
-                        it.getProperty("trafficModelId"),
-                        it.getProperty("id"),
-                        it.getProperty("iconLat"),
-                        it.getProperty("iconLon"),
-                        it.getProperty("incidentCategory"),
-                        it.getProperty("magnitudeOfDelay"),
-                        it.getProperty("description"),
-                        it.getProperty("causeOfAccident"),
-                        it.getProperty("from"),
-                        it.getProperty("to"),
-                        it.getProperty("length"),
-                        it.getProperty("delayInSeconds"),
-                        it.getProperty("affectedRoads"),
-                        it.getProperty("city"),
-                        it.getProperty("citySeqNum")
+                    DataResult.Success(
+                        TrafficIncident(
+                            it.getProperty("trafficModelId"),
+                            it.getProperty("id"),
+                            it.getProperty("iconLat"),
+                            it.getProperty("iconLon"),
+                            it.getProperty("incidentCategory"),
+                            it.getProperty("magnitudeOfDelay"),
+                            it.getProperty("description"),
+                            it.getProperty("causeOfAccident"),
+                            it.getProperty("from"),
+                            it.getProperty("to"),
+                            it.getProperty("length"),
+                            it.getProperty("delayInSeconds"),
+                            it.getProperty("affectedRoads"),
+                            it.getProperty("city"),
+                            it.getProperty("citySeqNum")
+                        )
                     )
                 }
             }
         )
     }
 
-    private fun <T> commonLoad(
+    private fun <T : BlockChainData> commonLoad(
         document: OElement,
         tName: String,
-        loader: () -> T
-    ): T {
-        val opt = document.schemaType.map { it.name }
-        val name = if (opt.isPresent) {
-            opt.get()
-        } else {
-            throw LoadFailedException(
-                "Schema not existent for $document"
-            )
-        }
-        return if (tName == name) {
-            loader()
-        } else {
-            throw LoadFailedException(
-                "Got document with unexpected class: $name"
+        loader: () -> DataResult<T>
+    ): DataResult<T> {
+        return try {
+            val opt = document.schemaType.map { it.name }
+            if (opt.isPresent) {
+                val name = opt.get()
+                if (tName == name) {
+                    loader()
+                } else {
+                    DataResult.UnexpectedClass(
+                        "Got document with unexpected class: $name"
+                    )
+                }
+            } else {
+                DataResult.NonRegisteredSchema(
+                    "Schema not existent for: ${document.toJSON()}"
+                )
+            }
+        } catch (e: Exception) {
+            DataResult.QueryFailure(
+                e.message ?: "", e
             )
         }
     }
