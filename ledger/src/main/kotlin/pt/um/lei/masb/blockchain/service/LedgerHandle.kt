@@ -18,7 +18,8 @@ class LedgerHandle internal constructor(
     private val pw: PersistenceWrapper,
     val ledgerId: LedgerId
 ) : Storable, ServiceHandle {
-    val knownChainTypes: List<Class<BlockChainData>> = TODO()
+    //TODO: efficiently retrieve chains registered for this ledger.
+    val knownChainTypes: List<Class<BlockChainData>> = emptyList()
 
     init {
         pw.registerDefaultClusters(
