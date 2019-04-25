@@ -1,4 +1,4 @@
-package pt.um.lei.masb.blockchain.persistance
+package pt.um.lei.masb.blockchain.persistance.database
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument
 

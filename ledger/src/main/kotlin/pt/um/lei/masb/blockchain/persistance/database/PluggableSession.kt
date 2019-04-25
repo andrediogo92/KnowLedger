@@ -1,4 +1,4 @@
-package pt.um.lei.masb.blockchain.persistance
+package pt.um.lei.masb.blockchain.persistance.database
 
 import com.orientechnologies.orient.core.db.OrientDB
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument
@@ -7,16 +7,16 @@ class PluggableSession(
     val db: OrientDB,
     val dbInfo: ManagedDatabaseInfo
 ) : ManagedSession {
-    private var _session: ODatabaseDocument =
+    private var sessionInternal: ODatabaseDocument =
         openSession()
 
 
     override val session: ODatabaseDocument
-        get() = _session
+        get() = sessionInternal
 
     override fun reOpenIfNecessary() {
-        if (_session.isClosed) {
-            _session = openSession()
+        if (sessionInternal.isClosed) {
+            sessionInternal = openSession()
         }
     }
 
