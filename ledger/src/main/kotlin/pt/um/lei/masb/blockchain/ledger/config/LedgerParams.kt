@@ -1,14 +1,20 @@
-package pt.um.lei.masb.blockchain.ledger
+package pt.um.lei.masb.blockchain.ledger.config
 
 import com.orientechnologies.orient.core.record.OElement
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import com.squareup.moshi.JsonClass
+import pt.um.lei.masb.blockchain.ledger.Hash
+import pt.um.lei.masb.blockchain.ledger.LedgerContract
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.SHA256Encrypter
 import pt.um.lei.masb.blockchain.persistance.Storable
-import pt.um.lei.masb.blockchain.utils.Crypter
-import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Hashable
+import pt.um.lei.masb.blockchain.utils.bytes
+import pt.um.lei.masb.blockchain.utils.flattenBytes
 
+@JsonClass(generateAdapter = true)
 data class LedgerParams(
-    val crypter: Crypter = DEFAULT_CRYPTER,
+    val crypter: Crypter = SHA256Encrypter,
     val recalcTime: Long = 1228800000,
     val recalcTrigger: Long = 2048,
     val blockParams: BlockParams = BlockParams()
@@ -26,12 +32,12 @@ data class LedgerParams(
 
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-                ${crypter.id}
-                $recalcTime
-                $recalcTrigger
-                ${blockParams.blockMemSize}
-                ${blockParams.blockLength}
-            """.trimIndent()
+            flattenBytes(
+                crypter.id,
+                recalcTime.bytes(),
+                recalcTrigger.bytes(),
+                blockParams.blockMemSize.bytes(),
+                blockParams.blockLength.bytes()
+            )
         )
 }

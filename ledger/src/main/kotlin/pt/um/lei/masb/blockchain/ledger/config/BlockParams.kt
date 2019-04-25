@@ -1,11 +1,16 @@
-package pt.um.lei.masb.blockchain.ledger
+package pt.um.lei.masb.blockchain.ledger.config
 
 import com.orientechnologies.orient.core.record.OElement
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import com.squareup.moshi.JsonClass
+import pt.um.lei.masb.blockchain.ledger.Hash
+import pt.um.lei.masb.blockchain.ledger.LedgerContract
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
 import pt.um.lei.masb.blockchain.persistance.Storable
-import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Hashable
+import pt.um.lei.masb.blockchain.utils.bytes
 
+@JsonClass(generateAdapter = true)
 data class BlockParams(
     val blockMemSize: Long = 2097152,
     val blockLength: Long = 512
@@ -22,10 +27,8 @@ data class BlockParams(
 
     override fun digest(c: Crypter): Hash =
         c.applyHash(
-            """
-                $blockMemSize
-                $blockLength
-            """.trimIndent()
+            blockMemSize.bytes() +
+                    blockLength.bytes()
         )
 
 }
