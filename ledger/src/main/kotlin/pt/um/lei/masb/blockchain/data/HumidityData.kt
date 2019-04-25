@@ -1,10 +1,11 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import pt.um.lei.masb.blockchain.ledger.Coinbase
 import pt.um.lei.masb.blockchain.ledger.Hash
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
-import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.bytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
@@ -16,6 +17,7 @@ import java.math.BigDecimal
  * can be in g/Kg ([HUnit.G_BY_KG]), Kg/Kg ([HUnit.KG_BY_KG])
  * or percentage ([HUnit.RELATIVE]) expressed by the [unit].
  */
+@JsonClass(generateAdapter = true)
 data class HumidityData(
     val hum: BigDecimal,
     val unit: HUnit
@@ -44,10 +46,10 @@ data class HumidityData(
 
     override fun calculateDiff(previous: SelfInterval): BigDecimal =
         when (previous) {
-            is HumidityData ->
-                calculateDiffHum(previous)
-            else ->
-                throw InvalidClassException("SelfInterval supplied is not ${this::class.simpleName}")
+            is HumidityData -> calculateDiffHum(previous)
+            else -> throw InvalidClassException(
+                "SelfInterval supplied is not ${this::class.java.name}"
+            )
         }
 
     private fun calculateDiffHum(previous: HumidityData): BigDecimal {
@@ -63,10 +65,4 @@ data class HumidityData(
         return newH.subtract(oldH)
             .divide(oldH, Coinbase.MATH_CONTEXT)
     }
-
-
-    override fun toString(): String {
-        return "HumidityData(hum = $hum, unit = $unit)"
-    }
-
 }

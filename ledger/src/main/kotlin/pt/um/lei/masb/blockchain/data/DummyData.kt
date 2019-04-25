@@ -1,20 +1,23 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import pt.um.lei.masb.blockchain.ledger.Hash
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
-import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import java.math.BigDecimal
 
 /**
  * Dummy data type used for the origin block.
  */
+@JsonClass(generateAdapter = true)
 class DummyData : BlockChainData {
 
-    override val approximateSize: Long = 0
+    override val approximateSize: Long
+        get() = 0
 
     override fun digest(c: Crypter): Hash =
-        c.applyHash(ByteArray(1) { 0x01 })
+        c.applyHash(ByteArray(1) { 0xCC.toByte() })
 
     override fun store(
         session: NewInstanceSession
@@ -24,7 +27,7 @@ class DummyData : BlockChainData {
             .apply {
                 setProperty(
                     "origin",
-                    0x01.toByte()
+                    0xCC.toByte()
                 )
             }
 
@@ -32,6 +35,4 @@ class DummyData : BlockChainData {
         previous: SelfInterval
     ): BigDecimal =
         BigDecimal.ZERO
-
-    override fun toString(): String = "Dummy"
 }

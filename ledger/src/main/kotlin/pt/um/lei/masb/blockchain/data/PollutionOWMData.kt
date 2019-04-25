@@ -1,15 +1,17 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import pt.um.lei.masb.blockchain.ledger.Hash
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
-import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.bytes
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
 
 
-class PollutionOWM(
+@JsonClass(generateAdapter = true)
+class PollutionOWMData(
     unit: String,
     var parameter: PollutionType,
     value: Double,
@@ -21,6 +23,39 @@ class PollutionOWM(
     city,
     citySeqNum
 ) {
+    var valueInternal = value
+    var value: Double
+        get() = if (!valueInternal.isNaN())
+            valueInternal
+        else
+            -99.0
+        set(v) {
+            valueInternal = v
+        }
+
+
+    //mean of Value/Precision
+    //Value
+    //Precision
+    val meanValuePrecision: DoubleArray
+        get() {
+            val mean = doubleArrayOf(0.0, 0.0)
+            var validElements = 0
+            if (value == -99.0) {
+                for (values in data) {
+                    if (!values[0].isNaN() && !values[1].isNaN()) {
+                        mean[0] += values[0]
+                        mean[1] += values[1]
+                        validElements++
+                    }
+                }
+                mean[0] = mean[0] / validElements
+                mean[1] = mean[1] / validElements
+            }
+            return mean
+        }
+
+
     constructor(
         unit: String,
         parameter: String,
@@ -73,7 +108,7 @@ class PollutionOWM(
         )
 
     override fun store(session: NewInstanceSession): OElement =
-        session.newInstance("PollutionOWM").apply {
+        session.newInstance("PollutionOWMData").apply {
             val parameter = when (parameter) {
                 PollutionType.O3 -> PollutionType.O3.ordinal
                 PollutionType.UV -> PollutionType.UV.ordinal
@@ -91,61 +126,9 @@ class PollutionOWM(
             setProperty("citySeqNum", citySeqNum)
         }
 
-    var valueInternal = value
-    var value: Double
-        get() = if (!valueInternal.isNaN())
-            valueInternal
-        else
-            -99.0
-        set(v) {
-            valueInternal = v
-        }
-
-
-    //mean of Value/Precision
-    //Value
-    //Precision
-    val meanValuePrecision: DoubleArray
-        get() {
-            val mean = doubleArrayOf(0.0, 0.0)
-            var validElements = 0
-            if (value == -99.0) {
-                for (values in data) {
-                    if (!values[0].isNaN() && !values[1].isNaN()) {
-                        mean[0] += values[0]
-                        mean[1] += values[1]
-                        validElements++
-                    }
-                }
-                mean[0] = mean[0] / validElements
-                mean[1] = mean[1] / validElements
-            }
-            return mean
-        }
-
-
-    override fun toString(): String =
-        """
-        |PollutionOWM {
-        |                   Pollution Measurement: $parameter - ${parameter.name}
-        |                   ${
-        when (parameter) {
-            PollutionType.O3, PollutionType.UV -> "Value: $value $unit"
-            PollutionType.NA -> "Value: NA"
-            else ->
-                """Data {
-                |${data.joinToString(
-                    ","
-                ) {
-                    """
-                    |Value: ${data[0]} $unit
-                    |Precision: ${data[1]}
-                    """.trimMargin()
-                }}"""
-        }
-        }
-        |               }
-        """.trimMargin()
+    override fun toString(): String {
+        return "PollutionOWMData(parameter=$parameter, data=$data, valueInternal=$valueInternal)"
+    }
 
 
     companion object {

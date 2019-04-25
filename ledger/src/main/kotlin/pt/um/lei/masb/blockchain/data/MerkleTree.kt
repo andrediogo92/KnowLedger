@@ -2,23 +2,25 @@ package pt.um.lei.masb.blockchain.data
 
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import mu.KLogging
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.ledger.Hashed
 import pt.um.lei.masb.blockchain.ledger.LedgerContract
 import pt.um.lei.masb.blockchain.ledger.Sizeable
+import pt.um.lei.masb.blockchain.ledger.crypt.SHA256Encrypter
 import pt.um.lei.masb.blockchain.ledger.emptyHash
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.persistance.Storable
-import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 
-class MerkleTree(
+@JsonClass(generateAdapter = true)
+data class MerkleTree(
     val collapsedTree: List<Hash> = emptyList(),
     val levelIndex: List<Int> = emptyList()
 ) : Sizeable, Storable, LedgerContract {
 
     /**
-     * The root hash.
+     * The root hashId.
      */
     val root: Hash
         get() =
@@ -250,13 +252,13 @@ class MerkleTree(
     }
 
     companion object : KLogging() {
-        val crypter = DEFAULT_CRYPTER
+        val crypter = SHA256Encrypter
 
         /**
          * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
          *
          * Initializes the first tree layer, which is the transaction layer,
-         * sets a correspondence from each hash to its index and starts a build loop,
+         * sets a correspondence from each hashId to its index and starts a build loop,
          * building all subsequent layers.
          *
          * Takes [data] as the transactions in the block and outputs the full
@@ -275,7 +277,7 @@ class MerkleTree(
          * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
          *
          * Initializes the first tree layer, which is the transaction layer,
-         * sets a correspondence from each hash to its index and starts a build loop,
+         * sets a correspondence from each hashId to its index and starts a build loop,
          * building all subsequent layers.
          *
          * Takes [data] as the transactions in the block + the special [coinbase] transaction's
@@ -287,11 +289,14 @@ class MerkleTree(
             data: List<Hashed>
         ): MerkleTree {
             val treeLayer = mutableListOf<Array<Hash>>()
+            val arr = Array(data.size + 1) {
+                when (it) {
+                    0 -> coinbase.hashId
+                    else -> data[it - 1].hashId
+                }
+            }
             treeLayer.add(
-                arrayOf(
-                    coinbase.hashId,
-                    *data.map(Hashed::hashId).toTypedArray()
-                )
+                arr
             )
             return buildLoop(treeLayer)
         }
@@ -319,8 +324,8 @@ class MerkleTree(
                 count = (count / 2) + (count % 2)
                 i += 1
             }
-            return when {
-                treeLayer[i].size == 2 -> {
+            return when (treeLayer[i].size) {
+                2 -> {
                     val tempTree = mutableListOf<Hash>()
                     val tempIndex = mutableListOf<Int>()
                     tempTree.add(
@@ -342,7 +347,7 @@ class MerkleTree(
                     )
                 }
                 //If the previous layer was already length 1, that means we started at the root.
-                treeLayer[i].size == 1 -> {
+                1 -> {
                     MerkleTree(listOf(treeLayer[i][0]))
                 }
                 else -> {
@@ -370,7 +375,7 @@ class MerkleTree(
             val treeLayer = Array(count) { emptyHash() }
             var j = 0
             var i = 1
-            //While we're inside the bounds of this layer, calculate two by two the hash.
+            //While we're inside the bounds of this layer, calculate two by two the hashId.
             while (i < previousTreeLayer.size) {
                 treeLayer[j] = crypter.applyHash(
                     previousTreeLayer[i - 1] + previousTreeLayer[i]
@@ -381,7 +386,8 @@ class MerkleTree(
             //If we're still in the layer, there's one left, it's grouped and hashed with itself.
             if (j < treeLayer.size) {
                 treeLayer[j] = crypter.applyHash(
-                    previousTreeLayer[previousTreeLayer.size - 1] + previousTreeLayer[previousTreeLayer.size - 1]
+                    previousTreeLayer[previousTreeLayer.size - 1] +
+                            previousTreeLayer[previousTreeLayer.size - 1]
                 )
             }
             return treeLayer

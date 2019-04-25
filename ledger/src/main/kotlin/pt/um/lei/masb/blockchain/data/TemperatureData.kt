@@ -1,10 +1,11 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import pt.um.lei.masb.blockchain.ledger.Coinbase
 import pt.um.lei.masb.blockchain.ledger.Hash
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
-import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.bytes
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.io.InvalidClassException
@@ -16,6 +17,7 @@ import java.math.BigDecimal
  * [TUnit.FAHRENHEIT], [TUnit.RANKINE] and [TUnit.KELVIN])
  * with idempotent methods to convert between them as needed.
  */
+@JsonClass(generateAdapter = true)
 data class TemperatureData(
     val temperature: BigDecimal,
     val unit: TUnit
@@ -56,12 +58,9 @@ data class TemperatureData(
     ): BigDecimal =
         when (previous) {
             is TemperatureData -> calculateDiffTemp(previous)
-            else ->
-                throw InvalidClassException(
-                    "SelfInterval supplied is not ${
-                    this::class.simpleName
-                    }"
-                )
+            else -> throw InvalidClassException(
+                "SelfInterval supplied is not ${this::class.java.name}"
+            )
         }
 
 
@@ -76,9 +75,5 @@ data class TemperatureData(
             .subtract(oldT)
             .divide(oldT, Coinbase.MATH_CONTEXT)
     }
-
-    override fun toString(): String =
-        "TemperatureData(temperature = $temperature, unit = $unit)"
-
 
 }

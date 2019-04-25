@@ -1,14 +1,14 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import org.openjdk.jol.info.ClassLayout
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.ledger.LedgerContract
 import pt.um.lei.masb.blockchain.ledger.Sizeable
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
 import pt.um.lei.masb.blockchain.persistance.Storable
-import pt.um.lei.masb.blockchain.utils.Crypter
-import pt.um.lei.masb.blockchain.utils.GeoCoords
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Hashable
 import pt.um.lei.masb.blockchain.utils.bytes
 import pt.um.lei.masb.blockchain.utils.flattenBytes
@@ -20,9 +20,10 @@ import java.time.Instant
 /**
  * Physical data is the main class in which to store blockchain data.
  *
- * It requires an instant in which the data was recorded and
+ * It requires an [instant] in which the data was recorded and
  * optionally geo coordinates for where it was recorded.
  */
+@JsonClass(generateAdapter = true)
 data class PhysicalData(
     val instant: Instant,
     val geoCoords: GeoCoords?,
@@ -138,16 +139,6 @@ data class PhysicalData(
                 )
             }
         )
-
-    override fun toString(): String = """
-        |           Physical Data: {
-        |               Instant: $instant
-        |               Latitude: ${geoCoords?.latitude}
-        |               Longitude: ${geoCoords?.longitude}
-        |               Altitude: ${geoCoords?.altitude}
-        |               Payload: $data
-        |           }
-        """.trimMargin()
 
     companion object {
         val MATH_CONTEXT = MathContext(

@@ -2,13 +2,15 @@ package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
 import com.orientechnologies.orient.core.record.impl.ORecordBytes
+import com.squareup.moshi.JsonClass
 import pt.um.lei.masb.blockchain.ledger.Hash
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
-import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.math.BigDecimal
 
+@JsonClass(generateAdapter = true)
 data class OtherData(
     val data: java.io.Serializable
 ) : BlockChainData {
@@ -31,11 +33,10 @@ data class OtherData(
     ): OElement =
         session
             .newInstance("Other")
-            .let { doc ->
-                val byteStream =
-                    ByteArrayOutputStream(
-                        approximateSize.toInt()
-                    )
+            .apply {
+                val byteStream = ByteArrayOutputStream(
+                    approximateSize.toInt()
+                )
                 ObjectOutputStream(
                     byteStream
                 ).use {
@@ -43,12 +44,8 @@ data class OtherData(
                     val blob = ORecordBytes(
                         byteStream.toByteArray()
                     )
-                    doc.setProperty(
-                        "data",
-                        blob
-                    )
+                    setProperty("data", blob)
                 }
-                doc
             }
 
     override fun calculateDiff(
@@ -56,6 +53,4 @@ data class OtherData(
     ): BigDecimal =
         BigDecimal.ONE
 
-    override fun toString(): String =
-        "OtherData(data = $data)"
 }

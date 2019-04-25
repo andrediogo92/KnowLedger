@@ -1,10 +1,11 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import pt.um.lei.masb.blockchain.ledger.Coinbase
 import pt.um.lei.masb.blockchain.ledger.Hash
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
-import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.bytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
@@ -15,6 +16,7 @@ import java.math.BigDecimal
  * outputting a specific amount of lumens ([LUnit.LUMENS]),
  * according to [unit].
  */
+@JsonClass(generateAdapter = true)
 data class LuminosityData(
     val lum: BigDecimal,
     val unit: LUnit
@@ -47,12 +49,9 @@ data class LuminosityData(
     ): BigDecimal =
         when (previous) {
             is LuminosityData -> calculateDiffLum(previous)
-            else ->
-                throw InvalidClassException(
-                    "SelfInterval supplied is not ${
-                    this::class.qualifiedName
-                    }"
-                )
+            else -> throw InvalidClassException(
+                "SelfInterval supplied is not ${this::class.java.name}"
+            )
         }
 
     private fun calculateDiffLum(

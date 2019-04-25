@@ -1,10 +1,11 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import mu.KLogging
 import pt.um.lei.masb.blockchain.ledger.Hash
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
-import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.bytes
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
@@ -16,7 +17,8 @@ import java.math.BigDecimal
  *
  *
  **/
-class TrafficIncident(
+@JsonClass(generateAdapter = true)
+class TrafficIncidentData(
     //Current traffic model.
     var trafficModelId: String,
     //ID of the traffic incident.
@@ -78,102 +80,79 @@ class TrafficIncident(
         )
 
     override fun store(session: NewInstanceSession): OElement =
-        session.newInstance("TrafficFlow").let {
-            it.setProperty("trafficModelId", trafficModelId)
-            it.setProperty("id", id)
-            it.setProperty("iconLat", iconLat)
-            it.setProperty("iconLon", iconLon)
-            it.setProperty("incidentCategory", incidentCategory)
-            it.setProperty("magnitudeOfDelay", magnitudeOfDelay)
-            it.setProperty("clusterSize", clusterSize)
-            it.setProperty("description", description)
-            it.setProperty("causeOfAccident", causeOfAccident)
-            it.setProperty("from", from)
-            it.setProperty("to", to)
-            it.setProperty("length", length)
-            it.setProperty("delayInSeconds", delayInSeconds)
-            it.setProperty("affectedRoads", affectedRoads)
-            it.setProperty("cityName", cityName)
-            it.setProperty("citySeqNum", citySeqNum)
-            it
-        }
-
-
-    var incidentCategoryDesc: String    //The category description associated with this incident
-    var magnitudeOfDelayDesc: String    //The magnitude of delay description associated with the incident
-
-    init {
-        when (this.incidentCategory) {
-            IncidentCategory.Cluster.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.Cluster.toString()
-            IncidentCategory.Detour.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.Detour.toString()
-            IncidentCategory.Flooding.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.Flooding.toString()
-            IncidentCategory.Wind.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.Wind.toString()
-            IncidentCategory.RoadWorks.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.RoadWorks.toString()
-            IncidentCategory.RoadClosed.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.RoadClosed.toString()
-            IncidentCategory.LaneClosed.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.LaneClosed.toString()
-            IncidentCategory.Jam.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.Jam.toString()
-            IncidentCategory.Ice.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.Ice.toString()
-            IncidentCategory.Rain.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.Rain.toString()
-            IncidentCategory.DangerousConditions.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.DangerousConditions.toString()
-            IncidentCategory.Fog.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.Fog.toString()
-            IncidentCategory.Accident.ordinal ->
-                this.incidentCategoryDesc = IncidentCategory.Accident.toString()
-            else ->
-                this.incidentCategoryDesc = IncidentCategory.Unknown.toString()
-        }
-        when (this.magnitudeOfDelay) {
-            MagnitudeDelay.Undefined.ordinal ->
-                this.magnitudeOfDelayDesc = MagnitudeDelay.Undefined.toString()
-            MagnitudeDelay.Major.ordinal ->
-                this.magnitudeOfDelayDesc = MagnitudeDelay.Major.toString()
-            MagnitudeDelay.Moderate.ordinal ->
-                this.magnitudeOfDelayDesc = MagnitudeDelay.Moderate.toString()
-            MagnitudeDelay.Minor.ordinal ->
-                this.magnitudeOfDelayDesc = MagnitudeDelay.Minor.toString()
-            else -> {
-                this.magnitudeOfDelayDesc = MagnitudeDelay.UnknownDelay.toString()
+        session
+            .newInstance("TrafficFlowData")
+            .apply {
+                setProperty("trafficModelId", trafficModelId)
+                setProperty("id", id)
+                setProperty("iconLat", iconLat)
+                setProperty("iconLon", iconLon)
+                setProperty("incidentCategory", incidentCategory)
+                setProperty("magnitudeOfDelay", magnitudeOfDelay)
+                setProperty("clusterSize", clusterSize)
+                setProperty("description", description)
+                setProperty("causeOfAccident", causeOfAccident)
+                setProperty("from", from)
+                setProperty("to", to)
+                setProperty("length", length)
+                setProperty("delayInSeconds", delayInSeconds)
+                setProperty("affectedRoads", affectedRoads)
+                setProperty("cityName", cityName)
+                setProperty("citySeqNum", citySeqNum)
             }
+
+
+    //The category description associated with this incident.
+    var incidentCategoryDesc: String = when (incidentCategory) {
+        IncidentCategory.Cluster.ordinal ->
+            IncidentCategory.Cluster.toString()
+        IncidentCategory.Detour.ordinal ->
+            IncidentCategory.Detour.toString()
+        IncidentCategory.Flooding.ordinal ->
+            IncidentCategory.Flooding.toString()
+        IncidentCategory.Wind.ordinal ->
+            IncidentCategory.Wind.toString()
+        IncidentCategory.RoadWorks.ordinal ->
+            IncidentCategory.RoadWorks.toString()
+        IncidentCategory.RoadClosed.ordinal ->
+            IncidentCategory.RoadClosed.toString()
+        IncidentCategory.LaneClosed.ordinal ->
+            IncidentCategory.LaneClosed.toString()
+        IncidentCategory.Jam.ordinal ->
+            IncidentCategory.Jam.toString()
+        IncidentCategory.Ice.ordinal ->
+            IncidentCategory.Ice.toString()
+        IncidentCategory.Rain.ordinal ->
+            IncidentCategory.Rain.toString()
+        IncidentCategory.DangerousConditions.ordinal ->
+            IncidentCategory.DangerousConditions.toString()
+        IncidentCategory.Fog.ordinal ->
+            IncidentCategory.Fog.toString()
+        IncidentCategory.Accident.ordinal ->
+            IncidentCategory.Accident.toString()
+        else ->
+            IncidentCategory.Unknown.toString()
+    }
+
+    //The magnitude of delay description associated with the incident.
+    var magnitudeOfDelayDesc: String = when (magnitudeOfDelay) {
+        MagnitudeDelay.Undefined.ordinal ->
+            MagnitudeDelay.Undefined.toString()
+        MagnitudeDelay.Major.ordinal ->
+            MagnitudeDelay.Major.toString()
+        MagnitudeDelay.Moderate.ordinal ->
+            MagnitudeDelay.Moderate.toString()
+        MagnitudeDelay.Minor.ordinal ->
+            MagnitudeDelay.Minor.toString()
+        else -> {
+            MagnitudeDelay.UnknownDelay.toString()
         }
     }
 
 
-    override fun toString(): String =
-        """
-        |TrafficIncident {
-        |                   Id: $id,
-        |                   Traffic Model Id: $id,
-        |                   Icon Latitude: $iconLat
-        |                   Icon Longitude: $iconLon
-        |                   Incident Category Id: $incidentCategory
-        |                   Incident Category: $incidentCategoryDesc
-        |                   Magnitude of Delay Id: $magnitudeOfDelay
-        |                   Magnitude of Delay: $magnitudeOfDelayDesc
-        |                   Cluster Size: $clusterSize
-        |                   Description: $description
-        |                   Cause of Accident: $causeOfAccident
-        |                   From: $from
-        |                   To: $to
-        |                   Length in meters: $length
-        |                   Delay in seconds: $delayInSeconds
-        |                   Affected Roads: $affectedRoads
-        |               }
-        """.trimMargin()
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is TrafficIncident) return false
+        if (other !is TrafficIncidentData) return false
 
         if (trafficModelId != other.trafficModelId) return false
         if (id != other.id) return false
@@ -213,6 +192,10 @@ class TrafficIncident(
         result = 31 * result + incidentCategoryDesc.hashCode()
         result = 31 * result + magnitudeOfDelayDesc.hashCode()
         return result
+    }
+
+    override fun toString(): String {
+        return "TrafficIncidentData(trafficModelId='$trafficModelId', id='$id', iconLat=$iconLat, iconLon=$iconLon, incidentCategory=$incidentCategory, magnitudeOfDelay=$magnitudeOfDelay, clusterSize=$clusterSize, description='$description', causeOfAccident='$causeOfAccident', from='$from', to='$to', length=$length, delayInSeconds=$delayInSeconds, affectedRoads='$affectedRoads', incidentCategoryDesc='$incidentCategoryDesc', magnitudeOfDelayDesc='$magnitudeOfDelayDesc')"
     }
 
     companion object : KLogging()

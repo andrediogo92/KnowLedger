@@ -1,18 +1,20 @@
 package pt.um.lei.masb.blockchain.data
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import pt.um.lei.masb.blockchain.ledger.Hash
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
-import pt.um.lei.masb.blockchain.utils.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.bytes
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
 
-class PollutionAQ(
+@JsonClass(generateAdapter = true)
+class PollutionAQData(
     var lastUpdated: String,
     unit: String,
     var parameter: PollutionType,
-    value: Double,
+    var value: Double,
     var sourceName: String,
     city: String = "",
     citySeqNum: Int = 1
@@ -61,7 +63,7 @@ class PollutionAQ(
                 lastUpdated.toByteArray(),
                 unit.toByteArray(),
                 parameter.ordinal.bytes(),
-                valueInternal.bytes(),
+                value.bytes(),
                 sourceName.toByteArray(),
                 city.toByteArray(),
                 citySeqNum.bytes()
@@ -69,7 +71,7 @@ class PollutionAQ(
         )
 
     override fun store(session: NewInstanceSession): OElement =
-        session.newInstance("PollutionAQ").apply {
+        session.newInstance("PollutionAQData").apply {
             setProperty("lastUpdated", lastUpdated)
             setProperty("unit", unit)
             val byte = when (parameter) {
@@ -85,41 +87,23 @@ class PollutionAQ(
             }
             //Byte encode the enum.
             setProperty("parameter", byte)
-            setProperty("valueInternal", valueInternal)
+            setProperty("valueInternal", value)
             setProperty("sourceName", sourceName)
             setProperty("city", city)
             setProperty("citySeqNum", citySeqNum)
         }
 
-    private var valueInternal = value
-
-    var value: Double
-        get() = if (valueInternal.isNaN())
-            valueInternal else
-            -99.0
-        set(v) {
-            valueInternal = v
-        }
 
 
-    override fun toString(): String =
-        """
-        |PollutionAQ {
-        |                   Pollution Measurement: $parameter - ${parameter.name}
-        |                   Last Update: $lastUpdated
-        |                   Value: $value
-        |                   Data Source: $sourceName
-        |               }
-        """.trimMargin()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is PollutionAQ) return false
+        if (other !is PollutionAQData) return false
 
         if (lastUpdated != other.lastUpdated) return false
         if (parameter != other.parameter) return false
         if (sourceName != other.sourceName) return false
-        if (valueInternal != other.valueInternal) return false
+        if (value != other.value) return false
 
         return true
     }
@@ -128,8 +112,12 @@ class PollutionAQ(
         var result = lastUpdated.hashCode()
         result = 31 * result + parameter.hashCode()
         result = 31 * result + sourceName.hashCode()
-        result = 31 * result + valueInternal.hashCode()
+        result = 31 * result + value.hashCode()
         return result
+    }
+
+    override fun toString(): String {
+        return "PollutionAQData(lastUpdated='$lastUpdated', parameter=$parameter, sourceName='$sourceName', valueInternal=$value)"
     }
 
 }
