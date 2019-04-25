@@ -1,31 +1,33 @@
 package pt.um.lei.masb.blockchain.ledger
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
 import pt.um.lei.masb.blockchain.data.MerkleTree
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.ledger.config.BlockParams
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.SHA256Encrypter
 import pt.um.lei.masb.blockchain.persistance.Storable
-import pt.um.lei.masb.blockchain.utils.Crypter
-import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Hashable
 import pt.um.lei.masb.blockchain.utils.bytes
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.time.Instant
 
-class BlockHeader(
+@JsonClass(generateAdapter = true)
+data class BlockHeader(
     val ledgerId: Hash,
     // Difficulty is fixed at block generation time.
     val difficulty: Difficulty,
     val blockheight: Long,
-    var hash: Hash,
+    override var hashId: Hash,
     var merkleRoot: Hash,
     val previousHash: Hash,
     val params: BlockParams,
     var timestamp: Instant = Instant.now(),
     var nonce: Long = 0
-) : Sizeable, Hashable, Storable, LedgerContract {
-
+) : Sizeable, Hashed, Hashable, Storable, LedgerContract {
 
     override val approximateSize: Long =
         ClassLayout
@@ -56,10 +58,10 @@ class BlockHeader(
         session
             .newInstance("BlockHeader")
             .apply {
-                setProperty("ledgerId", ledgerId)
+                setProperty("ledgerHash", ledgerId)
                 setProperty("difficulty", difficulty.toByteArray())
                 setProperty("blockheight", blockheight)
-                setProperty("hash", hash)
+                setProperty("hashId", hashId)
                 setProperty("merkleRoot", merkleRoot)
                 setProperty("previousHash", previousHash)
                 setProperty("params", params)
@@ -70,26 +72,14 @@ class BlockHeader(
 
 
     /**
-     * Hash is a cryptographic digest calculated from previous hash,
+     * Hash is a cryptographic digest calculated from previous hashId,
      * internalNonce, internalTimestamp, [MerkleTree]'s root
-     * and each [Transaction]'s hash.
+     * and each [Transaction]'s hashId.
      */
     fun updateHash() {
-        hash = digest(crypter)
+        hashId = digest(crypter)
     }
 
-
-    override fun toString(): String = """
-        |   Header: {
-        |       BlockChainHash: ${ledgerId.print()}
-        |       Difficulty: ${difficulty.print()}
-        |       Blockheight: $blockheight
-        |       PrevHash: ${previousHash.print()}
-        |       Hash: ${hash.print()}
-        |       MerkleRoot: ${merkleRoot.print()}
-        |       Time: $timestamp
-        |   }
-        """.trimMargin()
 
     override fun digest(c: Crypter): Hash =
         c.applyHash(
@@ -121,8 +111,8 @@ class BlockHeader(
             return false
         if (blockheight != other.blockheight)
             return false
-        if (!hash.contentEquals(
-                other.hash
+        if (!hashId.contentEquals(
+                other.hashId
             )
         )
             return false
@@ -148,7 +138,7 @@ class BlockHeader(
         var result = ledgerId.contentHashCode()
         result = 31 * result + difficulty.hashCode()
         result = 31 * result + blockheight.hashCode()
-        result = 31 * result + hash.contentHashCode()
+        result = 31 * result + hashId.contentHashCode()
         result = 31 * result + merkleRoot.contentHashCode()
         result = 31 * result + previousHash.contentHashCode()
         result = 31 * result + timestamp.hashCode()
@@ -157,6 +147,6 @@ class BlockHeader(
     }
 
     companion object : KLogging() {
-        val crypter = DEFAULT_CRYPTER
+        val crypter = SHA256Encrypter
     }
 }

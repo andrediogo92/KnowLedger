@@ -1,15 +1,18 @@
 package pt.um.lei.masb.blockchain.ledger
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
 import pt.um.lei.masb.blockchain.data.MerkleTree
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.ledger.config.BlockParams
 import pt.um.lei.masb.blockchain.persistance.Storable
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
-class Block(
+@JsonClass(generateAdapter = true)
+data class Block(
     val data: MutableList<Transaction>,
     val coinbase: Coinbase,
     val header: BlockHeader,
@@ -103,10 +106,6 @@ class Block(
         invalidate: Boolean,
         time: Boolean
     ): Boolean {
-        //Can't mine origin block.
-        if (this == origins[header.ledgerId]) {
-            return false
-        }
         if (invalidate && time) {
             merkleTree = MerkleTree.buildMerkleTree(
                 coinbase,
@@ -131,10 +130,10 @@ class Block(
             header.nonce = 0
         }
         header.updateHash()
-        val curDiff = header.hash.toDifficulty()
+        val curDiff = header.hashId.toDifficulty()
         return if (curDiff < header.difficulty) {
             logger.info {
-                "Block Mined!!! : ${header.hash}"
+                "Block Mined!!! : ${header.hashId}"
             }
             logger.info {
                 "Block contains: ${toString()}"
@@ -218,68 +217,6 @@ class Block(
         )
     }
 
-    override fun toString(): String =
-        StringBuilder().let { sb: StringBuilder
-            ->
-            sb.append(
-                """
-                | Block: {
-                |$coinbase
-                |$header
-                |   Transactions: [
-                |
-                """.trimMargin()
-            )
-            data.forEach {
-                sb.append(
-                    """$it,
-                    |
-                """.trimMargin()
-                )
-            }
-            sb.append(
-                """
-                |   ]
-                | }
-                """.trimMargin()
-            )
-            sb.toString()
-        }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other)
-            return true
-        if (other !is Block)
-            return false
-
-        if (!data.containsAll(
-                other.data
-            )
-        )
-            return false
-        if (data.size != other.data.size)
-            return false
-        if (coinbase != other.coinbase)
-            return false
-        if (header != other.header)
-            return false
-        if (merkleTree != other.merkleTree)
-            return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = data.hashCode()
-        result = 31 * result + coinbase.hashCode()
-        result = 31 * result + header.hashCode()
-        result = 31 * result + merkleTree.hashCode()
-        return result
-    }
-
-    companion object : KLogging() {
-        private var origins =
-            mutableMapOf<Hash, Block>()
-    }
+    companion object : KLogging()
 
 }

@@ -1,15 +1,16 @@
 package pt.um.lei.masb.blockchain.ledger
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
 import pt.um.lei.masb.blockchain.data.DataFormula
 import pt.um.lei.masb.blockchain.data.PhysicalData
 import pt.um.lei.masb.blockchain.data.calculateDiff
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.SHA256Encrypter
 import pt.um.lei.masb.blockchain.persistance.Storable
-import pt.um.lei.masb.blockchain.utils.Crypter
-import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Hashable
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
@@ -24,12 +25,13 @@ import java.time.temporal.ChronoField
  * The coinbase will be continually updated
  * to reflect changes to the block.
  */
-class Coinbase(
+@JsonClass(generateAdapter = true)
+data class Coinbase(
     val payoutTXO: MutableSet<TransactionOutput>,
     var coinbase: Payout,
     override var hashId: Hash,
     @Transient
-    private val payoutFormula: DataFormula
+    private val payoutFormula: DataFormula = ::calculateDiff
 ) : Sizeable, Hashed, Hashable, Storable,
     LedgerContract {
 
@@ -167,9 +169,9 @@ class Coinbase(
 
     /**
      * @param publicKey Public Key of transaction publisher.
-     * @param prevUTXO  Previous known UTXO's hash.
-     * @param newT      Transaction to contribute to payout's hash.
-     * @param prev      Transaction compared for fluctuation's hash,
+     * @param prevUTXO  Previous known UTXO's hashId.
+     * @param newT      Transaction to contribute to payout's hashId.
+     * @param prev      Transaction compared for fluctuation's hashId,
      *                  might be empty.
      * @param payout    Payout amount to publisher.
      */
@@ -219,38 +221,12 @@ class Coinbase(
         c.applyHash(
             flattenBytes(
                 payoutTXO.map {
-                    it.digest(c)
+                    it.hashId
                 },
                 coinbase.unscaledValue().toByteArray()
             )
         )
 
-    override fun toString(): String =
-        StringBuilder().let { sb: StringBuilder
-            ->
-            sb.append(
-                """
-                |   Coinbase: {
-                |       Total: $coinbase
-                |       Hash: ${hashId.print()}
-                |       Payouts: [
-                """.trimMargin()
-            )
-            payoutTXO.forEach {
-                sb.append(
-                    """$it,
-                    |
-                    """.trimMargin()
-                )
-            }
-            sb.append(
-                """
-                |       ]
-                |   }
-                """.trimMargin()
-            )
-            sb.toString()
-        }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -284,7 +260,7 @@ class Coinbase(
             12,
             RoundingMode.HALF_EVEN
         )
-        val crypter = DEFAULT_CRYPTER
+        val crypter = SHA256Encrypter
     }
 
 }

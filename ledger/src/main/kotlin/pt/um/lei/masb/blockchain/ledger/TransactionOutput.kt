@@ -1,18 +1,19 @@
 package pt.um.lei.masb.blockchain.ledger
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.openjdk.jol.info.GraphLayout
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.SHA256Encrypter
 import pt.um.lei.masb.blockchain.persistance.Storable
-import pt.um.lei.masb.blockchain.utils.Crypter
-import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.utils.Hashable
-import pt.um.lei.masb.blockchain.utils.asHex
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
 import java.security.PublicKey
 
+@JsonClass(generateAdapter = true)
 data class TransactionOutput(
     val publicKey: PublicKey,
     val prevCoinbase: Hash,
@@ -76,39 +77,10 @@ data class TransactionOutput(
                 tx,
                 publicKey.encoded,
                 prevCoinbase,
-                hashId,
                 payout.unscaledValue().toByteArray()
             )
         )
 
-    override fun toString(): String =
-        StringBuilder().let { sb: StringBuilder
-            ->
-            sb.append(
-                """
-                |           TransactionOutput: {
-                |               PublicKey: ${publicKey.encoded.asHex()},
-                |               PrevCoinbase: ${prevCoinbase.print()},
-                |               HashId: ${hashId.print()},
-                |               Payout: $payout,
-                |               TXs: [
-                """.trimMargin()
-            )
-            tx.forEach {
-                sb.append(
-                    """
-                    |                   ${it.print()},
-                    """.trimIndent()
-                )
-            }
-            sb.append(
-                """
-                |               ]
-                |           }
-                """.trimMargin()
-            )
-            sb.toString()
-        }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -145,6 +117,6 @@ data class TransactionOutput(
     }
 
     companion object : KLogging() {
-        val crypter = DEFAULT_CRYPTER
+        val crypter = SHA256Encrypter
     }
 }

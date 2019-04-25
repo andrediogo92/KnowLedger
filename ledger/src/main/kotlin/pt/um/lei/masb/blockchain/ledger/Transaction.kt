@@ -1,22 +1,23 @@
 package pt.um.lei.masb.blockchain.ledger
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
 import pt.um.lei.masb.blockchain.data.PhysicalData
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.SHA256Encrypter
 import pt.um.lei.masb.blockchain.persistance.Storable
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.service.Ident
-import pt.um.lei.masb.blockchain.utils.Crypter
-import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
 import pt.um.lei.masb.blockchain.utils.Hashable
-import pt.um.lei.masb.blockchain.utils.asHex
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import pt.um.lei.masb.blockchain.utils.generateSignature
 import pt.um.lei.masb.blockchain.utils.verifyECDSASig
 import java.security.PrivateKey
 import java.security.PublicKey
 
+@JsonClass(generateAdapter = true)
 data class Transaction(
     // Agent's pub key.
     val publicKey: PublicKey,
@@ -30,7 +31,7 @@ data class Transaction(
     LedgerContract {
 
 
-    // This is also the hash of the transaction.
+    // This is also the hashId of the transaction.
     override val hashId = digest(crypter)
 
     /**
@@ -53,7 +54,8 @@ data class Transaction(
         generateSignature(
             ident.privateKey,
             ident.publicKey,
-            data
+            data,
+            crypter
         )
     )
 
@@ -67,7 +69,8 @@ data class Transaction(
         generateSignature(
             privateKey,
             publicKey,
-            data
+            data,
+            crypter
         )
     )
 
@@ -111,15 +114,6 @@ data class Transaction(
     }
 
 
-    override fun toString(): String = """
-            |       Transaction {
-            |           Transaction id: ${hashId.print()},
-            |           Public Key: ${publicKey.encoded.asHex()},
-            |$data,
-            |           Signature: ${signature.asHex()}
-            |       }
-            """.trimMargin()
-
     override fun digest(c: Crypter): Hash =
         c.applyHash(
             flattenBytes(
@@ -160,7 +154,7 @@ data class Transaction(
     }
 
     companion object : KLogging() {
-        val crypter = DEFAULT_CRYPTER
+        val crypter = SHA256Encrypter
     }
 
 }
