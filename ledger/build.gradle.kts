@@ -35,6 +35,7 @@ dependencies {
     //Test dependencies
     testImplementation(project(":ledger"))
     testImplementation(Libs.assertK)
+    testImplementation(Libs.commonsRNG)
     testImplementation(Libs.bouncyCastle)
     testImplementation(Libs.jUnitApi)
     Libs.jUnitRuntime.forEach {

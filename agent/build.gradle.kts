@@ -10,7 +10,7 @@ plugins {
 
 repositories {
     maven("https://kotlin.bintray.com/ktor")
-    maven("http://jade.tilab.com/maven")
+    maven("https://jade.tilab.com/maven")
 }
 
 dependencies {
