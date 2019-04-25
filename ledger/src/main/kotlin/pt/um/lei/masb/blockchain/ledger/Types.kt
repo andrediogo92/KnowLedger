@@ -28,6 +28,10 @@ typealias Difficulty = BigInteger
 
 const val HEXR = 16
 
+private val hexCode = "0123456789ABCDEF".toCharArray()
+
+private const val TRUNC = 10
+
 val MAX_DIFFICULTY: Difficulty = BigInteger(ByteArray(32) { 0xFF.toByte() }.let {
     it[0] = 0x7F.toByte()
     it
@@ -46,31 +50,63 @@ fun emptyHash(): Hash = ByteArray(0)
 fun Difficulty.print(): String = this.toString(HEXR)
 
 fun Hash.print(): String =
-// Only convert on print.
-    StringBuilder().let {
-        for (bHash in this) {
-            val hex = String.format(
-                "%02X",
-                bHash
-            )
-            it.append(hex)
-        }
-        it.toString()
-    }
+    // Only convert on print.
+    printHexBinary(this)
 
 fun Hash.truncated(): String =
-// Only convert on truncation.
-    StringBuilder().let {
-        for (bHash in this.take(10)) {
-            val hex = String.format(
-                "%02X",
-                bHash
-            )
-            it.append(hex)
-        }
-        it.toString()
+    // Only convert on truncation.
+    if (this.size > TRUNC) {
+        printHexBinary(this.sliceArray(0..TRUNC))
+    } else {
+        printHexBinary(this)
     }
+
+fun String.toHashFromHexString(): Hash =
+    parseHexBinary(this)
 
 
 fun Hash.toDifficulty(): Difficulty =
     BigInteger(this)
+
+
+fun parseHexBinary(s: String): ByteArray {
+    val len = s.length
+
+    // "111" is not a valid hex encoding.
+    if (len % 2 != 0) throw IllegalArgumentException(
+        "hexBinary needs to be even-length: $s"
+    )
+
+    val out = ByteArray(len / 2)
+
+    var i = 0
+    while (i < len) {
+        val h = hexToBin(s[i])
+        val l = hexToBin(s[i + 1])
+        if (h == -1 || l == -1) throw IllegalArgumentException(
+            "contains illegal character for hexBinary: $s"
+        )
+
+        out[i / 2] = (h * 16 + l).toByte()
+        i += 2
+    }
+
+    return out
+}
+
+private fun hexToBin(ch: Char): Int =
+    when (ch) {
+        in '0'..'9' -> ch - '0'
+        in 'A'..'F' -> ch - 'A' + 10
+        in 'a'..'f' -> ch - 'a' + 10
+        else -> -1
+    }
+
+fun printHexBinary(data: ByteArray): String {
+    val r = StringBuilder(data.size * 2)
+    for (b in data) {
+        r.append(hexCode[b.toInt() shr 4 and 0xF])
+        r.append(hexCode[b.toInt() and 0xF])
+    }
+    return r.toString()
+}
