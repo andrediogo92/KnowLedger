@@ -1,7 +1,7 @@
 package pt.um.lei.masb.blockchain.persistance.results
 
 import pt.um.lei.masb.blockchain.data.BlockChainData
-import pt.um.lei.masb.blockchain.utils.Failable
+import pt.um.lei.masb.blockchain.results.Failable
 
 sealed class DataResult<T : BlockChainData> {
     data class Success<T : BlockChainData>(
@@ -32,4 +32,12 @@ sealed class DataResult<T : BlockChainData> {
     data class NonRegisteredSchema<T : BlockChainData>(
         override val cause: String
     ) : Failable, DataResult<T>()
+
+    data class Propagated<T : BlockChainData>(
+        val pointOfFailure: String,
+        val failable: Failable
+    ) : Failable, DataResult<T>() {
+        override val cause: String
+            get() = "$pointOfFailure: ${failable.cause}"
+    }
 }
