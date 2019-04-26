@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import mu.KLogging
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import pt.um.lei.masb.blockchain.ledger.print
@@ -11,18 +12,12 @@ import pt.um.lei.masb.blockchain.utils.bytes
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import pt.um.lei.masb.test.utils.applyHashInPairs
 import pt.um.lei.masb.test.utils.crypter
-import pt.um.lei.masb.test.utils.r
+import pt.um.lei.masb.test.utils.randomByteArray
+import pt.um.lei.masb.test.utils.randomInt
 
 class TestUtils {
-    val randomHashes = Array(8) {
-        ByteArray(32).also {
-            r.nextBytes(it)
-        }
-    }
-
-
     @Test
-    fun `Test bytes conversions`() {
+    fun `bytes conversions`() {
         val lsize = Long.SIZE_BYTES
         val test0 = 0L
         val test33 = 33L
@@ -112,102 +107,152 @@ class TestUtils {
         assertThat(test33564286.bytes()).containsExactly(*bytes33564286)
     }
 
-    @Test
-    fun `Test byte flattening`() {
-        val expected = randomHashes.reduce { acc, bytes ->
-            acc + bytes
+    @Nested
+    inner class HashingOperations {
+        val randomHashes = Array(randomInt(248) + 8) {
+            randomByteArray(32)
         }
-        val test = flattenBytes(
-            *randomHashes
-        )
-        assertThat(expected.size).isEqualTo(test.size)
-        assertThat(expected).containsExactly(*test)
-    }
 
-    @Test
-    fun `Test pair crypting balanced`() {
-        val expected = crypter.applyHash(
-            crypter.applyHash(
-                crypter.applyHash(
-                    randomHashes[0] + randomHashes[1]
-                ) + crypter.applyHash(
-                    randomHashes[2] + randomHashes[3]
-                )
-            ) + crypter.applyHash(
-                crypter.applyHash(
-                    randomHashes[4] + randomHashes[5]
-                ) + crypter.applyHash(
-                    randomHashes[6] + randomHashes[7]
-                )
+        @Test
+        fun `byte flattening`() {
+            val expected = randomHashes.reduce { acc, bytes ->
+                acc + bytes
+            }
+            val expectedShort = expected.sliceArray(0..255)
+            val test = flattenBytes(
+                *randomHashes
             )
-        )
-
-        val test = applyHashInPairs(
-            crypter,
-            arrayOf(
-                randomHashes[0],
-                randomHashes[1],
-                randomHashes[2],
-                randomHashes[3],
-                randomHashes[4],
-                randomHashes[5],
-                randomHashes[6],
+            val test2 = flattenBytes(
+                randomHashes.sliceArray(0..6).toList(),
                 randomHashes[7]
             )
-        )
-
-        logger.info {
-            """
-               | Test: ${test.print()}
-               | Expected: ${expected.print()}
+            val test3 = flattenBytes(
+                randomHashes
+            )
+            assertThat(expected.size).isEqualTo(test.size)
+            assertThat(expectedShort.size).isEqualTo(test2.size)
+            assertThat(expected.size).isEqualTo(test3.size)
+            logger.debug {
+                """
+                |
+                |Expected:
+                |   - ${expected.print()}
+                |Flatten via vararg byte arrays:
+                |   - ${test.print()}
             """.trimMargin()
+            }
+            assertThat(expected).containsExactly(*test)
+            logger.debug {
+                """
+                |
+                |Expected:
+                |   - ${expected.print()}
+                |Flatten via direct AoA:
+                |   - ${test3.print()}
+            """.trimMargin()
+            }
+            assertThat(expected).containsExactly(*test3)
+            logger.debug {
+                """
+                |
+                |Expected:
+                |   - ${expectedShort.print()}
+                |Flatten via collection + vararg byte arrays:
+                |   - ${test2.print()}
+            """.trimMargin()
+            }
+            assertThat(expectedShort).containsExactly(*test2)
         }
 
-        assertThat(expected).containsExactly(*test)
-
-    }
-
-    @Test
-    fun `Test pair crypting unbalanced`() {
-        val expected = crypter.applyHash(
-            crypter.applyHash(
+        @Test
+        fun `pair crypting balanced`() {
+            val expected = crypter.applyHash(
                 crypter.applyHash(
-                    randomHashes[0] + randomHashes[1]
+                    crypter.applyHash(
+                        randomHashes[0] + randomHashes[1]
+                    ) + crypter.applyHash(
+                        randomHashes[2] + randomHashes[3]
+                    )
                 ) + crypter.applyHash(
-                    randomHashes[2] + randomHashes[3]
-                )
-            ) + crypter.applyHash(
-                crypter.applyHash(
-                    randomHashes[4] + randomHashes[5]
-                ) + crypter.applyHash(
-                    randomHashes[4] + randomHashes[5]
+                    crypter.applyHash(
+                        randomHashes[4] + randomHashes[5]
+                    ) + crypter.applyHash(
+                        randomHashes[6] + randomHashes[7]
+                    )
                 )
             )
-        )
 
-        val test = applyHashInPairs(
-            crypter,
-            arrayOf(
-                randomHashes[0],
-                randomHashes[1],
-                randomHashes[2],
-                randomHashes[3],
-                randomHashes[4],
-                randomHashes[5]
+            val test = applyHashInPairs(
+                crypter,
+                arrayOf(
+                    randomHashes[0],
+                    randomHashes[1],
+                    randomHashes[2],
+                    randomHashes[3],
+                    randomHashes[4],
+                    randomHashes[5],
+                    randomHashes[6],
+                    randomHashes[7]
+                )
             )
-        )
 
-        logger.info {
-            """
-               | Test: ${test.print()}
-               | Expected: ${expected.print()}
+            logger.info {
+                """
+                |
+                | Test: ${test.print()}
+                | Expected: ${expected.print()}
             """.trimMargin()
+            }
+
+            assertThat(expected).containsExactly(*test)
+
         }
 
+        @Test
+        fun `pair crypting unbalanced`() {
+            val expected = crypter.applyHash(
+                crypter.applyHash(
+                    crypter.applyHash(
+                        randomHashes[0] + randomHashes[1]
+                    ) + crypter.applyHash(
+                        randomHashes[2] + randomHashes[3]
+                    )
+                ) + crypter.applyHash(
+                    crypter.applyHash(
+                        randomHashes[4] + randomHashes[5]
+                    ) + crypter.applyHash(
+                        randomHashes[4] + randomHashes[5]
+                    )
+                )
+            )
 
-        assertThat(expected).containsExactly(*test)
+            val test = applyHashInPairs(
+                crypter,
+                arrayOf(
+                    randomHashes[0],
+                    randomHashes[1],
+                    randomHashes[2],
+                    randomHashes[3],
+                    randomHashes[4],
+                    randomHashes[5]
+                )
+            )
 
+            logger.info {
+                """
+                |
+                | Test: ${test.print()}
+                | Expected: ${expected.print()}
+            """.trimMargin()
+            }
+
+
+            assertThat(expected).containsExactly(*test)
+
+        }
     }
+
+
 
     companion object : KLogging()
 }

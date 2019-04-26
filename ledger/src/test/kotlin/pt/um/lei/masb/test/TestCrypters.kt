@@ -5,15 +5,15 @@ import assertk.assertions.isEqualTo
 import mu.KLogging
 import org.junit.jupiter.api.Test
 import pt.um.lei.masb.blockchain.ledger.print
-import pt.um.lei.masb.blockchain.utils.SHA256Encrypter
 import pt.um.lei.masb.blockchain.utils.base64encode
+import pt.um.lei.masb.test.utils.crypter
 
 class TestCrypters {
     companion object : KLogging()
 
     @Test
     fun `Test SHA256 encryption and base64 encoding`() {
-        val shaer = SHA256Encrypter()
+        val shaer = crypter
         val check = shaer.applyHash(
             "thisissampletext"
         )
