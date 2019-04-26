@@ -58,7 +58,7 @@ internal object PreConfiguredSchemas {
                 )
             ),
             PreConfiguredSchemaProvider(
-                "PollutionAQ",
+                "PollutionAQData",
                 mapOf(
                     "lastUpdated" to OType.STRING,
                     "unit" to OType.STRING,
@@ -70,7 +70,7 @@ internal object PreConfiguredSchemas {
                 )
             ),
             PreConfiguredSchemaProvider(
-                "PollutionOWM",
+                "PollutionOWMData",
                 mapOf(
                     "unit" to OType.STRING,
                     "parameter" to OType.INTEGER,
@@ -81,7 +81,7 @@ internal object PreConfiguredSchemas {
                 )
             ),
             PreConfiguredSchemaProvider(
-                "TrafficFlow",
+                "TrafficFlowData",
                 mapOf(
                     "functionalRoadClass" to OType.STRING,
                     "currentSpeed" to OType.INTEGER,
@@ -95,7 +95,7 @@ internal object PreConfiguredSchemas {
                 )
             ),
             PreConfiguredSchemaProvider(
-                "TrafficIncident",
+                "TrafficIncidentData",
                 mapOf(
                     "trafficModelId" to OType.STRING,
                     "id" to OType.INTEGER,
@@ -135,10 +135,10 @@ internal object PreConfiguredSchemas {
             PreConfiguredSchemaProvider(
                 "BlockHeader",
                 mapOf(
-                    "ledgerId" to OType.BINARY,
+                    "ledgerHash" to OType.BINARY,
                     "difficulty" to OType.BINARY,
                     "blockheight" to OType.LONG,
-                    "hash" to OType.BINARY,
+                    "hashId" to OType.BINARY,
                     "merkleRoot" to OType.BINARY,
                     "previousHash" to OType.BINARY,
                     "params" to OType.LINK,
@@ -158,7 +158,7 @@ internal object PreConfiguredSchemas {
                 "ChainHandle",
                 mapOf(
                     "clazz" to OType.STRING,
-                    "hash" to OType.BINARY,
+                    "hashId" to OType.BINARY,
                     "difficultyTarget" to OType.BINARY,
                     "lastRecalc" to OType.INTEGER,
                     "currentBlockheight" to OType.LONG,
@@ -179,7 +179,7 @@ internal object PreConfiguredSchemas {
                     "uuid" to OType.STRING,
                     "timestamp" to OType.STRING,
                     "id" to OType.STRING,
-                    "hash" to OType.BINARY,
+                    "hashId" to OType.BINARY,
                     "params" to OType.LINK
                 )
             ),
