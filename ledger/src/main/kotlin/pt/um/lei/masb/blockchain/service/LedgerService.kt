@@ -3,20 +3,20 @@ package pt.um.lei.masb.blockchain.service
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
 import pt.um.lei.masb.blockchain.data.BlockChainData
-import pt.um.lei.masb.blockchain.data.Loadable
 import pt.um.lei.masb.blockchain.ledger.Hash
-import pt.um.lei.masb.blockchain.ledger.LedgerId
-import pt.um.lei.masb.blockchain.persistance.ManagedDatabase
-import pt.um.lei.masb.blockchain.persistance.ManagedDatabaseInfo
-import pt.um.lei.masb.blockchain.persistance.PersistenceWrapper
-import pt.um.lei.masb.blockchain.persistance.PluggableDatabase
+import pt.um.lei.masb.blockchain.ledger.config.LedgerId
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.SHA256Encrypter
+import pt.um.lei.masb.blockchain.persistance.database.ManagedDatabase
+import pt.um.lei.masb.blockchain.persistance.database.ManagedDatabaseInfo
+import pt.um.lei.masb.blockchain.persistance.database.PluggableDatabase
+import pt.um.lei.masb.blockchain.persistance.loaders.Loadable
 import pt.um.lei.masb.blockchain.persistance.loaders.Loaders
 import pt.um.lei.masb.blockchain.persistance.loaders.PluggableLoaders
+import pt.um.lei.masb.blockchain.persistance.transactions.PersistenceWrapper
+import pt.um.lei.masb.blockchain.results.intoLedger
 import pt.um.lei.masb.blockchain.service.results.LedgerResult
-import pt.um.lei.masb.blockchain.utils.Crypter
-import pt.um.lei.masb.blockchain.utils.DEFAULT_CRYPTER
 import pt.um.lei.masb.blockchain.utils.base64encode
-import pt.um.lei.masb.blockchain.utils.intoLedger
 import pt.um.lei.masb.blockchain.utils.stringToPrivateKey
 import pt.um.lei.masb.blockchain.utils.stringToPublicKey
 import java.security.KeyPair
@@ -24,27 +24,27 @@ import java.security.KeyPair
 class LedgerService(
     private val db: ManagedDatabase =
         PluggableDatabase(ManagedDatabaseInfo()),
-    private val crypter: Crypter = DEFAULT_CRYPTER
+    private val crypter: Crypter = SHA256Encrypter
 ) {
     private val session = db.newManagedSession()
     private val pw = PersistenceWrapper(session)
 
+    init {
+        mutCrypters[base64encode(crypter.id)] = crypter
+    }
 
-    fun getIdentById(id: String): Ident? =
-        let {
-            val ident: OElement? = pw.getIdent(id)
-            if (ident != null) {
-                Ident(
-                    id,
-                    KeyPair(
-                        stringToPublicKey(ident.getProperty("publicKey")),
-                        stringToPrivateKey(ident.getProperty("privateKey"))
-                    )
-                )
-            } else {
-                null
-            }
+    fun getIdentById(id: String): Ident? {
+        val ident: OElement? = pw.getIdent(id)
+        return if (ident != null) {
+            val keyPair = KeyPair(
+                stringToPublicKey(ident.getProperty("publicKey")),
+                stringToPrivateKey(ident.getProperty("privateKey"))
+            )
+            Ident(id, keyPair)
+        } else {
+            null
         }
+    }
 
 
     //Get a specific blockchain from DB
@@ -54,7 +54,7 @@ class LedgerService(
         pw.getBlockChain(id)
 
     fun getLedgerHandleByHash(
-        crypterHash: Hash = DEFAULT_CRYPTER.id,
+        crypterHash: Hash = SHA256Encrypter.id,
         hash: Hash
     ): LedgerResult<LedgerHandle> =
         pw.getBlockChain(crypterHash, hash)
@@ -70,9 +70,12 @@ class LedgerService(
 
 
     companion object : KLogging() {
-        val crypters = mutableMapOf(
-            base64encode(DEFAULT_CRYPTER.id) to DEFAULT_CRYPTER
+        private val mutCrypters: MutableMap<String, Crypter> = mutableMapOf(
+            base64encode(SHA256Encrypter.id) to SHA256Encrypter
         )
+
+        val crypters: Map<String, Crypter>
+            get() = mutCrypters
 
         private val dataLoaders: MutableMap<Hash, Loaders> =
             mutableMapOf()
@@ -82,10 +85,10 @@ class LedgerService(
         internal fun getFromLoaders(
             blockChainId: Hash,
             id: String
-        ): Loadable<BlockChainData>? =
+        ): Loadable<out BlockChainData>? =
             dataLoaders[blockChainId]
                 ?.loaders
-                ?.get(id) as Loadable<BlockChainData>
+                ?.get(id)
 
         fun <T : BlockChainData> registerLoader(
             blockChainId: Hash,
@@ -104,6 +107,25 @@ class LedgerService(
                     )
             }
         }
+
+        fun registerLoaders(
+            blockChainId: Hash,
+            vararg entries: Pair<String, Loadable<out BlockChainData>>
+        ) {
+            if (dataLoaders.containsKey(blockChainId)) {
+                entries.forEach { pair ->
+                    dataLoaders[blockChainId]!!.loaders[pair.first] = pair.second
+                }
+            } else {
+                val m: MutableMap<String, Loadable<out BlockChainData>> = mutableMapOf()
+                entries.forEach { pair ->
+                    m[pair.first] = pair.second
+                }
+                dataLoaders[blockChainId] =
+                    PluggableLoaders(m)
+            }
+        }
+
 
         fun registerLoaders(
             blockChainId: Hash,
