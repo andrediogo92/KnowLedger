@@ -1,36 +1,80 @@
 package pt.um.lei.masb.test.utils
 
 import assertk.fail
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
 import mu.KLogger
+import org.apache.commons.rng.simple.RandomSource
+import pt.um.lei.masb.blockchain.data.BlockChainData
 import pt.um.lei.masb.blockchain.data.PhysicalData
 import pt.um.lei.masb.blockchain.data.TUnit
 import pt.um.lei.masb.blockchain.data.TemperatureData
+import pt.um.lei.masb.blockchain.data.TrafficFlowData
+import pt.um.lei.masb.blockchain.json.BigDecimalJsonAdapter
+import pt.um.lei.masb.blockchain.json.BigIntegerJsonAdapter
+import pt.um.lei.masb.blockchain.json.HashJsonAdapter
+import pt.um.lei.masb.blockchain.json.InstantJsonAdapter
+import pt.um.lei.masb.blockchain.json.PublicKeyJsonAdapter
 import pt.um.lei.masb.blockchain.ledger.Coinbase
 import pt.um.lei.masb.blockchain.ledger.LedgerContract
 import pt.um.lei.masb.blockchain.ledger.Transaction
 import pt.um.lei.masb.blockchain.ledger.TransactionOutput
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
+import pt.um.lei.masb.blockchain.ledger.crypt.SHA256Encrypter
 import pt.um.lei.masb.blockchain.ledger.emptyHash
 import pt.um.lei.masb.blockchain.service.Ident
 import pt.um.lei.masb.blockchain.service.ServiceHandle
 import pt.um.lei.masb.blockchain.service.results.LedgerResult
 import pt.um.lei.masb.blockchain.service.results.LoadListResult
 import pt.um.lei.masb.blockchain.service.results.LoadResult
-import pt.um.lei.masb.blockchain.utils.Crypter
-import pt.um.lei.masb.blockchain.utils.SHA256Encrypter
 import java.math.BigDecimal
-import java.security.SecureRandom
 import java.security.Security
 
-internal val r = SecureRandom.getInstanceStrong()
+internal val r = RandomSource.create(RandomSource.SPLIT_MIX_64)
+
+internal val moshi by lazy {
+    Moshi
+        .Builder()
+        .add(HashJsonAdapter())
+        .add(PublicKeyJsonAdapter())
+        .add(InstantJsonAdapter())
+        .add(BigDecimalJsonAdapter())
+        .add(BigIntegerJsonAdapter())
+        .add(
+            PolymorphicJsonAdapterFactory
+                .of(BlockChainData::class.java, "type")
+                .withSubtype(TemperatureData::class.java, "Temperature")
+                .withSubtype(TrafficFlowData::class.java, "TrafficFlowData")
+        )
+        .build()
+}
 
 internal val crypter: Crypter =
     if (Security.getProvider("BC") == null) {
         Security.addProvider(
             org.bouncycastle.jce.provider.BouncyCastleProvider()
         )
-        SHA256Encrypter()
+        SHA256Encrypter
     } else {
-        SHA256Encrypter()
+        SHA256Encrypter
+    }
+
+internal fun randomDouble(): Double =
+    r.nextDouble()
+
+internal fun randomInt(): Int =
+    r.nextInt()
+
+internal fun randomInt(bound: Int): Int =
+    r.nextInt(bound)
+
+internal fun randomBytesIntoArray(byteArray: ByteArray) {
+    r.nextBytes(byteArray)
+}
+
+internal fun randomByteArray(size: Int): ByteArray =
+    ByteArray(size).also {
+        randomBytesIntoArray(it)
     }
 
 internal fun makeXTransactions(
@@ -47,7 +91,7 @@ internal fun makeXTransactions(
                 PhysicalData(
                     TemperatureData(
                         BigDecimal(
-                            r.nextDouble() * 100
+                            randomDouble() * 100
                         ),
                         TUnit.CELSIUS
                     )
@@ -71,7 +115,7 @@ internal fun makeXTransactions(
                 PhysicalData(
                     TemperatureData(
                         BigDecimal(
-                            r.nextDouble() * 100
+                            randomDouble() * 100
                         ),
                         TUnit.CELSIUS
                     )
@@ -190,7 +234,7 @@ internal fun applyHashInPairs(
 
 internal inline fun <T : LedgerContract> LoadListResult<T>.applyOrFail(
     block: List<T>.() -> Unit
-) {
+) =
     when (this) {
         is LoadListResult.Success -> this.data.block()
         is LoadListResult.QueryFailure ->
@@ -200,14 +244,14 @@ internal inline fun <T : LedgerContract> LoadListResult<T>.applyOrFail(
                 fail(cause)
         is LoadListResult.NonExistentData -> fail(cause)
         is LoadListResult.NonMatchingCrypter -> fail(cause)
-        is LoadListResult.UnregisteredCrypter -> fail(cause)
         is LoadListResult.UnrecognizedDataType -> fail(cause)
+        is LoadListResult.Propagated -> fail(cause)
     }
-}
+
 
 internal inline fun <T : LedgerContract> LoadResult<T>.applyOrFail(
     block: T.() -> Unit
-) {
+) =
     when (this) {
         is LoadResult.Success -> this.data.block()
         is LoadResult.QueryFailure ->
@@ -217,14 +261,14 @@ internal inline fun <T : LedgerContract> LoadResult<T>.applyOrFail(
                 fail(cause)
         is LoadResult.NonExistentData -> fail(cause)
         is LoadResult.NonMatchingCrypter -> fail(cause)
-        is LoadResult.UnregisteredCrypter -> fail(cause)
         is LoadResult.UnrecognizedDataType -> fail(cause)
+        is LoadResult.Propagated -> fail(cause)
     }
-}
+
 
 internal inline fun <T : ServiceHandle> LedgerResult<T>.applyOrFail(
     block: T.() -> Unit
-) {
+) =
     when (this) {
         is LedgerResult.Success -> this.data.block()
         is LedgerResult.QueryFailure ->
@@ -234,9 +278,9 @@ internal inline fun <T : ServiceHandle> LedgerResult<T>.applyOrFail(
                 fail(cause)
         is LedgerResult.NonExistentData -> fail(cause)
         is LedgerResult.NonMatchingCrypter -> fail(cause)
-        is LedgerResult.UnregisteredCrypter -> fail(cause)
+        is LedgerResult.Propagated -> fail(cause)
     }
-}
+
 
 internal fun <T : ServiceHandle> LedgerResult<T>.extractOrFail(): T =
     when (this) {
@@ -248,5 +292,15 @@ internal fun <T : ServiceHandle> LedgerResult<T>.extractOrFail(): T =
                 fail(cause)
         is LedgerResult.NonExistentData -> fail(cause)
         is LedgerResult.NonMatchingCrypter -> fail(cause)
-        is LedgerResult.UnregisteredCrypter -> fail(cause)
+        is LedgerResult.Propagated -> fail(cause)
     }
+
+internal fun StringBuilder.appendByLine(toPrint: Collection<String>): StringBuilder {
+    for (thing in toPrint) {
+        append(System.lineSeparator())
+        append('\t')
+        append(thing)
+        append(',')
+    }
+    return this
+}
