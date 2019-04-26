@@ -6,52 +6,54 @@ import pt.um.lei.masb.blockchain.data.DummyData
 import pt.um.lei.masb.blockchain.data.MerkleTree
 import pt.um.lei.masb.blockchain.data.PhysicalData
 import pt.um.lei.masb.blockchain.ledger.*
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
-import pt.um.lei.masb.blockchain.persistance.PersistenceWrapper
+import pt.um.lei.masb.blockchain.ledger.config.BlockParams
+import pt.um.lei.masb.blockchain.ledger.config.LedgerParams
 import pt.um.lei.masb.blockchain.persistance.Storable
-import pt.um.lei.masb.blockchain.persistance.results.PersistResult
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
+import pt.um.lei.masb.blockchain.persistance.results.QueryResult
+import pt.um.lei.masb.blockchain.persistance.transactions.PersistenceWrapper
+import pt.um.lei.masb.blockchain.results.Failable
+import pt.um.lei.masb.blockchain.results.intoQuery
+import pt.um.lei.masb.blockchain.service.results.LoadListResult
 import pt.um.lei.masb.blockchain.service.results.LoadResult
-import pt.um.lei.masb.blockchain.utils.Failable
-import pt.um.lei.masb.blockchain.utils.RingBuffer
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
+/**
+ * A facade into useful methods for managing a
+ * unique chain in the ledger.
+ */
 class ChainHandle internal constructor(
     private val pw: PersistenceWrapper,
     private val params: LedgerParams,
     val clazz: String,
-    val ledgerId: Hash
+    val ledgerHash: Hash
 ) : Storable, ServiceHandle {
 
-    @Transient
-    private var cache: RingBuffer<Block> = RingBuffer(CACHE_SIZE)
-
-    private var difficultyTarget: Difficulty =
+    private var difficultyTarget =
         INIT_DIFFICULTY
 
-    private var lastRecalc: Long = 0L
+    private var lastRecalc = 0L
 
-    private var currentBlockheight = 0L
+    //Blockheight 1 is Origin which is immediately added.
+    private var currentBlockheight = 1L
 
     /**
-     * @return The tail-end block of the blockchain.
+     * Returns a [LoadResult] for the tail-end
+     * [Block] in the ledger.
      */
     val lastBlock: LoadResult<Block>
-        get() = cache.peek()?.let {
-            LoadResult.Success(it)
-        } ?: pw.getLatestBlock(ledgerId)
+        get() = pw.getLatestBlock(ledgerHash)
 
 
     /**
-     * @return The tail-end blockheader in the blockchain.
+     * Returns a [LoadResult] for the tail-end
+     * [Blockheader] in the ledger.
      */
     val lastBlockHeader: LoadResult<BlockHeader>
-        get() = cache.peek()
-            ?.header?.let {
-            LoadResult.Success(it)
-        } ?: pw.getLatestBlockHeader(ledgerId)
+        get() = pw.getLatestBlockHeader(ledgerHash)
 
 
     internal constructor(
@@ -79,23 +81,14 @@ class ChainHandle internal constructor(
         session
             .newInstance("ChainHandle")
             .apply {
-                this.setProperty(
-                    "clazz",
-                    clazz
-                )
-                this.setProperty(
-                    "hash",
-                    ledgerId
-                )
-                this.setProperty(
+                setProperty("clazz", clazz)
+                setProperty("hashId", ledgerHash)
+                setProperty(
                     "difficultyTarget",
                     difficultyTarget.toByteArray()
                 )
-                this.setProperty(
-                    "lastRecalc",
-                    lastRecalc
-                )
-                this.setProperty(
+                setProperty("lastRecalc", lastRecalc)
+                setProperty(
                     "currentBlockheight",
                     currentBlockheight
                 )
@@ -107,24 +100,46 @@ class ChainHandle internal constructor(
      *
      * TODO: actually check entire blockchain in
      * ranges of [ChainHandle.CACHE_SIZE] blocks.
-     * @return Whether the chain is valid.
+     *
+     * Returns whether the chain is valid.
      */
-    fun isChainValid(): Boolean {
-        val blocks = cache.iterator()
-        // Origin block is always the first block.
-        var previousBlock = blocks.next()
+    fun isChainValid(): QueryResult<Boolean> {
+        var blocksLeft = true
+        var valid = true
+        var result: QueryResult<Boolean> = QueryResult.Success(true)
+        var lowIndex = -CACHE_SIZE.toLong()
+        var highIndex = 0L
+        while (blocksLeft && valid) {
+            lowIndex += CACHE_SIZE.toLong()
+            highIndex += CACHE_SIZE.toLong()
+            val blocks = pw.getBlockListByBlockHeightInterval(
+                lowIndex,
+                highIndex,
+                ledgerHash
+            )
+            if (blocks is LoadListResult.Success) {
+                valid = checkBlocks(blocks.data[0], blocks.data.iterator())
+            } else {
+                result = blocks.intoQuery<Boolean>()
+                valid = false
+            }
+        }
+        return result
+    }
 
+    private fun checkBlocks(lastBlock: Block, data: Iterator<Block>): Boolean {
         // loop through blockchain to check hashes:
-        while (blocks.hasNext()) {
-            val currentBlock = blocks.next()
+        var previousBlock = lastBlock
+        while (data.hasNext()) {
+            val currentBlock = data.next()
             val curHeader = currentBlock.header
             val cmpHash = curHeader.digest(params.crypter)
-            // compare registered hash and calculated hash:
-            if (!curHeader.hash.contentEquals(cmpHash)) {
+            // compare registered hashId and calculated hashId:
+            if (!curHeader.hashId.contentEquals(cmpHash)) {
                 logger.debug {
                     """
                     |Current Hashes not equal:
-                    |   ${curHeader.hash.print()}
+                    |   ${curHeader.hashId.print()}
                     |   -- and --
                     |   ${cmpHash.print()}
                     """.trimMargin()
@@ -132,12 +147,12 @@ class ChainHandle internal constructor(
                 return false
             }
             val prevHeader = previousBlock.header
-            // compare previous hash and registered previous hash
-            if (!prevHeader.hash.contentEquals(curHeader.previousHash)) {
+            // compare previous hashId and registered previous hashId
+            if (!prevHeader.hashId.contentEquals(curHeader.previousHash)) {
                 logger.debug {
                     """
                     |Previous Hashes not equal:
-                    |   ${prevHeader.hash.print()}
+                    |   ${prevHeader.hashId.print()}
                     |   -- and --
                     |   ${curHeader.previousHash.print()}
                     """.trimMargin()
@@ -146,10 +161,10 @@ class ChainHandle internal constructor(
             }
 
             val hashTarget = curHeader.difficulty
-            val curDiff = curHeader.hash.toDifficulty()
+            val curDiff = curHeader.hashId.toDifficulty()
             if (curDiff > hashTarget) {
                 logger.debug {
-                    "Unmined block: ${curHeader.hash.print()}"
+                    "Unmined block: ${curHeader.hashId.print()}"
                 }
                 return false
             }
@@ -160,133 +175,152 @@ class ChainHandle internal constructor(
     }
 
     /**
-     * @param hash  Hash of block.
-     * @return Block with provided hash if exists, else null.
+     * Takes the [hash] of a block and returns a [LoadResult]
+     * over a [Block] with the provided [hash].
      */
     fun getBlock(hash: Hash): LoadResult<Block> =
-        cache.find {
-            it.header.hash
-                .contentEquals(hash)
-        }?.let {
-            LoadResult.Success(it)
-        } ?: pw.getBlockByHeaderHash(
-            ledgerId,
+        pw.getBlockByHeaderHash(
+            ledgerHash,
             hash
         )
 
     /**
-     * @param blockheight Block height of block to fetch.
-     * @return Block with provided blockheight, if it exists, else the null block.
+     * Takes a [blockheight] and returns a [LoadResult]
+     * over a [Block] with the provided [blockheight].
      */
     fun getBlockByHeight(blockheight: Long): LoadResult<Block> =
-        cache.find {
-            it.header.blockheight == blockheight
-        }?.let {
-            LoadResult.Success(it)
-        } ?: pw.getBlockByBlockHeight(
-            ledgerId,
+        pw.getBlockByBlockHeight(
+            ledgerHash,
             blockheight
         )
 
     /**
-     * @param hash  Hash of block.
-     * @return Block with provided hash if exists, else null.
+     * Takes the [hash] of a block and returns a [LoadResult]
+     * over a [BlockHeader] with the provided [hash].
      */
     fun getBlockHeaderByHash(hash: Hash): LoadResult<BlockHeader> =
-        cache.find {
-            it.header.hash
-                .contentEquals(hash)
-        }?.header?.let {
-            LoadResult.Success(it)
-        } ?: pw.getBlockHeaderByHash(
-            ledgerId,
+        pw.getBlockHeaderByHash(
+            ledgerHash,
             hash
         )
 
     /**
-     * Checks whether the block with [hash] exists.
+     * Returns whether the block with [hash] exists.
      */
     fun hasBlock(hash: Hash): Boolean =
-        cache.any {
-            it.header.hash.contentEquals(hash)
-        } || (pw.getBlockByHeaderHash(
-            ledgerId,
+        (pw.getBlockByHeaderHash(
+            ledgerHash,
             hash
         ) is LoadResult.Success)
 
     /**
-     * Gets the block previous to that which has [hash].
+     * Takes the hash of a block and returns a [LoadResult] over
+     * the [Block] previous to that which has [hash].
      */
-    fun getPrevBlock(hash: Hash): LoadResult<Block> =
-        cache.find { h ->
-            !h.header.hash.contentEquals(hash)
-        }?.let {
-            LoadResult.Success(it)
-        } ?: pw.getBlockByPrevHeaderHash(
-            ledgerId,
+    fun getPrevBlock(
+        hash: Hash
+    ): LoadResult<Block> =
+        pw.getBlockByPrevHeaderHash(
+            ledgerHash,
             hash
         )
 
     /**
-     * Gets the blockheader of the block previous to that which has [hash].
+     * Takes the hash of a block and returns a [LoadResult] over
+     * the [BlockHeader] previous to that which has [hash].
      */
-    fun getPrevBlockHeaderByHash(hash: Hash): LoadResult<BlockHeader> =
-        cache.find { h ->
-            !h.header.hash.contentEquals(hash)
-        }?.header?.let {
-            LoadResult.Success(it)
-        } ?: pw.getBlockHeaderByPrevHeaderHash(
-            ledgerId,
+    fun getPrevBlockHeaderByHash(
+        hash: Hash
+    ): LoadResult<BlockHeader> =
+        pw.getBlockHeaderByPrevHeaderHash(
+            ledgerHash,
             hash
         )
 
+
     /**
-     * Add [block] to blockchain if block is valid.
+     * Returns a [LoadListResult] over the requested list of [Block]
+     * for the specified blockheight [range].
+     */
+    fun getBlockChunk(range: LongRange) =
+        getBlockChunk(range.first, range.endInclusive)
+
+
+    /**
+     * Preferrable overload, returns a [LoadListResult] over
+     * [Blocks] for the specified blockheight interval, from
+     * [startInclusive] to [endInclusive].
+     */
+    fun getBlockChunk(
+        startInclusive: Long, endInclusive: Long
+    ): LoadListResult<Block> =
+        pw.getBlockListByBlockHeightInterval(
+            startInclusive,
+            endInclusive,
+            ledgerHash
+        )
+
+
+    /**
+     * Attempts to add the [block] to the ledger if block is valid.
      *
      * May trigger difficulty recalculation.
      *
-     * TODO: Verify coinbase.
      *
-     * @return Whether block was successfully added.
+     * TODO: Verify coinbase and invalidate mempool.
+     *
+     * Returns whether the block was successfully added.
      */
-    fun addBlock(block: Block): Boolean {
-        //Blockheight is 1.
-        return if (currentBlockheight == 1L) {
-            validateBlock(getOriginHeader(ledgerId).hash, block)
-        } else {
-            when (lastBlockHeader) {
-                is LoadResult.Success ->
-                    validateBlock(
-                        (lastBlockHeader as LoadResult.Success<BlockHeader>).data.hash,
+    fun addBlock(block: Block): QueryResult<Boolean> =
+        lastBlockHeader.let {
+            val recalcTrigger = params.recalcTrigger
+            val valid = it.intoQuery {
+                if (validateBlock(
+                        this.hashId,
                         block
                     )
-                is LoadResult.QueryFailure -> false
-                is LoadResult.NonExistentData -> false
-                is LoadResult.NonMatchingCrypter -> false
-                is LoadResult.UnregisteredCrypter -> false
-                is LoadResult.UnrecognizedDataType -> false
-            }
-        }
-    }
-
-    private fun validateBlock(hash: Hash, block: Block): Boolean {
-        if (block.header.previousHash
-                .contentEquals(hash)
-        ) {
-            if (block.header.hash.toDifficulty() <=
-                block.header.difficulty
-            ) {
-                if (block.verifyTransactions()) {
-                    if (lastRecalc == params.recalcTrigger) {
+                ) {
+                    if (lastRecalc == recalcTrigger) {
                         recalculateDifficulty(block)
                         lastRecalc = 0
                     } else {
                         lastRecalc++
                     }
-                    return pw.persistEntity(
-                        block
-                    ) is PersistResult.Success && cache.offer(block)
+                    true
+                } else {
+                    false
                 }
+            }
+            if (valid is QueryResult.Success) {
+                pw.persistEntity(
+                    block
+                ).intoQuery {
+                    true
+                }
+            } else {
+                valid
+            }
+        }
+
+    /**
+     * Will check if the block beats the current difficulty,
+     * the current difficulty is correct, and transactions are
+     * also valid.
+     *
+     * Returns whether the [block] is valid in regards to
+     * the [hash] provided.
+     */
+    private fun validateBlock(
+        hash: Hash,
+        block: Block
+    ): Boolean {
+        if (block.header.previousHash
+                .contentEquals(hash)
+        ) {
+            if (block.header.hashId.toDifficulty() <=
+                block.header.difficulty
+            ) {
+                return block.verifyTransactions()
             }
         }
         return false
@@ -301,8 +335,8 @@ class ChainHandle internal constructor(
      * [params]'s recalcTime which is used to multiply by current
      * difficulty target.
      *
-     * @returns The recalculated difficulty or the same
-     *          difficulty if re-triggered erroneously.
+     * Returns the recalculated difficulty or the same
+     * difficulty if re-triggered erroneously.
      */
     private fun recalculateDifficulty(
         triggerBlock: Block
@@ -310,7 +344,7 @@ class ChainHandle internal constructor(
         val cmp = triggerBlock.header.blockheight
         val cstamp = triggerBlock.header.timestamp.epochSecond
         val fromHeight = cmp - params.recalcTrigger
-        val recalcBlock = pw.getBlockByBlockHeight(ledgerId, fromHeight)
+        val recalcBlock = pw.getBlockByBlockHeight(ledgerHash, fromHeight)
         return when (recalcBlock) {
             is LoadResult.Success -> {
                 val pstamp = recalcBlock.data.header.timestamp.epochSecond
@@ -382,6 +416,10 @@ class ChainHandle internal constructor(
         }
     }
 
+    /**
+     * Add a transaction to the transaction pool.
+     *
+     */
     fun addTransaction(t: Transaction) {
         TODO()
     }
