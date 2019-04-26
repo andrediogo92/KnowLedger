@@ -88,7 +88,7 @@ fun flattenBytes(
         into += it.size
     }
     bytesArrays.forEach {
-        it.copyInto(final)
+        it.copyInto(final, into)
         into += it.size
     }
     return final
