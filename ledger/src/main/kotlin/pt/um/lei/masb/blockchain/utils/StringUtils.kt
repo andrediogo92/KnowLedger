@@ -1,43 +1,38 @@
 package pt.um.lei.masb.blockchain.utils
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider
+import pt.um.lei.masb.blockchain.ledger.Hashable
+import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
 import java.security.Key
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.PublicKey
-import java.security.Security
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
 
-//Ugly hack to ensure BC is loaded.
-val DEFAULT_CRYPTER: Crypter =
-    if (Security.getProvider("BC") == null) {
-        Security.addProvider(BouncyCastleProvider())
-        SHA256Encrypter()
-    } else {
-        SHA256Encrypter()
-    }
-
+private val b64Encoder = Base64.getEncoder()
+private val b64Decoder = Base64.getDecoder()
 
 /**
- * Signs the sensor data using the private key.
- * @return Signature generated.
+ * Signs the [data]'s digest appended to the [publicKey]
+ * using the [privateKey].
+ * Returns the generated signature as a [ByteArray].
  */
 fun generateSignature(
     privateKey: PrivateKey,
     publicKey: PublicKey,
-    data: Hashable
+    data: Hashable,
+    crypter: Crypter
 ): ByteArray =
     applyECDSASig(
         privateKey,
-        publicKey.encoded + data.digest(DEFAULT_CRYPTER)
+        publicKey.encoded + data.digest(crypter)
     )
 
 
 /**
- * Applies ECDSA Signature and returns the result (as bytes).
+ * Applies ECDSA Signature and returns the result (as [ByteArray]).
  */
 fun applyECDSASig(
     privateKey: PrivateKey, input: String
@@ -49,7 +44,7 @@ fun applyECDSASig(
 
 
 /**
- * Applies ECDSA Signature and returns the result (as bytes).
+ * Applies ECDSA Signature and returns the result (as [ByteArray]).
  */
 fun applyECDSASig(
     privateKey: PrivateKey,
@@ -65,7 +60,7 @@ fun applyECDSASig(
 }
 
 /**
- * Verifies a String signature.
+ * Verifies a [String] signature.
  */
 fun verifyECDSASig(
     publicKey: PublicKey,
@@ -80,7 +75,7 @@ fun verifyECDSASig(
 
 
 /**
- * Verifies a ByteArray signature.
+ * Verifies a [ByteArray] signature.
  */
 fun verifyECDSASig(
     publicKey: PublicKey,
@@ -100,16 +95,12 @@ fun verifyECDSASig(
 fun base64encode(
     toEncode: ByteArray
 ): String =
-    Base64
-        .getEncoder()
-        .encodeToString(toEncode)
+    b64Encoder.encodeToString(toEncode)
 
 fun base64decode(
     toDecode: String
 ): ByteArray =
-    Base64
-        .getDecoder()
-        .decode(toDecode)
+    b64Decoder.decode(toDecode)
 
 
 fun getStringFromKey(
