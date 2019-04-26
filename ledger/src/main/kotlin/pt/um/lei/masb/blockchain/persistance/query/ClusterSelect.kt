@@ -10,6 +10,11 @@ class ClusterSelect(
     private var filters: MutableMap<Filters, String> = mutableMapOf(),
     private var queryParams: MutableMap<String, Any> = mutableMapOf()
 ) : GenericQuery {
+    val ident: (String, String) -> String
+        get() = { _: String, it: String ->
+            it
+        }
+
     override val query: String
         get() = "SELECT $projection FROM CLUSTER:${
         typeCluster.toLowerCase()
@@ -18,7 +23,8 @@ class ClusterSelect(
         } ${
         filters.entries.joinToString(" ") {
             "${it.key.s} ${it.value}"
-        }}"
+        }
+        }"
 
     override val params: Map<String, Any>
         get() = queryParams
@@ -37,38 +43,51 @@ class ClusterSelect(
         apply {
             filters.merge(
                 filter,
-                "$field = :$varName"
+                "$field = :$varName",
+                ident
             )
-            { _: String,
-              it: String ->
-                it
-            }
             queryParams[varName] = variable
         }
+
 
     fun withSimpleFilter(
         filter: Filters,
         field: String
     ): ClusterSelect =
         apply {
-            filters.merge(filter, field)
-            { _: String,
-              it: String ->
-                it
-            }
+            filters.merge(
+                filter, field, ident
+            )
         }
 
-    fun withContainsFilter(
+    fun withBetweenFilter(
+        filter: Filters,
+        field: String,
+        varNames: Pair<String, String>,
+        variables: Pair<Any, Any>,
+        op: SimpleBinaryOperator
+    ): ClusterSelect =
+        apply {
+            filters.merge(
+                filter,
+                "$field BETWEEN :${varNames.first} $op :${varNames.second}",
+                ident
+            )
+            queryParams[varNames.first] = variables.first
+            queryParams[varNames.second] = variables.second
+        }
+
+    fun withContainsAllFilter(
         field: String,
         varName: String,
         variable: Any
     ): ClusterSelect =
         apply {
-            filters.merge(Filters.WHERE, "$field CONTAINSALL :$varName")
-            { _: String,
-              it: String ->
-                it
-            }
+            filters.merge(
+                Filters.WHERE,
+                "$field CONTAINSALL :$varName",
+                ident
+            )
             queryParams[varName] = variable
         }
 }
