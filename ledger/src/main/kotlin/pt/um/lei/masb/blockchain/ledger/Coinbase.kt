@@ -11,7 +11,6 @@ import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
 import pt.um.lei.masb.blockchain.ledger.crypt.SHA256Encrypter
 import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
-import pt.um.lei.masb.blockchain.utils.Hashable
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
 import java.math.MathContext

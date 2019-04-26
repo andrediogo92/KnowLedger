@@ -10,7 +10,6 @@ import pt.um.lei.masb.blockchain.ledger.crypt.SHA256Encrypter
 import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import pt.um.lei.masb.blockchain.service.Ident
-import pt.um.lei.masb.blockchain.utils.Hashable
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import pt.um.lei.masb.blockchain.utils.generateSignature
 import pt.um.lei.masb.blockchain.utils.verifyECDSASig

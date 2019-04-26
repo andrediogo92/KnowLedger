@@ -4,12 +4,12 @@ import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
 import org.openjdk.jol.info.ClassLayout
 import pt.um.lei.masb.blockchain.ledger.Hash
+import pt.um.lei.masb.blockchain.ledger.Hashable
 import pt.um.lei.masb.blockchain.ledger.LedgerContract
 import pt.um.lei.masb.blockchain.ledger.Sizeable
 import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
 import pt.um.lei.masb.blockchain.persistance.Storable
 import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
-import pt.um.lei.masb.blockchain.utils.Hashable
 import pt.um.lei.masb.blockchain.utils.bytes
 import pt.um.lei.masb.blockchain.utils.flattenBytes
 import java.math.BigDecimal
