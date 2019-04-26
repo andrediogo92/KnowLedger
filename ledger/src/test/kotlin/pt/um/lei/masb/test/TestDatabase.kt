@@ -3,10 +3,10 @@ package pt.um.lei.masb.test
 import assertk.assertAll
 import assertk.assertThat
 import assertk.assertions.containsAll
+import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
-import assertk.fail
 import com.orientechnologies.orient.core.db.ODatabaseType
 import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
@@ -14,29 +14,31 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import pt.um.lei.masb.blockchain.data.PhysicalData
 import pt.um.lei.masb.blockchain.data.TemperatureData
-import pt.um.lei.masb.blockchain.data.TrafficFlow
+import pt.um.lei.masb.blockchain.data.TrafficFlowData
 import pt.um.lei.masb.blockchain.ledger.Block
-import pt.um.lei.masb.blockchain.ledger.BlockParams
 import pt.um.lei.masb.blockchain.ledger.MIN_DIFFICULTY
 import pt.um.lei.masb.blockchain.ledger.Transaction
+import pt.um.lei.masb.blockchain.ledger.config.BlockParams
 import pt.um.lei.masb.blockchain.ledger.emptyHash
 import pt.um.lei.masb.blockchain.ledger.print
 import pt.um.lei.masb.blockchain.ledger.truncated
-import pt.um.lei.masb.blockchain.persistance.DatabaseMode
-import pt.um.lei.masb.blockchain.persistance.ManagedDatabaseInfo
-import pt.um.lei.masb.blockchain.persistance.ManagedSession
-import pt.um.lei.masb.blockchain.persistance.PersistenceWrapper
-import pt.um.lei.masb.blockchain.persistance.PluggableDatabase
+import pt.um.lei.masb.blockchain.persistance.database.DatabaseMode
+import pt.um.lei.masb.blockchain.persistance.database.ManagedDatabaseInfo
+import pt.um.lei.masb.blockchain.persistance.database.ManagedSession
+import pt.um.lei.masb.blockchain.persistance.database.PluggableDatabase
 import pt.um.lei.masb.blockchain.persistance.loaders.PreConfiguredLoaders
+import pt.um.lei.masb.blockchain.persistance.schema.PreConfiguredSchemas
+import pt.um.lei.masb.blockchain.persistance.transactions.PersistenceWrapper
 import pt.um.lei.masb.blockchain.service.ChainHandle
 import pt.um.lei.masb.blockchain.service.Ident
 import pt.um.lei.masb.blockchain.service.LedgerHandle
 import pt.um.lei.masb.blockchain.service.LedgerService
-import pt.um.lei.masb.blockchain.service.results.LoadListResult
+import pt.um.lei.masb.test.utils.appendByLine
 import pt.um.lei.masb.test.utils.applyOrFail
 import pt.um.lei.masb.test.utils.extractOrFail
 import pt.um.lei.masb.test.utils.logActualToExpectedLists
 import pt.um.lei.masb.test.utils.makeXTransactions
+import pt.um.lei.masb.test.utils.moshi
 import java.math.BigDecimal
 
 class TestDatabase {
@@ -58,7 +60,7 @@ class TestDatabase {
 
     val blockChain = LedgerHandle(pw, "test")
 
-    val hash = blockChain.ledgerId.hash
+    val hash = blockChain.ledgerId.hashId
 
     val trunc = hash.truncated()
 
@@ -77,19 +79,16 @@ class TestDatabase {
         fun `Test created clusters`() {
             val clusterNames = database.session.clusterNames
             logger.info {
-                """Clusters present in ${database.session.name}:
-                    | ${
-                clusterNames.joinToString(
-                    """
-                        |,
-                    """.trimMargin()
-                ) { it }
-                }
-                """.trimMargin()
+                StringBuilder()
+                    .append("Clusters present in ${database.session.name}")
+                    .appendByLine(clusterNames)
+                    .toString()
             }
             assertThat(
                 clusterNames
             ).containsAll(
+                "BlockPool$trunc".toLowerCase(),
+                "TransactionPool$trunc".toLowerCase(),
                 "Transaction$trunc".toLowerCase(),
                 "ChainHandle$trunc".toLowerCase(),
                 "TransactionOutput$trunc".toLowerCase(),
@@ -139,7 +138,7 @@ class TestDatabase {
             ).next().toElement().getProperty<ByteArray>(
                 "hashId"
             )
-            assertThat(binary).containsAll(
+            assertThat(binary).containsExactly(
                 *testTransactions[0].hashId
             )
         }
@@ -163,14 +162,18 @@ class TestDatabase {
                 val present = database.session.browseClass(
                     "Transaction"
                 ).toList()
+                val schemaProps = PreConfiguredSchemas.chainSchemas.find {
+                    it.id == "Transaction"
+                }?.properties?.keys?.toTypedArray() ?: emptyArray()
+                assertThat(
+                    present[0].propertyNames
+                ).isNotNull().containsAll(
+                    *schemaProps
+                )
                 logger.info {
-                    present[0].propertyNames.joinToString(
-                        ", ",
-                        """|
-                       | Transaction properties:
-                       |
-                    """.trimMargin()
-                    )
+                    StringBuilder("Properties in Transaction:")
+                        .appendByLine(present[0].propertyNames)
+                        .toString()
                 }
                 logActualToExpectedLists(
                     "Transactions' hashes from DB:",
@@ -192,38 +195,20 @@ class TestDatabase {
                     hash,
                     "Temperature"
                 )
-                when (transactions) {
-                    is LoadListResult.Success -> {
-                        logActualToExpectedLists(
-                            "Transactions' hashes from DB:",
-                            transactions.data.map { it.hashId.print() },
-                            "Transactions' hashes from test:",
-                            testTransactions.map { it.hashId.print() },
-                            logger
-                        )
-                        assertAll {
-                            assertThat(transactions.data.size).isEqualTo(testTransactions.size)
-                            transactions.data.forEachIndexed { i, it ->
-                                assertThat(it).isEqualTo(testTransactions[i])
-                            }
+                transactions.applyOrFail {
+                    logActualToExpectedLists(
+                        "Transactions' hashes from DB:",
+                        this.map { it.hashId.print() },
+                        "Transactions' hashes from test:",
+                        testTransactions.map { it.hashId.print() },
+                        logger
+                    )
+                    assertAll {
+                        assertThat(this.size).isEqualTo(testTransactions.size)
+                        this.forEachIndexed { i, it ->
+                            assertThat(it).isEqualTo(testTransactions[i])
                         }
                     }
-                    is LoadListResult.QueryFailure ->
-                        if (transactions.exception != null)
-                            org.junit.jupiter.api.fail(
-                                transactions.cause,
-                                transactions.exception
-                            )
-                        else
-                            fail(transactions.cause)
-                    is LoadListResult.NonExistentData ->
-                        fail(transactions.cause)
-                    is LoadListResult.NonMatchingCrypter ->
-                        fail(transactions.cause)
-                    is LoadListResult.UnregisteredCrypter ->
-                        fail(transactions.cause)
-                    is LoadListResult.UnrecognizedDataType ->
-                        fail(transactions.cause)
                 }
             }
 
@@ -290,14 +275,15 @@ class TestDatabase {
 
         @Nested
         inner class TestBlocks {
-            val chain: ChainHandle = blockChain.registerNewChainHandleOf(
-                TemperatureData::class.java
-            ).extractOrFail()
 
             @Test
             fun `Test simple insertion`() {
+                val chain: ChainHandle = blockChain.registerNewChainHandleOf(
+                    TemperatureData::class.java
+                ).extractOrFail()
+
                 val block = Block(
-                    blockChain.ledgerId.hash,
+                    hash,
                     emptyHash(),
                     MIN_DIFFICULTY,
                     1,
@@ -319,7 +305,7 @@ class TestDatabase {
                     PhysicalData(
                         BigDecimal.ONE,
                         BigDecimal.ONE,
-                        TrafficFlow(
+                        TrafficFlowData(
                             "FRC0",
                             20,
                             20,
@@ -331,11 +317,11 @@ class TestDatabase {
                     )
                 )
                 val sidechain: ChainHandle = blockChain.registerNewChainHandleOf(
-                    TemperatureData::class.java
+                    TrafficFlowData::class.java
                 ).extractOrFail()
 
                 val block = Block(
-                    blockChain.ledgerId.hash,
+                    hash,
                     emptyHash(),
                     MIN_DIFFICULTY,
                     1,
@@ -348,9 +334,8 @@ class TestDatabase {
                     .isNotNull()
                     .isEqualTo(testTraffic)
                 logger.info {
-                    block.toString()
+                    moshi.adapter(Block::class.java).toJson(block)
                 }
-
             }
 
         }
