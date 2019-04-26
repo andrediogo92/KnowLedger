@@ -18,9 +18,9 @@ import pt.um.lei.masb.blockchain.ledger.Block
 import pt.um.lei.masb.blockchain.ledger.BlockHeader
 import pt.um.lei.masb.blockchain.ledger.Coinbase
 import pt.um.lei.masb.blockchain.ledger.Hash
-import pt.um.lei.masb.blockchain.ledger.LedgerId
 import pt.um.lei.masb.blockchain.ledger.Transaction
 import pt.um.lei.masb.blockchain.ledger.TransactionOutput
+import pt.um.lei.masb.blockchain.ledger.config.LedgerId
 import pt.um.lei.masb.blockchain.utils.base64decode
 import pt.um.lei.masb.blockchain.utils.base64encode
 import pt.um.lei.masb.blockchain.utils.getStringFromKey
@@ -76,7 +76,7 @@ fun convertToJadeBlockHeader(header: BlockHeader): JBlockHeader =
         base64encode(header.ledgerId),
         header.difficulty.toString(),
         header.blockheight,
-        base64encode(header.hash),
+        base64encode(header.hashId),
         base64encode(header.merkleRoot),
         base64encode(header.previousHash),
         header.params,
@@ -90,7 +90,7 @@ fun convertToJadeBlockChainId(blid: LedgerId): JLedgerId =
         blid.timestamp.toString(),
         blid.params.copy(),
         blid.id,
-        base64encode(blid.hash)
+        base64encode(blid.hashId)
     )
 
 
@@ -180,7 +180,7 @@ fun convertToJadeTransaction(
 
 /*
 fun <T : BlockChainData> convertToJadeTransaction(
-    blid: ledgerId,
+    blid: ledgerHash,
     t: Transaction,
     srl: SerializationStrategy<T>
 ): JTransaction =

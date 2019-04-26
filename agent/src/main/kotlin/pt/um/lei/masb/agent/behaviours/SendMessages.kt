@@ -35,7 +35,7 @@ class SendMessages(
                         msg,
                         DiffuseTransaction(
                             convertToJadeTransaction(
-                                sc.ledgerId,
+                                sc.ledgerHash,
                                 t
                             )
                         )
