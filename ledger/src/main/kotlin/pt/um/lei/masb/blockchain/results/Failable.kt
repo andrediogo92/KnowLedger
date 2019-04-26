@@ -1,4 +1,4 @@
-package pt.um.lei.masb.blockchain.utils
+package pt.um.lei.masb.blockchain.results
 
 interface Failable {
     val cause: String
