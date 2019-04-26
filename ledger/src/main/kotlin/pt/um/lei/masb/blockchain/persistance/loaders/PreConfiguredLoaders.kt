@@ -159,10 +159,10 @@ object PreConfiguredLoaders : Loaders {
                     }
                 }
             },
-            "PollutionAQ" to Loadable {
-                commonLoad<PollutionAQ>(
+            "PollutionAQData" to Loadable {
+                commonLoad<PollutionAQData>(
                     it,
-                    "PollutionAQ"
+                    "PollutionAQData"
                 ) {
                     val byteP = it.getProperty<Int>("parameter")
                     val parameter = when (byteP) {
@@ -182,7 +182,7 @@ object PreConfiguredLoaders : Loaders {
                         )
                     } else {
                         DataResult.Success(
-                            PollutionAQ(
+                            PollutionAQData(
                                 it.getProperty("lastUpdated"),
                                 it.getProperty("unit"),
                                 parameter,
@@ -195,10 +195,10 @@ object PreConfiguredLoaders : Loaders {
                     }
                 }
             },
-            "PollutionOWM" to Loadable {
-                commonLoad<PollutionOWM>(
+            "PollutionOWMData" to Loadable {
+                commonLoad<PollutionOWMData>(
                     it,
-                    "PollutionOWM"
+                    "PollutionOWMData"
                 ) {
                     val byteP = it.getProperty<Int>("parameter")
                     val parameter = when (byteP) {
@@ -217,7 +217,7 @@ object PreConfiguredLoaders : Loaders {
                     } else {
 
                         DataResult.Success(
-                            PollutionOWM(
+                            PollutionOWMData(
                                 it.getProperty("unit"),
                                 parameter,
                                 it.getProperty("value"),
@@ -229,13 +229,13 @@ object PreConfiguredLoaders : Loaders {
                     }
                 }
             },
-            "TrafficFlow" to Loadable {
+            "TrafficFlowData" to Loadable {
                 commonLoad(
                     it,
-                    "TrafficFlow"
+                    "TrafficFlowData"
                 ) {
                     DataResult.Success(
-                        TrafficFlow(
+                        TrafficFlowData(
                             it.getProperty("functionalRoadClass"),
                             it.getProperty("currentSpeed"),
                             it.getProperty("freeFlowSpeed"),
@@ -249,13 +249,13 @@ object PreConfiguredLoaders : Loaders {
                     )
                 }
             },
-            "TrafficIncident" to Loadable {
+            "TrafficIncidentData" to Loadable {
                 commonLoad(
                     it,
-                    "TrafficIncident"
+                    "TrafficIncidentData"
                 ) {
                     DataResult.Success(
-                        TrafficIncident(
+                        TrafficIncidentData(
                             it.getProperty("trafficModelId"),
                             it.getProperty("id"),
                             it.getProperty("iconLat"),
