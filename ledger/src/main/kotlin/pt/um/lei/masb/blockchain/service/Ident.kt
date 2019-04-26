@@ -1,11 +1,12 @@
 package pt.um.lei.masb.blockchain.service
 
 import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import pt.um.lei.masb.blockchain.ledger.LedgerContract
-import pt.um.lei.masb.blockchain.persistance.NewInstanceSession
 import pt.um.lei.masb.blockchain.persistance.Storable
+import pt.um.lei.masb.blockchain.persistance.database.NewInstanceSession
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.PrivateKey
@@ -14,9 +15,10 @@ import java.security.SecureRandom
 import java.security.Security
 import java.security.spec.ECGenParameterSpec
 
+@JsonClass(generateAdapter = true)
 data class Ident(
     val id: String,
-    private val pair: KeyPair
+    val pair: KeyPair
 ) : Storable,
     LedgerContract {
 
@@ -36,15 +38,15 @@ data class Ident(
         session
             .newInstance("Ident")
             .apply {
-                this.setProperty(
+                setProperty(
                     "id",
                     id
                 )
-                this.setProperty(
+                setProperty(
                     "publicKey",
                     publicKey.encoded
                 )
-                this.setProperty(
+                setProperty(
                     "privateKey",
                     privateKey.encoded
                 )
@@ -69,7 +71,11 @@ data class Ident(
         }
 
         private val random by lazy {
-            SecureRandom.getInstanceStrong()
+            try {
+                SecureRandom.getInstance("NativePRNGNonBlocking")
+            } catch (e: Exception) {
+                SecureRandom.getInstance("SHA1PRNG")
+            }
         }
 
         private val ecSpec by lazy {
