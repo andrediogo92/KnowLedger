@@ -9,7 +9,7 @@ fun <T : ServiceHandle> LedgerResult<T>.unpackOrThrow(): T =
         is LedgerResult.NonExistentData -> throw RuntimeException(cause)
         is LedgerResult.QueryFailure -> throw exception ?: RuntimeException(cause)
         is LedgerResult.NonMatchingCrypter -> throw RuntimeException(cause)
-        is LedgerResult.UnregisteredCrypter -> throw RuntimeException(cause)
+        is LedgerResult.Propagated -> throw RuntimeException(cause)
     }
 
 inline fun <T : ServiceHandle> LedgerResult<T>.unpackOrThrowAndDoOnNonExistent(
@@ -20,5 +20,5 @@ inline fun <T : ServiceHandle> LedgerResult<T>.unpackOrThrowAndDoOnNonExistent(
         is LedgerResult.NonExistentData -> attempt()
         is LedgerResult.QueryFailure -> throw exception ?: RuntimeException(cause)
         is LedgerResult.NonMatchingCrypter -> throw RuntimeException(cause)
-        is LedgerResult.UnregisteredCrypter -> throw RuntimeException(cause)
+        is LedgerResult.Propagated -> throw RuntimeException(cause)
     }

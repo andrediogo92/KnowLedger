@@ -16,11 +16,12 @@ import pt.um.lei.masb.blockchain.data.PhysicalData
 import pt.um.lei.masb.blockchain.ledger.Block
 import pt.um.lei.masb.blockchain.ledger.Hash
 import pt.um.lei.masb.blockchain.ledger.Transaction
+import pt.um.lei.masb.blockchain.results.Failable
+import pt.um.lei.masb.blockchain.results.checkSealed
 import pt.um.lei.masb.blockchain.service.ChainHandle
 import pt.um.lei.masb.blockchain.service.LedgerHandle
-import pt.um.lei.masb.blockchain.service.results.LedgerResult
+import pt.um.lei.masb.blockchain.service.results.LedgerListResult
 import pt.um.lei.masb.blockchain.service.results.LoadResult
-import pt.um.lei.masb.blockchain.utils.Failable
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
@@ -48,29 +49,32 @@ class MonitorAgent(
         logger.info("Connecting to broker: $broker")
         mqttClient.connect(connOpts, guardCounter, MonitorCallback())
         logger.info("Connected")
-        val clazzes = ledgerHandle.knownChainTypes
-        for (cl in clazzes) {
-            val sc = ledgerHandle.getChainHandleOf(cl)
-            when (sc) {
-                is LedgerResult.Success -> {
-                    var i = 0L
-                    var fail = false
-                    while (!fail) {
-                        fail = tryLoad(cl.kotlin.qualifiedName ?: "", sc, i, 0)
-                    }
-                }
-                else -> {
-                }
+        var chains: List<ChainHandle> = listOf()
+        val res = ledgerHandle.knownChains
+        when (res) {
+            is LedgerListResult.Success -> chains = res.data
+            is LedgerListResult.QueryFailure,
+            is LedgerListResult.NonExistentData,
+            is LedgerListResult.NonMatchingCrypter,
+            is LedgerListResult.UnregisteredCrypter,
+            is LedgerListResult.Propagated -> logger.error {
+                (res as Failable).cause
             }
-
+        }.checkSealed()
+        for (cl in chains) {
+            var i = 0L
+            var fail = false
+            while (!fail) {
+                fail = tryLoad(cl.clazz, cl, i, 0)
+            }
         }
         mqttClient.disconnect()
         logger.info("Disconnected")
     }
 
-    private tailrec fun tryLoad(cl: String, sc: LedgerResult.Success<ChainHandle>, i: Long, l: Int): Boolean =
+    private tailrec fun tryLoad(cl: String, ch: ChainHandle, i: Long, l: Int): Boolean =
         if (l < 3) {
-            val bl = sc.data.getBlockByHeight(i)
+            val bl = ch.getBlockByHeight(i)
             when (bl) {
                 is LoadResult.NonExistentData ->
                     false
@@ -79,7 +83,7 @@ class MonitorAgent(
                     true
                 }
                 is LoadResult.QueryFailure -> {
-                    tryLoad(cl, sc, i, l + 1)
+                    tryLoad(cl, ch, i, l + 1)
                 }
                 is Failable -> {
                     logger.warn { bl.cause }
