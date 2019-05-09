@@ -26,7 +26,7 @@ plugins {
 
 allprojects {
 
-    group = "pt.um.lei.masb"
+    group = "pt.um.masb"
     version = "1.0-SNAPSHOT"
 
     repositories {

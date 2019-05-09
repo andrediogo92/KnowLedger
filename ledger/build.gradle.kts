@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -8,6 +9,10 @@ plugins {
 }
 
 dependencies {
+    //Project dependencies
+    implementation(project(":common"))
+    compileOnly(project(":annotations"))
+    kapt(project(":generation"))
     //Annotation Processing
     kapt(Libs.moshiCodeGen)
 
@@ -33,7 +38,6 @@ dependencies {
 
 
     //Test dependencies
-    testImplementation(project(":ledger"))
     testImplementation(Libs.assertK)
     testImplementation(Libs.commonsRNG)
     testImplementation(Libs.bouncyCastle)
@@ -60,7 +64,8 @@ compileKotlin.kotlinOptions {
     freeCompilerArgs = freeCompilerArgs + "-XXLanguage:+InlineClasses"
     jvmTarget = "1.8"
 }
-val compileTestKotlin: KotlinCompile by tasks
-compileTestKotlin.kotlinOptions {
-    jvmTarget = "1.8"
+
+
+sourceSets["main"].withConvention(KotlinSourceSet::class) {
+    kotlin.srcDir("${buildDir.absolutePath}/generated/source/kaptKotlin/")
 }

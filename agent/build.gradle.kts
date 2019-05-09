@@ -14,13 +14,17 @@ repositories {
 }
 
 dependencies {
+    //Project dependencies
+    implementation(project(":common"))
+    implementation(project(":ledger"))
+
+
     //Annotation Processing
     kapt(Libs.moshiCodeGen)
 
 
     //Regular dependencies
     implementation(kotlin("stdlib", Versions.kotlin))
-    implementation(project(":ledger"))
     //implementation(Libs.arrowK)
     implementation(Libs.coroutines)
     implementation(Libs.eclipsePaho)

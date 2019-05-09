@@ -1,7 +1,10 @@
 rootProject.name = "KnowledgerMAS"
 include(
     "ledger",
-    "agent"
+    "agent",
+    "annotations",
+    "generation",
+    "common"
 )
 
 

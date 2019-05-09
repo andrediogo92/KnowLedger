@@ -1,32 +1,32 @@
 package pt.um.lei.masb.test.utils
 
-import assertk.fail
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
 import mu.KLogger
 import org.apache.commons.rng.simple.RandomSource
-import pt.um.lei.masb.blockchain.data.BlockChainData
-import pt.um.lei.masb.blockchain.data.PhysicalData
-import pt.um.lei.masb.blockchain.data.TUnit
-import pt.um.lei.masb.blockchain.data.TemperatureData
-import pt.um.lei.masb.blockchain.data.TrafficFlowData
-import pt.um.lei.masb.blockchain.json.BigDecimalJsonAdapter
-import pt.um.lei.masb.blockchain.json.BigIntegerJsonAdapter
-import pt.um.lei.masb.blockchain.json.HashJsonAdapter
-import pt.um.lei.masb.blockchain.json.InstantJsonAdapter
-import pt.um.lei.masb.blockchain.json.PublicKeyJsonAdapter
-import pt.um.lei.masb.blockchain.ledger.Coinbase
-import pt.um.lei.masb.blockchain.ledger.LedgerContract
-import pt.um.lei.masb.blockchain.ledger.Transaction
-import pt.um.lei.masb.blockchain.ledger.TransactionOutput
-import pt.um.lei.masb.blockchain.ledger.crypt.Crypter
-import pt.um.lei.masb.blockchain.ledger.crypt.SHA256Encrypter
-import pt.um.lei.masb.blockchain.ledger.emptyHash
-import pt.um.lei.masb.blockchain.service.Ident
-import pt.um.lei.masb.blockchain.service.ServiceHandle
-import pt.um.lei.masb.blockchain.service.results.LedgerResult
-import pt.um.lei.masb.blockchain.service.results.LoadListResult
-import pt.um.lei.masb.blockchain.service.results.LoadResult
+import org.junit.jupiter.api.fail
+import pt.um.masb.common.crypt.AvailableCrypters
+import pt.um.masb.common.crypt.Crypter
+import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.emptyHash
+import pt.um.masb.ledger.Coinbase
+import pt.um.masb.ledger.LedgerContract
+import pt.um.masb.ledger.Transaction
+import pt.um.masb.ledger.TransactionOutput
+import pt.um.masb.ledger.data.PhysicalData
+import pt.um.masb.ledger.data.TUnit
+import pt.um.masb.ledger.data.TemperatureData
+import pt.um.masb.ledger.data.TrafficFlowData
+import pt.um.masb.ledger.json.BigDecimalJsonAdapter
+import pt.um.masb.ledger.json.BigIntegerJsonAdapter
+import pt.um.masb.ledger.json.HashJsonAdapter
+import pt.um.masb.ledger.json.InstantJsonAdapter
+import pt.um.masb.ledger.json.PublicKeyJsonAdapter
+import pt.um.masb.ledger.service.Ident
+import pt.um.masb.ledger.service.ServiceHandle
+import pt.um.masb.ledger.service.results.LedgerResult
+import pt.um.masb.ledger.service.results.LoadListResult
+import pt.um.masb.ledger.service.results.LoadResult
 import java.math.BigDecimal
 import java.security.Security
 
@@ -54,9 +54,9 @@ internal val crypter: Crypter =
         Security.addProvider(
             org.bouncycastle.jce.provider.BouncyCastleProvider()
         )
-        SHA256Encrypter
+        AvailableCrypters.SHA256Encrypter
     } else {
-        SHA256Encrypter
+        AvailableCrypters.SHA256Encrypter
     }
 
 internal fun randomDouble(): Double =
@@ -239,7 +239,7 @@ internal inline fun <T : LedgerContract> LoadListResult<T>.applyOrFail(
         is LoadListResult.Success -> this.data.block()
         is LoadListResult.QueryFailure ->
             if (exception != null)
-                org.junit.jupiter.api.fail(cause, exception)
+                fail(cause, exception)
             else
                 fail(cause)
         is LoadListResult.NonExistentData -> fail(cause)
@@ -256,7 +256,7 @@ internal inline fun <T : LedgerContract> LoadResult<T>.applyOrFail(
         is LoadResult.Success -> this.data.block()
         is LoadResult.QueryFailure ->
             if (exception != null)
-                org.junit.jupiter.api.fail(cause, exception)
+                fail(cause, exception)
             else
                 fail(cause)
         is LoadResult.NonExistentData -> fail(cause)
@@ -273,7 +273,7 @@ internal inline fun <T : ServiceHandle> LedgerResult<T>.applyOrFail(
         is LedgerResult.Success -> this.data.block()
         is LedgerResult.QueryFailure ->
             if (exception != null)
-                org.junit.jupiter.api.fail(cause, exception)
+                fail(cause, exception)
             else
                 fail(cause)
         is LedgerResult.NonExistentData -> fail(cause)
@@ -287,7 +287,7 @@ internal fun <T : ServiceHandle> LedgerResult<T>.extractOrFail(): T =
         is LedgerResult.Success -> this.data
         is LedgerResult.QueryFailure ->
             if (exception != null)
-                org.junit.jupiter.api.fail(cause, exception)
+                fail(cause, exception)
             else
                 fail(cause)
         is LedgerResult.NonExistentData -> fail(cause)

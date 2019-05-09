@@ -4,11 +4,11 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import mu.KLogging
 import org.junit.jupiter.api.Test
-import pt.um.lei.masb.blockchain.ledger.print
-import pt.um.lei.masb.blockchain.service.Ident
-import pt.um.lei.masb.blockchain.utils.getStringFromKey
-import pt.um.lei.masb.blockchain.utils.stringToPrivateKey
-import pt.um.lei.masb.blockchain.utils.stringToPublicKey
+import pt.um.masb.common.misc.getStringFromKey
+import pt.um.masb.common.misc.stringToPrivateKey
+import pt.um.masb.common.misc.stringToPublicKey
+import pt.um.masb.common.print
+import pt.um.masb.ledger.service.Ident
 import java.security.Key
 
 

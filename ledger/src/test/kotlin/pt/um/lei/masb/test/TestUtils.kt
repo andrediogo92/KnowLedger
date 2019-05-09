@@ -7,13 +7,13 @@ import mu.KLogging
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
-import pt.um.lei.masb.blockchain.ledger.print
-import pt.um.lei.masb.blockchain.utils.bytes
-import pt.um.lei.masb.blockchain.utils.flattenBytes
 import pt.um.lei.masb.test.utils.applyHashInPairs
 import pt.um.lei.masb.test.utils.crypter
 import pt.um.lei.masb.test.utils.randomByteArray
 import pt.um.lei.masb.test.utils.randomInt
+import pt.um.masb.common.misc.bytes
+import pt.um.masb.common.misc.flattenBytes
+import pt.um.masb.common.print
 
 class TestUtils {
     @Test

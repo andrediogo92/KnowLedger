@@ -6,14 +6,14 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import mu.KLogging
 import org.junit.jupiter.api.Test
-import pt.um.lei.masb.blockchain.ledger.Block
-import pt.um.lei.masb.blockchain.ledger.MIN_DIFFICULTY
-import pt.um.lei.masb.blockchain.ledger.config.BlockParams
-import pt.um.lei.masb.blockchain.ledger.emptyHash
-import pt.um.lei.masb.blockchain.service.Ident
 import pt.um.lei.masb.test.utils.makeXTransactions
 import pt.um.lei.masb.test.utils.moshi
 import pt.um.lei.masb.test.utils.randomByteArray
+import pt.um.masb.common.MIN_DIFFICULTY
+import pt.um.masb.common.emptyHash
+import pt.um.masb.ledger.Block
+import pt.um.masb.ledger.config.BlockParams
+import pt.um.masb.ledger.service.Ident
 
 class TestSerialization {
     val ident = Ident("test")

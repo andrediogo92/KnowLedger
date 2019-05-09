@@ -1,0 +1,81 @@
+package pt.um.masb.ledger.data
+
+import com.orientechnologies.orient.core.record.OElement
+import com.squareup.moshi.JsonClass
+import pt.um.masb.common.Hash
+import pt.um.masb.common.crypt.Crypter
+import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.data.SelfInterval
+import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.misc.bytes
+import pt.um.masb.common.misc.flattenBytes
+import pt.um.masb.ledger.Coinbase
+import java.io.InvalidClassException
+import java.math.BigDecimal
+
+/**
+ * Temperature data specifies a decimal temperature value
+ * and a Temperature unit ([TUnit.CELSIUS],
+ * [TUnit.FAHRENHEIT], [TUnit.RANKINE] and [TUnit.KELVIN])
+ * with idempotent methods to convert between them as needed.
+ */
+@JsonClass(generateAdapter = true)
+data class TemperatureData(
+    val temperature: BigDecimal,
+    val unit: TUnit
+) : BlockChainData {
+    override fun digest(c: Crypter): Hash =
+        c.applyHash(
+            flattenBytes(
+                arrayOf(
+                    temperature.unscaledValue().toByteArray(),
+                    unit.ordinal.bytes()
+                )
+            )
+        )
+
+    override fun store(
+        session: NewInstanceSession
+    ): OElement =
+        session
+            .newInstance("Temperature")
+            .apply {
+                setProperty(
+                    "temperature",
+                    temperature
+                )
+                setProperty(
+                    "unit",
+                    when (unit) {
+                        TUnit.CELSIUS -> TUnit.CELSIUS.ordinal
+                        TUnit.FAHRENHEIT -> TUnit.FAHRENHEIT.ordinal
+                        TUnit.KELVIN -> TUnit.KELVIN.ordinal
+                        TUnit.RANKINE -> TUnit.RANKINE.ordinal
+                    }
+                )
+            }
+
+    override fun calculateDiff(
+        previous: SelfInterval
+    ): BigDecimal =
+        when (previous) {
+            is TemperatureData -> calculateDiffTemp(previous)
+            else -> throw InvalidClassException(
+                "SelfInterval supplied is not ${this::class.java.name}"
+            )
+        }
+
+
+    private fun calculateDiffTemp(
+        previous: TemperatureData
+    ): BigDecimal {
+        val oldT = previous.unit.convertTo(
+            previous.temperature,
+            TUnit.CELSIUS
+        )
+        return unit.convertTo(temperature, TUnit.CELSIUS)
+            .subtract(oldT)
+            .divide(oldT, Coinbase.MATH_CONTEXT)
+    }
+
+}

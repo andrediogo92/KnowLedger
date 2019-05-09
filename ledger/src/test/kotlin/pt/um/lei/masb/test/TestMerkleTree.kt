@@ -8,19 +8,19 @@ import assertk.assertions.isTrue
 import mu.KLogging
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import pt.um.lei.masb.blockchain.data.MerkleTree
-import pt.um.lei.masb.blockchain.data.PhysicalData
-import pt.um.lei.masb.blockchain.data.TUnit
-import pt.um.lei.masb.blockchain.data.TemperatureData
-import pt.um.lei.masb.blockchain.ledger.Coinbase
-import pt.um.lei.masb.blockchain.ledger.Transaction
-import pt.um.lei.masb.blockchain.ledger.print
-import pt.um.lei.masb.blockchain.service.Ident
 import pt.um.lei.masb.test.utils.applyHashInPairs
 import pt.um.lei.masb.test.utils.crypter
 import pt.um.lei.masb.test.utils.generateCoinbase
 import pt.um.lei.masb.test.utils.makeXTransactions
 import pt.um.lei.masb.test.utils.randomDouble
+import pt.um.masb.common.print
+import pt.um.masb.ledger.Coinbase
+import pt.um.masb.ledger.Transaction
+import pt.um.masb.ledger.data.MerkleTree
+import pt.um.masb.ledger.data.PhysicalData
+import pt.um.masb.ledger.data.TUnit
+import pt.um.masb.ledger.data.TemperatureData
+import pt.um.masb.ledger.service.Ident
 import java.math.BigDecimal
 
 class TestMerkleTree {
