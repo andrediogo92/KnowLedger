@@ -2,4 +2,10 @@ package pt.um.masb.common.storage.adapters
 
 import pt.um.masb.common.data.BlockChainData
 
-interface StorageAdapter<T : BlockChainData> : Loadable<T>, Storable
+/**
+ * Main contract describing an object capable of, loading, storing
+ * and deriving a schema for a given [BlockChainData].
+ */
+internal interface StorageAdapter<T : BlockChainData> : Loadable<T>,
+                                                        Storable<BlockChainData>,
+                                                        SchemaProvider<T>
