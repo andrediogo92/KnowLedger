@@ -1,11 +1,8 @@
 package pt.um.masb.common.database.query
 
-import pt.um.masb.common.hash.Hash
 
-
-class ClusterSelect(
-    val typeCluster: String,
-    val blockChainId: Hash,
+class GenericSelect(
+    val typeId: String,
     private var projection: String = "*",
     private var filters: MutableMap<Filters, String> = mutableMapOf(),
     private var queryParams: MutableMap<String, Any> = mutableMapOf()
@@ -16,10 +13,8 @@ class ClusterSelect(
         }
 
     override val query: String
-        get() = "SELECT $projection FROM CLUSTER:${
-        typeCluster.toLowerCase()
-        }${
-        blockChainId.truncated.toLowerCase()
+        get() = "SELECT $projection FROM ${
+        typeId.toLowerCase()
         } ${
         filters.entries.joinToString(" ") {
             "${it.key.s} ${it.value}"
@@ -29,7 +24,7 @@ class ClusterSelect(
     override val params: Map<String, Any>
         get() = queryParams
 
-    fun withProjection(projection: String): ClusterSelect =
+    fun withProjection(projection: String): GenericSelect =
         apply {
             this.projection = projection
         }
@@ -39,7 +34,7 @@ class ClusterSelect(
         field: String,
         varName: String,
         variable: Any
-    ): ClusterSelect =
+    ): GenericSelect =
         apply {
             filters.merge(
                 filter,
@@ -53,7 +48,7 @@ class ClusterSelect(
     fun withSimpleFilter(
         filter: Filters,
         field: String
-    ): ClusterSelect =
+    ): GenericSelect =
         apply {
             filters.merge(
                 filter, field, ident
@@ -66,7 +61,7 @@ class ClusterSelect(
         varNames: Pair<String, String>,
         variables: Pair<Any, Any>,
         op: SimpleBinaryOperator
-    ): ClusterSelect =
+    ): GenericSelect =
         apply {
             filters.merge(
                 filter,
@@ -81,7 +76,7 @@ class ClusterSelect(
         field: String,
         varName: String,
         variable: Any
-    ): ClusterSelect =
+    ): GenericSelect =
         apply {
             filters.merge(
                 Filters.WHERE,
