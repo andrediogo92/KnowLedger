@@ -5,7 +5,7 @@ import pt.um.masb.common.data.Payout
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.storage.adapters.Storable
 
-interface StorageElement {
+interface StorageElement : Discardable<StorageElement> {
     val presentProperties: Set<String>
     val schema: String?
     val identity: StorageID
@@ -13,6 +13,7 @@ interface StorageElement {
     fun getDifficultyProperty(name: String): Difficulty
     fun getHashProperty(name: String): Hash
     fun getPayoutProperty(name: String): Payout
+    fun getStorageIDs(s: String): List<StorageID>
     fun <T> getStorageProperty(name: String): T
 
     fun <T> setStorageProperty(
