@@ -1,23 +1,20 @@
 package pt.um.masb.ledger.data
 
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
 import mu.KLogging
-import pt.um.masb.common.Hash
-import pt.um.masb.common.Hashed
 import pt.um.masb.common.Sizeable
-import pt.um.masb.common.crypt.AvailableCrypters
-import pt.um.masb.common.database.NewInstanceSession
-import pt.um.masb.common.emptyHash
-import pt.um.masb.common.storage.adapters.Storable
-import pt.um.masb.ledger.LedgerContract
+import pt.um.masb.common.hash.AvailableHashAlgorithms
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hash.Companion.emptyHash
+import pt.um.masb.common.hash.Hashed
+import pt.um.masb.common.storage.LedgerContract
 
 @JsonClass(generateAdapter = true)
 data class MerkleTree(
     val collapsedTree: List<Hash> = emptyList(),
     val levelIndex: List<Int> = emptyList()
-) : Sizeable, Storable, LedgerContract {
+) : Sizeable, LedgerContract {
 
     /**
      * The root hashId.
@@ -26,17 +23,8 @@ data class MerkleTree(
         get() =
             if (collapsedTree.isNotEmpty())
                 collapsedTree[0] else
-                emptyHash()
+                emptyHash
 
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("merkleTree")
-            .apply {
-                setProperty("collapsedTree", collapsedTree)
-                setProperty("levelIndex", levelIndex)
-            }
 
 
     fun hasTransaction(hash: Hash): Boolean {
@@ -252,7 +240,7 @@ data class MerkleTree(
     }
 
     companion object : KLogging() {
-        val crypter = AvailableCrypters.SHA256Encrypter
+        val crypter = AvailableHashAlgorithms.SHA256Hasher
 
         /**
          * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
@@ -289,7 +277,7 @@ data class MerkleTree(
             data: List<Hashed>
         ): MerkleTree {
             val treeLayer = mutableListOf<Array<Hash>>()
-            val arr = Array(data.size + 1) {
+            val arr = Array<Hash>(data.size + 1) {
                 when (it) {
                     0 -> coinbase.hashId
                     else -> data[it - 1].hashId
@@ -372,7 +360,7 @@ data class MerkleTree(
             previousTreeLayer: Array<Hash>,
             count: Int
         ): Array<Hash> {
-            val treeLayer = Array(count) { emptyHash() }
+            val treeLayer = Array(count) { emptyHash }
             var j = 0
             var i = 1
             //While we're inside the bounds of this layer, calculate two by two the hashId.
