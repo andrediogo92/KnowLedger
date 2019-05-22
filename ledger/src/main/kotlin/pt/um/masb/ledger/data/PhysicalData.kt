@@ -1,20 +1,17 @@
 package pt.um.masb.ledger.data
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
 import org.openjdk.jol.info.ClassLayout
-import pt.um.masb.common.Hash
-import pt.um.masb.common.Hashable
 import pt.um.masb.common.Sizeable
-import pt.um.masb.common.crypt.Crypter
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.DataCategory
 import pt.um.masb.common.data.SelfInterval
-import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hashable
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
-import pt.um.masb.common.storage.adapters.Storable
-import pt.um.masb.ledger.LedgerContract
+import pt.um.masb.common.storage.LedgerContract
 import java.math.BigDecimal
 import java.math.MathContext
 import java.math.RoundingMode
@@ -33,7 +30,6 @@ data class PhysicalData(
     val data: BlockChainData
 ) : Sizeable,
     Hashable,
-    Storable,
     LedgerContract,
     DataCategory by data,
     SelfInterval by data {
@@ -45,85 +41,27 @@ data class PhysicalData(
 
     constructor(
         data: BlockChainData
-    ) : this(
-        Instant.now(),
-        null,
-        data
-    )
+    ) : this(Instant.now(), null, data)
 
     constructor(
-        instant: Instant,
-        data: BlockChainData
-    ) : this(
-        instant,
-        null, data
-    )
+        instant: Instant, data: BlockChainData
+    ) : this(instant, null, data)
 
     constructor(
-        geoCoords: GeoCoords,
-        data: BlockChainData
-    ) : this(
-        Instant.now(),
-        geoCoords,
-        data
-    )
+        geoCoords: GeoCoords, data: BlockChainData
+    ) : this(Instant.now(), geoCoords, data)
 
     constructor(
-        lat: BigDecimal,
-        lng: BigDecimal,
+        lat: BigDecimal, lng: BigDecimal,
         data: BlockChainData
-    ) : this(
-        Instant.now(),
-        GeoCoords(lat, lng),
-        data
-    )
+    ) : this(Instant.now(), GeoCoords(lat, lng), data)
 
     constructor(
-        instant: Instant,
-        lat: BigDecimal,
-        lng: BigDecimal,
-        data: BlockChainData
-    ) : this(
-        instant,
-        GeoCoords(lat, lng),
-        data
-    )
+        instant: Instant, lat: BigDecimal,
+        lng: BigDecimal, data: BlockChainData
+    ) : this(instant, GeoCoords(lat, lng), data)
 
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("PhysicalData")
-            .apply {
-                setProperty(
-                    "seconds",
-                    instant.epochSecond
-                )
-                setProperty(
-                    "nanos",
-                    instant.nano
-                )
-                setProperty(
-                    "data",
-                    data.store(session)
-                )
-                geoCoords?.let {
-                    setProperty(
-                        "latitude",
-                        it.latitude
-                    )
-                    setProperty(
-                        "longitude",
-                        it.longitude
-                    )
-                    setProperty(
-                        "altitude",
-                        it.altitude
-                    )
-                }
-            }
-
-    override fun digest(c: Crypter): Hash =
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             if (geoCoords != null) {
                 flattenBytes(
@@ -132,13 +70,13 @@ data class PhysicalData(
                     geoCoords.latitude.unscaledValue().toByteArray(),
                     geoCoords.longitude.unscaledValue().toByteArray(),
                     geoCoords.altitude.unscaledValue().toByteArray(),
-                    data.digest(c)
+                    data.digest(c).bytes
                 )
             } else {
                 flattenBytes(
                     instant.epochSecond.bytes(),
                     instant.nano.bytes(),
-                    data.digest(c)
+                    data.digest(c).bytes
                 )
             }
         )
