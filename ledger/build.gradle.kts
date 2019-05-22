@@ -43,8 +43,13 @@ dependencies {
     //Test dependencies
     testImplementation(Libs.assertK)
     testImplementation(Libs.commonsRNG)
-    testImplementation(Libs.bouncyCastle)
     testImplementation(Libs.jUnitApi)
+    testImplementation(project(":common")) {
+        capabilities {
+            // Indicate we want a variant with a specific capability
+            requireCapability("pt.um.masb.common:test")
+        }
+    }
     Libs.jUnitRuntime.forEach {
         testRuntimeOnly(it)
     }
