@@ -1,4 +1,4 @@
-package pt.um.masb.ledger.storage.query
+package pt.um.masb.common.database.query
 
 enum class SimpleBinaryOperator(val s: String) {
     AND("AND"),

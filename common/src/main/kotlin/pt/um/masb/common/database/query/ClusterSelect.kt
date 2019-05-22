@@ -1,7 +1,6 @@
-package pt.um.masb.ledger.storage.query
+package pt.um.masb.common.database.query
 
-import pt.um.masb.common.Hash
-import pt.um.masb.common.truncated
+import pt.um.masb.common.hash.Hash
 
 
 class ClusterSelect(
@@ -20,7 +19,7 @@ class ClusterSelect(
         get() = "SELECT $projection FROM CLUSTER:${
         typeCluster.toLowerCase()
         }${
-        blockChainId.truncated().toLowerCase()
+        blockChainId.truncated.toLowerCase()
         } ${
         filters.entries.joinToString(" ") {
             "${it.key.s} ${it.value}"
