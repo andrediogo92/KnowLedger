@@ -1,19 +1,15 @@
 package pt.um.masb.ledger.config
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
 import mu.KLogging
-import pt.um.masb.common.Hash
-import pt.um.masb.common.Hashable
-import pt.um.masb.common.Hashed
-import pt.um.masb.common.crypt.Crypter
-import pt.um.masb.common.database.NewInstanceSession
-import pt.um.masb.common.emptyHash
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hash.Companion.emptyHash
+import pt.um.masb.common.hash.Hashable
+import pt.um.masb.common.hash.Hashed
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
-import pt.um.masb.common.print
-import pt.um.masb.common.storage.adapters.Storable
-import pt.um.masb.ledger.LedgerContract
+import pt.um.masb.common.storage.LedgerContract
 import java.time.Instant
 import java.util.*
 
@@ -24,25 +20,25 @@ data class LedgerId(
     val timestamp: Instant,
     val params: LedgerParams,
     override var hashId: Hash
-) : Hashable, Hashed, Storable, LedgerContract {
+) : Hashable, Hashed, LedgerContract {
 
     internal constructor(
         id: String,
         uuid: UUID = UUID.randomUUID(),
         timestamp: Instant = Instant.now(),
         params: LedgerParams = LedgerParams()
-    ) : this(id, uuid, timestamp, params, emptyHash()) {
+    ) : this(id, uuid, timestamp, params, emptyHash) {
         hashId = digest(params.crypter)
     }
 
-    override fun digest(c: Crypter): Hash =
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
                 uuid.toString().toByteArray(),
                 timestamp.epochSecond.bytes(),
                 timestamp.nano.bytes(),
                 id.toByteArray(),
-                params.crypter.id,
+                params.crypter.id.bytes,
                 params.blockParams.blockLength.bytes(),
                 params.blockParams.blockMemSize.bytes(),
                 params.recalcTrigger.bytes(),
@@ -50,25 +46,13 @@ data class LedgerId(
             )
         )
 
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("LedgerId")
-            .apply {
-                setProperty("uuid", uuid.toString())
-                setProperty("timestamp", timestamp.toString())
-                setProperty("id", id)
-                setProperty("hashId", hashId)
-                setProperty("params", params.store(session))
-            }
 
     override fun toString(): String = """
         |       LedgerId {
         |           UUID: $uuid
         |           Timestamp: $timestamp
         |           Id: $id
-        |           Hash: ${hashId.print()}
+        |           Hash: ${hashId.print}
         |
         |       }
     """.trimMargin()
