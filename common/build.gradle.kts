@@ -18,6 +18,7 @@ dependencies {
     }
     implementation(Libs.bouncyCastle)
     implementation(Libs.klog)
+    implementation(Libs.jol)
     Libs.slf4j.forEach {
         runtime(it)
     }

@@ -10,7 +10,9 @@ import org.junit.jupiter.api.fail
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
+import pt.um.masb.common.misc.hashFromHexString
 import pt.um.masb.common.misc.hexString
+
 
 class TestUtils {
     @Test
@@ -260,6 +262,40 @@ class TestUtils {
         }
     }
 
+    @Nested
+    inner class StringOperations {
+        val canonicHex: (ByteArray) -> String = {
+            val sb = StringBuilder(it.size * 2)
+            for (b in it) {
+                sb.append(String.format("%02x", b).toUpperCase())
+            }
+            sb.toString()
+        }
+
+        val canonicParse: (String) -> ByteArray = {
+            val data = ByteArray(it.length / 2)
+            var i = 0
+            while (i < it.length) {
+                data[i / 2] = Integer.decode("0x" + it[i] + it[i + 1]).toByte()
+                i += 2
+            }
+            data
+        }
+
+        @Test
+        fun `hex string printing and parsing`() {
+            repeat(200) {
+                val testHash = crypter.applyHash(randomByteArray(256))
+                val expectedString = canonicHex(testHash.bytes)
+
+                assertThat(testHash.print)
+                    .isEqualTo(expectedString)
+
+                assertThat(testHash.print.hashFromHexString.bytes)
+                    .isEqualTo(canonicParse(expectedString))
+            }
+        }
+    }
 
 
     companion object : KLogging()
