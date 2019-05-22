@@ -23,10 +23,11 @@ import java.security.PublicKey
 import java.time.temporal.ChronoField
 
 /**
- * The coinbase transaction. Pays out to contributors to the ledger.
+ * The coinbase transaction. Pays out to contributors to
+ * the ledger.
  *
- * The coinbase will be continually updated
- * to reflect changes to the block.
+ * The coinbase will be continually updated to reflect
+ * changes to the block.
  */
 @JsonClass(generateAdapter = true)
 data class Coinbase(
@@ -78,20 +79,24 @@ data class Coinbase(
     )
 
     /**
-     * Takes the new Transaction and attempts to calculate a fluctuation from
-     * the previous Transaction of same type and in the same geographical area.
+     * Takes the [newTransaction] and attempts to calculate a
+     * fluctuation from the [latestKnown] of the same type
+     * and in the same geographical area.
      *
-     * Adds a payout for the transaction's agent in a transaction output.
-     * @param newT                  Transaction to contribute to payout.
-     * @param latestKnown           Transaction to compare for fluctuation.
-     * @param latestUTXO            Last unspent transaction output for
-     *                              the new Transaction's publisher.
-     *                              <pw>
-     *                              If it's the first time for this identity, supply
-     *                              null.
+     * Uses the [latestUTXO] for the new [Transaction]'s publisher.
+     *
+     * Adds a [Payout] for the transaction's agent in a transaction
+     * output.
+     *
+     * There may not be a [latestKnown], in which case the [newTransaction]
+     * is treated as the first known [Transaction] of that type.
+     *
+     * There may not be a [latestUTXO], in which case the first
+     * transaction output must be created for the [Identity] which
+     * supplied the [newTransaction].
      */
     internal fun addToInput(
-        newT: Transaction,
+        newTransaction: Transaction,
         latestKnown: Transaction?,
         latestUTXO: TransactionOutput?
     ) {
@@ -108,23 +113,23 @@ data class Coinbase(
                 BigDecimal.ONE,
                 VALUE_BASE,
                 BigDecimal.ONE,
-                newT.data.dataConstant,
+                newTransaction.data.dataConstant,
                 THRESHOLD,
                 MATH_CONTEXT
             )
             lkHash = emptyHash
         } else {
             payout = calculatePayout(
-                newT.data,
+                newTransaction.data,
                 latestKnown.data
             )
             lkHash = latestKnown.hashId
         }
         coinbase = coinbase.add(payout)
         addToOutputs(
-            newT.publicKey,
+            newTransaction.publicKey,
             lUTXOHash,
-            newT.hashId,
+            newTransaction.hashId,
             lkHash,
             payout
         )
@@ -149,38 +154,44 @@ data class Coinbase(
     }
 
     /**
-     * @param publicKey Public Key of transaction publisher.
-     * @param prevUTXO  Previous known UTXO's hashId.
-     * @param newT      Transaction to contribute to payout's hashId.
-     * @param prev      Transaction compared for fluctuation's hashId,
-     *                  might be empty.
-     * @param payout    Payout amount to publisher.
+     * Adds a [payout] to a transaction output in the [publicKey]'s
+     * owner's behalf.
+     *
+     * If a [TransactionOutput] for this same [PublicKey] representing
+     * an active participant already exists, appends the pair consisting
+     * of [newTransaction] and [previousTransaction] to the set of
+     * transactions counted into the calculation of the total payout to
+     * this participant.
+     * The respective [payout] associated with this transaction is
+     * added to the total for this [TransactionOutput].
+     *
+     * If a [TransactionOutput] does not yet exist, a new [TransactionOutput]
+     * is created referencing the [previousUTXO].
      */
     private fun addToOutputs(
         publicKey: PublicKey,
-        prevUTXO: Hash,
-        newT: Hash,
-        prev: Hash,
+        previousUTXO: Hash,
+        newTransaction: Hash,
+        previousTransaction: Hash,
         payout: Payout
     ) {
         payoutTXO
             .firstOrNull { it.publicKey == publicKey }
-            .let {
-                it?.addToPayout(
+            ?.addToPayout(
+                payout,
+                newTransaction,
+                previousTransaction
+            )
+            ?: payoutTXO.add(
+                TransactionOutput(
+                    publicKey,
+                    previousUTXO,
                     payout,
-                    newT,
-                    prev
+                    newTransaction,
+                    previousTransaction
                 )
-                    ?: payoutTXO.add(
-                        TransactionOutput(
-                            publicKey,
-                            prevUTXO,
-                            payout,
-                            newT,
-                            prev
-                        )
-                    )
-            }
+            )
+
     }
 
     private fun calculatePayout(
