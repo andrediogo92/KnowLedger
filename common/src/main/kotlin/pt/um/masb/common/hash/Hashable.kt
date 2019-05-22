@@ -1,6 +1,4 @@
-package pt.um.masb.common
-
-import pt.um.masb.common.crypt.Crypter
+package pt.um.masb.common.hash
 
 /**
  * Indicates capability to produce
@@ -9,7 +7,7 @@ import pt.um.masb.common.crypt.Crypter
 interface Hashable {
     /**
      * Pure function that must produce a unique digest
-     * through the use of a [Crypter] instance.
+     * through the use of a [Hasher] instance.
      */
-    fun digest(c: Crypter): Hash
+    fun digest(c: Hasher): Hash
 }
