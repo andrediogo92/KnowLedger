@@ -8,6 +8,7 @@ plugins {
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
@@ -20,8 +21,9 @@ dependencies {
     implementation(Libs.jol)
 }
 
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    freeCompilerArgs = freeCompilerArgs + "-XXLanguage:+InlineClasses"
-    jvmTarget = "1.8"
+tasks {
+    withType<KotlinCompile> {
+        kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
+        kotlinOptions.jvmTarget = "1.8"
+    }
 }
