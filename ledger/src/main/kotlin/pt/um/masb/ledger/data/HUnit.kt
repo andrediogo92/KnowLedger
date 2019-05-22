@@ -25,16 +25,19 @@ enum class HUnit : PhysicalUnit,
         override fun convertTo(
             value: BigDecimal, to: HUnit
         ): BigDecimal = when (to) {
-            HUnit.RELATIVE, HUnit.G_BY_KG -> value
-            HUnit.KG_BY_KG -> value.multiply(BigDecimal("1000"))
+            RELATIVE, G_BY_KG -> value
+            KG_BY_KG -> value.multiply(BigDecimal("1000"))
         }
     },
     KG_BY_KG {
         override fun convertTo(
             value: BigDecimal, to: HUnit
         ): BigDecimal = when (to) {
-            HUnit.RELATIVE, HUnit.KG_BY_KG -> value
-            HUnit.G_BY_KG -> value.divide(BigDecimal("1000"), PhysicalData.MATH_CONTEXT)
+            RELATIVE, KG_BY_KG -> value
+            G_BY_KG -> value.divide(
+                BigDecimal("1000"),
+                PhysicalData.MATH_CONTEXT
+            )
         }
     };
 
