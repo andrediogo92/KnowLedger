@@ -1,6 +1,7 @@
 package pt.um.masb.agent
 
 import com.squareup.moshi.Moshi
+import io.ktor.util.Hash
 import jade.core.Agent
 import mu.KLogging
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
@@ -12,16 +13,15 @@ import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import pt.um.masb.agent.data.feed.AdafruitPublish
 import pt.um.masb.agent.data.feed.Reduxer
-import pt.um.masb.common.Hash
 import pt.um.masb.common.results.Failable
-import pt.um.masb.ledger.Block
-import pt.um.masb.ledger.Transaction
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.results.checkSealed
 import pt.um.masb.ledger.service.ChainHandle
 import pt.um.masb.ledger.service.LedgerHandle
 import pt.um.masb.ledger.service.results.LedgerListResult
 import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.storage.Block
+import pt.um.masb.ledger.storage.Transaction
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 

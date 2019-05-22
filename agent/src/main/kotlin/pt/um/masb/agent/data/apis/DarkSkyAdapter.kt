@@ -3,7 +3,7 @@ package pt.um.masb.agent.data.apis
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import pt.um.masb.agent.data.DataSource
-import pt.um.masb.ledger.Transaction
+import pt.um.masb.ledger.storage.Transaction
 
 open class DarkSkyAdapter : ApiAdapter {
     private lateinit var source: DataSource

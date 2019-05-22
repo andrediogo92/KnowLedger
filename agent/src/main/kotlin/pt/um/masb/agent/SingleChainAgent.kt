@@ -9,9 +9,10 @@ import mu.KLogging
 import pt.um.masb.agent.utils.unpackOrThrow
 import pt.um.masb.agent.utils.unpackOrThrowAndDoOnNonExistent
 import pt.um.masb.common.data.BlockChainData
-import pt.um.masb.ledger.Transaction
+import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
 import pt.um.masb.ledger.service.LedgerHandle
 import pt.um.masb.ledger.service.LedgerService
+import pt.um.masb.ledger.storage.Transaction
 
 @Suppress("UNCHECKED_CAST")
 class SingleChainAgent : Agent() {
@@ -38,11 +39,12 @@ class SingleChainAgent : Agent() {
         sessionRewards = 0.0
 
         val cl = arguments[2] as Class<out BlockChainData>
+        val storage = arguments[3] as AbstractStorageAdapter<out BlockChainData>
         val sc = handle.getChainHandleOf(cl).unpackOrThrowAndDoOnNonExistent {
-            handle.registerNewChainHandleOf(cl).unpackOrThrow()
+            handle.registerNewChainHandleOf(cl, storage).unpackOrThrow()
         }
 
-        val b = object : ParallelBehaviour(this, ParallelBehaviour.WHEN_ALL) {
+        val b = object : ParallelBehaviour(this, WHEN_ALL) {
             override fun onEnd(): Int {
                 logger.info("Session Closed")
                 return 0

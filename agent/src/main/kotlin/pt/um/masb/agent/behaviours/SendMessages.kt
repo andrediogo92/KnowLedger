@@ -9,8 +9,8 @@ import pt.um.masb.agent.data.convertToJadeTransaction
 import pt.um.masb.agent.messaging.transaction.TransactionOntology
 import pt.um.masb.agent.messaging.transaction.ontology.actions.DiffuseTransaction
 import pt.um.masb.common.data.BlockChainData
-import pt.um.masb.ledger.Transaction
 import pt.um.masb.ledger.service.ChainHandle
+import pt.um.masb.ledger.storage.Transaction
 
 class SendMessages(
     private val sc: ChainHandle,

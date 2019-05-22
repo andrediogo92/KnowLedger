@@ -10,10 +10,10 @@ import pt.um.masb.agent.messaging.block.BlockOntology
 import pt.um.masb.agent.messaging.block.ontology.actions.DiffuseBlock
 import pt.um.masb.agent.messaging.transaction.TransactionOntology
 import pt.um.masb.common.data.BlockChainData
-import pt.um.masb.ledger.Block
-import pt.um.masb.ledger.Transaction
 import pt.um.masb.ledger.service.ChainHandle
 import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.storage.Block
+import pt.um.masb.ledger.storage.Transaction
 
 /**
  * Behaviour for handling incoming messages related to Transactions and Blocks.

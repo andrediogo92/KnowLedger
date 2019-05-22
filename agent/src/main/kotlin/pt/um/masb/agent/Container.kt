@@ -7,7 +7,7 @@ import jade.wrapper.ContainerController
 import mu.KLogging
 import pt.um.masb.agent.utils.unpackOrThrow
 import pt.um.masb.agent.utils.unpackOrThrowAndDoOnNonExistent
-import pt.um.masb.common.emptyHash
+import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.ledger.service.LedgerHandle
 import pt.um.masb.ledger.service.LedgerService
 
@@ -70,7 +70,7 @@ class Container {
 
             val a = Container()
             val service = LedgerService()
-            val handle = service.getLedgerHandleByHash(hash = emptyHash()).unpackOrThrowAndDoOnNonExistent {
+            val handle = service.getLedgerHandleByHash(hash = emptyHash).unpackOrThrowAndDoOnNonExistent {
                 service.newLedgerHandle("smarthub").unpackOrThrow()
             }
 

@@ -2,8 +2,8 @@ package pt.um.masb.agent.behaviours
 
 import jade.core.behaviours.Behaviour
 import mu.KLogging
-import pt.um.masb.ledger.Block
 import pt.um.masb.ledger.service.ChainHandle
+import pt.um.masb.ledger.storage.Block
 
 
 class Mining(
