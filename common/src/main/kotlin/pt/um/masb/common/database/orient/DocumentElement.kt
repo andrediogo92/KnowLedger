@@ -1,5 +1,6 @@
 package pt.um.masb.common.database.orient
 
+import com.orientechnologies.orient.core.id.ORID
 import com.orientechnologies.orient.core.record.OElement
 import com.orientechnologies.orient.core.record.impl.OBlob
 import pt.um.masb.common.data.Difficulty
@@ -16,6 +17,15 @@ import java.math.BigInteger
 data class DocumentElement internal constructor(
     internal val elem: OElement
 ) : StorageElement, OElement by elem {
+    override fun getStorageIDs(name: String): List<StorageID> =
+        elem.getProperty<List<ORID>>(name).map {
+            DocumentID(it)
+        }
+
+    override fun discard(): StorageElement =
+        apply {
+            elem.unload<OElement>()
+        }
 
     override val presentProperties
         get() = elem.propertyNames
