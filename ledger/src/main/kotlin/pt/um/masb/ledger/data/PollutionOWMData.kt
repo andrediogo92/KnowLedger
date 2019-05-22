@@ -1,13 +1,12 @@
 package pt.um.masb.ledger.data
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
-import pt.um.masb.common.Hash
-import pt.um.masb.common.crypt.Crypter
 import pt.um.masb.common.data.SelfInterval
-import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
+import java.io.InvalidClassException
 import java.math.BigDecimal
 
 
@@ -15,26 +14,15 @@ import java.math.BigDecimal
 class PollutionOWMData(
     unit: String,
     var parameter: PollutionType,
-    value: Double,
+    val value: Double,
     var data: List<List<Double>>,
     city: String = "",
     citySeqNum: Int = 1
-) : pt.um.masb.ledger.data.AbstractPollution(
+) : AbstractPollution(
     unit,
     city,
     citySeqNum
 ) {
-    var valueInternal = value
-    var value: Double
-        get() = if (!valueInternal.isNaN())
-            valueInternal
-        else
-            -99.0
-        set(v) {
-            valueInternal = v
-        }
-
-
     //mean of Value/Precision
     //Value
     //Precision
@@ -89,10 +77,25 @@ class PollutionOWMData(
     )
 
     override fun calculateDiff(previous: SelfInterval): BigDecimal {
-        TODO("calculateDiff not implemented")
+        return if (previous is PollutionOWMData) {
+            calculateDiffPollution(previous)
+        } else {
+            throw InvalidClassException(
+                """SelfInterval supplied is:
+                    |   ${previous.javaClass.name},
+                    |   not ${this::class.java.name}
+                """.trimMargin()
+            )
+        }
     }
 
-    override fun digest(c: Crypter): Hash =
+    private fun calculateDiffPollution(
+        previous: PollutionOWMData
+    ): BigDecimal {
+        TODO()
+    }
+
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
                 data.asIterable().flatMap { fl ->
@@ -108,27 +111,9 @@ class PollutionOWMData(
             )
         )
 
-    override fun store(session: NewInstanceSession): OElement =
-        session.newInstance("PollutionOWMData").apply {
-            val parameter = when (parameter) {
-                PollutionType.O3 -> PollutionType.O3.ordinal
-                PollutionType.UV -> PollutionType.UV.ordinal
-                PollutionType.CO -> PollutionType.CO.ordinal
-                PollutionType.SO2 -> PollutionType.SO2.ordinal
-                PollutionType.NO2 -> PollutionType.NO2.ordinal
-                PollutionType.NA -> PollutionType.NA.ordinal
-                else -> Int.MAX_VALUE
-            }
-            setProperty("parameter", parameter)
-            setProperty("valueInternal", valueInternal)
-            setProperty("unit", unit)
-            setProperty("city", city)
-            setProperty("data", emptyList<List<Double>>())
-            setProperty("citySeqNum", citySeqNum)
-        }
 
     override fun toString(): String {
-        return "PollutionOWMData(parameter=$parameter, data=$data, valueInternal=$valueInternal)"
+        return "PollutionOWMData(parameter=$parameter, value=$value, data=$data)"
     }
 
 

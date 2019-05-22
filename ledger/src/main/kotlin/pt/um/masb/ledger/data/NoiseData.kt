@@ -1,15 +1,13 @@
 package pt.um.masb.ledger.data
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
-import pt.um.masb.common.Hash
-import pt.um.masb.common.crypt.Crypter
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.SelfInterval
-import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
-import pt.um.masb.ledger.Coinbase
+import pt.um.masb.ledger.storage.Coinbase
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -33,7 +31,7 @@ data class NoiseData(
     val peakOrBase: BigDecimal,
     val unit: NUnit
 ) : BlockChainData {
-    override fun digest(c: Crypter): Hash =
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
                 noiseLevel.unscaledValue().toByteArray(),
@@ -42,30 +40,16 @@ data class NoiseData(
             )
         )
 
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("Noise")
-            .apply {
-                setProperty("noiseLevel", noiseLevel)
-                setProperty("peakOrBase", peakOrBase)
-                setProperty(
-                    "unit", when (unit) {
-                        NUnit.DBSPL -> NUnit.DBSPL.ordinal.toByte()
-                        NUnit.RMS -> NUnit.RMS.ordinal.toByte()
-                    }
-                )
-            }
-
-
     override fun calculateDiff(
         previous: SelfInterval
     ): BigDecimal =
         when (previous) {
             is NoiseData -> calculateDiffNoise(previous)
             else -> throw InvalidClassException(
-                "SelfInterval supplied is not ${this::class.java.name}"
+                """SelfInterval supplied is:
+                    |   ${previous.javaClass.name},
+                    |   not ${this::class.java.name}
+                """.trimMargin()
             )
         }
 
@@ -73,12 +57,17 @@ data class NoiseData(
     private fun calculateDiffNoise(
         previous: NoiseData
     ): BigDecimal {
-        val newN = noiseLevel.add(peakOrBase)
-            .abs()
-        val oldN = previous.noiseLevel
-            .add(previous.peakOrBase)
-            .abs()
-        return newN.subtract(oldN)
+        val newN =
+            noiseLevel
+                .add(peakOrBase)
+                .abs()
+        val oldN =
+            previous
+                .noiseLevel
+                .add(previous.peakOrBase)
+                .abs()
+        return newN
+            .subtract(oldN)
             .divide(
                 oldN,
                 Coinbase.MATH_CONTEXT

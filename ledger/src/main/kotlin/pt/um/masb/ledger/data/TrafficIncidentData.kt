@@ -1,14 +1,13 @@
 package pt.um.masb.ledger.data
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
 import mu.KLogging
-import pt.um.masb.common.Hash
-import pt.um.masb.common.crypt.Crypter
 import pt.um.masb.common.data.SelfInterval
-import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
+import java.io.InvalidClassException
 import java.math.BigDecimal
 
 /**
@@ -50,15 +49,30 @@ class TrafficIncidentData(
     var affectedRoads: String,
     city: String = "TBD",
     citySeqNum: Int = 1
-) : pt.um.masb.ledger.data.AbstractTrafficIncident(
+) : AbstractTrafficIncident(
     city,
     citySeqNum
 ) {
     override fun calculateDiff(previous: SelfInterval): BigDecimal {
-        TODO("calculateDiff not implemented")
+        return if (previous is TrafficIncidentData) {
+            calculateDiffTraffic(previous)
+        } else {
+            throw InvalidClassException(
+                """SelfInterval supplied is:
+                    |   ${previous.javaClass.name},
+                    |   not ${this::class.java.name}
+                """.trimMargin()
+            )
+        }
     }
 
-    override fun digest(c: Crypter): Hash =
+    private fun calculateDiffTraffic(
+        previous: TrafficIncidentData
+    ): BigDecimal {
+        TODO()
+    }
+
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
                 trafficModelId.toByteArray(),
@@ -80,75 +94,54 @@ class TrafficIncidentData(
             )
         )
 
-    override fun store(session: NewInstanceSession): OElement =
-        session
-            .newInstance("TrafficFlowData")
-            .apply {
-                setProperty("trafficModelId", trafficModelId)
-                setProperty("id", id)
-                setProperty("iconLat", iconLat)
-                setProperty("iconLon", iconLon)
-                setProperty("incidentCategory", incidentCategory)
-                setProperty("magnitudeOfDelay", magnitudeOfDelay)
-                setProperty("clusterSize", clusterSize)
-                setProperty("description", description)
-                setProperty("causeOfAccident", causeOfAccident)
-                setProperty("from", from)
-                setProperty("to", to)
-                setProperty("length", length)
-                setProperty("delayInSeconds", delayInSeconds)
-                setProperty("affectedRoads", affectedRoads)
-                setProperty("cityName", cityName)
-                setProperty("citySeqNum", citySeqNum)
-            }
-
-
     //The category description associated with this incident.
-    var incidentCategoryDesc: String = when (incidentCategory) {
-        IncidentCategory.Cluster.ordinal ->
-            IncidentCategory.Cluster.toString()
-        IncidentCategory.Detour.ordinal ->
-            IncidentCategory.Detour.toString()
-        IncidentCategory.Flooding.ordinal ->
-            IncidentCategory.Flooding.toString()
-        IncidentCategory.Wind.ordinal ->
-            IncidentCategory.Wind.toString()
-        IncidentCategory.RoadWorks.ordinal ->
-            IncidentCategory.RoadWorks.toString()
-        IncidentCategory.RoadClosed.ordinal ->
-            IncidentCategory.RoadClosed.toString()
-        IncidentCategory.LaneClosed.ordinal ->
-            IncidentCategory.LaneClosed.toString()
-        IncidentCategory.Jam.ordinal ->
-            IncidentCategory.Jam.toString()
-        IncidentCategory.Ice.ordinal ->
-            IncidentCategory.Ice.toString()
-        IncidentCategory.Rain.ordinal ->
-            IncidentCategory.Rain.toString()
-        IncidentCategory.DangerousConditions.ordinal ->
-            IncidentCategory.DangerousConditions.toString()
-        IncidentCategory.Fog.ordinal ->
-            IncidentCategory.Fog.toString()
-        IncidentCategory.Accident.ordinal ->
-            IncidentCategory.Accident.toString()
-        else ->
-            IncidentCategory.Unknown.toString()
-    }
+    var incidentCategoryDesc: String =
+        when (incidentCategory) {
+            IncidentCategory.Cluster.ordinal ->
+                IncidentCategory.Cluster.toString()
+            IncidentCategory.Detour.ordinal ->
+                IncidentCategory.Detour.toString()
+            IncidentCategory.Flooding.ordinal ->
+                IncidentCategory.Flooding.toString()
+            IncidentCategory.Wind.ordinal ->
+                IncidentCategory.Wind.toString()
+            IncidentCategory.RoadWorks.ordinal ->
+                IncidentCategory.RoadWorks.toString()
+            IncidentCategory.RoadClosed.ordinal ->
+                IncidentCategory.RoadClosed.toString()
+            IncidentCategory.LaneClosed.ordinal ->
+                IncidentCategory.LaneClosed.toString()
+            IncidentCategory.Jam.ordinal ->
+                IncidentCategory.Jam.toString()
+            IncidentCategory.Ice.ordinal ->
+                IncidentCategory.Ice.toString()
+            IncidentCategory.Rain.ordinal ->
+                IncidentCategory.Rain.toString()
+            IncidentCategory.DangerousConditions.ordinal ->
+                IncidentCategory.DangerousConditions.toString()
+            IncidentCategory.Fog.ordinal ->
+                IncidentCategory.Fog.toString()
+            IncidentCategory.Accident.ordinal ->
+                IncidentCategory.Accident.toString()
+            else ->
+                IncidentCategory.Unknown.toString()
+        }
 
     //The magnitude of delay description associated with the incident.
-    var magnitudeOfDelayDesc: String = when (magnitudeOfDelay) {
-        MagnitudeDelay.Undefined.ordinal ->
-            MagnitudeDelay.Undefined.toString()
-        MagnitudeDelay.Major.ordinal ->
-            MagnitudeDelay.Major.toString()
-        MagnitudeDelay.Moderate.ordinal ->
-            MagnitudeDelay.Moderate.toString()
-        MagnitudeDelay.Minor.ordinal ->
-            MagnitudeDelay.Minor.toString()
-        else -> {
-            MagnitudeDelay.UnknownDelay.toString()
+    var magnitudeOfDelayDesc: String =
+        when (magnitudeOfDelay) {
+            MagnitudeDelay.Undefined.ordinal ->
+                MagnitudeDelay.Undefined.toString()
+            MagnitudeDelay.Major.ordinal ->
+                MagnitudeDelay.Major.toString()
+            MagnitudeDelay.Moderate.ordinal ->
+                MagnitudeDelay.Moderate.toString()
+            MagnitudeDelay.Minor.ordinal ->
+                MagnitudeDelay.Minor.toString()
+            else -> {
+                MagnitudeDelay.UnknownDelay.toString()
+            }
         }
-    }
 
 
     override fun equals(other: Any?): Boolean {

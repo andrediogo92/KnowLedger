@@ -1,15 +1,12 @@
 package pt.um.masb.ledger.data
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
-import pt.um.masb.common.Hash
-import pt.um.masb.common.crypt.Crypter
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.SelfInterval
-import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
-import pt.um.masb.common.misc.flattenBytes
-import pt.um.masb.ledger.Coinbase
+import pt.um.masb.ledger.storage.Coinbase
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -24,36 +21,10 @@ data class TemperatureData(
     val temperature: BigDecimal,
     val unit: TUnit
 ) : BlockChainData {
-    override fun digest(c: Crypter): Hash =
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
-            flattenBytes(
-                arrayOf(
-                    temperature.unscaledValue().toByteArray(),
-                    unit.ordinal.bytes()
-                )
-            )
+            temperature.unscaledValue().toByteArray() + unit.ordinal.bytes()
         )
-
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("Temperature")
-            .apply {
-                setProperty(
-                    "temperature",
-                    temperature
-                )
-                setProperty(
-                    "unit",
-                    when (unit) {
-                        TUnit.CELSIUS -> TUnit.CELSIUS.ordinal
-                        TUnit.FAHRENHEIT -> TUnit.FAHRENHEIT.ordinal
-                        TUnit.KELVIN -> TUnit.KELVIN.ordinal
-                        TUnit.RANKINE -> TUnit.RANKINE.ordinal
-                    }
-                )
-            }
 
     override fun calculateDiff(
         previous: SelfInterval
@@ -61,7 +32,10 @@ data class TemperatureData(
         when (previous) {
             is TemperatureData -> calculateDiffTemp(previous)
             else -> throw InvalidClassException(
-                "SelfInterval supplied is not ${this::class.java.name}"
+                """SelfInterval supplied is:
+                    |   ${previous.javaClass.name},
+                    |   not ${this::class.java.name}
+                """.trimMargin()
             )
         }
 

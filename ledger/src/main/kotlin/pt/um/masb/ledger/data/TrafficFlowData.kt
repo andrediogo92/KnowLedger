@@ -1,14 +1,13 @@
 package pt.um.masb.ledger.data
 
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
-import pt.um.masb.common.Hash
-import pt.um.masb.common.crypt.Crypter
 import pt.um.masb.common.data.SelfInterval
-import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
+import java.io.InvalidClassException
 import java.math.BigDecimal
 
 /**
@@ -33,10 +32,25 @@ class TrafficFlowData(
     citySeqNum
 ) {
     override fun calculateDiff(previous: SelfInterval): BigDecimal {
-        TODO("calculateDiff not implemented")
+        return if (previous is TrafficFlowData) {
+            calculateDiffTraffic(previous)
+        } else {
+            throw InvalidClassException(
+                """SelfInterval supplied is:
+                    |   ${previous.javaClass.name},
+                    |   not ${this::class.java.name}
+                """.trimMargin()
+            )
+        }
     }
 
-    override fun digest(c: Crypter): Hash =
+    private fun calculateDiffTraffic(
+        previous: TrafficFlowData
+    ): BigDecimal {
+        TODO()
+    }
+
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
                 functionalRoadClass.toByteArray(),
@@ -51,38 +65,20 @@ class TrafficFlowData(
             )
         )
 
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session.newInstance("TrafficFlowData").apply {
-            setProperty("functionalRoadClass", functionalRoadClass)
-            setProperty("currentSpeed", currentSpeed)
-            setProperty("freeFlowSpeed", freeFlowSpeed)
-            setProperty("currentTravelTime", currentTravelTime)
-            setProperty("freeFlowTravelTime", freeFlowTravelTime)
-            setProperty("confidence", confidence)
-            setProperty("realtimeRatio", realtimeRatio)
-            setProperty("cityName", cityName)
-            setProperty("citySeqNum", citySeqNum)
-        }
-
     //Indicates the road type
-    var functionalRoadClassDesc: String
-
-    init {
+    var functionalRoadClassDesc: String =
         when (this.functionalRoadClass) {
-            "FRC0" -> this.functionalRoadClassDesc = "Motorway"
-            "FRC1" -> this.functionalRoadClassDesc = "Major Road"
-            "FRC2" -> this.functionalRoadClassDesc = "Other Major Road"
-            "FRC3" -> this.functionalRoadClassDesc = "Secondary Road"
-            "FRC4" -> this.functionalRoadClassDesc = "Local Connecting Road"
-            "FRC5" -> this.functionalRoadClassDesc = "Local High Importance Road"
-            "FRC6" -> this.functionalRoadClassDesc = "Local Road"
+            "FRC0" -> "Motorway"
+            "FRC1" -> "Major Road"
+            "FRC2" -> "Other Major Road"
+            "FRC3" -> "Secondary Road"
+            "FRC4" -> "Local Connecting Road"
+            "FRC5" -> "Local High Importance Road"
+            "FRC6" -> "Local Road"
             else -> {
-                this.functionalRoadClassDesc = "Unknown Road"
+                "Unknown Road"
             }
         }
-    }
 
 
     override fun equals(other: Any?): Boolean {

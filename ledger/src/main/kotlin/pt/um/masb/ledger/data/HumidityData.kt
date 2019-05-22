@@ -1,14 +1,12 @@
 package pt.um.masb.ledger.data
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
-import pt.um.masb.common.Hash
-import pt.um.masb.common.crypt.Crypter
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.SelfInterval
-import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
-import pt.um.masb.ledger.Coinbase
+import pt.um.masb.ledger.storage.Coinbase
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -24,33 +22,20 @@ data class HumidityData(
     val hum: BigDecimal,
     val unit: HUnit
 ) : BlockChainData {
-    override fun digest(c: Crypter): Hash =
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             hum.unscaledValue().toByteArray() + unit.ordinal.bytes()
         )
-
-
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("Humidity")
-            .apply {
-                setProperty("hum", hum)
-                val hUnit = when (unit) {
-                    HUnit.G_BY_KG -> HUnit.G_BY_KG.ordinal
-                    HUnit.KG_BY_KG -> HUnit.KG_BY_KG.ordinal
-                    HUnit.RELATIVE -> HUnit.RELATIVE.ordinal
-                }
-                setProperty("unit", hUnit)
-            }
 
 
     override fun calculateDiff(previous: SelfInterval): BigDecimal =
         when (previous) {
             is HumidityData -> calculateDiffHum(previous)
             else -> throw InvalidClassException(
-                "SelfInterval supplied is not ${this::class.java.name}"
+                """SelfInterval supplied is:
+                    |   ${previous.javaClass.name},
+                    |   not ${this::class.java.name}
+                """.trimMargin()
             )
         }
 
@@ -67,4 +52,9 @@ data class HumidityData(
         return newH.subtract(oldH)
             .divide(oldH, Coinbase.MATH_CONTEXT)
     }
+
+    override fun toString(): String {
+        return "HumidityData(hum=$hum, unit=$unit)"
+    }
+
 }

@@ -1,13 +1,12 @@
 package pt.um.masb.ledger.data
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
-import pt.um.masb.common.Hash
-import pt.um.masb.common.crypt.Crypter
 import pt.um.masb.common.data.SelfInterval
-import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
+import java.io.InvalidClassException
 import java.math.BigDecimal
 
 @JsonClass(generateAdapter = true)
@@ -19,7 +18,7 @@ class PollutionAQData(
     var sourceName: String,
     city: String = "",
     citySeqNum: Int = 1
-) : pt.um.masb.ledger.data.AbstractPollution(
+) : AbstractPollution(
     unit,
     city,
     citySeqNum
@@ -54,11 +53,28 @@ class PollutionAQData(
     )
 
 
-    override fun calculateDiff(previous: SelfInterval): BigDecimal {
-        TODO("not implemented")
+    override fun calculateDiff(
+        previous: SelfInterval
+    ): BigDecimal {
+        return if (previous is PollutionAQData) {
+            calculateDiffPollution(previous)
+        } else {
+            throw InvalidClassException(
+                """SelfInterval supplied is:
+                    |   ${previous.javaClass.name},
+                    |   not ${this::class.java.name}
+                """.trimMargin()
+            )
+        }
     }
 
-    override fun digest(c: Crypter): Hash =
+    private fun calculateDiffPollution(
+        previous: PollutionAQData
+    ): BigDecimal {
+        TODO()
+    }
+
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
                 lastUpdated.toByteArray(),
@@ -70,30 +86,6 @@ class PollutionAQData(
                 citySeqNum.bytes()
             )
         )
-
-    override fun store(session: NewInstanceSession): OElement =
-        session.newInstance("PollutionAQData").apply {
-            setProperty("lastUpdated", lastUpdated)
-            setProperty("unit", unit)
-            val byte = when (parameter) {
-                PollutionType.PM25 -> PollutionType.PM25.ordinal
-                PollutionType.PM10 -> PollutionType.PM10.ordinal
-                PollutionType.SO2 -> PollutionType.SO2.ordinal
-                PollutionType.NO2 -> PollutionType.NO2.ordinal
-                PollutionType.O3 -> PollutionType.O3.ordinal
-                PollutionType.CO -> PollutionType.CO.ordinal
-                PollutionType.BC -> PollutionType.BC.ordinal
-                PollutionType.NA -> PollutionType.NA.ordinal
-                else -> Int.MAX_VALUE
-            }
-            //Byte encode the enum.
-            setProperty("parameter", byte)
-            setProperty("valueInternal", value)
-            setProperty("sourceName", sourceName)
-            setProperty("city", city)
-            setProperty("citySeqNum", citySeqNum)
-        }
-
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
