@@ -2,18 +2,9 @@ package pt.um.masb.common.misc
 
 import kotlin.experimental.and
 
-fun ByteArray.asHex(): String =
 // Only convert on print.
-    StringBuilder().let {
-        for (bHash in this) {
-            val hex = String.format(
-                "%02X",
-                bHash
-            )
-            it.append(hex)
-        }
-        it.toString()
-    }
+val ByteArray.hexString: String
+    get() = printHexBinary(this)
 
 
 fun Long.bytes(): ByteArray {
@@ -81,6 +72,26 @@ fun flattenBytes(
 ): ByteArray {
     val final = ByteArray(
         collection.sumBy { it.size } + bytesArrays.sumBy { it.size }
+    )
+    var into = 0
+    collection.forEach {
+        it.copyInto(final, into)
+        into += it.size
+    }
+    bytesArrays.forEach {
+        it.copyInto(final, into)
+        into += it.size
+    }
+    return final
+}
+
+fun flattenBytes(
+    collectionSize: Int,
+    collection: Sequence<ByteArray>,
+    vararg bytesArrays: ByteArray
+): ByteArray {
+    val final = ByteArray(
+        collectionSize + bytesArrays.sumBy { it.size }
     )
     var into = 0
     collection.forEach {
