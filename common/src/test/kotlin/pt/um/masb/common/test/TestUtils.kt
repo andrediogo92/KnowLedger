@@ -1,4 +1,4 @@
-package pt.um.masb.ledger.test
+package pt.um.masb.common.test
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -11,10 +11,6 @@ import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
 import pt.um.masb.common.misc.hexString
-import pt.um.masb.ledger.test.utils.applyHashInPairs
-import pt.um.masb.ledger.test.utils.crypter
-import pt.um.masb.ledger.test.utils.randomByteArray
-import pt.um.masb.ledger.test.utils.randomInt
 
 class TestUtils {
     @Test
@@ -127,7 +123,7 @@ class TestUtils {
             }
             val expectedShort = expected.bytes.sliceArray(0..255)
             val test = flattenBytes(
-                randomHashes.map {
+                *randomHashes.map {
                     it.bytes
                 }.toTypedArray()
             )
@@ -140,7 +136,7 @@ class TestUtils {
             val test3 = flattenBytes(
                 randomHashes.map {
                     it.bytes
-                }
+                }.toTypedArray()
             )
             assertThat(test.size).isEqualTo(expected.bytes.size)
             assertThat(test2.size).isEqualTo(expectedShort.size)
@@ -159,22 +155,22 @@ class TestUtils {
                 """
                 |
                 |Expected:
-                |   - ${expected.print}
-                |Flatten via direct AoA:
-                |   - ${test3.hexString}
-            """.trimMargin()
-            }
-            assertThat(test3).containsExactly(*expected.bytes)
-            logger.debug {
-                """
-                |
-                |Expected:
                 |   - ${expectedShort.hexString}
                 |Flatten via collection + vararg byte arrays:
                 |   - ${test2.hexString}
             """.trimMargin()
             }
             assertThat(test2).containsExactly(*expectedShort)
+            logger.debug {
+                """
+                |
+                |Expected:
+                |   - ${expected.print}
+                |Flatten via direct AoA:
+                |   - ${test3.hexString}
+            """.trimMargin()
+            }
+            assertThat(test3).containsExactly(*expected.bytes)
         }
 
         @Test
@@ -209,7 +205,7 @@ class TestUtils {
                 )
             )
 
-            logger.info {
+            logger.debug {
                 """
                 |
                 | Test: ${test.print}
