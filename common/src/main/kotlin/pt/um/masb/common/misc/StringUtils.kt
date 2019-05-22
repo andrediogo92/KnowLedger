@@ -12,6 +12,7 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
 
+
 private val hexCode = "0123456789ABCDEF".toCharArray()
 private val b64Encoder = Base64.getEncoder()
 private val b64Decoder = Base64.getDecoder()
@@ -202,10 +203,11 @@ private fun hexToBin(ch: Char): Int =
     }
 
 fun printHexBinary(data: ByteArray): String {
-    val r = StringBuilder(data.size * 2)
-    for (b in data) {
-        r.append(hexCode[b.toInt() shr 4 and 0xF])
-        r.append(hexCode[b.toInt() and 0xF])
+    val r = CharArray(data.size * 2)
+    for (j in 0 until data.size) {
+        val v = data[j].toInt() and 0xFF
+        r[j * 2] = hexCode[v.ushr(4)]
+        r[j * 2 + 1] = hexCode[v and 0x0F]
     }
-    return r.toString()
+    return String(r)
 }
