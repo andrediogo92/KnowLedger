@@ -53,14 +53,14 @@ sealed class AvailableHashAlgorithms : KLogging() {
     }
 
     companion object : KLogging() {
-        //Ugly hack to ensure BC is loaded.
-        private val force: Int =
+        init {
+            //Ensure Bouncy Castle Crypto provider is present
             if (Security.getProvider("BC") == null) {
-                Security.addProvider(BouncyCastleProvider())
-            } else {
-                0
+                Security.addProvider(
+                    BouncyCastleProvider()
+                )
             }
-
+        }
 
         fun getCrypter(hash: Hash): Hasher? =
             when {
