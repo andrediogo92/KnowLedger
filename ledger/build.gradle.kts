@@ -10,19 +10,22 @@ plugins {
 
 dependencies {
     //Project dependencies
-    implementation(project(":common"))
     compileOnly(project(":annotations"))
-    kapt(project(":generation"))
+    implementation(project(":common"))
+
     //Annotation Processing
     kapt(Libs.moshiCodeGen)
+    kapt(project(":generation"))
 
 
     //Regular dependencies
     implementation(kotlin("stdlib", Versions.kotlin))
     implementation(kotlin("reflect", Versions.kotlin))
+    implementation(kotlin("test", Versions.kotlin))
+    implementation(kotlin("test-junit", Versions.kotlin))
     //implementation(Libs.arrowK)
     implementation(Libs.bouncyCastle)
-    implementation(Libs.coroutines)
+    //implementation(Libs.coroutines)
     implementation(Libs.klog)
     implementation(Libs.jol)
     Libs.moshi.forEach {
@@ -47,22 +50,21 @@ dependencies {
     }
 }
 
-
-tasks.withType<JavaExec> {
-    jvmArgs("-Djdk.attach.allowAttachSelf=true")
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform {
-        includeEngines("junit-jupiter")
+tasks {
+    withType<JavaExec> {
+        jvmArgs("-Djdk.attach.allowAttachSelf=true")
     }
-}
 
+    withType<Test> {
+        useJUnitPlatform {
+            includeEngines("junit-jupiter")
+        }
+    }
 
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    freeCompilerArgs = freeCompilerArgs + "-XXLanguage:+InlineClasses"
-    jvmTarget = "1.8"
+    withType<KotlinCompile> {
+        kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
+        kotlinOptions.jvmTarget = "1.8"
+    }
 }
 
 

@@ -56,18 +56,20 @@ configure<ApplicationPluginConvention> {
     mainClassName = "pt.um.lei.masb.agent.Container"
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform {
-        includeEngines("junit-jupiter")
+tasks {
+    withType<JavaExec> {
+        jvmArgs("-Djdk.attach.allowAttachSelf=true")
     }
-}
 
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions {
-    jvmTarget = "1.8"
-}
+    withType<Test> {
+        useJUnitPlatform {
+            includeEngines("junit-jupiter")
+        }
+    }
 
-val compileTestKotlin: KotlinCompile by tasks
-compileTestKotlin.kotlinOptions {
-    jvmTarget = "1.8"
+    withType<KotlinCompile> {
+        kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
 }
