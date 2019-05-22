@@ -1,4 +1,4 @@
-package pt.um.lei.masb.test
+package pt.um.masb.ledger.test
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -6,17 +6,18 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import mu.KLogging
 import org.junit.jupiter.api.Test
-import pt.um.lei.masb.test.utils.makeXTransactions
-import pt.um.lei.masb.test.utils.moshi
-import pt.um.lei.masb.test.utils.randomByteArray
-import pt.um.masb.common.MIN_DIFFICULTY
-import pt.um.masb.common.emptyHash
-import pt.um.masb.ledger.Block
+import pt.um.masb.common.data.Difficulty.Companion.MIN_DIFFICULTY
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.ledger.config.BlockParams
-import pt.um.masb.ledger.service.Ident
+import pt.um.masb.ledger.service.Identity
+import pt.um.masb.ledger.storage.Block
+import pt.um.masb.ledger.test.utils.makeXTransactions
+import pt.um.masb.ledger.test.utils.moshi
+import pt.um.masb.ledger.test.utils.randomByteArray
 
 class TestSerialization {
-    val ident = Ident("test")
+    val ident = Identity("test")
 
     val testTransactions = makeXTransactions(ident, 4)
         .sortedByDescending {
@@ -26,8 +27,8 @@ class TestSerialization {
     @Test
     fun `serialization and deserialization of blocks`() {
         val block = Block(
-            randomByteArray(32),
-            emptyHash(),
+            Hash(randomByteArray(32)),
+            emptyHash,
             MIN_DIFFICULTY,
             1,
             BlockParams()

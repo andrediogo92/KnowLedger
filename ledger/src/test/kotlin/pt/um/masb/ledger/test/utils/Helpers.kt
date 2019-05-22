@@ -1,18 +1,22 @@
-package pt.um.lei.masb.test.utils
+package pt.um.masb.ledger.test.utils
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
 import mu.KLogger
 import org.apache.commons.rng.simple.RandomSource
 import org.junit.jupiter.api.fail
-import pt.um.masb.common.crypt.AvailableCrypters
-import pt.um.masb.common.crypt.Crypter
 import pt.um.masb.common.data.BlockChainData
-import pt.um.masb.common.emptyHash
-import pt.um.masb.ledger.Coinbase
-import pt.um.masb.ledger.LedgerContract
-import pt.um.masb.ledger.Transaction
-import pt.um.masb.ledger.TransactionOutput
+import pt.um.masb.common.data.Payout
+import pt.um.masb.common.database.ManagedDatabase
+import pt.um.masb.common.database.orient.OrientDatabase
+import pt.um.masb.common.database.orient.OrientDatabaseInfo
+import pt.um.masb.common.database.orient.OrientDatabaseMode
+import pt.um.masb.common.database.orient.OrientDatabaseType
+import pt.um.masb.common.hash.AvailableHashAlgorithms
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hash.Companion.emptyHash
+import pt.um.masb.common.hash.Hasher
+import pt.um.masb.common.storage.LedgerContract
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.data.TUnit
 import pt.um.masb.ledger.data.TemperatureData
@@ -22,11 +26,14 @@ import pt.um.masb.ledger.json.BigIntegerJsonAdapter
 import pt.um.masb.ledger.json.HashJsonAdapter
 import pt.um.masb.ledger.json.InstantJsonAdapter
 import pt.um.masb.ledger.json.PublicKeyJsonAdapter
-import pt.um.masb.ledger.service.Ident
+import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.service.ServiceHandle
 import pt.um.masb.ledger.service.results.LedgerResult
 import pt.um.masb.ledger.service.results.LoadListResult
 import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.storage.Coinbase
+import pt.um.masb.ledger.storage.Transaction
+import pt.um.masb.ledger.storage.TransactionOutput
 import java.math.BigDecimal
 import java.security.Security
 
@@ -49,15 +56,23 @@ internal val moshi by lazy {
         .build()
 }
 
-internal val crypter: Crypter =
+internal val crypter: Hasher =
     if (Security.getProvider("BC") == null) {
         Security.addProvider(
             org.bouncycastle.jce.provider.BouncyCastleProvider()
         )
-        AvailableCrypters.SHA256Encrypter
+        AvailableHashAlgorithms.SHA256Hasher
     } else {
-        AvailableCrypters.SHA256Encrypter
+        AvailableHashAlgorithms.SHA256Hasher
     }
+
+internal fun testDB(): ManagedDatabase = OrientDatabase(
+    OrientDatabaseInfo(
+        modeOpenOrient = OrientDatabaseMode.MEMORY,
+        path = "./test",
+        mode = OrientDatabaseType.MEMORY
+    )
+)
 
 internal fun randomDouble(): Double =
     r.nextDouble()
@@ -78,7 +93,7 @@ internal fun randomByteArray(size: Int): ByteArray =
     }
 
 internal fun makeXTransactions(
-    id: Array<Ident>,
+    id: Array<Identity>,
     size: Int
 ): List<Transaction> {
     val ts: MutableList<Transaction> = mutableListOf()
@@ -103,7 +118,7 @@ internal fun makeXTransactions(
 }
 
 internal fun makeXTransactions(
-    id: Ident,
+    id: Identity,
     size: Int
 ): List<Transaction> {
     val ts: MutableList<Transaction> = mutableListOf()
@@ -128,23 +143,23 @@ internal fun makeXTransactions(
 
 
 internal fun generateCoinbase(
-    id: Array<Ident>,
+    id: Array<Identity>,
     ts: List<Transaction>
 ): Coinbase {
     val sets = listOf(
         TransactionOutput(
             id[0].publicKey,
-            emptyHash(),
-            BigDecimal.ONE,
+            emptyHash,
+            Payout(BigDecimal.ONE),
             ts[0].hashId,
-            emptyHash()
+            emptyHash
         ),
         TransactionOutput(
             id[1].publicKey,
-            emptyHash(),
-            BigDecimal.ONE,
+            emptyHash,
+            Payout(BigDecimal.ONE),
             ts[1].hashId,
-            emptyHash()
+            emptyHash
         )
     )
     //First transaction output has
@@ -154,19 +169,19 @@ internal fun generateCoinbase(
     //Third is transaction 4
     //referencing transaction 0.
     sets[0].addToPayout(
-        BigDecimal.ONE,
+        Payout(BigDecimal.ONE),
         ts[2].hashId,
         ts[0].hashId
     )
     sets[0].addToPayout(
-        BigDecimal.ONE,
+        Payout(BigDecimal.ONE),
         ts[4].hashId,
         ts[0].hashId
     )
     return Coinbase(
         sets.toSet() as MutableSet<TransactionOutput>,
-        BigDecimal("3"),
-        emptyHash()
+        Payout(BigDecimal("3")),
+        emptyHash
     )
 }
 
@@ -198,11 +213,11 @@ internal fun logActualToExpectedLists(
 }
 
 internal fun applyHashInPairs(
-    crypter: Crypter,
-    hashes: Array<ByteArray>
-): ByteArray {
+    crypter: Hasher,
+    hashes: Array<Hash>
+): Hash {
     var previousHashes = hashes
-    var newHashes: Array<ByteArray>
+    var newHashes: Array<Hash>
     var levelIndex = hashes.size
     while (levelIndex > 2) {
         if (levelIndex % 2 == 0) {

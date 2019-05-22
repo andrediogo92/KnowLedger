@@ -1,12 +1,11 @@
-package pt.um.lei.masb.test
+package pt.um.masb.ledger.test
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import mu.KLogging
 import org.junit.jupiter.api.Test
-import pt.um.lei.masb.test.utils.crypter
-import pt.um.masb.common.misc.base64encode
-import pt.um.masb.common.print
+import pt.um.masb.common.misc.base64Encode
+import pt.um.masb.ledger.test.utils.crypter
 
 class TestCrypters {
     companion object : KLogging()
@@ -17,8 +16,8 @@ class TestCrypters {
         val check = shaer.applyHash(
             "thisissampletext"
         )
-        val print = check.print()
-        val base64 = base64encode(check)
+        val print = check.print
+        val base64 = base64Encode(check)
         assertThat(
             print
         ).isEqualTo(

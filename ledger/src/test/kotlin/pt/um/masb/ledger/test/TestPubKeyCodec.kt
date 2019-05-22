@@ -1,14 +1,14 @@
-package pt.um.lei.masb.test
+package pt.um.masb.ledger.test
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import mu.KLogging
 import org.junit.jupiter.api.Test
 import pt.um.masb.common.misc.getStringFromKey
+import pt.um.masb.common.misc.hexString
 import pt.um.masb.common.misc.stringToPrivateKey
 import pt.um.masb.common.misc.stringToPublicKey
-import pt.um.masb.common.print
-import pt.um.masb.ledger.service.Ident
+import pt.um.masb.ledger.service.Identity
 import java.security.Key
 
 
@@ -16,7 +16,7 @@ import java.security.Key
  * Tests for encoding/decoding [Key]s.
  */
 class TestPubKeyCodec {
-    val pair = Ident("test")
+    val pair = Identity("test")
     val pr = pair.privateKey
     val pub = pair.publicKey
 
@@ -61,14 +61,14 @@ class TestPubKeyCodec {
                 |  private: $pr
                 |  public: $pub
                 |Hex:
-                |  private: ${pr.encoded.print()}
-                |  public: ${pub.encoded.print()}
+                |  private: ${pr.encoded.hexString}
+                |  public: ${pub.encoded.hexString}
                 |Base64:
                 |  private: $encpr
                 |  public: $encpub
                 |Hex to Base64 to Hex:
-                |  private: ${decpr.encoded.print()}
-                |  public: ${decpub.encoded.print()}
+                |  private: ${decpr.encoded.hexString}
+                |  public: ${decpub.encoded.hexString}
                 |Hex to Base64 to Key:
                 |  private: $decpr
                 |  public: $decpub

@@ -1,4 +1,4 @@
-package pt.um.lei.masb.test
+package pt.um.masb.ledger.test
 
 import assertk.assertThat
 import assertk.assertions.containsExactly
@@ -7,13 +7,14 @@ import mu.KLogging
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
-import pt.um.lei.masb.test.utils.applyHashInPairs
-import pt.um.lei.masb.test.utils.crypter
-import pt.um.lei.masb.test.utils.randomByteArray
-import pt.um.lei.masb.test.utils.randomInt
+import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
-import pt.um.masb.common.print
+import pt.um.masb.common.misc.hexString
+import pt.um.masb.ledger.test.utils.applyHashInPairs
+import pt.um.masb.ledger.test.utils.crypter
+import pt.um.masb.ledger.test.utils.randomByteArray
+import pt.um.masb.ledger.test.utils.randomInt
 
 class TestUtils {
     @Test
@@ -110,58 +111,70 @@ class TestUtils {
     @Nested
     inner class HashingOperations {
         val randomHashes = Array(randomInt(248) + 8) {
-            randomByteArray(32)
+            Hash(randomByteArray(32))
         }
 
         @Test
         fun `byte flattening`() {
+            logger.debug {
+                """Expected: ${randomHashes.joinToString {
+                    it.bytes.hexString
+                }}"""
+            }
+
             val expected = randomHashes.reduce { acc, bytes ->
                 acc + bytes
             }
-            val expectedShort = expected.sliceArray(0..255)
+            val expectedShort = expected.bytes.sliceArray(0..255)
             val test = flattenBytes(
-                *randomHashes
+                randomHashes.map {
+                    it.bytes
+                }.toTypedArray()
             )
             val test2 = flattenBytes(
-                randomHashes.sliceArray(0..6).toList(),
-                randomHashes[7]
+                randomHashes.sliceArray(0..6).map {
+                    it.bytes
+                },
+                randomHashes[7].bytes
             )
             val test3 = flattenBytes(
-                randomHashes
+                randomHashes.map {
+                    it.bytes
+                }
             )
-            assertThat(expected.size).isEqualTo(test.size)
-            assertThat(expectedShort.size).isEqualTo(test2.size)
-            assertThat(expected.size).isEqualTo(test3.size)
+            assertThat(test.size).isEqualTo(expected.bytes.size)
+            assertThat(test2.size).isEqualTo(expectedShort.size)
+            assertThat(test3.size).isEqualTo(expected.bytes.size)
             logger.debug {
                 """
                 |
                 |Expected:
-                |   - ${expected.print()}
+                |   - ${expected.print}
                 |Flatten via vararg byte arrays:
-                |   - ${test.print()}
+                |   - ${test.hexString}
             """.trimMargin()
             }
-            assertThat(expected).containsExactly(*test)
+            assertThat(test).containsExactly(*expected.bytes)
             logger.debug {
                 """
                 |
                 |Expected:
-                |   - ${expected.print()}
+                |   - ${expected.print}
                 |Flatten via direct AoA:
-                |   - ${test3.print()}
+                |   - ${test3.hexString}
             """.trimMargin()
             }
-            assertThat(expected).containsExactly(*test3)
+            assertThat(test3).containsExactly(*expected.bytes)
             logger.debug {
                 """
                 |
                 |Expected:
-                |   - ${expectedShort.print()}
+                |   - ${expectedShort.hexString}
                 |Flatten via collection + vararg byte arrays:
-                |   - ${test2.print()}
+                |   - ${test2.hexString}
             """.trimMargin()
             }
-            assertThat(expectedShort).containsExactly(*test2)
+            assertThat(test2).containsExactly(*expectedShort)
         }
 
         @Test
@@ -199,12 +212,12 @@ class TestUtils {
             logger.info {
                 """
                 |
-                | Test: ${test.print()}
-                | Expected: ${expected.print()}
+                | Test: ${test.print}
+                | Expected: ${expected.print}
             """.trimMargin()
             }
 
-            assertThat(expected).containsExactly(*test)
+            assertThat(expected.bytes).containsExactly(*test.bytes)
 
         }
 
@@ -241,14 +254,13 @@ class TestUtils {
             logger.info {
                 """
                 |
-                | Test: ${test.print()}
-                | Expected: ${expected.print()}
+                | Test: ${test.print}
+                | Expected: ${expected.print}
             """.trimMargin()
             }
 
 
-            assertThat(expected).containsExactly(*test)
-
+            assertThat(expected.bytes).containsExactly(*test.bytes)
         }
     }
 
