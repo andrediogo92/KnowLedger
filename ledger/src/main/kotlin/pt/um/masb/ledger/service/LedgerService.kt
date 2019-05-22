@@ -1,46 +1,43 @@
 package pt.um.masb.ledger.service
 
-import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
-import pt.um.masb.common.Hash
-import pt.um.masb.common.crypt.AvailableCrypters
-import pt.um.masb.common.crypt.Crypter
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.database.ManagedDatabase
-import pt.um.masb.common.database.ManagedDatabaseInfo
-import pt.um.masb.common.database.PluggableDatabase
-import pt.um.masb.common.misc.base64encode
+import pt.um.masb.common.database.StorageElement
+import pt.um.masb.common.database.orient.OrientDatabase
+import pt.um.masb.common.database.orient.OrientDatabaseInfo
+import pt.um.masb.common.hash.AvailableHashAlgorithms
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.stringToPrivateKey
 import pt.um.masb.common.misc.stringToPublicKey
+import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
 import pt.um.masb.ledger.config.LedgerId
+import pt.um.masb.ledger.data.adapters.DummyDataStorageAdapter
 import pt.um.masb.ledger.results.intoLedger
+import pt.um.masb.ledger.service.adapters.LedgerHandleStorageAdapter
 import pt.um.masb.ledger.service.results.LedgerResult
-import pt.um.masb.ledger.storage.loaders.Loadable
-import pt.um.masb.ledger.storage.loaders.Loaders
-import pt.um.masb.ledger.storage.loaders.PluggableLoaders
 import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
 import java.security.KeyPair
 
-class LedgerService(
+data class LedgerService(
     private val db: ManagedDatabase =
-        PluggableDatabase(ManagedDatabaseInfo()),
-    private val crypter: Crypter = AvailableCrypters.SHA256Encrypter
+        OrientDatabase(OrientDatabaseInfo()),
+    private val hasher: Hasher =
+        AvailableHashAlgorithms.SHA256Hasher
 ) {
     private val session = db.newManagedSession()
     private val pw = PersistenceWrapper(session)
 
-    init {
-        mutCrypters[base64encode(crypter.id)] = crypter
-    }
 
-    fun getIdentById(id: String): Ident? {
-        val ident: OElement? = pw.getIdent(id)
+    fun getIdentById(id: String): Identity? {
+        val ident: StorageElement? = pw.getIdent(id)
         return if (ident != null) {
             val keyPair = KeyPair(
-                stringToPublicKey(ident.getProperty("publicKey")),
-                stringToPrivateKey(ident.getProperty("privateKey"))
+                stringToPublicKey(ident.getStorageProperty("publicKey")),
+                stringToPrivateKey(ident.getStorageProperty("privateKey"))
             )
-            Ident(id, keyPair)
+            Identity(id, keyPair)
         } else {
             null
         }
@@ -54,7 +51,7 @@ class LedgerService(
         pw.getBlockChain(id)
 
     fun getLedgerHandleByHash(
-        crypterHash: Hash = AvailableCrypters.SHA256Encrypter.id,
+        crypterHash: Hash = AvailableHashAlgorithms.SHA256Hasher.id,
         hash: Hash
     ): LedgerResult<LedgerHandle> =
         pw.getBlockChain(crypterHash, hash)
@@ -63,80 +60,39 @@ class LedgerService(
         id: String
     ): LedgerResult<LedgerHandle> {
         val ledgerHandle = LedgerHandle(pw, id)
-        return pw.persistEntity(ledgerHandle).intoLedger {
+        return pw.persistEntity(
+            ledgerHandle, LedgerHandleStorageAdapter()
+        ).intoLedger {
             ledgerHandle
         }
     }
 
 
     companion object : KLogging() {
-        private val mutCrypters: MutableMap<String, Crypter> = mutableMapOf(
-            base64encode(AvailableCrypters.SHA256Encrypter.id) to AvailableCrypters.SHA256Encrypter
-        )
-
-        val crypters: Map<String, Crypter>
-            get() = mutCrypters
-
-        private val dataLoaders: MutableMap<Hash, Loaders> =
-            mutableMapOf()
+        private val dataAdapters =
+            mutableSetOf<AbstractStorageAdapter<out BlockChainData>>(
+                DummyDataStorageAdapter()
+            )
 
 
-        @Suppress("UNCHECKED_CAST")
-        internal fun getFromLoaders(
-            blockChainId: Hash,
-            id: String
-        ): Loadable<out BlockChainData>? =
-            dataLoaders[blockChainId]
-                ?.loaders
-                ?.get(id)
-
-        fun <T : BlockChainData> registerLoader(
-            blockChainId: Hash,
-            loaderType: String,
-            loader: Loadable<T>
-        ) {
-            if (dataLoaders.containsKey(blockChainId)) {
-                dataLoaders[blockChainId]!!.loaders +=
-                    (loaderType to loader)
-            } else {
-                dataLoaders[blockChainId] =
-                    PluggableLoaders(
-                        mutableMapOf(
-                            loaderType to loader
-                        )
-                    )
+        fun getStorageAdapter(
+            dataName: String
+        ): AbstractStorageAdapter<out BlockChainData>? =
+            dataAdapters.firstOrNull {
+                it.id == dataName
             }
-        }
 
-        fun registerLoaders(
-            blockChainId: Hash,
-            vararg entries: Pair<String, Loadable<out BlockChainData>>
-        ) {
-            if (dataLoaders.containsKey(blockChainId)) {
-                entries.forEach { pair ->
-                    dataLoaders[blockChainId]!!.loaders[pair.first] = pair.second
-                }
-            } else {
-                val m: MutableMap<String, Loadable<out BlockChainData>> = mutableMapOf()
-                entries.forEach { pair ->
-                    m[pair.first] = pair.second
-                }
-                dataLoaders[blockChainId] =
-                    PluggableLoaders(m)
+        fun getStorageAdapter(
+            clazz: Class<out BlockChainData>
+        ): AbstractStorageAdapter<out BlockChainData>? =
+            dataAdapters.firstOrNull {
+                it.clazz == clazz
             }
-        }
 
+        fun addStorageAdapter(
+            adapter: AbstractStorageAdapter<out BlockChainData>
+        ): Boolean =
+            dataAdapters.add(adapter)
 
-        fun registerLoaders(
-            blockChainId: Hash,
-            loaders: Loaders
-        ) {
-            if (dataLoaders.containsKey(blockChainId)) {
-                dataLoaders[blockChainId]!!.loaders +=
-                    loaders.loaders
-            } else {
-                dataLoaders[blockChainId] = loaders
-            }
-        }
     }
 }
