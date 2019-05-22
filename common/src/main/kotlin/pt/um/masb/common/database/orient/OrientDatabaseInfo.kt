@@ -1,6 +1,5 @@
 package pt.um.masb.common.database.orient
 
-import com.orientechnologies.orient.core.db.ODatabaseType
 import com.orientechnologies.orient.core.db.OrientDBConfig
 
 data class OrientDatabaseInfo(
@@ -11,5 +10,5 @@ data class OrientDatabaseInfo(
     internal val dbName: String = "ledger",
     internal val user: String = "admin",
     internal val password: String = "admin",
-    internal val mode: ODatabaseType = ODatabaseType.PLOCAL
+    internal val mode: OrientDatabaseType = OrientDatabaseType.LOCAL
 )

@@ -1,5 +1,6 @@
 package pt.um.masb.common.database.orient
 
+import com.orientechnologies.orient.core.db.ODatabaseType
 import com.orientechnologies.orient.core.metadata.schema.OType
 import pt.um.masb.common.database.StorageType
 
@@ -20,4 +21,10 @@ fun StorageType.toOType(): OType =
         StorageType.SET -> OType.LINKSET
         StorageType.MAP -> OType.LINKMAP
         StorageType.LISTEMBEDDED -> OType.EMBEDDEDLIST
+    }
+
+fun OrientDatabaseType.toOType(): ODatabaseType =
+    when (this) {
+        OrientDatabaseType.MEMORY -> ODatabaseType.MEMORY
+        OrientDatabaseType.LOCAL -> ODatabaseType.PLOCAL
     }

@@ -73,7 +73,7 @@ data class OrientSession(
             if (!db.exists(dbInfo.dbName)) {
                 db.create(
                     dbInfo.dbName,
-                    dbInfo.mode
+                    dbInfo.mode.toOType()
                 )
             }
             db.open(
