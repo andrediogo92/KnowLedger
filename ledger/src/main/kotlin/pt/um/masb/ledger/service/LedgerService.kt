@@ -78,14 +78,14 @@ data class LedgerService(
         fun getStorageAdapter(
             dataName: String
         ): AbstractStorageAdapter<out BlockChainData>? =
-            dataAdapters.firstOrNull {
+            dataAdapters.find {
                 it.id == dataName
             }
 
         fun getStorageAdapter(
             clazz: Class<out BlockChainData>
         ): AbstractStorageAdapter<out BlockChainData>? =
-            dataAdapters.firstOrNull {
+            dataAdapters.find {
                 it.clazz == clazz
             }
 
