@@ -1,11 +1,10 @@
 package pt.um.masb.ledger.data.adapters
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable
-import com.orientechnologies.orient.core.record.impl.ORecordBytes
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageBytes
 import pt.um.masb.common.database.StorageElement
+import pt.um.masb.common.database.StorageID
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
 import pt.um.masb.common.storage.results.DataResult
@@ -65,12 +64,12 @@ class OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
     ): DataResult<OtherData> =
         commonLoad(element, id) {
             val bos = ByteArrayOutputStream()
-            val chunkIds: List<OIdentifiable> =
-                getStorageProperty("data")
+            val chunkIds: List<StorageID> =
+                getStorageIDs("data")
             for (id in chunkIds) {
-                val chunk = id.getRecord<ORecordBytes>()
+                val chunk = id.getBytes()
                 chunk.toOutputStream(bos)
-                chunk.unload()
+                chunk.discard()
             }
 
             ObjectInputStream(

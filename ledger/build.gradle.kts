@@ -31,9 +31,9 @@ dependencies {
     Libs.moshi.forEach {
         implementation(it)
     }
-    Libs.orientDB.forEach {
-        implementation(it)
-    }
+//    Libs.orientDB.forEach {
+//        implementation(it)
+//    }
     //implementation(Libs.serialization)
     Libs.slf4j.forEach {
         implementation(it)
