@@ -13,7 +13,7 @@ interface StorageElement : Discardable<StorageElement> {
     fun getDifficultyProperty(name: String): Difficulty
     fun getHashProperty(name: String): Hash
     fun getPayoutProperty(name: String): Payout
-    fun getStorageIDs(s: String): List<StorageID>
+    fun getStorageIDs(name: String): List<StorageID>
     fun <T> getStorageProperty(name: String): T
 
     fun <T> setStorageProperty(

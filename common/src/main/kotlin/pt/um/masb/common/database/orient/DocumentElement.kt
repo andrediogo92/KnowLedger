@@ -17,7 +17,9 @@ import java.math.BigInteger
 data class DocumentElement internal constructor(
     internal val elem: OElement
 ) : StorageElement, OElement by elem {
-    override fun getStorageIDs(name: String): List<StorageID> =
+    override fun getStorageIDs(
+        name: String
+    ): List<StorageID> =
         elem.getProperty<List<ORID>>(name).map {
             DocumentID(it)
         }
