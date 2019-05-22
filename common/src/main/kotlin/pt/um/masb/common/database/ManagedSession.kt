@@ -1,8 +1,12 @@
 package pt.um.masb.common.database
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument
+interface ManagedSession : NewInstanceSession {
+    val managedSchemas: ManagedSchemas
 
-interface ManagedSession {
-    val session: ODatabaseDocument
     fun reOpenIfNecessary()
+    fun close()
+    fun query(query: String, params: Map<String, Any>): StorageResults
+    fun save(elem: StorageElement): StorageElement?
+    fun save(elem: StorageElement, cluster: String): StorageElement?
+    fun makeActive()
 }
