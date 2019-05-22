@@ -37,12 +37,6 @@ data class LedgerHandle internal constructor(
             ledgerId.hashId
         )
 
-    init {
-        pw.registerDefaultClusters(
-            ledgerId.hashId
-        )
-    }
-
 
     internal constructor(
         pw: PersistenceWrapper,
