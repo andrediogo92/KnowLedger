@@ -1,10 +1,10 @@
-package pt.um.masb.common.database
+package pt.um.masb.common.database.orient
 
 import com.orientechnologies.orient.core.db.ODatabaseType
 import com.orientechnologies.orient.core.db.OrientDBConfig
 
-data class ManagedDatabaseInfo(
-    internal val modeOpen: DatabaseMode = DatabaseMode.EMBEDDED,
+data class OrientDatabaseInfo(
+    internal val modeOpenOrient: OrientDatabaseMode = OrientDatabaseMode.EMBEDDED,
     internal val path: String = "./db",
     internal val options: OrientDBConfig =
         OrientDBConfig.defaultConfig(),
