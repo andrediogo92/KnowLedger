@@ -12,7 +12,7 @@ typealias DataFormula = (
     constant: Int,
     threshold: Int,
     mathContext: MathContext
-) -> BigDecimal
+) -> Payout
 
 
 fun calculateDiff(
@@ -24,7 +24,7 @@ fun calculateDiff(
     constant: Int,
     threshold: Int,
     mathContext: MathContext
-): BigDecimal {
+): Payout {
     val standardDivisor = BigDecimal(threshold * constant)
     val timeFactor = deltaTime
         .multiply(BigDecimal(timeBase))
@@ -37,9 +37,11 @@ fun calculateDiff(
         .divide(standardDivisor, mathContext)
 
     val baseFactor = BigDecimal(base).divide(standardDivisor, mathContext)
-    return timeFactor
-        .add(valueFactor)
-        .add(baseFactor)
+    return Payout(
+        timeFactor
+            .add(valueFactor)
+            .add(baseFactor)
+    )
 }
 
 object DataDefaults {
