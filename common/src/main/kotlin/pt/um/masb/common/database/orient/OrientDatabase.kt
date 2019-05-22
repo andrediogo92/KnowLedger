@@ -10,7 +10,7 @@ class OrientDatabase(
     internal val instance: OrientDB =
         OrientDB(
             "${dbInfo.modeOpenOrient.mode}:${dbInfo.path}",
-            dbInfo.options
+            dbInfo.config
         )
 
     override fun newManagedSession(): ManagedSession =
