@@ -1,7 +1,8 @@
 package pt.um.masb.common.misc
 
-import pt.um.masb.common.Hashable
-import pt.um.masb.common.crypt.Crypter
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hashable
+import pt.um.masb.common.hash.Hasher
 import java.security.Key
 import java.security.KeyFactory
 import java.security.PrivateKey
@@ -11,6 +12,7 @@ import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.*
 
+private val hexCode = "0123456789ABCDEF".toCharArray()
 private val b64Encoder = Base64.getEncoder()
 private val b64Decoder = Base64.getDecoder()
 
@@ -23,11 +25,11 @@ fun generateSignature(
     privateKey: PrivateKey,
     publicKey: PublicKey,
     data: Hashable,
-    crypter: Crypter
+    hasher: Hasher
 ): ByteArray =
     applyECDSASig(
         privateKey,
-        publicKey.encoded + data.digest(crypter)
+        publicKey.encoded + data.digest(hasher).bytes
     )
 
 
@@ -92,21 +94,31 @@ fun verifyECDSASig(
 }
 
 
-fun base64encode(
+fun base64Encode(
+    toEncode: Hash
+): String =
+    b64Encoder.encodeToString(toEncode.bytes)
+
+
+fun base64Encode(
     toEncode: ByteArray
 ): String =
     b64Encoder.encodeToString(toEncode)
 
-fun base64decode(
+fun base64Decode(
     toDecode: String
 ): ByteArray =
     b64Decoder.decode(toDecode)
 
+fun base64DecodeToHash(
+    toDecode: String
+): Hash =
+    Hash(b64Decoder.decode(toDecode))
 
 fun getStringFromKey(
     key: Key
 ): String =
-    base64encode(key.encoded)
+    base64Encode(key.encoded)
 
 
 /**
@@ -141,7 +153,7 @@ fun byteEncodeToPrivateKey(bytes: ByteArray): PrivateKey =
  * a ECDSA [PublicKey] via an [X509EncodedKeySpec].
  */
 fun stringToPublicKey(s: String): PublicKey =
-    byteEncodeToPublicKey(base64decode(s))
+    byteEncodeToPublicKey(base64Decode(s))
 
 
 /**
@@ -149,4 +161,51 @@ fun stringToPublicKey(s: String): PublicKey =
  * a ECDSA [PrivateKey] via an [X509EncodedKeySpec].
  */
 fun stringToPrivateKey(s: String): PrivateKey =
-    byteEncodeToPrivateKey(base64decode(s))
+    byteEncodeToPrivateKey(base64Decode(s))
+
+
+val String.hashFromHexString: Hash
+    get() = Hash(parseHexBinary(this))
+
+
+fun parseHexBinary(s: String): ByteArray {
+    val len = s.length
+
+    // "111" is not a valid hex encoding.
+    if (len % 2 != 0) throw IllegalArgumentException(
+        "hexBinary needs to be even-length: $s"
+    )
+
+    val out = ByteArray(len / 2)
+
+    var i = 0
+    while (i < len) {
+        val h = hexToBin(s[i])
+        val l = hexToBin(s[i + 1])
+        if (h == -1 || l == -1) throw IllegalArgumentException(
+            "contains illegal character for hexBinary: $s"
+        )
+
+        out[i / 2] = (h * 16 + l).toByte()
+        i += 2
+    }
+
+    return out
+}
+
+private fun hexToBin(ch: Char): Int =
+    when (ch) {
+        in '0'..'9' -> ch - '0'
+        in 'A'..'F' -> ch - 'A' + 10
+        in 'a'..'f' -> ch - 'a' + 10
+        else -> -1
+    }
+
+fun printHexBinary(data: ByteArray): String {
+    val r = StringBuilder(data.size * 2)
+    for (b in data) {
+        r.append(hexCode[b.toInt() shr 4 and 0xF])
+        r.append(hexCode[b.toInt() and 0xF])
+    }
+    return r.toString()
+}
