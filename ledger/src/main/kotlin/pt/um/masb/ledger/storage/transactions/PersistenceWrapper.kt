@@ -154,33 +154,6 @@ class PersistenceWrapper(
         }
     }
 
-    internal fun registerDefaultClusters(
-        blockChainId: Hash
-    ): PersistenceWrapper =
-        apply {
-            val trunc = blockChainId.truncated
-            //For all schemas except Identity add a new chain-specific cluster.
-            //For transactions and blocks add temporary pools.
-            schemasRegistered.forEach {
-                schemas.getSchema(
-                    it
-                )?.addCluster(
-                    "$it$trunc"
-                )
-            }.also {
-                schemas.getSchema(
-                    "Transaction"
-                )?.addCluster(
-                    "TransactionPool$trunc"
-                )
-                schemas.getSchema(
-                    "Block"
-                )?.addCluster(
-                    "BlockPool$trunc"
-                )
-            }
-        }
-
     internal fun closeCurrentSession(): PersistenceWrapper =
         apply {
             session.close()
