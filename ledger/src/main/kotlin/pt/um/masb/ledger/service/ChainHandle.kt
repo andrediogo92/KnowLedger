@@ -1,16 +1,14 @@
 package pt.um.masb.ledger.service
 
-import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
-import pt.um.masb.common.*
-import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.data.Difficulty
+import pt.um.masb.common.data.Difficulty.Companion.INIT_DIFFICULTY
+import pt.um.masb.common.data.Difficulty.Companion.MAX_DIFFICULTY
+import pt.um.masb.common.data.Difficulty.Companion.MIN_DIFFICULTY
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.common.results.Failable
-import pt.um.masb.common.storage.adapters.Storable
 import pt.um.masb.common.storage.results.QueryResult
-import pt.um.masb.ledger.Block
-import pt.um.masb.ledger.BlockHeader
-import pt.um.masb.ledger.Coinbase
-import pt.um.masb.ledger.Transaction
 import pt.um.masb.ledger.config.BlockParams
 import pt.um.masb.ledger.config.LedgerParams
 import pt.um.masb.ledger.data.DummyData
@@ -19,6 +17,11 @@ import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.results.intoQuery
 import pt.um.masb.ledger.service.results.LoadListResult
 import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.storage.Block
+import pt.um.masb.ledger.storage.BlockHeader
+import pt.um.masb.ledger.storage.Coinbase
+import pt.um.masb.ledger.storage.Transaction
+import pt.um.masb.ledger.storage.adapters.BlockStorageAdapter
 import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -29,20 +32,29 @@ import java.time.ZonedDateTime
  * A facade into useful methods for managing a
  * unique chain in the ledger represented by the [ledgerHash].
  */
-class ChainHandle internal constructor(
+data class ChainHandle internal constructor(
     private val pw: PersistenceWrapper,
-    private val params: LedgerParams,
+    val params: LedgerParams,
     val clazz: String,
     val ledgerHash: Hash
-) : Storable, ServiceHandle {
+) : ServiceHandle {
 
     private var difficultyTarget =
         INIT_DIFFICULTY
 
+    val currentDifficulty
+        get() = difficultyTarget
+
     private var lastRecalc = 0L
 
+    val lastRecalculation
+        get() = lastRecalc
+
     //Blockheight 1 is Origin which is immediately added.
-    private var currentBlockheight = 1L
+    private var blockheight = 1L
+
+    val currentBlockheight
+        get() = blockheight
 
     /**
      * Returns a [LoadResult] for the tail-end
@@ -76,27 +88,8 @@ class ChainHandle internal constructor(
     ) {
         this.difficultyTarget = difficulty
         this.lastRecalc = lastRecalc
-        this.currentBlockheight = currentBlockheight
+        this.blockheight = currentBlockheight
     }
-
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("ChainHandle")
-            .apply {
-                setProperty("clazz", clazz)
-                setProperty("hashId", ledgerHash)
-                setProperty(
-                    "difficultyTarget",
-                    difficultyTarget.toByteArray()
-                )
-                setProperty("lastRecalc", lastRecalc)
-                setProperty(
-                    "currentBlockheight",
-                    currentBlockheight
-                )
-            }
 
 
     /**
@@ -156,7 +149,8 @@ class ChainHandle internal constructor(
     fun isChainValid(): QueryResult<Boolean> {
         var blocksLeft = true
         var valid = true
-        var blockResult = pw.getBlockByBlockHeight(ledgerHash, 1)
+        var blockResult =
+            pw.getBlockByBlockHeight(ledgerHash, 1)
         lateinit var previousLastBlock: Block
         var result: QueryResult<Boolean>
         result = if (blockResult !is LoadResult.Success) {
@@ -172,13 +166,16 @@ class ChainHandle internal constructor(
         while (blocksLeft && valid) {
             lowIndex += CACHE_SIZE.toLong()
             highIndex += CACHE_SIZE.toLong()
-            val blocks = pw.getBlockListByBlockHeightInterval(
-                lowIndex,
-                highIndex,
-                ledgerHash
-            )
+            val blocks =
+                pw.getBlockListByBlockHeightInterval(
+                    lowIndex,
+                    highIndex,
+                    ledgerHash
+                )
             if (blocks is LoadListResult.Success) {
-                valid = checkBlocks(previousLastBlock, blocks.data.iterator())
+                valid = checkBlocks(
+                    previousLastBlock, blocks.data.iterator()
+                )
             } else {
                 result = blocks.intoQuery()
                 valid = false
@@ -187,7 +184,9 @@ class ChainHandle internal constructor(
         return result
     }
 
-    private fun checkBlocks(lastBlock: Block, data: Iterator<Block>): Boolean {
+    private fun checkBlocks(
+        lastBlock: Block, data: Iterator<Block>
+    ): Boolean {
         // loop through ledger to check hashes:
         var previousBlock = lastBlock
         while (data.hasNext()) {
@@ -199,9 +198,9 @@ class ChainHandle internal constructor(
                 logger.debug {
                     """
                     |Current Hashes not equal:
-                    |   ${curHeader.hashId.print()}
+                    |   ${curHeader.hashId.print}
                     |   -- and --
-                    |   ${cmpHash.print()}
+                    |   ${cmpHash.print}
                     """.trimMargin()
                 }
                 return false
@@ -212,19 +211,19 @@ class ChainHandle internal constructor(
                 logger.debug {
                     """
                     |Previous Hashes not equal:
-                    |   ${prevHeader.hashId.print()}
+                    |   ${prevHeader.hashId.print}
                     |   -- and --
-                    |   ${curHeader.previousHash.print()}
+                    |   ${curHeader.previousHash.print}
                     """.trimMargin()
                 }
                 return false
             }
 
             val hashTarget = curHeader.difficulty
-            val curDiff = curHeader.hashId.toDifficulty()
+            val curDiff = curHeader.hashId.difficulty
             if (curDiff > hashTarget) {
                 logger.debug {
-                    "Unmined block: ${curHeader.hashId.print()}"
+                    "Unmined block: ${curHeader.hashId.print}"
                 }
                 return false
             }
@@ -353,7 +352,8 @@ class ChainHandle internal constructor(
             }
             if (valid is QueryResult.Success) {
                 pw.persistEntity(
-                    block
+                    block,
+                    BlockStorageAdapter()
                 ).intoQuery {
                     true
                 }
@@ -377,7 +377,7 @@ class ChainHandle internal constructor(
         if (block.header.previousHash
                 .contentEquals(hash)
         ) {
-            if (block.header.hashId.toDifficulty() <=
+            if (block.header.hashId.difficulty <=
                 block.header.difficulty
             ) {
                 return block.verifyTransactions()
@@ -454,9 +454,9 @@ class ChainHandle internal constructor(
         val deltadiv = (deltax * RECALC_MULT)
             .divideToIntegralValue(BigDecimal(params.recalcTime))
             .toBigInteger()
-        val difficulty = BigInteger(difficultyTarget.toByteArray())
+        val difficulty = BigInteger(difficultyTarget.bytes)
         val newDiff = difficulty + (difficulty * deltadiv)
-        return padOrMax(newDiff / RECALC_DIV)
+        return padOrMax(Difficulty(newDiff / RECALC_DIV))
     }
 
     /**
@@ -499,9 +499,9 @@ class ChainHandle internal constructor(
                 blockChainId,
                 MAX_DIFFICULTY,
                 0,
-                emptyHash(),
-                emptyHash(),
-                emptyHash(),
+                emptyHash,
+                emptyHash,
+                emptyHash,
                 BlockParams(),
                 ZonedDateTime
                     .of(
@@ -529,8 +529,8 @@ class ChainHandle internal constructor(
             ).apply {
                 this.addTransaction(
                     Transaction(
-                        Ident(""),
-                        PhysicalData(DummyData())
+                        Identity(""),
+                        PhysicalData(DummyData.DUMMY)
                     )
                 )
             }

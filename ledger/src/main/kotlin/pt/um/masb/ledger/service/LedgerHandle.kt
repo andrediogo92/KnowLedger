@@ -1,11 +1,9 @@
 package pt.um.masb.ledger.service
 
-import com.orientechnologies.orient.core.id.ORID
-import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
 import pt.um.masb.common.data.BlockChainData
-import pt.um.masb.common.database.NewInstanceSession
-import pt.um.masb.common.storage.adapters.Storable
+import pt.um.masb.common.database.StorageID
+import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
 import pt.um.masb.common.storage.results.QueryResult
 import pt.um.masb.ledger.config.LedgerId
 import pt.um.masb.ledger.config.LedgerParams
@@ -18,17 +16,17 @@ import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
 /**
  * Create a geographically unbounded ledger.
  */
-class LedgerHandle internal constructor(
+data class LedgerHandle internal constructor(
     private val pw: PersistenceWrapper,
     val ledgerId: LedgerId
-) : Storable, ServiceHandle {
+) : ServiceHandle {
     //TODO: efficiently retrieve chains registered for this ledger.
     val knownChainTypes: QueryResult<List<String>>
         get() = pw.getKnownChainHandleTypes(
             ledgerId.hashId
         )
 
-    internal val knownChainIDs: QueryResult<List<ORID>>
+    internal val knownChainIDs: QueryResult<List<StorageID>>
         get() = pw.getKnownChainHandleIDs(
             ledgerId.hashId
         )
@@ -64,14 +62,8 @@ class LedgerHandle internal constructor(
     )
 
 
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        ledgerId.store(session)
-
-
     fun <T : BlockChainData> getChainHandleOf(
-        clazz: Class<T>
+        clazz: Class<in T>
     ): LedgerResult<ChainHandle> =
         pw.getChainHandle(
             ledgerId.params.crypter.id,
@@ -80,12 +72,14 @@ class LedgerHandle internal constructor(
         )
 
     fun <T : BlockChainData> registerNewChainHandleOf(
-        clazz: Class<T>
+        clazz: Class<out T>,
+        adapter: AbstractStorageAdapter<out T>
     ): LedgerResult<ChainHandle> =
         ChainHandle(
             pw, ledgerId.params,
             clazz.name, ledgerId.hashId
         ).let {
+            LedgerService.addStorageAdapter(adapter)
             pw.tryAddChainHandle(it).intoLedger {
                 it
             }

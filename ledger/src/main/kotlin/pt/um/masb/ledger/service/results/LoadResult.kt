@@ -1,7 +1,7 @@
 package pt.um.masb.ledger.service.results
 
 import pt.um.masb.common.results.Failable
-import pt.um.masb.ledger.LedgerContract
+import pt.um.masb.common.storage.LedgerContract
 
 
 /**

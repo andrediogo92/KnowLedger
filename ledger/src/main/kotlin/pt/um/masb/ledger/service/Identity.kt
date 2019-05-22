@@ -1,12 +1,9 @@
 package pt.um.masb.ledger.service
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import pt.um.masb.common.database.NewInstanceSession
-import pt.um.masb.common.storage.adapters.Storable
-import pt.um.masb.ledger.LedgerContract
+import pt.um.masb.common.storage.LedgerContract
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.PrivateKey
@@ -16,11 +13,10 @@ import java.security.Security
 import java.security.spec.ECGenParameterSpec
 
 @JsonClass(generateAdapter = true)
-data class Ident(
+data class Identity(
     val id: String,
     val pair: KeyPair
-) : Storable,
-    LedgerContract {
+) : LedgerContract {
 
 
     val privateKey: PrivateKey
@@ -31,26 +27,6 @@ data class Ident(
 
     constructor(id: String) : this(id, generateNewKeyPair())
 
-
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("Ident")
-            .apply {
-                setProperty(
-                    "id",
-                    id
-                )
-                setProperty(
-                    "publicKey",
-                    publicKey.encoded
-                )
-                setProperty(
-                    "privateKey",
-                    privateKey.encoded
-                )
-            }
 
 
     companion object : KLogging() {

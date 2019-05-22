@@ -1,10 +1,10 @@
 package pt.um.masb.ledger.results
 
 import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.storage.LedgerContract
 import pt.um.masb.common.storage.results.DataListResult
 import pt.um.masb.common.storage.results.DataResult
 import pt.um.masb.common.storage.results.QueryResult
-import pt.um.masb.ledger.LedgerContract
 import pt.um.masb.ledger.service.ServiceHandle
 import pt.um.masb.ledger.service.results.LedgerListResult
 import pt.um.masb.ledger.service.results.LedgerResult
