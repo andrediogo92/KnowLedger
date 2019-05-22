@@ -1,43 +1,52 @@
 package pt.um.masb.ledger.storage.transactions
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument
-import com.orientechnologies.orient.core.id.ORID
-import com.orientechnologies.orient.core.metadata.schema.OSchema
-import com.orientechnologies.orient.core.record.OElement
 import mu.KLogging
-import pt.um.masb.common.Hash
 import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.database.ManagedSchemas
 import pt.um.masb.common.database.ManagedSession
 import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.database.StorageElement
+import pt.um.masb.common.database.StorageID
+import pt.um.masb.common.database.query.ClusterSelect
+import pt.um.masb.common.database.query.Filters
+import pt.um.masb.common.database.query.GenericQuery
+import pt.um.masb.common.database.query.SimpleBinaryOperator
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.storage.LedgerContract
+import pt.um.masb.common.storage.adapters.Loadable
+import pt.um.masb.common.storage.adapters.SchemaProvider
 import pt.um.masb.common.storage.adapters.Storable
 import pt.um.masb.common.storage.results.DataListResult
 import pt.um.masb.common.storage.results.DataResult
 import pt.um.masb.common.storage.results.QueryResult
-import pt.um.masb.common.truncated
-import pt.um.masb.ledger.Block
-import pt.um.masb.ledger.BlockHeader
-import pt.um.masb.ledger.LedgerContract
-import pt.um.masb.ledger.Transaction
 import pt.um.masb.ledger.config.LedgerId
+import pt.um.masb.ledger.config.adapters.BlockParamsStorageAdapter
+import pt.um.masb.ledger.config.adapters.LedgerIdStorageAdapter
+import pt.um.masb.ledger.config.adapters.LedgerParamsStorageAdapter
+import pt.um.masb.ledger.data.adapters.DummyDataStorageAdapter
+import pt.um.masb.ledger.data.adapters.MerkleTreeStorageAdapter
+import pt.um.masb.ledger.data.adapters.PhysicalDataStorageAdapter
 import pt.um.masb.ledger.results.*
 import pt.um.masb.ledger.service.ChainHandle
 import pt.um.masb.ledger.service.LedgerHandle
 import pt.um.masb.ledger.service.ServiceHandle
+import pt.um.masb.ledger.service.adapters.ChainHandleStorageAdapter
+import pt.um.masb.ledger.service.adapters.LedgerHandleStorageAdapter
+import pt.um.masb.ledger.service.adapters.ServiceLoadable
 import pt.um.masb.ledger.service.results.LedgerListResult
 import pt.um.masb.ledger.service.results.LedgerResult
 import pt.um.masb.ledger.service.results.LoadListResult
 import pt.um.masb.ledger.service.results.LoadResult
-import pt.um.masb.ledger.storage.loaders.BlockChainLoaders
-import pt.um.masb.ledger.storage.loaders.ChainLoadable
-import pt.um.masb.ledger.storage.loaders.DefaultLoadable
-import pt.um.masb.ledger.storage.loaders.Loadable
-import pt.um.masb.ledger.storage.loaders.QueryLoadable
-import pt.um.masb.ledger.storage.query.ClusterSelect
-import pt.um.masb.ledger.storage.query.Filters
-import pt.um.masb.ledger.storage.query.GenericQuery
-import pt.um.masb.ledger.storage.query.SimpleBinaryOperator
-import pt.um.masb.ledger.storage.schema.PreConfiguredSchemas
-import pt.um.masb.ledger.storage.schema.SchemaProvider
+import pt.um.masb.ledger.storage.Block
+import pt.um.masb.ledger.storage.BlockHeader
+import pt.um.masb.ledger.storage.Transaction
+import pt.um.masb.ledger.storage.adapters.BlockHeaderStorageAdapter
+import pt.um.masb.ledger.storage.adapters.BlockStorageAdapter
+import pt.um.masb.ledger.storage.adapters.CoinbaseStorageAdapter
+import pt.um.masb.ledger.storage.adapters.QueryLoadable
+import pt.um.masb.ledger.storage.adapters.StorageLoadable
+import pt.um.masb.ledger.storage.adapters.TransactionOutputStorageAdapter
+import pt.um.masb.ledger.storage.adapters.TransactionStorageAdapter
 import java.security.PublicKey
 
 
@@ -45,11 +54,11 @@ import java.security.PublicKey
  * A Thread-safe wrapper into a DB context
  * for the ledger library.
  */
-internal class PersistenceWrapper(
-    private val db: ManagedSession
+class PersistenceWrapper(
+    private val session: ManagedSession
 ) {
-
-    private val dbSchema = db.session.metadata.schema
+    private val schemas = session.managedSchemas
+    private lateinit var schemasRegistered: List<String>
 
     init {
         registerDefaultSchemas()
@@ -57,75 +66,91 @@ internal class PersistenceWrapper(
 
     private fun registerDefaultSchemas(
     ) {
-        PreConfiguredSchemas
-            .chainSchemas
-            .forEach {
-                registerSchema(
-                    it
-                )
-            }
+        val schemas = listOf<SchemaProvider<out Any>>(
+            BlockHeaderStorageAdapter(),
+            BlockStorageAdapter(),
+            CoinbaseStorageAdapter(),
+            TransactionOutputStorageAdapter(),
+            TransactionStorageAdapter(),
+            BlockParamsStorageAdapter(),
+            LedgerIdStorageAdapter(),
+            LedgerParamsStorageAdapter(),
+            DummyDataStorageAdapter(),
+            MerkleTreeStorageAdapter(),
+            PhysicalDataStorageAdapter()
+        )
+        schemasRegistered = schemas.map { it.id }
+        schemas.forEach {
+            registerSchema(
+                it
+            )
+        }
     }
 
     fun registerSchema(
-        schemaProvider: SchemaProvider
+        schemaProvider: SchemaProvider<out Any>
     ): PersistenceWrapper =
         apply {
-            if (!dbSchema.existsClass(schemaProvider.id)) {
+            if (!schemas.hasSchema(schemaProvider.id)) {
                 createSchema(
-                    dbSchema,
+                    schemas,
                     schemaProvider
                 )
             } else {
                 replaceSchema(
-                    dbSchema,
+                    schemas,
                     schemaProvider
                 )
             }
         }
 
     private fun createSchema(
-        schema: OSchema,
-        provider: SchemaProvider
+        schema: ManagedSchemas,
+        provider: SchemaProvider<out Any>
     ) {
-        val cl = schema.createClass(provider.id)
-        provider.properties.forEach {
-            cl.createProperty(it.key, it.value)
+        val cl = schema.createSchema(provider.id)
+        cl?.let {
+            provider.properties.forEach {
+                cl.createProperty(it.key, it.value)
+            }
         }
     }
 
 
     private fun replaceSchema(
-        schema: OSchema,
-        provider: SchemaProvider
+        schema: ManagedSchemas,
+        provider: SchemaProvider<out Any>
     ) {
-        val cl = schema.getClass(provider.id)
-        val (propsIn, propsNotIn) = cl
-            .declaredProperties()
-            .partition {
-                it.name in provider.properties.keys
-            }
-
-        if (propsNotIn.isNotEmpty()) {
-            //Drop properties that no longer exist in provider.
-            propsNotIn.forEach {
-                cl.dropProperty(it.name)
-            }
-        }
-
-        if (propsIn.size != provider.properties.keys.size) {
-            //New properties are those in provider that are not already present.
-            provider
-                .properties
-                .keys
-                .asSequence()
-                .filter {
-                    it !in propsIn.map { elem -> elem.name }
-                }.forEach {
-                    cl.createProperty(
-                        it,
-                        provider.properties[it]
-                    )
+        val cl = schema.getSchema(provider.id)
+        cl?.let {
+            val (propsIn, propsNotIn) = cl
+                .declaredPropertyNames()
+                .partition {
+                    it in provider.properties.keys
                 }
+
+            if (propsNotIn.isNotEmpty()) {
+                //Drop properties that no longer exist in provider.
+                propsNotIn.forEach {
+                    cl.dropProperty(it)
+                }
+            }
+
+            if (propsIn.size != provider.properties.keys.size) {
+                //New properties are those in provider that are not already present.
+                provider
+                    .properties
+                    .keys
+                    .asSequence()
+                    .filter {
+                        it !in propsIn
+                    }.forEach {
+                        cl.createProperty(
+                            it,
+                            provider.properties.getValue(it)
+                        )
+                    }
+            }
         }
     }
 
@@ -133,24 +158,24 @@ internal class PersistenceWrapper(
         blockChainId: Hash
     ): PersistenceWrapper =
         apply {
-            val trunc = blockChainId.truncated()
-            //For all schemas except Ident add a new chain-specific cluster.
+            val trunc = blockChainId.truncated
+            //For all schemas except Identity add a new chain-specific cluster.
             //For transactions and blocks add temporary pools.
-            PreConfiguredSchemas.chainSchemas.forEach {
-                dbSchema.getClass(
-                    it.id
-                ).addCluster(
-                    "${it.id}$trunc"
+            schemasRegistered.forEach {
+                schemas.getSchema(
+                    it
+                )?.addCluster(
+                    "$it$trunc"
                 )
             }.also {
-                dbSchema.getClass(
+                schemas.getSchema(
                     "Transaction"
-                ).addCluster(
+                )?.addCluster(
                     "TransactionPool$trunc"
                 )
-                dbSchema.getClass(
+                schemas.getSchema(
                     "Block"
-                ).addCluster(
+                )?.addCluster(
                     "BlockPool$trunc"
                 )
             }
@@ -158,11 +183,10 @@ internal class PersistenceWrapper(
 
     internal fun closeCurrentSession(): PersistenceWrapper =
         apply {
-            db.session.close()
+            session.close()
         }
 
-    fun getInstanceSession(): NewInstanceSession =
-        NewInstanceSession(db.session)
+    fun getInstanceSession(): NewInstanceSession = session
 
     /**
      * Requires:
@@ -178,11 +202,11 @@ internal class PersistenceWrapper(
         loader: Loadable<T>
     ): DataResult<T> =
         tryOrDataQueryFailure {
-            db.session.query(
+            session.query(
                 query.query,
                 query.params
             ).asSequence().firstOrNull()?.let {
-                loader.load(it.toElement())
+                loader.load(it.element)
             } ?: DataResult.NonExistentData(
                 "Empty ResultSet for ${query.query}"
             )
@@ -207,17 +231,14 @@ internal class PersistenceWrapper(
     private fun <T : LedgerContract> queryUniqueResult(
         blockChainId: Hash,
         query: GenericQuery,
-        loader: DefaultLoadable<T>
+        loader: StorageLoadable<T>
     ): LoadResult<T> =
         tryOrLoadQueryFailure {
-            db.session.query(
+            session.query(
                 query.query,
                 query.params
             ).asSequence().firstOrNull()?.let {
-                (loader.load)(
-                    blockChainId,
-                    it.toElement()
-                )
+                loader.load(blockChainId, it.element)
             } ?: LoadResult.NonExistentData(
                 "Empty ResultSet for ${query.query}"
             )
@@ -246,18 +267,14 @@ internal class PersistenceWrapper(
     private fun <T : ServiceHandle> queryUniqueResult(
         crypterHash: Hash,
         query: GenericQuery,
-        loader: ChainLoadable<T>
+        loader: ServiceLoadable<T>
     ): LedgerResult<T> =
         tryOrLedgerQueryFailure {
-            db.session.query(
+            session.query(
                 query.query,
                 query.params
             ).asSequence().firstOrNull()?.let {
-                (loader.load)(
-                    crypterHash,
-                    this,
-                    it.toElement()
-                )
+                loader.load(this, crypterHash, it.element)
             } ?: LedgerResult.NonExistentData(
                 "Empty ResultSet for ${query.query}"
             )
@@ -281,12 +298,13 @@ internal class PersistenceWrapper(
         loader: QueryLoadable<T>
     ): QueryResult<T> =
         tryOrQueryQueryFailure {
-            db.session.query(
-                query.query,
-                query.params
-            ).asSequence().firstOrNull()?.let {
-                (loader.load)(it.toElement())
-            } ?: QueryResult.NonExistentData(
+            session
+                .query(query.query, query.params)
+                .asSequence()
+                .firstOrNull()
+                ?.let {
+                    loader.load(it.element)
+                } ?: QueryResult.NonExistentData<T>(
                 "Empty ResultSet for ${query.query}"
             )
         }
@@ -294,7 +312,6 @@ internal class PersistenceWrapper(
 
     /**
      * Requires:
-     * - The [session] in which to execute the query.
      * - A [query] with the command to execute
      * and it's arguments.
      * - A [Loadable] that converts from documents to
@@ -304,17 +321,16 @@ internal class PersistenceWrapper(
      * Returns a [DataListResult] over a list.
      */
     private fun <T : BlockChainData> queryResults(
-        session: ODatabaseDocument,
         query: GenericQuery,
         loader: Loadable<T>
     ): DataListResult<T> =
         tryOrDataListQueryFailure {
-            session.query(
-                query.query,
-                query.params
-            ).asSequence().map {
-                (loader.load)(it.toElement())
-            }.collapse()
+            session
+                .query(query.query, query.params)
+                .asSequence()
+                .map {
+                    loader.load(it.element)
+                }.collapse()
         }
 
     /**
@@ -335,15 +351,15 @@ internal class PersistenceWrapper(
     private fun <T : LedgerContract> queryResults(
         blockChainId: Hash,
         query: GenericQuery,
-        loader: DefaultLoadable<T>
+        loader: StorageLoadable<T>
     ): LoadListResult<T> =
         tryOrLoadListQueryFailure {
-            db.session.query(
-                query.query,
-                query.params
-            ).asSequence().map {
-                (loader.load)(blockChainId, it.toElement())
-            }.collapse()
+            session
+                .query(query.query, query.params)
+                .asSequence()
+                .map {
+                    loader.load(blockChainId, it.element)
+                }.collapse()
         }
 
     /**
@@ -368,15 +384,15 @@ internal class PersistenceWrapper(
     private fun <T : ServiceHandle> queryResults(
         crypterHash: Hash,
         query: GenericQuery,
-        loader: ChainLoadable<T>
+        loader: ServiceLoadable<T>
     ): LedgerListResult<T> =
         tryOrLedgerListQueryFailure {
-            db.session.query(
-                query.query,
-                query.params
-            ).asSequence().map {
-                (loader.load)(crypterHash, this, it.toElement())
-            }.collapse()
+            session
+                .query(query.query, query.params)
+                .asSequence()
+                .map {
+                    loader.load(this, crypterHash, it.element)
+                }.collapse()
         }
 
 
@@ -397,12 +413,12 @@ internal class PersistenceWrapper(
         loader: QueryLoadable<T>
     ): QueryResult<List<T>> =
         tryOrQueryQueryFailure {
-            db.session.query(
-                query.query,
-                query.params
-            ).asSequence().map {
-                (loader.load)(it.toElement())
-            }.collapse()
+            session
+                .query(query.query, query.params)
+                .asSequence()
+                .map {
+                    loader.load(it.element)
+                }.collapse()
         }
 
 
@@ -418,20 +434,45 @@ internal class PersistenceWrapper(
      * Persists an [element] to an active [ManagedSession]
      * in a synchronous manner.
      *
-     * Returns a [QueryResult] over an [ORID].
+     * Returns a [QueryResult] over a [StorageID].
      */
     @Synchronized
-    internal fun persistEntity(
-        element: Storable
-    ): QueryResult<ORID> =
+    internal fun <T : Any> persistEntity(
+        element: T,
+        storable: Storable<T>
+    ): QueryResult<StorageID> =
         tryOrQueryQueryFailure {
-            val elem = element.store(NewInstanceSession(db.session))
-            val r = db.session.save<OElement>(elem)
+            val elem = storable.store(element, session)
+            val r = session.save(elem)
             if (r != null) {
                 QueryResult.Success(r.identity)
             } else {
-                QueryResult.NonExistentData<ORID>(
-                    "Failed to save element ${elem.toJSON()}"
+                QueryResult.NonExistentData<StorageID>(
+                    "Failed to save element ${elem.print()}"
+                )
+            }
+        }
+
+    /**
+     * Persists an [element] to an active [ManagedSession]
+     * in a synchronous manner.
+     *
+     * Returns a [QueryResult] over a [StorageID].
+     */
+    @Synchronized
+    fun <T : Any> persistEntity(
+        element: T,
+        storable: Storable<T>,
+        cluster: String
+    ): QueryResult<StorageID> =
+        tryOrQueryQueryFailure {
+            val elem = storable.store(element, session)
+            val r = session.save(elem, cluster)
+            if (r != null) {
+                QueryResult.Success(r.identity)
+            } else {
+                QueryResult.NonExistentData<StorageID>(
+                    "Failed to save element ${elem.print()}"
                 )
             }
         }
@@ -459,7 +500,7 @@ internal class PersistenceWrapper(
                 "hashId",
                 blockChainId.hashId
             ),
-            BlockChainLoaders.ledgerLoader
+            LedgerHandleStorageAdapter()
         )
 
     internal fun getBlockChain(
@@ -477,7 +518,7 @@ internal class PersistenceWrapper(
                 "hashId",
                 hash
             ),
-            BlockChainLoaders.ledgerLoader
+            LedgerHandleStorageAdapter()
         )
 
 
@@ -500,7 +541,7 @@ internal class PersistenceWrapper(
                 "hashId",
                 hash
             ),
-            BlockChainLoaders.blockHeaderLoader
+            BlockHeaderStorageAdapter()
         )
 
 
@@ -518,7 +559,7 @@ internal class PersistenceWrapper(
                 "blockheight",
                 height
             ),
-            BlockChainLoaders.blockHeaderLoader
+            BlockHeaderStorageAdapter()
         )
 
 
@@ -537,7 +578,7 @@ internal class PersistenceWrapper(
                 "hashId",
                 hash
             ),
-            BlockChainLoaders.blockHeaderLoader
+            BlockHeaderStorageAdapter()
         )
 
     internal fun getLatestBlockHeader(
@@ -550,7 +591,7 @@ internal class PersistenceWrapper(
                 blockChainId,
                 "max(blockheight), *"
             ),
-            BlockChainLoaders.blockHeaderLoader
+            BlockHeaderStorageAdapter()
         )
 
 
@@ -575,7 +616,7 @@ internal class PersistenceWrapper(
                 "blockheight",
                 blockheight
             ),
-            BlockChainLoaders.blockLoader
+            BlockStorageAdapter()
         )
 
 
@@ -594,7 +635,7 @@ internal class PersistenceWrapper(
                 "hashId",
                 hash
             ),
-            BlockChainLoaders.blockLoader
+            BlockStorageAdapter()
         )
 
 
@@ -613,7 +654,7 @@ internal class PersistenceWrapper(
                 "hashId",
                 hash
             ),
-            BlockChainLoaders.blockLoader
+            BlockStorageAdapter()
         )
 
 
@@ -628,7 +669,7 @@ internal class PersistenceWrapper(
             ).withProjection(
                 "max(header.blockheight), *"
             ),
-            BlockChainLoaders.blockLoader
+            BlockStorageAdapter()
         )
 
     fun getBlockListByBlockHeightInterval(
@@ -648,23 +689,25 @@ internal class PersistenceWrapper(
                 Pair(startInclusive, endInclusive),
                 SimpleBinaryOperator.AND
             ),
-            BlockChainLoaders.blockLoader
+            BlockStorageAdapter()
         )
 
 
     // ------------------------------
-    // Ident transaction.
+    // Identity transaction.
     //
     // ------------------------------
 
 
-    internal fun getIdent(id: String): OElement? =
-        db.session.query(
+    internal fun getIdent(id: String): StorageElement? =
+        session.query(
             "SELECT * FROM ident WHERE id = :id",
-            id
+            mapOf(
+                "id" to id
+            )
         ).let {
             if (it.hasNext()) {
-                it.next().toElement()
+                it.next().element
             } else {
                 null
             }
@@ -694,7 +737,7 @@ internal class PersistenceWrapper(
                 "publicKey",
                 publicKey.encoded
             ),
-            BlockChainLoaders.transactionLoader
+            TransactionStorageAdapter()
         )
 
     fun getTransactionByHash(
@@ -712,7 +755,7 @@ internal class PersistenceWrapper(
                 "hashId",
                 hash
             ),
-            BlockChainLoaders.transactionLoader
+            TransactionStorageAdapter()
         )
 
 
@@ -729,7 +772,7 @@ internal class PersistenceWrapper(
                 Filters.ORDER,
                 "data.seconds DESC, data.nanos DESC"
             ),
-            BlockChainLoaders.transactionLoader
+            TransactionStorageAdapter()
         )
 
     fun getTransactionsByClass(
@@ -747,7 +790,7 @@ internal class PersistenceWrapper(
                 "typeName",
                 typeName
             ),
-            BlockChainLoaders.transactionLoader
+            TransactionStorageAdapter()
         )
 
 
@@ -770,39 +813,41 @@ internal class PersistenceWrapper(
                 "clazz",
                 clazz.name
             ),
-            BlockChainLoaders.chainLoader
+            ChainHandleStorageAdapter()
         )
 
     fun tryAddChainHandle(
         chainHandle: ChainHandle
-    ): QueryResult<ORID> =
-        persistEntity(chainHandle)
+    ): QueryResult<StorageID> =
+        persistEntity(chainHandle, ChainHandleStorageAdapter())
 
     fun getKnownChainHandleTypes(
         ledgerHash: Hash
     ): QueryResult<List<String>> =
-        queryResults<String>(
+        queryResults(
             ClusterSelect(
                 "ChainHandle",
                 ledgerHash
             ).withProjection(
                 "clazz"
             ),
-            QueryLoadable {
-                QueryResult.Success(it.getProperty<String>("clazz"))
+            object : QueryLoadable<String> {
+                override fun load(element: StorageElement): QueryResult<String> =
+                    QueryResult.Success(element.getStorageProperty("clazz"))
             }
         )
 
     fun getKnownChainHandleIDs(
         ledgerHash: Hash
-    ): QueryResult<List<ORID>> =
-        queryResults<ORID>(
+    ): QueryResult<List<StorageID>> =
+        queryResults<StorageID>(
             ClusterSelect(
                 "ChainHandle",
                 ledgerHash
             ),
-            QueryLoadable {
-                QueryResult.Success(it.identity)
+            object : QueryLoadable<StorageID> {
+                override fun load(element: StorageElement): QueryResult<StorageID> =
+                    QueryResult.Success(element.identity)
             }
         )
 
@@ -817,7 +862,7 @@ internal class PersistenceWrapper(
                 "ChainHandle",
                 ledgerHash
             ),
-            BlockChainLoaders.chainLoader
+            ChainHandleStorageAdapter()
         )
 
 
