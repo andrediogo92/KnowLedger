@@ -1,6 +1,7 @@
 object Versions {
     const val arrowK = "0.9"
     const val assertK = "0.13"
+    const val autoService = "1.0-rc5"
     const val bouncyCastle = "1.61"
     const val commons = "1.2"
     const val coroutines = "1.2.0"
@@ -14,6 +15,7 @@ object Versions {
     const val kotlin = "1.3.31"
     const val ktor = "1.1.4"
     const val moshi = "1.8.0"
+    const val kotlinPoet = "1.2.0"
     const val orientDB = "3.0.14"
     const val slf4j = "1.8.0-beta2"
     const val serial = "0.11.0"
@@ -25,6 +27,9 @@ object Libs {
 
     const val assertK =
         "com.willowtreeapps.assertk:assertk-jvm:${Versions.assertK}"
+
+    const val autoService =
+        "com.google.auto.service:auto-service:${Versions.autoService}"
 
     const val bouncyCastle =
         "org.bouncycastle:bcprov-jdk15on:${Versions.bouncyCastle}"
@@ -77,6 +82,9 @@ object Libs {
         "com.orientechnologies:orientdb-client:${Versions.orientDB}",
         "com.orientechnologies:orientdb-server:${Versions.orientDB}"
     )
+
+    const val kotlinPoet =
+        "com.squareup:kotlinpoet:${Versions.kotlinPoet}"
 
     const val serialization =
         "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serial}"
