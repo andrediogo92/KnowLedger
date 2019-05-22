@@ -1,20 +1,18 @@
-package pt.um.masb.ledger
+package pt.um.masb.ledger.storage
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.openjdk.jol.info.GraphLayout
-import pt.um.masb.common.Hash
-import pt.um.masb.common.Hashable
-import pt.um.masb.common.Hashed
-import pt.um.masb.common.Payout
 import pt.um.masb.common.Sizeable
-import pt.um.masb.common.crypt.AvailableCrypters
-import pt.um.masb.common.crypt.Crypter
-import pt.um.masb.common.database.NewInstanceSession
-import pt.um.masb.common.emptyHash
+import pt.um.masb.common.data.Payout
+import pt.um.masb.common.hash.AvailableHashAlgorithms
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hash.Companion.emptyHash
+import pt.um.masb.common.hash.Hashable
+import pt.um.masb.common.hash.Hashed
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.flattenBytes
-import pt.um.masb.common.storage.adapters.Storable
+import pt.um.masb.common.storage.LedgerContract
 import java.math.BigDecimal
 import java.security.PublicKey
 
@@ -25,7 +23,7 @@ data class TransactionOutput(
     override var hashId: Hash,
     var payout: Payout,
     var tx: MutableSet<Hash>
-) : Sizeable, Hashed, Hashable, Storable,
+) : Sizeable, Hashed, Hashable,
     LedgerContract {
 
     override val approximateSize: Long
@@ -43,25 +41,13 @@ data class TransactionOutput(
     ) : this(
         publicKey,
         prevCoinbase,
-        emptyHash(),
-        BigDecimal("0"),
+        emptyHash,
+        Payout(BigDecimal.ZERO),
         mutableSetOf<Hash>()
     ) {
         addToPayout(cumUTXO, newT, prev)
     }
 
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("TransactionOutput")
-            .apply {
-                setProperty("publicKey", publicKey.encoded)
-                setProperty("prevCoinbase", prevCoinbase)
-                setProperty("hashId", hashId)
-                setProperty("payout", payout)
-                setProperty("txSet", tx)
-            }
 
     fun addToPayout(
         payout: Payout,
@@ -76,13 +62,14 @@ data class TransactionOutput(
     /**
      * {@inheritDoc}
      */
-    override fun digest(c: Crypter): Hash =
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
-                tx,
+                tx.sumBy { it.bytes.size },
+                tx.asSequence().map { it.bytes },
                 publicKey.encoded,
-                prevCoinbase,
-                payout.unscaledValue().toByteArray()
+                prevCoinbase.bytes,
+                payout.bytes
             )
         )
 
@@ -122,6 +109,6 @@ data class TransactionOutput(
     }
 
     companion object : KLogging() {
-        val crypter = AvailableCrypters.SHA256Encrypter
+        val crypter = AvailableHashAlgorithms.SHA256Hasher
     }
 }

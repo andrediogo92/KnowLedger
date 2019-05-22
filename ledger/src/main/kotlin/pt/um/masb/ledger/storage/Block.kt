@@ -1,14 +1,12 @@
-package pt.um.masb.ledger
+package pt.um.masb.ledger.storage
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
-import pt.um.masb.common.Difficulty
-import pt.um.masb.common.Hash
 import pt.um.masb.common.Sizeable
-import pt.um.masb.common.database.NewInstanceSession
-import pt.um.masb.common.storage.adapters.Storable
+import pt.um.masb.common.data.Difficulty
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.storage.LedgerContract
 import pt.um.masb.ledger.config.BlockParams
 import pt.um.masb.ledger.data.MerkleTree
 
@@ -18,7 +16,7 @@ data class Block(
     val coinbase: Coinbase,
     val header: BlockHeader,
     var merkleTree: MerkleTree
-) : Sizeable, Storable, LedgerContract {
+) : Sizeable, LedgerContract {
 
     @Transient
     private val classSize: Long =
@@ -69,31 +67,6 @@ data class Block(
     ) {
         headerSize = header.approximateSize
     }
-
-
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("Block")
-            .apply {
-                setProperty(
-                    "data",
-                    data.map { it.store(session) })
-                setProperty(
-                    "coinbase",
-                    coinbase.store(session)
-                )
-                setProperty(
-                    "header",
-                    header.store(session)
-                )
-                setProperty(
-                    "merkleTree",
-                    merkleTree.store(session)
-                )
-            }
-
 
     /**
      * Add a single new transaction.

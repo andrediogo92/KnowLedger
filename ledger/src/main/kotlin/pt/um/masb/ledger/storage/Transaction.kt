@@ -1,22 +1,20 @@
-package pt.um.masb.ledger
+package pt.um.masb.ledger.storage
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
-import pt.um.masb.common.Hash
-import pt.um.masb.common.Hashable
-import pt.um.masb.common.Hashed
 import pt.um.masb.common.Sizeable
-import pt.um.masb.common.crypt.AvailableCrypters
-import pt.um.masb.common.crypt.Crypter
-import pt.um.masb.common.database.NewInstanceSession
+import pt.um.masb.common.hash.AvailableHashAlgorithms
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hashable
+import pt.um.masb.common.hash.Hashed
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.flattenBytes
 import pt.um.masb.common.misc.generateSignature
 import pt.um.masb.common.misc.verifyECDSASig
-import pt.um.masb.common.storage.adapters.Storable
+import pt.um.masb.common.storage.LedgerContract
 import pt.um.masb.ledger.data.PhysicalData
-import pt.um.masb.ledger.service.Ident
+import pt.um.masb.ledger.service.Identity
 import java.security.PrivateKey
 import java.security.PublicKey
 
@@ -30,7 +28,6 @@ data class Transaction(
 ) : Sizeable,
     Hashed,
     Hashable,
-    Storable,
     LedgerContract {
 
 
@@ -49,14 +46,14 @@ data class Transaction(
 
 
     constructor(
-        ident: Ident,
+        identity: Identity,
         data: PhysicalData
     ) : this(
-        ident.publicKey,
+        identity.publicKey,
         data,
         generateSignature(
-            ident.privateKey,
-            ident.publicKey,
+            identity.privateKey,
+            identity.publicKey,
             data,
             crypter
         )
@@ -77,23 +74,6 @@ data class Transaction(
         )
     )
 
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("Transaction")
-            .apply {
-                setProperty("publicKey", publicKey.encoded)
-                setProperty("data", data.store(session))
-                setProperty(
-                    "signature",
-                    session.newInstance(
-                        signature
-                    )
-                )
-                setProperty("hashId", hashId)
-            }
-
     /**
      * Verifies the data we signed hasn't been
      * tampered with.
@@ -104,7 +84,7 @@ data class Transaction(
     fun verifySignature(): Boolean =
         verifyECDSASig(
             publicKey,
-            publicKey.encoded + data.digest(crypter),
+            publicKey.encoded + data.digest(crypter).bytes,
             signature
         )
 
@@ -117,11 +97,11 @@ data class Transaction(
     }
 
 
-    override fun digest(c: Crypter): Hash =
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
                 publicKey.encoded,
-                data.digest(c),
+                data.digest(c).bytes,
                 signature
             )
         )
@@ -157,7 +137,7 @@ data class Transaction(
     }
 
     companion object : KLogging() {
-        val crypter = AvailableCrypters.SHA256Encrypter
+        val crypter = AvailableHashAlgorithms.SHA256Hasher
     }
 
 }

@@ -1,22 +1,20 @@
-package pt.um.masb.ledger
+package pt.um.masb.ledger.storage
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
-import pt.um.masb.common.Hash
-import pt.um.masb.common.Hashable
-import pt.um.masb.common.Hashed
-import pt.um.masb.common.Payout
 import pt.um.masb.common.Sizeable
-import pt.um.masb.common.crypt.AvailableCrypters
-import pt.um.masb.common.crypt.Crypter
 import pt.um.masb.common.data.DataFormula
+import pt.um.masb.common.data.Payout
 import pt.um.masb.common.data.calculateDiff
-import pt.um.masb.common.database.NewInstanceSession
-import pt.um.masb.common.emptyHash
+import pt.um.masb.common.hash.AvailableHashAlgorithms
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hash.Companion.emptyHash
+import pt.um.masb.common.hash.Hashable
+import pt.um.masb.common.hash.Hashed
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.flattenBytes
-import pt.um.masb.common.storage.adapters.Storable
+import pt.um.masb.common.storage.LedgerContract
 import pt.um.masb.ledger.data.PhysicalData
 import java.math.BigDecimal
 import java.math.MathContext
@@ -37,8 +35,7 @@ data class Coinbase(
     override var hashId: Hash,
     @Transient
     private val payoutFormula: DataFormula = ::calculateDiff
-) : Sizeable, Hashed, Hashable, Storable,
-    LedgerContract {
+) : Sizeable, Hashed, Hashable, LedgerContract {
 
 
     override val approximateSize: Long
@@ -55,7 +52,7 @@ data class Coinbase(
 
     init {
         if (hashId.contentEquals(
-                emptyHash()
+                emptyHash
             )
         ) {
             hashId = digest(crypter)
@@ -64,8 +61,8 @@ data class Coinbase(
 
     constructor() : this(
         mutableSetOf(),
-        BigDecimal.ZERO,
-        emptyHash(),
+        Payout(BigDecimal.ZERO),
+        emptyHash,
         ::calculateDiff
     )
 
@@ -79,27 +76,6 @@ data class Coinbase(
         hashId,
         ::calculateDiff
     )
-
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("Coinbase")
-            .apply {
-                setProperty(
-                    "payoutTXOs",
-                    payoutTXO.map {
-                        it.store(session)
-                    })
-                setProperty(
-                    "coinbase",
-                    coinbase
-                )
-                setProperty(
-                    "hashId",
-                    hashId
-                )
-            }
 
     /**
      * Takes the new Transaction and attempts to calculate a fluctuation from
@@ -122,7 +98,7 @@ data class Coinbase(
         val payout: Payout
         val lkHash: Hash
         val lUTXOHash: Hash = latestUTXO?.hashId
-            ?: emptyHash()
+            ?: emptyHash
 
         //None are known for this area.
         if (latestKnown == null) {
@@ -136,7 +112,7 @@ data class Coinbase(
                 THRESHOLD,
                 MATH_CONTEXT
             )
-            lkHash = emptyHash()
+            lkHash = emptyHash
         } else {
             payout = calculatePayout(
                 newT.data,
@@ -222,13 +198,16 @@ data class Coinbase(
             MATH_CONTEXT
         )
 
-    override fun digest(c: Crypter): Hash =
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
-                payoutTXO.map {
-                    it.hashId
+                payoutTXO.sumBy {
+                    it.hashId.bytes.size
                 },
-                coinbase.unscaledValue().toByteArray()
+                payoutTXO.asSequence().map {
+                    it.hashId.bytes
+                },
+                coinbase.bytes
             )
         )
 
@@ -265,7 +244,7 @@ data class Coinbase(
             12,
             RoundingMode.HALF_EVEN
         )
-        val crypter = AvailableCrypters.SHA256Encrypter
+        val crypter = AvailableHashAlgorithms.SHA256Hasher
     }
 
 }

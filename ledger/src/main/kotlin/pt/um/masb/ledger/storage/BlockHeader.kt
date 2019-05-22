@@ -1,21 +1,19 @@
-package pt.um.masb.ledger
+package pt.um.masb.ledger.storage
 
-import com.orientechnologies.orient.core.record.OElement
 import com.squareup.moshi.JsonClass
 import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
-import pt.um.masb.common.Difficulty
-import pt.um.masb.common.Hash
-import pt.um.masb.common.Hashable
-import pt.um.masb.common.Hashed
 import pt.um.masb.common.Sizeable
-import pt.um.masb.common.crypt.AvailableCrypters
-import pt.um.masb.common.crypt.Crypter
-import pt.um.masb.common.database.NewInstanceSession
-import pt.um.masb.common.emptyHash
+import pt.um.masb.common.data.Difficulty
+import pt.um.masb.common.hash.AvailableHashAlgorithms
+import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hash.Companion.emptyHash
+import pt.um.masb.common.hash.Hashable
+import pt.um.masb.common.hash.Hashed
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
-import pt.um.masb.common.storage.adapters.Storable
+import pt.um.masb.common.storage.LedgerContract
 import pt.um.masb.ledger.config.BlockParams
 import java.time.Instant
 
@@ -31,8 +29,7 @@ data class BlockHeader(
     val params: BlockParams,
     var timestamp: Instant = Instant.now(),
     var nonce: Long = 0
-) : Sizeable, Hashed, Hashable, Storable,
-    LedgerContract {
+) : Sizeable, Hashed, Hashable, LedgerContract {
 
     override val approximateSize: Long =
         ClassLayout
@@ -50,31 +47,11 @@ data class BlockHeader(
         blockChainId,
         difficulty,
         blockheight,
-        emptyHash(),
-        emptyHash(),
+        emptyHash,
+        emptyHash,
         previousHash,
         blockParams
     )
-
-
-    override fun store(
-        session: NewInstanceSession
-    ): OElement =
-        session
-            .newInstance("BlockHeader")
-            .apply {
-                setProperty("ledgerHash", ledgerId)
-                setProperty("difficulty", difficulty.toByteArray())
-                setProperty("blockheight", blockheight)
-                setProperty("hashId", hashId)
-                setProperty("merkleRoot", merkleRoot)
-                setProperty("previousHash", previousHash)
-                setProperty("params", params)
-                setProperty("seconds", timestamp.epochSecond)
-                setProperty("nanos", timestamp.nano)
-                setProperty("nonce", nonce)
-            }
-
 
     /**
      * Hash is a cryptographic digest calculated from previous hashId,
@@ -86,17 +63,17 @@ data class BlockHeader(
     }
 
 
-    override fun digest(c: Crypter): Hash =
+    override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
-                ledgerId,
-                difficulty.toByteArray(),
+                ledgerId.bytes,
+                difficulty.difficulty.toByteArray(),
                 blockheight.bytes(),
-                previousHash,
+                previousHash.bytes,
                 nonce.bytes(),
                 timestamp.epochSecond.bytes(),
                 timestamp.nano.bytes(),
-                merkleRoot,
+                merkleRoot.bytes,
                 params.blockLength.bytes(),
                 params.blockMemSize.bytes()
             )
@@ -152,6 +129,6 @@ data class BlockHeader(
     }
 
     companion object : KLogging() {
-        val crypter = AvailableCrypters.SHA256Encrypter
+        val crypter = AvailableHashAlgorithms.SHA256Hasher
     }
 }
