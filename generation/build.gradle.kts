@@ -10,6 +10,7 @@ repositories {
 }
 
 dependencies {
+    implementation(project(":common"))
     implementation(project(":annotations"))
     implementation(kotlin("stdlib-jdk8"))
     //Code generation library for kotlin, highly recommended
