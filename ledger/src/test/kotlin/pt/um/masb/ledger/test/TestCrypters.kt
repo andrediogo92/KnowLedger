@@ -5,7 +5,7 @@ import assertk.assertions.isEqualTo
 import mu.KLogging
 import org.junit.jupiter.api.Test
 import pt.um.masb.common.misc.base64Encode
-import pt.um.masb.ledger.test.utils.crypter
+import pt.um.masb.common.test.crypter
 
 class TestCrypters {
     companion object : KLogging()

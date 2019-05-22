@@ -23,10 +23,6 @@ import pt.um.masb.ledger.service.LedgerService
 import pt.um.masb.ledger.storage.Block
 import pt.um.masb.ledger.storage.Transaction
 import pt.um.masb.ledger.storage.adapters.TransactionStorageAdapter
-import pt.um.masb.ledger.test.utils.extractOrFail
-import pt.um.masb.ledger.test.utils.makeXTransactions
-import pt.um.masb.ledger.test.utils.moshi
-import pt.um.masb.ledger.test.utils.testDB
 import java.math.BigDecimal
 
 class TestOrientDatabase {

@@ -8,6 +8,9 @@ import assertk.assertions.isTrue
 import mu.KLogging
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import pt.um.masb.common.test.applyHashInPairs
+import pt.um.masb.common.test.crypter
+import pt.um.masb.common.test.randomDouble
 import pt.um.masb.ledger.data.MerkleTree
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.data.TUnit
@@ -15,11 +18,6 @@ import pt.um.masb.ledger.data.TemperatureData
 import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.storage.Coinbase
 import pt.um.masb.ledger.storage.Transaction
-import pt.um.masb.ledger.test.utils.applyHashInPairs
-import pt.um.masb.ledger.test.utils.crypter
-import pt.um.masb.ledger.test.utils.generateCoinbase
-import pt.um.masb.ledger.test.utils.makeXTransactions
-import pt.um.masb.ledger.test.utils.randomDouble
 import java.math.BigDecimal
 
 class TestMerkleTree {

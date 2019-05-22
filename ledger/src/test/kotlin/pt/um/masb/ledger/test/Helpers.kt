@@ -1,9 +1,8 @@
-package pt.um.masb.ledger.test.utils
+package pt.um.masb.ledger.test
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
 import mu.KLogger
-import org.apache.commons.rng.simple.RandomSource
 import org.junit.jupiter.api.fail
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.Payout
@@ -12,11 +11,9 @@ import pt.um.masb.common.database.orient.OrientDatabase
 import pt.um.masb.common.database.orient.OrientDatabaseInfo
 import pt.um.masb.common.database.orient.OrientDatabaseMode
 import pt.um.masb.common.database.orient.OrientDatabaseType
-import pt.um.masb.common.hash.AvailableHashAlgorithms
-import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
-import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.storage.LedgerContract
+import pt.um.masb.common.test.randomDouble
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.data.TUnit
 import pt.um.masb.ledger.data.TemperatureData
@@ -35,9 +32,6 @@ import pt.um.masb.ledger.storage.Coinbase
 import pt.um.masb.ledger.storage.Transaction
 import pt.um.masb.ledger.storage.TransactionOutput
 import java.math.BigDecimal
-import java.security.Security
-
-internal val r = RandomSource.create(RandomSource.SPLIT_MIX_64)
 
 internal val moshi by lazy {
     Moshi
@@ -56,41 +50,13 @@ internal val moshi by lazy {
         .build()
 }
 
-internal val crypter: Hasher =
-    if (Security.getProvider("BC") == null) {
-        Security.addProvider(
-            org.bouncycastle.jce.provider.BouncyCastleProvider()
-        )
-        AvailableHashAlgorithms.SHA256Hasher
-    } else {
-        AvailableHashAlgorithms.SHA256Hasher
-    }
-
 internal fun testDB(): ManagedDatabase = OrientDatabase(
     OrientDatabaseInfo(
         modeOpenOrient = OrientDatabaseMode.MEMORY,
-        path = "./test",
+        path = "",
         mode = OrientDatabaseType.MEMORY
     )
 )
-
-internal fun randomDouble(): Double =
-    r.nextDouble()
-
-internal fun randomInt(): Int =
-    r.nextInt()
-
-internal fun randomInt(bound: Int): Int =
-    r.nextInt(bound)
-
-internal fun randomBytesIntoArray(byteArray: ByteArray) {
-    r.nextBytes(byteArray)
-}
-
-internal fun randomByteArray(size: Int): ByteArray =
-    ByteArray(size).also {
-        randomBytesIntoArray(it)
-    }
 
 internal fun makeXTransactions(
     id: Array<Identity>,
@@ -212,40 +178,6 @@ internal fun logActualToExpectedLists(
     }
 }
 
-internal fun applyHashInPairs(
-    crypter: Hasher,
-    hashes: Array<Hash>
-): Hash {
-    var previousHashes = hashes
-    var newHashes: Array<Hash>
-    var levelIndex = hashes.size
-    while (levelIndex > 2) {
-        if (levelIndex % 2 == 0) {
-            levelIndex /= 2
-            newHashes = Array(levelIndex) {
-                crypter.applyHash(
-                    previousHashes[it * 2] + previousHashes[it * 2 + 1]
-                )
-            }
-        } else {
-            levelIndex /= 2
-            levelIndex++
-            newHashes = Array(levelIndex) {
-                if (it != levelIndex - 1) {
-                    crypter.applyHash(
-                        previousHashes[it * 2] + previousHashes[it * 2 + 1]
-                    )
-                } else {
-                    crypter.applyHash(
-                        previousHashes[it * 2] + previousHashes[it * 2]
-                    )
-                }
-            }
-        }
-        previousHashes = newHashes
-    }
-    return crypter.applyHash(previousHashes[0] + previousHashes[1])
-}
 
 internal inline fun <T : LedgerContract> LoadListResult<T>.applyOrFail(
     block: List<T>.() -> Unit

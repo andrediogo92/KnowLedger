@@ -9,12 +9,10 @@ import org.junit.jupiter.api.Test
 import pt.um.masb.common.data.Difficulty.Companion.MIN_DIFFICULTY
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
+import pt.um.masb.common.test.randomByteArray
 import pt.um.masb.ledger.config.BlockParams
 import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.storage.Block
-import pt.um.masb.ledger.test.utils.makeXTransactions
-import pt.um.masb.ledger.test.utils.moshi
-import pt.um.masb.ledger.test.utils.randomByteArray
 
 class TestSerialization {
     val ident = Identity("test")
