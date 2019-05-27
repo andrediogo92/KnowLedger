@@ -6,31 +6,24 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import mu.KLogging
 import org.junit.jupiter.api.Test
-import pt.um.masb.common.data.Difficulty.Companion.MIN_DIFFICULTY
-import pt.um.masb.common.hash.Hash
-import pt.um.masb.common.hash.Hash.Companion.emptyHash
-import pt.um.masb.common.test.randomByteArray
-import pt.um.masb.ledger.config.BlockParams
 import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.storage.Block
 
 class TestSerialization {
-    val ident = Identity("test")
+    private val id = arrayOf(
+        Identity("test1"),
+        Identity("test2")
+    )
 
-    val testTransactions = makeXTransactions(ident, 4)
-        .sortedByDescending {
-            it.data.instant
-        }
+    val testTransactions =
+        generateXTransactions(id, 10)
+            .sortedByDescending {
+                it.data.instant
+            }
 
     @Test
     fun `serialization and deserialization of blocks`() {
-        val block = Block(
-            Hash(randomByteArray(32)),
-            emptyHash,
-            MIN_DIFFICULTY,
-            1,
-            BlockParams()
-        )
+        val block = generateBlock(id, testTransactions)
 
         testTransactions.forEachIndexed { i, t ->
             assertThat(block.addTransaction(t))
@@ -47,7 +40,11 @@ class TestSerialization {
         logger.debug {
             resultingBlock
         }
-        assertThat(json.fromJson(resultingBlock)).isEqualTo(block)
+        val rebuiltBlock = json.fromJson(resultingBlock)!!
+        //Even though everything seems absolutely fine
+        //this blows up.
+        //Deserialization is unnecessary though.
+        assertThat(rebuiltBlock).isEqualTo(block)
     }
 
     companion object : KLogging()
