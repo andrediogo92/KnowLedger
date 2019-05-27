@@ -26,7 +26,7 @@ class TestCrypters {
         assertThat(
             base64
         ).isEqualTo(
-            "66A+X3HpwVxjvJEUrhSrt0dcc/27SpL6ymh3sM5gH1s="
+            "66A-X3HpwVxjvJEUrhSrt0dcc_27SpL6ymh3sM5gH1s="
         )
 
         logger.debug {
