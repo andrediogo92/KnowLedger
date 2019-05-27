@@ -9,8 +9,10 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import pt.um.masb.common.data.Difficulty.Companion.MIN_DIFFICULTY
-import pt.um.masb.common.database.ManagedDatabase
+import pt.um.masb.common.database.DatabaseMode
+import pt.um.masb.common.database.DatabaseType
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.ledger.config.BlockParams
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.data.TemperatureData
@@ -19,28 +21,32 @@ import pt.um.masb.ledger.data.adapters.TemperatureDataStorageAdapter
 import pt.um.masb.ledger.data.adapters.TrafficFlowDataStorageAdapter
 import pt.um.masb.ledger.service.ChainHandle
 import pt.um.masb.ledger.service.Identity
-import pt.um.masb.ledger.service.LedgerService
+import pt.um.masb.ledger.service.LedgerHandle
 import pt.um.masb.ledger.storage.Block
 import pt.um.masb.ledger.storage.Transaction
-import pt.um.masb.ledger.storage.adapters.TransactionStorageAdapter
 import java.math.BigDecimal
 
 class TestOrientDatabase {
-    val database: ManagedDatabase = testDB()
-
     val ident = Identity("test")
 
-    val testTransactions = makeXTransactions(ident, 10)
+    val testTransactions = generateXTransactions(ident, 10)
 
-    val ledger = LedgerService(database)
-        .newLedgerHandle("test")
-        .extractOrFail()
+    val ledger: LedgerHandle = LedgerHandle
+        .Builder()
+        .withLedgerIdentity("test")
+        .unwrap()
+        .withCustomSession(
+            DatabaseMode.MEMORY, DatabaseType.MEMORY,
+            null, null
+        )
+        .withDBPath("test")
+        .build()
+        .unwrap()
 
     val hash = ledger.ledgerId.hashId
-
     val trunc = hash.truncated
 
-    val transactionStorageAdapter = TransactionStorageAdapter()
+    val hasher: Hasher = LedgerHandle.getHasher(hash)!!
 
     @BeforeAll
     fun `initialize DB`() {
@@ -50,13 +56,13 @@ class TestOrientDatabase {
     inner class TestQuerying {
         val temperatureChain: ChainHandle = ledger.registerNewChainHandleOf(
             TemperatureData::class.java,
-            TemperatureDataStorageAdapter()
-        ).extractOrFail()
+            TemperatureDataStorageAdapter
+        ).unwrap()
 
         val trafficChain: ChainHandle = ledger.registerNewChainHandleOf(
             TrafficFlowData::class.java,
-            TrafficFlowDataStorageAdapter()
-        ).extractOrFail()
+            TrafficFlowDataStorageAdapter
+        ).unwrap()
 
 
         @Nested
@@ -97,7 +103,8 @@ class TestOrientDatabase {
                             34.5,
                             12.6
                         )
-                    )
+                    ),
+                    hasher
                 )
 
                 val block = Block(
@@ -122,7 +129,7 @@ class TestOrientDatabase {
     }
 
     fun `close database`() {
-        database.close()
+        ledger.close()
     }
 
 
