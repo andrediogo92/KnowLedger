@@ -9,13 +9,14 @@ class OrientDatabase(
 ) : ManagedDatabase {
     internal val instance: OrientDB =
         OrientDB(
-            "${dbInfo.modeOpenOrient.mode}:${dbInfo.path}",
+            "${dbInfo.databaseMode.mode}:${dbInfo.path}",
             dbInfo.config
         )
 
-    override fun newManagedSession(): ManagedSession =
+    override fun newManagedSession(dbName: String): ManagedSession =
         OrientSession(
             instance,
+            dbName,
             dbInfo
         )
 
