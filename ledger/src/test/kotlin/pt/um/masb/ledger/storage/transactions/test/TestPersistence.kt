@@ -2,61 +2,99 @@ package pt.um.masb.ledger.storage.transactions.test
 
 import assertk.assertAll
 import assertk.assertThat
-import assertk.assertions.containsAll
-import assertk.assertions.containsExactly
-import assertk.assertions.isEqualTo
-import assertk.assertions.isNotNull
+import assertk.assertions.*
+import mu.KLogging
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import pt.um.masb.common.database.DatabaseMode
+import pt.um.masb.common.database.DatabaseType
 import pt.um.masb.common.database.ManagedDatabase
 import pt.um.masb.common.database.ManagedSession
+import pt.um.masb.common.database.orient.OrientDatabase
+import pt.um.masb.common.database.orient.OrientDatabaseInfo
 import pt.um.masb.common.database.orient.OrientSession
+import pt.um.masb.common.misc.base64Encode
+import pt.um.masb.common.storage.results.QueryFailure
+import pt.um.masb.ledger.data.adapters.TemperatureDataStorageAdapter
 import pt.um.masb.ledger.service.Identity
-import pt.um.masb.ledger.service.LedgerService
+import pt.um.masb.ledger.service.LedgerHandle
 import pt.um.masb.ledger.storage.adapters.TransactionStorageAdapter
 import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
-import pt.um.masb.ledger.test.TestOrientDatabase
-import pt.um.masb.ledger.test.utils.appendByLine
-import pt.um.masb.ledger.test.utils.applyOrFail
-import pt.um.masb.ledger.test.utils.extractOrFail
-import pt.um.masb.ledger.test.utils.logActualToExpectedLists
-import pt.um.masb.ledger.test.utils.makeXTransactions
-import pt.um.masb.ledger.test.utils.testDB
+import pt.um.masb.ledger.test.appendByLine
+import pt.um.masb.ledger.test.failOnLoadError
+import pt.um.masb.ledger.test.generateXTransactions
+import pt.um.masb.ledger.test.logActualToExpectedLists
 
 class TestPersistence {
-    val database: ManagedDatabase = testDB()
-    val session: ManagedSession = database.newManagedSession()
+    val database: ManagedDatabase = OrientDatabase(
+        OrientDatabaseInfo(
+            databaseMode = DatabaseMode.MEMORY,
+            path = "",
+            databaseType = DatabaseType.MEMORY
+        )
+    )
+
+    val session: ManagedSession =
+        database.newManagedSession("test")
     val pw = PersistenceWrapper(session)
     val ident = Identity("test")
 
-    val testTransactions = makeXTransactions(ident, 10)
+    val ledgerHandle =
+        LedgerHandle
+            .Builder()
+            .withCustomDB(database, session, pw)
+            .withLedgerIdentity("test")
+            .unwrap()
+            .build()
+            .unwrap()
 
-    val ledger = LedgerService(database)
-        .newLedgerHandle("test")
-        .extractOrFail()
+    val hash = ledgerHandle.ledgerId.hashId
+    val testTransactions = generateXTransactions(ident, 25)
 
-    val hash = ledger.ledgerId.hashId
-
-    val trunc = hash.truncated
-
-    val transactionStorageAdapter = TransactionStorageAdapter()
 
     @BeforeAll
     fun `initialize DB and transactions`() {
         session.makeActive()
 
+        logger.info {
+            """LedgerHash is ${hash.print}
+                | Base64: ${base64Encode(hash)}
+            """.trimMargin()
+        }
+
+        assert(
+            ledgerHandle.addStorageAdapter(TemperatureDataStorageAdapter)
+        )
+
+        assert(
+            LedgerHandle.getContainer(hash) != null
+        )
+
         testTransactions.forEach {
             pw.persistEntity(
                 it,
-                transactionStorageAdapter,
-                "${transactionStorageAdapter.id.toLowerCase()}${trunc.toLowerCase()}"
-            )
+                TransactionStorageAdapter
+            ).mapError {
+                when (this.failure) {
+                    is QueryFailure.UnknownFailure ->
+                        (this.failure as QueryFailure.UnknownFailure)
+                            .exception
+                            ?.let { exception ->
+                                throw exception
+                            } ?: logger.error {
+                            this.failure.cause
+                        }
+                    else ->
+                        logger.error {
+                            this.failure.cause
+                        }
+                }
+                this
+            }
         }
-    }
 
-    init {
     }
 
 
@@ -66,49 +104,52 @@ class TestPersistence {
         fun `Test created clusters`() {
             val plug = (session as OrientSession)
             val clusterNames = plug.clustersPresent
-            TestOrientDatabase.logger.info {
+            logger.info {
                 StringBuilder()
                     .append("Clusters present in ${plug.name}")
                     .appendByLine(clusterNames)
                     .toString()
             }
             assertThat(
-                clusterNames
+                clusterNames.asSequence().map {
+                    it.substringBefore('_')
+                }.toSet()
             ).containsAll(
-                "BlockPool$trunc".toLowerCase(),
-                "TransactionPool$trunc".toLowerCase(),
-                "Transaction$trunc".toLowerCase(),
-                "ChainHandle$trunc".toLowerCase(),
-                "TransactionOutput$trunc".toLowerCase(),
-                "Coinbase$trunc".toLowerCase(),
-                "Block$trunc".toLowerCase(),
-                "LedgerId$trunc".toLowerCase(),
-                "BlockHeader$trunc".toLowerCase(),
-                "PhysicalData$trunc".toLowerCase()
+                "Transaction".toLowerCase(),
+                "ChainHandle".toLowerCase(),
+                "TransactionOutput".toLowerCase(),
+                "Coinbase".toLowerCase(),
+                "Block".toLowerCase(),
+                "LedgerId".toLowerCase(),
+                "BlockHeader".toLowerCase(),
+                "PhysicalData".toLowerCase()
             )
         }
 
         @Test
         fun `Test cluster query`() {
+            //Query from first cluster.
             session.query(
-                "select from cluster:transaction${
-                trunc.toLowerCase()
-                }",
+                "select from cluster:transaction_1",
                 emptyMap()
             ).let { set ->
                 val l = set.asSequence().toList()
                 l.forEach { res ->
-                    TestOrientDatabase.logger.info {
+                    logger.info {
                         res.element.print()
                     }
                 }
+                //Ensure there is a subset of the generated transactions
+                //present.
                 assertAll {
-                    assertThat(l.size).isEqualTo(testTransactions.size)
+                    assertThat(l.size).isLessThanOrEqualTo(testTransactions.size)
                     l.map {
                         it.element.getHashProperty("hashId")
                     }.forEachIndexed { i, hash ->
-                        assertThat(hash.print).isEqualTo(
-                            testTransactions[i].hashId.print
+                        assertThat(testTransactions.map {
+                            it.hashId
+                        }).contains(
+                            hash
                         )
                     }
                 }
@@ -118,12 +159,11 @@ class TestPersistence {
 
         @Test
         fun `Test binary records`() {
-            val binary = session.query(
-                "select from cluster:transaction${
-                trunc.toLowerCase()
-                }",
-                emptyMap()
-            ).next().element.getHashProperty("hashId")
+            val t = session.query(
+                "select from transaction"
+            )
+            assertThat(t.hasNext()).isTrue()
+            val binary = t.next().element.getHashProperty("hashId")
             assertThat(binary.bytes).containsExactly(
                 *testTransactions[0].hashId.bytes
             )
@@ -135,18 +175,22 @@ class TestPersistence {
     @Nested
     inner class TestTransactions {
         @Test
-        fun `Test simple insertion`() {
+        fun `Test insertion successful all properties present`() {
             val orient = (session as OrientSession)
             val present = orient.browseClass(
-                "Transaction"
+                TransactionStorageAdapter.id
             ).toList()
-            val schemaProps = TransactionStorageAdapter().properties.keys.toTypedArray()
-            assertThat(
-                present[0].presentProperties
-            ).isNotNull().containsAll(
-                *schemaProps
-            )
-            TestOrientDatabase.logger.info {
+            assertThat(present.size).isEqualTo(testTransactions.size)
+            val schemaProps =
+                TransactionStorageAdapter.properties.keys.toTypedArray()
+            for (p in present) {
+                assertThat(
+                    p.presentProperties
+                ).isNotNull().containsAll(
+                    *schemaProps
+                )
+            }
+            logger.info {
                 StringBuilder("Properties in Transaction:")
                     .appendByLine(present[0].presentProperties)
                     .toString()
@@ -158,81 +202,82 @@ class TestPersistence {
                 },
                 "Transactions' hashes from test:",
                 testTransactions.map { it.hashId.print },
-                TestOrientDatabase.logger
+                logger
             )
-            assertThat(
-                present.size
-            ).isEqualTo(10)
         }
 
         @Test
         fun `Test loading transactions`() {
-            val transactions = pw.getTransactionsByClass(
+            pw.getTransactionsByClass(
                 hash,
-                "Temperature"
-            )
-            transactions.applyOrFail {
-                logActualToExpectedLists(
-                    "Transactions' hashes from DB:",
-                    this.map { it.hashId.print },
-                    "Transactions' hashes from test:",
-                    testTransactions.map { it.hashId.print },
-                    TestOrientDatabase.logger
-                )
-                assertAll {
-                    assertThat(this.size).isEqualTo(testTransactions.size)
-                    this.forEachIndexed { i, it ->
-                        assertThat(it).isEqualTo(testTransactions[i])
-                    }
+                TemperatureDataStorageAdapter.id
+            ).flatMapSuccess {
+                this.toList().apply {
+                    logActualToExpectedLists(
+                        "Transactions' hashes from DB:",
+                        this.map { it.hashId.print },
+                        "Transactions' hashes from test:",
+                        testTransactions.map { it.hashId.print },
+                        logger
+                    )
+                    assertThat(this.size).isEqualTo(
+                        testTransactions.size
+                    )
+                    assertThat(this).containsOnly(
+                        *testTransactions.toTypedArray()
+                    )
                 }
-            }
+
+            }.failOnLoadError()
         }
 
         @Test
         fun `Test loading by timestamp`() {
             pw.getTransactionsOrderedByTimestamp(
                 hash
-            ).applyOrFail {
-                val reversed = testTransactions.asReversed()
-                logActualToExpectedLists(
-                    "Transactions' hashes from DB:",
-                    this.map { it.hashId.print },
-                    "Transactions' hashes from test:",
-                    reversed.map { it.hashId.print },
-                    TestOrientDatabase.logger
-                )
-                assertAll {
+            ).flatMapSuccess {
+                this.toList().apply {
+                    val reversed = testTransactions.asReversed()
+                    logActualToExpectedLists(
+                        "Transactions' hashes from DB:",
+                        this.map { it.hashId.print },
+                        "Transactions' hashes from test:",
+                        reversed.map { it.hashId.print },
+                        logger
+                    )
                     assertThat(this.size).isEqualTo(
                         testTransactions.size
                     )
-                    this.forEachIndexed { i, it ->
-                        assertThat(it).isEqualTo(reversed[i])
-                    }
+                    assertThat(this).containsExactly(
+                        *testTransactions.asReversed().toTypedArray()
+                    )
+
                 }
-            }
+            }.failOnLoadError()
 
         }
 
         @Test
         fun `Test loading by Public Key`() {
             pw.getTransactionsFromAgent(
-                hash,
-                ident.publicKey
-            ).applyOrFail {
-                logActualToExpectedLists(
-                    "Transactions' hashes from DB:",
-                    this.map { it.hashId.print },
-                    "Transactions' hashes from test:",
-                    testTransactions.map { it.hashId.print },
-                    TestOrientDatabase.logger
-                )
-                assertAll {
-                    assertThat(this.size).isEqualTo(testTransactions.size)
-                    this.forEachIndexed { i, it ->
-                        assertThat(it).isEqualTo(testTransactions[i])
-                    }
+                hash, ident.publicKey
+            ).flatMapSuccess {
+                this.toList().apply {
+                    logActualToExpectedLists(
+                        "Transactions' hashes from DB:",
+                        this.map { it.hashId.print },
+                        "Transactions' hashes from test:",
+                        testTransactions.map { it.hashId.print },
+                        logger
+                    )
+                    assertThat(this.size).isEqualTo(
+                        testTransactions.size
+                    )
+                    assertThat(this).containsOnly(
+                        *testTransactions.toTypedArray()
+                    )
                 }
-            }
+            }.failOnLoadError()
         }
 
         @Test
@@ -240,11 +285,11 @@ class TestPersistence {
             pw.getTransactionByHash(
                 hash,
                 testTransactions[2].hashId
-            ).applyOrFail {
+            ).flatMapSuccess {
                 assertThat(this)
                     .isNotNull()
                     .isEqualTo(testTransactions[2])
-            }
+            }.failOnLoadError()
         }
 
     }
@@ -254,4 +299,6 @@ class TestPersistence {
         session.close()
         database.close()
     }
+
+    companion object : KLogging()
 }
