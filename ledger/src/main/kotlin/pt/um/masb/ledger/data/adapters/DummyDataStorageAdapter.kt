@@ -4,11 +4,12 @@ import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
-import pt.um.masb.common.storage.results.DataResult
+import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.ledger.data.DummyData
 
-class DummyDataStorageAdapter : AbstractStorageAdapter<DummyData>(
+object DummyDataStorageAdapter : AbstractStorageAdapter<DummyData>(
     DummyData::class.java
 ) {
     override val properties: Map<String, StorageType>
@@ -29,9 +30,9 @@ class DummyDataStorageAdapter : AbstractStorageAdapter<DummyData>(
 
     override fun load(
         element: StorageElement
-    ): DataResult<DummyData> =
+    ): Outcome<DummyData, DataFailure> =
         commonLoad(element, id) {
-            DataResult.Success(
+            Outcome.Ok<DummyData, DataFailure>(
                 DummyData.DUMMY
             )
         }

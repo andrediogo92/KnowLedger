@@ -6,8 +6,9 @@ import pt.um.masb.common.database.StorageBytes
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageID
 import pt.um.masb.common.database.StorageType
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
-import pt.um.masb.common.storage.results.DataResult
+import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.ledger.data.OtherData
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -15,7 +16,7 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 import java.io.Serializable
 
-class OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
+object OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
     OtherData::class.java
 ) {
     override val properties: Map<String, StorageType>
@@ -59,9 +60,7 @@ class OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
     }
 
 
-    override fun load(
-        element: StorageElement
-    ): DataResult<OtherData> =
+    override fun load(element: StorageElement): Outcome<OtherData, DataFailure> =
         commonLoad(element, id) {
             val bos = ByteArrayOutputStream()
             val chunkIds: List<StorageID> =
@@ -77,7 +76,7 @@ class OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
                     bos.toByteArray()
                 )
             ).use {
-                DataResult.Success(
+                Outcome.Ok<OtherData, DataFailure>(
                     OtherData(
                         it.readObject() as Serializable
                     )

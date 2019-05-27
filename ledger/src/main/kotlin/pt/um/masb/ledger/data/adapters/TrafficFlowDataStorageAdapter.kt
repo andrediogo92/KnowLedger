@@ -4,11 +4,12 @@ import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
-import pt.um.masb.common.storage.results.DataResult
+import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.ledger.data.TrafficFlowData
 
-class TrafficFlowDataStorageAdapter : AbstractStorageAdapter<TrafficFlowData>(
+object TrafficFlowDataStorageAdapter : AbstractStorageAdapter<TrafficFlowData>(
     TrafficFlowData::class.java
 ) {
     override val properties: Map<String, StorageType>
@@ -66,9 +67,11 @@ class TrafficFlowDataStorageAdapter : AbstractStorageAdapter<TrafficFlowData>(
         }
     }
 
-    override fun load(element: StorageElement): DataResult<TrafficFlowData> =
+    override fun load(
+        element: StorageElement
+    ): Outcome<TrafficFlowData, DataFailure> =
         commonLoad(element, id) {
-            DataResult.Success(
+            Outcome.Ok<TrafficFlowData, DataFailure>(
                 TrafficFlowData(
                     getStorageProperty("functionalRoadClass"),
                     getStorageProperty("currentSpeed"),

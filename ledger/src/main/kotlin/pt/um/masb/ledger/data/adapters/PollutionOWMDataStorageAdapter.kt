@@ -4,12 +4,13 @@ import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
-import pt.um.masb.common.storage.results.DataResult
+import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.ledger.data.PollutionOWMData
 import pt.um.masb.ledger.data.PollutionType
 
-class PollutionOWMDataStorageAdapter : AbstractStorageAdapter<PollutionOWMData>(
+object PollutionOWMDataStorageAdapter : AbstractStorageAdapter<PollutionOWMData>(
     PollutionOWMData::class.java
 ) {
     override val properties: Map<String, StorageType>
@@ -47,7 +48,7 @@ class PollutionOWMDataStorageAdapter : AbstractStorageAdapter<PollutionOWMData>(
 
     override fun load(
         element: StorageElement
-    ): DataResult<PollutionOWMData> =
+    ): Outcome<PollutionOWMData, DataFailure> =
         commonLoad(element, id) {
             val prop = getStorageProperty<Int>("parameter")
             val param = when (prop) {
@@ -60,11 +61,13 @@ class PollutionOWMDataStorageAdapter : AbstractStorageAdapter<PollutionOWMData>(
                 else -> null
             }
             if (param == null) {
-                DataResult.UnrecognizedUnit<PollutionOWMData>(
-                    "Parameter is not one of the expected types: $prop"
+                Outcome.Error<PollutionOWMData, DataFailure>(
+                    DataFailure.UnrecognizedUnit(
+                        "Parameter is not one of the expected types: $prop"
+                    )
                 )
             } else {
-                DataResult.Success(
+                Outcome.Ok<PollutionOWMData, DataFailure>(
                     PollutionOWMData(
                         getStorageProperty("unit"),
                         param,

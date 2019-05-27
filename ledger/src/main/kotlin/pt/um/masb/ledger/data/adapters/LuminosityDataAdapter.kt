@@ -4,12 +4,13 @@ import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
-import pt.um.masb.common.storage.results.DataResult
+import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.ledger.data.LUnit
 import pt.um.masb.ledger.data.LuminosityData
 
-class LuminosityDataAdapter : AbstractStorageAdapter<LuminosityData>(
+object LuminosityDataAdapter : AbstractStorageAdapter<LuminosityData>(
     LuminosityData::class.java
 ) {
     override val properties: Map<String, StorageType>
@@ -35,7 +36,7 @@ class LuminosityDataAdapter : AbstractStorageAdapter<LuminosityData>(
 
     override fun load(
         element: StorageElement
-    ): DataResult<LuminosityData> =
+    ): Outcome<LuminosityData, DataFailure> =
         commonLoad(element, id) {
             val prop = getStorageProperty<Int>("unit")
             val unit = when (prop) {
@@ -44,11 +45,13 @@ class LuminosityDataAdapter : AbstractStorageAdapter<LuminosityData>(
                 else -> null
             }
             if (unit == null) {
-                DataResult.UnrecognizedUnit<LuminosityData>(
-                    "LUnit is not one of the expected: $prop"
+                Outcome.Error<LuminosityData, DataFailure>(
+                    DataFailure.UnrecognizedUnit(
+                        "LUnit is not one of the expected: $prop"
+                    )
                 )
             } else {
-                DataResult.Success(
+                Outcome.Ok<LuminosityData, DataFailure>(
                     LuminosityData(
                         getStorageProperty("lum"),
                         unit

@@ -4,11 +4,12 @@ import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
-import pt.um.masb.common.storage.results.DataResult
+import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.ledger.data.TrafficIncidentData
 
-class TrafficIncidentDataStorageAdapter : AbstractStorageAdapter<TrafficIncidentData>(
+object TrafficIncidentDataStorageAdapter : AbstractStorageAdapter<TrafficIncidentData>(
     TrafficIncidentData::class.java
 ) {
     override val properties: Map<String, StorageType>
@@ -36,48 +37,50 @@ class TrafficIncidentDataStorageAdapter : AbstractStorageAdapter<TrafficIncident
     ): StorageElement {
         val trafficIncident = toStore as TrafficIncidentData
         return session.newInstance(id).apply {
-            setStorageProperty(
-                "trafficModelId",
-                trafficIncident.trafficModelId
-            )
-            setStorageProperty("id", trafficIncident.id)
-            setStorageProperty("iconLat", trafficIncident.iconLat)
-            setStorageProperty("iconLon", trafficIncident.iconLon)
-            setStorageProperty(
-                "incidentCategory",
-                trafficIncident.incidentCategory
-            )
-            setStorageProperty(
-                "magnitudeOfDelay",
-                trafficIncident.magnitudeOfDelay
-            )
-            setStorageProperty("clusterSize", trafficIncident.clusterSize)
-            setStorageProperty("description", trafficIncident.description)
-            setStorageProperty(
-                "causeOfAccident",
-                trafficIncident.causeOfAccident
-            )
-            setStorageProperty("from", trafficIncident.from)
-            setStorageProperty("to", trafficIncident.to)
-            setStorageProperty("length", trafficIncident.length)
-            setStorageProperty(
-                "delayInSeconds",
-                trafficIncident.delayInSeconds
-            )
-            setStorageProperty(
-                "affectedRoads",
-                trafficIncident.affectedRoads
-            )
-            setStorageProperty("cityName", trafficIncident.cityName)
-            setStorageProperty("citySeqNum", trafficIncident.citySeqNum)
+            this
+                .setStorageProperty(
+                    "trafficModelId",
+                    trafficIncident.trafficModelId
+                ).setStorageProperty("id", trafficIncident.id)
+                .setStorageProperty(
+                    "iconLat", trafficIncident.iconLat
+                ).setStorageProperty(
+                    "iconLon", trafficIncident.iconLon
+                ).setStorageProperty(
+                    "incidentCategory",
+                    trafficIncident.incidentCategory
+                ).setStorageProperty(
+                    "magnitudeOfDelay",
+                    trafficIncident.magnitudeOfDelay
+                ).setStorageProperty(
+                    "clusterSize", trafficIncident.clusterSize
+                ).setStorageProperty(
+                    "description", trafficIncident.description
+                ).setStorageProperty(
+                    "causeOfAccident",
+                    trafficIncident.causeOfAccident
+                ).setStorageProperty("from", trafficIncident.from)
+                .setStorageProperty("to", trafficIncident.to)
+                .setStorageProperty("length", trafficIncident.length)
+                .setStorageProperty(
+                    "delayInSeconds",
+                    trafficIncident.delayInSeconds
+                ).setStorageProperty(
+                    "affectedRoads",
+                    trafficIncident.affectedRoads
+                ).setStorageProperty(
+                    "cityName", trafficIncident.cityName
+                ).setStorageProperty(
+                    "citySeqNum", trafficIncident.citySeqNum
+                )
         }
     }
 
     override fun load(
         element: StorageElement
-    ): DataResult<TrafficIncidentData> =
+    ): Outcome<TrafficIncidentData, DataFailure> =
         commonLoad(element, id) {
-            DataResult.Success(
+            Outcome.Ok<TrafficIncidentData, DataFailure>(
                 TrafficIncidentData(
                     getStorageProperty("trafficModelId"),
                     getStorageProperty("id"),

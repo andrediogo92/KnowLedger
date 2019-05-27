@@ -4,13 +4,14 @@ import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
-import pt.um.masb.common.storage.results.DataResult
+import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.ledger.data.TUnit
 import pt.um.masb.ledger.data.TemperatureData
-import pt.um.masb.ledger.results.tryOrDataQueryFailure
+import pt.um.masb.ledger.results.tryOrDataUnknownFailure
 
-class TemperatureDataStorageAdapter : AbstractStorageAdapter<TemperatureData>(
+object TemperatureDataStorageAdapter : AbstractStorageAdapter<TemperatureData>(
     TemperatureData::class.java
 ) {
     override val properties: Map<String, StorageType>
@@ -21,29 +22,30 @@ class TemperatureDataStorageAdapter : AbstractStorageAdapter<TemperatureData>(
 
     override fun store(
         toStore: BlockChainData, session: NewInstanceSession
-    ): StorageElement {
-        val temperatureData = toStore as TemperatureData
-        return session.newInstance(id).apply {
-            setStorageProperty(
-                "temperature",
-                temperatureData.temperature
-            )
-            setStorageProperty(
-                "unit",
-                when (temperatureData.unit) {
-                    TUnit.CELSIUS -> TUnit.CELSIUS.ordinal
-                    TUnit.FAHRENHEIT -> TUnit.FAHRENHEIT.ordinal
-                    TUnit.KELVIN -> TUnit.KELVIN.ordinal
-                    TUnit.RANKINE -> TUnit.RANKINE.ordinal
-                }
-            )
+    ): StorageElement =
+        (toStore as TemperatureData).let {
+            session.newInstance(id).apply {
+                setStorageProperty(
+                    "temperature",
+                    it.temperature
+                )
+                setStorageProperty(
+                    "unit",
+                    when (it.unit) {
+                        TUnit.CELSIUS -> TUnit.CELSIUS.ordinal
+                        TUnit.FAHRENHEIT -> TUnit.FAHRENHEIT.ordinal
+                        TUnit.KELVIN -> TUnit.KELVIN.ordinal
+                        TUnit.RANKINE -> TUnit.RANKINE.ordinal
+                    }
+                )
+            }
         }
-    }
+
 
     override fun load(
         element: StorageElement
-    ): DataResult<TemperatureData> =
-        tryOrDataQueryFailure {
+    ): Outcome<TemperatureData, DataFailure> =
+        tryOrDataUnknownFailure {
             val prop = element.getStorageProperty<Int>("unit")
             val unit = when (prop) {
                 TUnit.CELSIUS.ordinal -> TUnit.CELSIUS
@@ -53,11 +55,13 @@ class TemperatureDataStorageAdapter : AbstractStorageAdapter<TemperatureData>(
                 else -> null
             }
             if (unit == null) {
-                DataResult.UnrecognizedUnit<TemperatureData>(
+                Outcome.Error<TemperatureData, DataFailure>(
+                    DataFailure.UnrecognizedUnit(
                     "Unit is not one of the expected: $prop"
+                    )
                 )
             } else {
-                DataResult.Success(
+                Outcome.Ok<TemperatureData, DataFailure>(
                     TemperatureData(
                         element.getStorageProperty("temperature"),
                         unit
