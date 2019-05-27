@@ -4,12 +4,14 @@ import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.ledger.data.MerkleTree
-import pt.um.masb.ledger.results.tryOrLoadQueryFailure
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
+import pt.um.masb.ledger.service.LedgerHandle
+import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.adapters.LedgerStorageAdapter
 
-class MerkleTreeStorageAdapter : LedgerStorageAdapter<MerkleTree> {
+object MerkleTreeStorageAdapter : LedgerStorageAdapter<MerkleTree> {
     override val id: String
         get() = "MerkleTree"
 
@@ -34,16 +36,16 @@ class MerkleTreeStorageAdapter : LedgerStorageAdapter<MerkleTree> {
 
 
     override fun load(
-        hash: Hash,
-        element: StorageElement
-    ): LoadResult<MerkleTree> =
-        tryOrLoadQueryFailure {
+        ledgerHash: Hash, element: StorageElement
+    ): Outcome<MerkleTree, LoadFailure> =
+        tryOrLoadUnknownFailure {
             val collapsedTree: List<Hash> =
                 element.getHashList("collapsedTree")
             val levelIndex: List<Int> =
                 element.getStorageProperty("levelIndex")
-            LoadResult.Success(
+            Outcome.Ok<MerkleTree, LoadFailure>(
                 MerkleTree(
+                    LedgerHandle.getHasher(ledgerHash)!!,
                     collapsedTree,
                     levelIndex
                 )

@@ -4,18 +4,18 @@ import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
-import pt.um.masb.common.storage.adapters.NotBaseClassException
-import pt.um.masb.common.storage.results.DataResult
+import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.storage.adapters.StorageAdapterNotRegistered
 import pt.um.masb.ledger.data.GeoCoords
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.results.intoLoad
-import pt.um.masb.ledger.results.tryOrLoadQueryFailure
-import pt.um.masb.ledger.service.LedgerService
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
+import pt.um.masb.ledger.service.LedgerHandle
+import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.adapters.LedgerStorageAdapter
 import java.time.Instant
 
-class PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
+object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
     override val id: String
         get() = "PhysicalData"
 
@@ -30,9 +30,9 @@ class PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
         toStore: PhysicalData, session: NewInstanceSession
     ): StorageElement {
         val dataStorageAdapter =
-            LedgerService.getStorageAdapter(
+            LedgerHandle.getStorageAdapter(
                 toStore.data.javaClass
-            ) ?: throw NotBaseClassException()
+            ) ?: throw StorageAdapterNotRegistered()
 
         return session.newInstance(id).apply {
             setStorageProperty(
@@ -55,25 +55,21 @@ class PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
     }
 
     override fun load(
-        hash: Hash, element: StorageElement
-    ): LoadResult<PhysicalData> =
-        tryOrLoadQueryFailure {
+        ledgerHash: Hash, element: StorageElement
+    ): Outcome<PhysicalData, LoadFailure> =
+        tryOrLoadUnknownFailure {
             val dataElem = element.getLinked("data")
             val dataName = dataElem.schema
             val loader = dataName?.let {
-                LedgerService.getStorageAdapter(dataName)
+                LedgerHandle.getStorageAdapter(dataName)
             }
             if (dataName != null && loader != null) {
-                val data = loader.load(dataElem)
-                if (data !is DataResult.Success) {
-                    return@tryOrLoadQueryFailure data.intoLoad<PhysicalData>()
-                }
-                val instant = Instant.ofEpochSecond(
-                    element.getStorageProperty("seconds"),
-                    element.getStorageProperty("nanos")
-                )
-                if (element.presentProperties.contains("latitude")) {
-                    LoadResult.Success(
+                loader.load(dataElem).flatMapSuccess {
+                    val instant = Instant.ofEpochSecond(
+                        element.getStorageProperty("seconds"),
+                        element.getStorageProperty("nanos")
+                    )
+                    if (element.presentProperties.contains("latitude")) {
                         PhysicalData(
                             instant,
                             GeoCoords(
@@ -81,20 +77,23 @@ class PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
                                 element.getStorageProperty("longitude"),
                                 element.getStorageProperty("altitude")
                             ),
-                            data.data
+                            this
                         )
-                    )
-                } else {
-                    LoadResult.Success(
+
+                    } else {
                         PhysicalData(
                             instant,
-                            data.data
+                            this
                         )
-                    )
+                    }
+                }.mapError {
+                    Outcome.Error<PhysicalData, LoadFailure>(this.failure.intoLoad())
                 }
             } else {
-                LoadResult.UnrecognizedDataType<PhysicalData>(
-                    "Data property was unrecognized in physical data loader: $dataElem"
+                Outcome.Error<PhysicalData, LoadFailure>(
+                    LoadFailure.UnrecognizedDataType(
+                        "Data property was unrecognized in physical data loader: $dataElem"
+                    )
                 )
             }
         }
