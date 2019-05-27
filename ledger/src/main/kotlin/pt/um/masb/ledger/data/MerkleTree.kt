@@ -8,13 +8,21 @@ import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.common.hash.Hashed
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.storage.LedgerContract
 
 @JsonClass(generateAdapter = true)
 data class MerkleTree(
-    val collapsedTree: List<Hash> = emptyList(),
-    val levelIndex: List<Int> = emptyList()
+    @Transient
+    val hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher,
+    internal var collapsedTree: List<Hash> = emptyList(),
+    internal var levelIndex: List<Int> = emptyList()
 ) : Sizeable, LedgerContract {
+
+    val nakedTree: List<Hash>
+        get() = collapsedTree
+    val levelIndexes: List<Int>
+        get() = levelIndex
 
     /**
      * The root hashId.
@@ -26,6 +34,20 @@ data class MerkleTree(
                 emptyHash
 
 
+    constructor(
+        hasher: Hasher,
+        data: List<Hashed>
+    ) : this(hasher) {
+        rebuildMerkleTree(data)
+    }
+
+    constructor(
+        hasher: Hasher,
+        coinbase: Hashed,
+        data: List<Hashed>
+    ) : this(hasher) {
+        rebuildMerkleTree(coinbase, data)
+    }
 
     fun hasTransaction(hash: Hash): Boolean {
         var res = false
@@ -94,11 +116,11 @@ data class MerkleTree(
                     (level + 1 != levelIndex.size &&
                             index + 1 == levelIndex[level + 1])
                 ) {
-                    crypter.applyHash(
+                    hasher.applyHash(
                         collapsedTree[index] + collapsedTree[index]
                     )
                 } else {
-                    crypter.applyHash(
+                    hasher.applyHash(
                         collapsedTree[index] + collapsedTree[index + 1]
                     )
                 }
@@ -106,7 +128,7 @@ data class MerkleTree(
 
             //Is a right leaf
             else {
-                crypter.applyHash(
+                hasher.applyHash(
                     collapsedTree[index - 1] + collapsedTree[index]
                 )
             }
@@ -132,7 +154,7 @@ data class MerkleTree(
         data: List<Hashed>
     ): Boolean =
         //Check if collapsedTree is empty.
-        if (!collapsedTree.isEmpty() &&
+        if (collapsedTree.isNotEmpty() &&
             collapsedTree.size - levelIndex[levelIndex.size - 1] == data.size + 1
         ) {
             if (checkAllTransactionsPresent(coinbase, data)) {
@@ -178,7 +200,7 @@ data class MerkleTree(
                     || delta + 1 == collapsedTree.size
                 ) {
                     if (!collapsedTree[i].contentEquals(
-                            (crypter.applyHash(
+                            (hasher.applyHash(
                                 collapsedTree[delta] + collapsedTree[delta]
                             ))
                         )
@@ -191,7 +213,7 @@ data class MerkleTree(
                 //Then it's a regular left leaf.
                 else {
                     if (!collapsedTree[i].contentEquals(
-                            (crypter.applyHash(
+                            (hasher.applyHash(
                                 collapsedTree[delta] + collapsedTree[delta + 1]
                             ))
                         )
@@ -239,150 +261,179 @@ data class MerkleTree(
         return res
     }
 
-    companion object : KLogging() {
-        val crypter = AvailableHashAlgorithms.SHA256Hasher
 
-        /**
-         * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
-         *
-         * Initializes the first tree layer, which is the transaction layer,
-         * sets a correspondence from each hashId to its index and starts a build loop,
-         * building all subsequent layers.
-         *
-         * Takes [data] as the transactions in the block and outputs the full
-         * corresponding [MerkleTree] for their hashes, or an empty [MerkleTree]
-         * if supplied with empty [data].
-         */
-        fun buildMerkleTree(data: List<Hashed>): MerkleTree {
-            val treeLayer = mutableListOf<Array<Hash>>()
-            treeLayer.add(
-                data.map(Hashed::hashId).toTypedArray()
-            )
-            return buildLoop(treeLayer)
-        }
-
-        /**
-         * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
-         *
-         * Initializes the first tree layer, which is the transaction layer,
-         * sets a correspondence from each hashId to its index and starts a build loop,
-         * building all subsequent layers.
-         *
-         * Takes [data] as the transactions in the block + the special [coinbase] transaction's
-         * hashes and outputs the full corresponding [Merkle Tree], or an empty [MerkleTree] if
-         * supplied with empty [data].
-         */
-        fun buildMerkleTree(
-            coinbase: Hashed,
-            data: List<Hashed>
-        ): MerkleTree {
-            val treeLayer = mutableListOf<Array<Hash>>()
-            val arr = Array<Hash>(data.size + 1) {
-                when (it) {
-                    0 -> coinbase.hashId
-                    else -> data[it - 1].hashId
-                }
-            }
-            treeLayer.add(
-                arr
-            )
-            return buildLoop(treeLayer)
-        }
-
-        /**
-         * Build loop that builds a [MerkleTree] collapsed in a heap.
-         *
-         * Start at leaves and iteratively builds the next layer at
-         * depth-1 until it arrives at root.
-         *
-         * Uses [treeLayer] as a container for the successive layers,
-         * where index = max_depth - depth.
-         *
-         * Starts with [treeLayer] supplied with the last layer containing all leaves,
-         * which are the hashes of each of the block's transactions.
-         */
-        private fun buildLoop(treeLayer: MutableList<Array<Hash>>): MerkleTree {
-            var i = 0
-            //Next layer's node count for depth-1
-            var count = (treeLayer[i].size / 2) + (treeLayer[i].size % 2)
-            //While we're not at root yet:
-            while (count > 1) {
-                treeLayer.add(buildNewLayer(treeLayer[i], count))
-                //Update to new count in next tree layer.
-                count = (count / 2) + (count % 2)
-                i += 1
-            }
-            return when (treeLayer[i].size) {
-                2 -> {
-                    val tempTree = mutableListOf<Hash>()
-                    val tempIndex = mutableListOf<Int>()
-                    tempTree.add(
-                        crypter.applyHash(
-                            treeLayer[i][0] + treeLayer[i][1]
-                        )
-                    )
-                    tempIndex.add(0)
-                    treeLayer.reverse()
-                    count = 1
-                    for (s in treeLayer) {
-                        tempIndex.add(count)
-                        tempTree.addAll(s)
-                        count += s.size
-                    }
-                    MerkleTree(
-                        tempTree,
-                        tempIndex
-                    )
-                }
-                //If the previous layer was already length 1, that means we started at the root.
-                1 -> {
-                    MerkleTree(listOf(treeLayer[i][0]))
-                }
-                else -> {
-                    logger.warn { "Empty merkle tree" }
-                    MerkleTree()
-                }
-            }
-        }
-
-        /**
-         * Build the next tree layer in ascending order. Sets proper indexes.
-         *
-         * Checks for oddness, in which case creates a single left child for remainder
-         * hashed with itself.
-         *
-         * Receives the [previousTreeLayer] in ascending order, that is, depth+1 and
-         * the node [count] of nodes in the new layer.
-         *
-         * Returns the new Layer of hashes of their children set.
-         */
-        private fun buildNewLayer(
-            previousTreeLayer: Array<Hash>,
-            count: Int
-        ): Array<Hash> {
-            val treeLayer = Array(count) { emptyHash }
-            var j = 0
-            var i = 1
-            //While we're inside the bounds of this layer, calculate two by two the hashId.
-            while (i < previousTreeLayer.size) {
-                treeLayer[j] = crypter.applyHash(
-                    previousTreeLayer[i - 1] + previousTreeLayer[i]
-                )
-                i += 2
-                j += 1
-            }
-            //If we're still in the layer, there's one left, it's grouped and hashed with itself.
-            if (j < treeLayer.size) {
-                treeLayer[j] = crypter.applyHash(
-                    previousTreeLayer[previousTreeLayer.size - 1] +
-                            previousTreeLayer[previousTreeLayer.size - 1]
-                )
-            }
-            return treeLayer
-        }
-
-
+    /**
+     * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
+     *
+     * Initializes the first tree layer, which is the transaction layer,
+     * sets a correspondence from each hashId to its index and starts a build loop,
+     * building all subsequent layers.
+     *
+     * Takes [data] as the transactions in the block and outputs the full
+     * corresponding [MerkleTree] for their hashes, or an empty [MerkleTree]
+     * if supplied with empty [data].
+     */
+    fun rebuildMerkleTree(data: List<Hashed>) {
+        val treeLayer = mutableListOf<Array<Hash>>()
+        treeLayer.add(
+            data.map(Hashed::hashId).toTypedArray()
+        )
+        buildLoop(treeLayer)
     }
+
+    /**
+     * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
+     *
+     * Initializes the first tree layer, which is the transaction layer,
+     * sets a correspondence from each hashId to its index and starts a build loop,
+     * building all subsequent layers.
+     *
+     * Takes [data] as the transactions in the block + the special [coinbase] transaction's
+     * hashes and outputs the full corresponding [Merkle Tree], or an empty [MerkleTree] if
+     * supplied with empty [data].
+     */
+    fun rebuildMerkleTree(
+        coinbase: Hashed, data: List<Hashed>
+    ) {
+        val treeLayer: MutableList<Array<Hash>> = mutableListOf()
+        val arr = Array(data.size + 1) {
+            when (it) {
+                0 -> coinbase.hashId
+                else -> data[it - 1].hashId
+            }
+        }
+        treeLayer.add(
+            arr
+        )
+        buildLoop(treeLayer)
+    }
+
+    /**
+     * Build loop that builds a [MerkleTree] collapsed in a heap.
+     *
+     * Start at leaves and iteratively builds the next layer at
+     * depth-1 until it arrives at root.
+     *
+     * Uses [treeLayer] as a container for the successive layers,
+     * where index = max_depth - depth.
+     *
+     * Starts with [treeLayer] supplied with the last layer containing all leaves,
+     * which are the hashes of each of the block's transactions.
+     */
+    private fun buildLoop(
+        treeLayer: MutableList<Array<Hash>>
+    ) {
+        var i = 0
+        //Next layer's node count for depth-1
+        var count = (treeLayer[i].size / 2) + (treeLayer[i].size % 2)
+        //While we're not at root yet:
+        while (count > 1) {
+            treeLayer.add(buildNewLayer(treeLayer[i], count))
+            //Update to new count in next tree layer.
+            count = (count / 2) + (count % 2)
+            i += 1
+        }
+        return when (treeLayer[i].size) {
+            2 -> {
+                val tempTree = mutableListOf<Hash>()
+                val tempIndex = mutableListOf<Int>()
+                tempTree.add(
+                    hasher.applyHash(
+                        treeLayer[i][0] + treeLayer[i][1]
+                    )
+                )
+                tempIndex.add(0)
+                treeLayer.reverse()
+                count = 1
+                for (s in treeLayer) {
+                    tempIndex.add(count)
+                    tempTree.addAll(s)
+                    count += s.size
+                }
+
+                collapsedTree = tempTree
+                levelIndex = tempIndex
+            }
+            //If the previous layer was already length 1,
+            //that means we started at the root.
+            1 -> {
+                collapsedTree = treeLayer[i].toList()
+                levelIndex = listOf(0)
+            }
+            else -> {
+                logger.warn { "Empty merkle tree" }
+                collapsedTree = emptyList()
+                levelIndex = emptyList()
+            }
+        }
+    }
+
+    /**
+     * Build the next tree layer in ascending order. Sets proper indexes.
+     *
+     * Checks for oddness, in which case creates a single left child for remainder
+     * hashed with itself.
+     *
+     * Receives the [previousTreeLayer] in ascending order, that is, depth+1 and
+     * the node [count] of nodes in the new layer.
+     *
+     * Returns the new Layer of hashes of their children set.
+     */
+    private fun buildNewLayer(
+        previousTreeLayer: Array<Hash>,
+        count: Int
+    ): Array<Hash> {
+        val treeLayer = Array(count) { emptyHash }
+        var j = 0
+        var i = 1
+        //While we're inside the bounds of this layer, calculate two by two the hashId.
+        while (i < previousTreeLayer.size) {
+            treeLayer[j] = hasher.applyHash(
+                previousTreeLayer[i - 1] + previousTreeLayer[i]
+            )
+            i += 2
+            j += 1
+        }
+        //If we're still in the layer, there's one left, it's grouped and hashed with itself.
+        if (j < treeLayer.size) {
+            treeLayer[j] = hasher.applyHash(
+                previousTreeLayer[previousTreeLayer.size - 1] +
+                        previousTreeLayer[previousTreeLayer.size - 1]
+            )
+        }
+        return treeLayer
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is MerkleTree) return false
+        if (!collapsedTree
+                .asSequence()
+                .zip(other.collapsedTree.asSequence())
+                .all { (h1, h2) ->
+                    h1.contentEquals(h2)
+                }
+        ) return false
+        if (levelIndex
+                .asSequence()
+                .zip(other.levelIndex.asSequence())
+                .all { (i1, i2) ->
+                    i1 == i2
+                }
+        ) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = hasher.hashCode()
+        result = 31 * result + collapsedTree.hashCode()
+        result = 31 * result + levelIndex.hashCode()
+        return result
+    }
+
+
+    companion object : KLogging()
 
 
 }
