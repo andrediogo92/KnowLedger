@@ -1,8 +1,8 @@
 package pt.um.masb.ledger.data
 
 import com.squareup.moshi.JsonClass
+import pt.um.masb.common.config.LedgerConfiguration.OTHER_BASE
 import pt.um.masb.common.data.BlockChainData
-import pt.um.masb.common.data.DataDefaults
 import pt.um.masb.common.data.SelfInterval
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
@@ -25,8 +25,8 @@ data class OtherData(
     }
 
 
-    override val dataConstant: Int
-        get() = DataDefaults.DEFAULT_UNKNOWN
+    override val dataConstant: Long
+        get() = OTHER_BASE
 
 
     override fun calculateDiff(
