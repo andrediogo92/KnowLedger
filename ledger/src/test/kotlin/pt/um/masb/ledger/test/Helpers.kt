@@ -1,19 +1,26 @@
 package pt.um.masb.ledger.test
 
+import assertk.fail
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
 import mu.KLogger
-import org.junit.jupiter.api.fail
 import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.data.DataFormula
+import pt.um.masb.common.data.DefaultDiff
+import pt.um.masb.common.data.Difficulty
 import pt.um.masb.common.data.Payout
-import pt.um.masb.common.database.ManagedDatabase
-import pt.um.masb.common.database.orient.OrientDatabase
-import pt.um.masb.common.database.orient.OrientDatabaseInfo
-import pt.um.masb.common.database.orient.OrientDatabaseMode
-import pt.um.masb.common.database.orient.OrientDatabaseType
+import pt.um.masb.common.hash.AvailableHashAlgorithms
+import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
-import pt.um.masb.common.storage.LedgerContract
+import pt.um.masb.common.hash.Hasher
+import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.storage.results.DataFailure
+import pt.um.masb.common.storage.results.QueryFailure
+import pt.um.masb.common.test.randomByteArray
 import pt.um.masb.common.test.randomDouble
+import pt.um.masb.ledger.config.BlockParams
+import pt.um.masb.ledger.config.CoinbaseParams
+import pt.um.masb.ledger.data.MerkleTree
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.data.TUnit
 import pt.um.masb.ledger.data.TemperatureData
@@ -24,10 +31,10 @@ import pt.um.masb.ledger.json.HashJsonAdapter
 import pt.um.masb.ledger.json.InstantJsonAdapter
 import pt.um.masb.ledger.json.PublicKeyJsonAdapter
 import pt.um.masb.ledger.service.Identity
-import pt.um.masb.ledger.service.ServiceHandle
-import pt.um.masb.ledger.service.results.LedgerResult
-import pt.um.masb.ledger.service.results.LoadListResult
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.service.results.LedgerFailure
+import pt.um.masb.ledger.service.results.LoadFailure
+import pt.um.masb.ledger.storage.Block
+import pt.um.masb.ledger.storage.BlockHeader
 import pt.um.masb.ledger.storage.Coinbase
 import pt.um.masb.ledger.storage.Transaction
 import pt.um.masb.ledger.storage.TransactionOutput
@@ -50,17 +57,35 @@ internal val moshi by lazy {
         .build()
 }
 
-internal fun testDB(): ManagedDatabase = OrientDatabase(
-    OrientDatabaseInfo(
-        modeOpenOrient = OrientDatabaseMode.MEMORY,
-        path = "",
-        mode = OrientDatabaseType.MEMORY
-    )
-)
-
-internal fun makeXTransactions(
+internal fun generateBlock(
     id: Array<Identity>,
-    size: Int
+    ts: List<Transaction>,
+    hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher,
+    formula: DataFormula = DefaultDiff,
+    coinbaseParams: CoinbaseParams = CoinbaseParams(),
+    blockParams: BlockParams = BlockParams()
+): Block {
+    val coinbase = generateCoinbase(
+        id, ts, hasher, formula, coinbaseParams
+    )
+    return Block(
+        mutableListOf(),
+        coinbase,
+        BlockHeader(
+            Hash(randomByteArray(32)),
+            hasher,
+            Hash(randomByteArray(32)),
+            Difficulty.INIT_DIFFICULTY, 2,
+            blockParams
+        ),
+        MerkleTree(hasher, coinbase, ts)
+    )
+}
+
+internal fun generateXTransactions(
+    id: Array<Identity>,
+    size: Int,
+    hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher
 ): List<Transaction> {
     val ts: MutableList<Transaction> = mutableListOf()
     for (i in 0 until size) {
@@ -76,16 +101,18 @@ internal fun makeXTransactions(
                         ),
                         TUnit.CELSIUS
                     )
-                )
+                ),
+                hasher
             )
         )
     }
     return ts
 }
 
-internal fun makeXTransactions(
+internal fun generateXTransactions(
     id: Identity,
-    size: Int
+    size: Int,
+    hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher
 ): List<Transaction> {
     val ts: MutableList<Transaction> = mutableListOf()
     for (i in 0 until size) {
@@ -100,7 +127,8 @@ internal fun makeXTransactions(
                         ),
                         TUnit.CELSIUS
                     )
-                )
+                ),
+                hasher
             )
         )
     }
@@ -110,7 +138,10 @@ internal fun makeXTransactions(
 
 internal fun generateCoinbase(
     id: Array<Identity>,
-    ts: List<Transaction>
+    ts: List<Transaction>,
+    hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher,
+    formula: DataFormula = DefaultDiff,
+    coinbaseParams: CoinbaseParams = CoinbaseParams()
 ): Coinbase {
     val sets = listOf(
         TransactionOutput(
@@ -118,14 +149,16 @@ internal fun generateCoinbase(
             emptyHash,
             Payout(BigDecimal.ONE),
             ts[0].hashId,
-            emptyHash
+            emptyHash,
+            hasher
         ),
         TransactionOutput(
             id[1].publicKey,
             emptyHash,
             Payout(BigDecimal.ONE),
             ts[1].hashId,
-            emptyHash
+            emptyHash,
+            hasher
         )
     )
     //First transaction output has
@@ -147,7 +180,10 @@ internal fun generateCoinbase(
     return Coinbase(
         sets.toSet() as MutableSet<TransactionOutput>,
         Payout(BigDecimal("3")),
-        emptyHash
+        emptyHash,
+        hasher,
+        formula,
+        coinbaseParams
     )
 }
 
@@ -178,70 +214,6 @@ internal fun logActualToExpectedLists(
     }
 }
 
-
-internal inline fun <T : LedgerContract> LoadListResult<T>.applyOrFail(
-    block: List<T>.() -> Unit
-) =
-    when (this) {
-        is LoadListResult.Success -> this.data.block()
-        is LoadListResult.QueryFailure ->
-            if (exception != null)
-                fail(cause, exception)
-            else
-                fail(cause)
-        is LoadListResult.NonExistentData -> fail(cause)
-        is LoadListResult.NonMatchingCrypter -> fail(cause)
-        is LoadListResult.UnrecognizedDataType -> fail(cause)
-        is LoadListResult.Propagated -> fail(cause)
-    }
-
-
-internal inline fun <T : LedgerContract> LoadResult<T>.applyOrFail(
-    block: T.() -> Unit
-) =
-    when (this) {
-        is LoadResult.Success -> this.data.block()
-        is LoadResult.QueryFailure ->
-            if (exception != null)
-                fail(cause, exception)
-            else
-                fail(cause)
-        is LoadResult.NonExistentData -> fail(cause)
-        is LoadResult.NonMatchingCrypter -> fail(cause)
-        is LoadResult.UnrecognizedDataType -> fail(cause)
-        is LoadResult.Propagated -> fail(cause)
-    }
-
-
-internal inline fun <T : ServiceHandle> LedgerResult<T>.applyOrFail(
-    block: T.() -> Unit
-) =
-    when (this) {
-        is LedgerResult.Success -> this.data.block()
-        is LedgerResult.QueryFailure ->
-            if (exception != null)
-                fail(cause, exception)
-            else
-                fail(cause)
-        is LedgerResult.NonExistentData -> fail(cause)
-        is LedgerResult.NonMatchingCrypter -> fail(cause)
-        is LedgerResult.Propagated -> fail(cause)
-    }
-
-
-internal fun <T : ServiceHandle> LedgerResult<T>.extractOrFail(): T =
-    when (this) {
-        is LedgerResult.Success -> this.data
-        is LedgerResult.QueryFailure ->
-            if (exception != null)
-                fail(cause, exception)
-            else
-                fail(cause)
-        is LedgerResult.NonExistentData -> fail(cause)
-        is LedgerResult.NonMatchingCrypter -> fail(cause)
-        is LedgerResult.Propagated -> fail(cause)
-    }
-
 internal fun StringBuilder.appendByLine(toPrint: Collection<String>): StringBuilder {
     for (thing in toPrint) {
         append(System.lineSeparator())
@@ -250,4 +222,52 @@ internal fun StringBuilder.appendByLine(toPrint: Collection<String>): StringBuil
         append(',')
     }
     return this
+}
+
+fun <T : Any> Outcome<T, LoadFailure>.failOnLoadError() {
+    this.mapError<LoadFailure> {
+        when (this.failure) {
+            is LoadFailure.UnknownFailure ->
+                (this.failure as LoadFailure.UnknownFailure).exception?.let {
+                    throw it
+                }
+        }
+        fail(this.failure.cause)
+    }
+}
+
+fun <T : Any> Outcome<T, DataFailure>.failOnDataError() {
+    this.mapError<DataFailure> {
+        when (this.failure) {
+            is DataFailure.UnknownFailure ->
+                (this.failure as DataFailure.UnknownFailure).exception?.let {
+                    throw it
+                }
+        }
+        fail(this.failure.cause)
+    }
+}
+
+fun <T : Any> Outcome<T, LedgerFailure>.failOnLedgerError() {
+    this.mapError<LedgerFailure> {
+        when (this.failure) {
+            is LedgerFailure.UnknownFailure ->
+                (this.failure as LedgerFailure.UnknownFailure).exception?.let {
+                    throw it
+                }
+        }
+        fail(this.failure.cause)
+    }
+}
+
+fun <T : Any> Outcome<T, QueryFailure>.failOnQueryError() {
+    this.mapError<QueryFailure> {
+        when (this.failure) {
+            is QueryFailure.UnknownFailure ->
+                (this.failure as QueryFailure.UnknownFailure).exception?.let {
+                    throw it
+                }
+        }
+        fail(this.failure.cause)
+    }
 }
