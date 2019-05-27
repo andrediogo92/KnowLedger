@@ -12,4 +12,10 @@ inline class Payout(val payout: BigDecimal) {
 
     fun add(payout: Payout): Payout =
         Payout(payout.payout.add(this.payout))
+
+    fun contentEquals(payout: Payout): Boolean =
+        this.payout == payout.payout
+
+    fun contentHashCode(): Int =
+        this.payout.hashCode()
 }
