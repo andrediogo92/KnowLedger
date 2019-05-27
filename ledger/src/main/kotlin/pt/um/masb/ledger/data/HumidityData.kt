@@ -1,12 +1,12 @@
 package pt.um.masb.ledger.data
 
 import com.squareup.moshi.JsonClass
+import pt.um.masb.common.config.LedgerConfiguration
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.SelfInterval
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
-import pt.um.masb.ledger.storage.Coinbase
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -50,7 +50,7 @@ data class HumidityData(
             oldH = previous.unit.convertTo(hum, HUnit.KG_BY_KG)
         }
         return newH.subtract(oldH)
-            .divide(oldH, Coinbase.MATH_CONTEXT)
+            .divide(oldH, LedgerConfiguration.GLOBALCONTEXT)
     }
 
     override fun toString(): String {
