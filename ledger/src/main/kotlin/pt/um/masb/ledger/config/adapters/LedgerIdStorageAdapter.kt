@@ -4,17 +4,15 @@ import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.ledger.config.LedgerId
-import pt.um.masb.ledger.results.intoLoad
-import pt.um.masb.ledger.results.tryOrLoadQueryFailure
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
+import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.adapters.LedgerStorageAdapter
 import java.time.Instant
 import java.util.*
 
-class LedgerIdStorageAdapter : LedgerStorageAdapter<LedgerId> {
-    val ledgerParamsStorageAdapter = LedgerParamsStorageAdapter()
-
+object LedgerIdStorageAdapter : LedgerStorageAdapter<LedgerId> {
     override val id: String
         get() = "LedgerId"
 
@@ -23,8 +21,8 @@ class LedgerIdStorageAdapter : LedgerStorageAdapter<LedgerId> {
             "uuid" to StorageType.STRING,
             "timestamp" to StorageType.STRING,
             "id" to StorageType.STRING,
-            "hashId" to StorageType.BYTES,
-            "params" to StorageType.LINK
+            "hashId" to StorageType.HASH,
+            "ledgerParams" to StorageType.LINK
         )
 
     override fun store(
@@ -40,37 +38,40 @@ class LedgerIdStorageAdapter : LedgerStorageAdapter<LedgerId> {
             setStorageProperty("id", toStore.id)
             setHashProperty("hashId", toStore.hashId)
             setLinked(
-                "params", ledgerParamsStorageAdapter,
+                "ledgerParams", LedgerParamsStorageAdapter,
                 toStore.params, session
             )
         }
 
 
     override fun load(
-        hash: Hash, element: StorageElement
-    ): LoadResult<LedgerId> =
-        tryOrLoadQueryFailure {
+        ledgerHash: Hash,
+        element: StorageElement
+    ): Outcome<LedgerId, LoadFailure> =
+        tryOrLoadUnknownFailure {
             val uuid = UUID.fromString(
                 element.getStorageProperty<String>("uuid")
             )
-
             val timestamp = Instant.ofEpochSecond(
                 element.getStorageProperty("seconds"),
                 element.getStorageProperty<Int>("nanos").toLong()
             )
-
-            val id: String =
-                element.getStorageProperty("id")
-
-            val ledgerHash =
+            val hash =
                 element.getHashProperty("hashId")
 
-            val params = ledgerParamsStorageAdapter.load(
+            assert(hash.contentEquals(ledgerHash))
+
+            LedgerParamsStorageAdapter.load(
                 ledgerHash,
-                element.getLinked("params")
-            )
-            params.intoLoad {
-                LedgerId(id, uuid, timestamp, this)
+                element.getLinked("ledgerParams")
+            ).flatMapSuccess {
+                LedgerId(
+                    element.getStorageProperty("id"),
+                    uuid,
+                    timestamp,
+                    this,
+                    ledgerHash
+                )
             }
         }
 }

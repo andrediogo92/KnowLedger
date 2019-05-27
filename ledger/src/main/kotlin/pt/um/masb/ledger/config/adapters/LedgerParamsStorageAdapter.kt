@@ -3,17 +3,14 @@ package pt.um.masb.ledger.config.adapters
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
-import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.ledger.config.LedgerParams
-import pt.um.masb.ledger.results.intoLoad
-import pt.um.masb.ledger.results.tryOrLoadQueryFailure
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
+import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.adapters.LedgerStorageAdapter
 
-class LedgerParamsStorageAdapter : LedgerStorageAdapter<LedgerParams> {
-    val blockParamsStorageAdapter = BlockParamsStorageAdapter()
-
+object LedgerParamsStorageAdapter : LedgerStorageAdapter<LedgerParams> {
     override val id: String
         get() = "LedgerParams"
 
@@ -29,7 +26,7 @@ class LedgerParamsStorageAdapter : LedgerStorageAdapter<LedgerParams> {
         toStore: LedgerParams, session: NewInstanceSession
     ): StorageElement =
         session.newInstance(id).apply {
-            setHashProperty("crypter", toStore.crypter.id)
+            setHashProperty("crypter", toStore.crypter)
             setStorageProperty(
                 "recalcTime", toStore.recalcTime
             )
@@ -37,42 +34,27 @@ class LedgerParamsStorageAdapter : LedgerStorageAdapter<LedgerParams> {
                 "recalcTrigger", toStore.recalcTrigger
             )
             setLinked(
-                "blockParams", blockParamsStorageAdapter,
+                "blockParams", BlockParamsStorageAdapter,
                 toStore.blockParams, session
             )
         }
 
 
     override fun load(
-        hash: Hash, element: StorageElement
-    ): LoadResult<LedgerParams> =
-        tryOrLoadQueryFailure {
-            val crypterHash =
-                element.getHashProperty("crypter")
-            AvailableHashAlgorithms.getCrypter(crypterHash)?.let {
-                val recalcTime: Long =
-                    element.getStorageProperty("recalcTime")
-                val recalcTrigger: Long =
-                    element.getStorageProperty("recalcTrigger")
-                val blockParams =
-                    blockParamsStorageAdapter.load(
-                        hash,
-                        element.getLinked("blockParams")
-                    )
-                if (blockParams !is LoadResult.Success) {
-                    return@tryOrLoadQueryFailure blockParams.intoLoad<LedgerParams>()
-                }
-                LoadResult.Success(
-                    LedgerParams(
-                        it, recalcTime,
-                        recalcTrigger,
-                        blockParams.data
-                    )
+        ledgerHash: Hash, element: StorageElement
+    ): Outcome<LedgerParams, LoadFailure> =
+        tryOrLoadUnknownFailure {
+            BlockParamsStorageAdapter.load(
+                ledgerHash,
+                element.getLinked("blockParams")
+            ).flatMapSuccess {
+                LedgerParams(
+                    element.getStorageProperty("recalcTime"),
+                    element.getStorageProperty("recalcTrigger"),
+                    this,
+                    element.getHashProperty("crypter")
                 )
-            } ?: LoadResult.NonMatchingCrypter<LedgerParams>(
-                """Non matching crypter at load params:
-                | with crypterHash: ${crypterHash.print}
-                """.trimMargin()
-            )
+            }
+
         }
 }
