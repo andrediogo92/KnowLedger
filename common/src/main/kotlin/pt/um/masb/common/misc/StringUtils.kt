@@ -14,8 +14,8 @@ import java.util.*
 
 
 private val hexCode = "0123456789ABCDEF".toCharArray()
-private val b64Encoder = Base64.getEncoder()
-private val b64Decoder = Base64.getDecoder()
+private val b64Encoder = Base64.getUrlEncoder()
+private val b64Decoder = Base64.getUrlDecoder()
 
 /**
  * Signs the [data]'s digest appended to the [publicKey]
