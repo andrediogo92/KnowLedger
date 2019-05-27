@@ -1,172 +1,11 @@
 package pt.um.masb.ledger.results
 
-import pt.um.masb.common.data.BlockChainData
-import pt.um.masb.common.storage.LedgerContract
-import pt.um.masb.common.storage.results.DataListResult
-import pt.um.masb.common.storage.results.DataResult
-import pt.um.masb.common.storage.results.QueryResult
-import pt.um.masb.ledger.service.ServiceHandle
-import pt.um.masb.ledger.service.results.LedgerListResult
-import pt.um.masb.ledger.service.results.LedgerResult
-import pt.um.masb.ledger.service.results.LoadListResult
-import pt.um.masb.ledger.service.results.LoadResult
-
-
-//---------------------------------------
-// Into List Result.
-//---------------------------------------
-
-
-inline fun <R : BlockChainData, T : BlockChainData> DataResult<R>.intoList(
-    reduce: R.() -> List<T>
-): DataListResult<T> =
-    when (this) {
-        is DataResult.Success ->
-            DataListResult.Success(data.reduce())
-        is DataResult.QueryFailure ->
-            DataListResult.QueryFailure(cause, exception)
-        is DataResult.UnrecognizedDataType ->
-            DataListResult.UnrecognizedDataType(cause)
-        is DataResult.UnrecognizedUnit ->
-            DataListResult.UnrecognizedUnit(cause)
-        is DataResult.UnexpectedClass ->
-            DataListResult.UnexpectedClass(cause)
-        is DataResult.NonRegisteredSchema ->
-            DataListResult.NonRegisteredSchema(cause)
-        is DataResult.NonExistentData ->
-            DataListResult.NonExistentData(cause)
-        is DataResult.Propagated -> DataListResult.Propagated(
-            "DataResult -> $pointOfFailure", failable
-        )
-    }
-
-
-fun <R : BlockChainData, T : BlockChainData> DataResult<R>.intoList(): DataListResult<T> =
-    when (this) {
-        //This should never ever happen.
-        is DataResult.Success -> DataListResult.QueryFailure(
-            "DataResult can't auto-convert into DataListResult."
-        )
-        is DataResult.QueryFailure ->
-            DataListResult.QueryFailure(cause, exception)
-        is DataResult.UnrecognizedDataType ->
-            DataListResult.UnrecognizedDataType(cause)
-        is DataResult.UnrecognizedUnit ->
-            DataListResult.UnrecognizedUnit(cause)
-        is DataResult.UnexpectedClass ->
-            DataListResult.UnexpectedClass(cause)
-        is DataResult.NonRegisteredSchema ->
-            DataListResult.NonRegisteredSchema(cause)
-        is DataResult.NonExistentData ->
-            DataListResult.NonExistentData(cause)
-        is DataResult.Propagated -> DataListResult.Propagated(
-            "DataResult -> $pointOfFailure", failable
-        )
-    }
-
-
-inline fun <R : LedgerContract, T : LedgerContract> LoadResult<R>.intoList(
-    reduce: R.() -> List<T>
-): LoadListResult<T> =
-    when (this) {
-        is LoadResult.Success ->
-            LoadListResult.Success(data.reduce())
-        is LoadResult.QueryFailure ->
-            LoadListResult.QueryFailure(cause, exception)
-        is LoadResult.NonMatchingCrypter ->
-            LoadListResult.NonMatchingCrypter(cause)
-        is LoadResult.NonExistentData ->
-            LoadListResult.NonExistentData(cause)
-        is LoadResult.UnrecognizedDataType ->
-            LoadListResult.UnrecognizedDataType(cause)
-        is LoadResult.Propagated -> LoadListResult.Propagated(
-            "LoadResult -> $pointOfFailure", failable
-        )
-    }
-
-
-fun <R : LedgerContract, T : LedgerContract> LoadResult<R>.intoList(): LoadListResult<T> =
-    when (this) {
-        //This should never ever happen.
-        is LoadResult.Success -> LoadListResult.QueryFailure(
-            "DataResult can't auto-convert into ListResult."
-        )
-        is LoadResult.QueryFailure ->
-            LoadListResult.QueryFailure(cause, exception)
-        is LoadResult.NonMatchingCrypter ->
-            LoadListResult.NonMatchingCrypter(cause)
-        is LoadResult.NonExistentData ->
-            LoadListResult.NonExistentData(cause)
-        is LoadResult.UnrecognizedDataType ->
-            LoadListResult.UnrecognizedDataType(cause)
-        is LoadResult.Propagated -> LoadListResult.Propagated(
-            "LoadResult -> $pointOfFailure", failable
-        )
-    }
-
-
-inline fun <R : ServiceHandle, T : ServiceHandle> LedgerResult<R>.intoList(
-    reduce: R.() -> List<T>
-): LedgerListResult<T> =
-    when (this) {
-        is LedgerResult.Success ->
-            LedgerListResult.Success(data.reduce())
-        is LedgerResult.QueryFailure ->
-            LedgerListResult.QueryFailure(cause, exception)
-        is LedgerResult.NonExistentData -> LedgerListResult.NonExistentData(cause)
-        is LedgerResult.NonMatchingCrypter -> LedgerListResult.NonMatchingCrypter(cause)
-        is LedgerResult.Propagated -> LedgerListResult.Propagated(
-            "LedgerResult -> $pointOfFailure", failable
-        )
-    }
-
-
-fun <R : ServiceHandle, T : ServiceHandle> LedgerResult<R>.intoList(): LedgerListResult<T> =
-    when (this) {
-        //This should never ever happen.
-        is LedgerResult.Success -> LedgerListResult.QueryFailure(
-            "LedgerResult can't auto-convert into LedgerListResult"
-        )
-        is LedgerResult.QueryFailure ->
-            LedgerListResult.QueryFailure(cause, exception)
-        is LedgerResult.NonExistentData -> LedgerListResult.NonExistentData(cause)
-        is LedgerResult.NonMatchingCrypter -> LedgerListResult.NonMatchingCrypter(cause)
-        is LedgerResult.Propagated -> LedgerListResult.Propagated(
-            "LedgerResult -> $pointOfFailure", failable
-        )
-    }
-
-
-inline fun <T : Any> QueryResult<T>.intoList(
-    reduce: T.() -> List<T>
-): QueryResult<List<T>> =
-    when (this) {
-        is QueryResult.Success ->
-            QueryResult.Success(data.reduce())
-        is QueryResult.QueryFailure ->
-            QueryResult.QueryFailure(cause, exception)
-        is QueryResult.NonExistentData ->
-            QueryResult.NonExistentData(cause)
-        is QueryResult.Propagated -> QueryResult.Propagated(
-            pointOfFailure, failable
-        )
-    }
-
-
-fun <T : Any> QueryResult<T>.intoList(): QueryResult<List<T>> =
-    when (this) {
-        //This should never ever happen.
-        is QueryResult.Success -> QueryResult.QueryFailure(
-            "QueryResult can't auto-convert into a QueryResult of Lists."
-        )
-        is QueryResult.QueryFailure ->
-            QueryResult.QueryFailure(cause, exception)
-        is QueryResult.NonExistentData ->
-            QueryResult.NonExistentData(cause)
-        is QueryResult.Propagated -> QueryResult.Propagated(
-            pointOfFailure, failable
-        )
-    }
+import pt.um.masb.common.results.Failable
+import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.storage.results.DataFailure
+import pt.um.masb.common.storage.results.QueryFailure
+import pt.um.masb.ledger.service.results.LedgerFailure
+import pt.um.masb.ledger.service.results.LoadFailure
 
 
 // ---------------------------------------
@@ -174,193 +13,108 @@ fun <T : Any> QueryResult<T>.intoList(): QueryResult<List<T>> =
 // ---------------------------------------
 
 
-fun <T : ServiceHandle> Sequence<LedgerResult<T>>.collapse(): LedgerListResult<T> {
+fun <T : Any, U : Failable> Sequence<Outcome<T, U>>.collapse(): Outcome<Sequence<T>, U> {
     val accumulator: MutableList<T> = mutableListOf()
     var short = false
-    var shorter: LedgerResult<T> =
-        LedgerResult.NonExistentData("Input Sequence empty")
-    for (shorting in this) {
-        if (shorting !is LedgerResult.Success) {
-            shorter = shorting
-            short = true
-            break
-        } else {
-            accumulator += shorting.data
+    lateinit var shorter: U
+    loop@ for (shorting in this) {
+        when (shorting) {
+            is Outcome.Ok -> accumulator += shorting.data
+            is Outcome.Error -> {
+                shorter = shorting.failure
+                short = true
+                break@loop
+            }
         }
     }
     return if (short) {
-        shorter.intoList()
+        Outcome.Error(shorter)
     } else {
-        LedgerListResult.Success(
-            accumulator
+        Outcome.Ok(
+            accumulator.asSequence()
         )
     }
 }
 
 
-fun <T : LedgerContract> Sequence<LoadResult<T>>.collapse(): LoadListResult<T> {
+fun <T : Any, U : Failable> List<Outcome<T, U>>.collapse(): Outcome<List<T>, U> {
     val accumulator: MutableList<T> = mutableListOf()
     var short = false
-    var shorter: LoadResult<T> =
-        LoadResult.NonExistentData("Input Sequence empty")
-    for (shorting in this) {
-        if (shorting !is LoadResult.Success) {
-            shorter = shorting
-            short = true
-            break
-        } else {
-            accumulator += shorting.data
+    lateinit var shorter: U
+    loop@ for (shorting in this) {
+        when (shorting) {
+            is Outcome.Ok -> accumulator += shorting.data
+            is Outcome.Error -> {
+                shorter = shorting.failure
+                short = true
+                break@loop
+            }
         }
     }
     return if (short) {
-        shorter.intoList()
+        Outcome.Error(shorter)
     } else {
-        LoadListResult.Success(
+        Outcome.Ok(
             accumulator
         )
     }
 }
-
-
-fun <T : BlockChainData> Sequence<DataResult<T>>.collapse(): DataListResult<T> {
-    val accumulator: MutableList<T> = mutableListOf()
-    var short = false
-    var shorter: DataResult<T> =
-        DataResult.NonExistentData("Input Sequence empty")
-    for (shorting in this) {
-        if (shorting !is DataResult.Success) {
-            shorter = shorting
-            short = true
-            break
-        } else {
-            accumulator += shorting.data
-        }
-    }
-    return if (short) {
-        shorter.intoList()
-    } else {
-        DataListResult.Success(
-            accumulator
-        )
-    }
-}
-
-fun <T : Any> Sequence<QueryResult<T>>.collapse(): QueryResult<List<T>> {
-    val accumulator: MutableList<T> = mutableListOf()
-    var short = false
-    var shorter: QueryResult<T> =
-        QueryResult.NonExistentData("Input Sequence empty")
-    for (shorting in this) {
-        if (shorting !is QueryResult.Success) {
-            shorter = shorting
-            short = true
-            break
-        } else {
-            accumulator += shorting.data
-        }
-    }
-    return if (short) {
-        shorter.intoList()
-    } else {
-        QueryResult.Success(
-            accumulator
-        )
-    }
-}
-
-fun <T : Any, R : Any> QueryResult<R>.collapse(
-    success: R.() -> T,
-    failure: () -> T
-): T =
-    when (this) {
-        is QueryResult.Success -> data.success()
-        is QueryResult.QueryFailure -> failure()
-        is QueryResult.NonExistentData -> failure()
-        is QueryResult.Propagated -> failure()
-    }
-
 
 //-----------------------------------------
 // Exception Handlers
 //-----------------------------------------
 
 
-inline fun <T : ServiceHandle> tryOrLedgerQueryFailure(
-    run: () -> LedgerResult<T>
-): LedgerResult<T> =
+inline fun <T : Any> tryOrLedgerUnknownFailure(
+    run: () -> Outcome<T, LedgerFailure>
+): Outcome<T, LedgerFailure> =
     try {
         run()
     } catch (e: Exception) {
-        LedgerResult.QueryFailure(
-            e.message ?: "", e
+        Outcome.Error(
+            LedgerFailure.UnknownFailure(
+                e.message ?: "", e
+            )
         )
     }
 
 
-inline fun <T : ServiceHandle> tryOrLedgerListQueryFailure(
-    run: () -> LedgerListResult<T>
-): LedgerListResult<T> =
+inline fun <T : Any> tryOrLoadUnknownFailure(
+    run: () -> Outcome<T, LoadFailure>
+): Outcome<T, LoadFailure> =
     try {
         run()
     } catch (e: Exception) {
-        LedgerListResult.QueryFailure(
-            e.message ?: "", e
+        Outcome.Error(
+            LoadFailure.UnknownFailure(
+                e.message ?: "", e
+            )
         )
     }
 
-
-inline fun <T : LedgerContract> tryOrLoadQueryFailure(
-    run: () -> LoadResult<T>
-): LoadResult<T> =
+inline fun <T : Any> tryOrDataUnknownFailure(
+    run: () -> Outcome<T, DataFailure>
+): Outcome<T, DataFailure> =
     try {
         run()
     } catch (e: Exception) {
-        LoadResult.QueryFailure(
-            e.message ?: "", e
+        Outcome.Error(
+            DataFailure.UnknownFailure(
+                e.message ?: "", e
+            )
         )
     }
 
-inline fun <T : LedgerContract> tryOrLoadListQueryFailure(
-    run: () -> LoadListResult<T>
-): LoadListResult<T> =
+inline fun <T : Any> tryOrQueryUnknownFailure(
+    run: () -> Outcome<T, QueryFailure>
+): Outcome<T, QueryFailure> =
     try {
         run()
     } catch (e: Exception) {
-        LoadListResult.QueryFailure(
-            e.message ?: "", e
-        )
-    }
-
-inline fun <T : BlockChainData> tryOrDataQueryFailure(
-    run: () -> DataResult<T>
-): DataResult<T> =
-    try {
-        run()
-    } catch (e: Exception) {
-        DataResult.QueryFailure(
-            e.message ?: "", e
-        )
-    }
-
-inline fun <T : BlockChainData> tryOrDataListQueryFailure(
-    run: () -> DataListResult<T>
-): DataListResult<T> =
-    try {
-        run()
-    } catch (e: Exception) {
-        DataListResult.QueryFailure(
-            e.message ?: "", e
-        )
-    }
-
-inline fun <T : Any> tryOrQueryQueryFailure(
-    run: () -> QueryResult<T>
-): QueryResult<T> =
-    try {
-        run()
-    } catch (e: Exception) {
-        QueryResult.QueryFailure(
-            e.message ?: "", e
+        Outcome.Error(
+            QueryFailure.UnknownFailure(
+                e.message ?: "", e
+            )
         )
     }
 

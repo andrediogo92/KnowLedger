@@ -8,41 +8,37 @@ import pt.um.masb.common.storage.LedgerContract
  * Result class representing loading of [LedgerContract] classes
  * from the database.
  */
-sealed class LoadResult<T : LedgerContract> {
-    data class Success<T : LedgerContract>(
-        val data: T
-    ) : LoadResult<T>()
-
-    data class NonExistentData<T : LedgerContract>(
+sealed class LoadFailure : Failable {
+    data class NonExistentData(
         override val cause: String
-    ) : Failable, LoadResult<T>()
+    ) : LoadFailure()
 
-    data class NonMatchingCrypter<T : LedgerContract>(
+    data class NonMatchingCrypter(
         override val cause: String
-    ) : Failable, LoadResult<T>()
+    ) : LoadFailure()
 
-    data class UnrecognizedDataType<T : LedgerContract>(
+    data class UnrecognizedDataType(
         override val cause: String
-    ) : Failable, LoadResult<T>()
+    ) : LoadFailure()
 
 
     /**
      * Reserved for direct irrecoverable errors.
      * Query failures will wrap exceptions if thrown.
      */
-    data class QueryFailure<T : LedgerContract>(
+    data class UnknownFailure(
         override val cause: String,
         val exception: Exception? = null
-    ) : Failable, LoadResult<T>()
+    ) : LoadFailure()
 
     /**
      * Reserved for indirect irrecoverable errors propagated
      * by some internal result.
      */
-    data class Propagated<T : LedgerContract>(
+    data class Propagated(
         val pointOfFailure: String,
         val failable: Failable
-    ) : Failable, LoadResult<T>() {
+    ) : LoadFailure() {
         override val cause: String
             get() = "$pointOfFailure: ${failable.cause}"
     }
