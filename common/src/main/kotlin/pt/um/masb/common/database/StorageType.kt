@@ -15,5 +15,8 @@ enum class StorageType {
     LIST,
     SET,
     MAP,
-    LISTEMBEDDED
+    LISTEMBEDDED,
+    HASH,
+    PAYOUT,
+    DIFFICULTY
 }
