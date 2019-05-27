@@ -9,6 +9,8 @@ import java.security.Security
 
 
 sealed class AvailableHashAlgorithms : KLogging() {
+    class NoSuchHasherRegistered : Exception()
+
     object SHA256Hasher : Hasher, AvailableHashAlgorithms() {
 
         val digester = MessageDigest.getInstance(
@@ -62,10 +64,10 @@ sealed class AvailableHashAlgorithms : KLogging() {
             }
         }
 
-        fun getCrypter(hash: Hash): Hasher? =
+        fun getHasher(hash: Hash): Hasher =
             when {
                 SHA256Hasher.checkForCrypter(hash) -> SHA256Hasher
-                else -> null
+                else -> throw NoSuchHasherRegistered()
             }
     }
 }
