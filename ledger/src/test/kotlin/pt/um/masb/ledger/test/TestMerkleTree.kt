@@ -8,6 +8,7 @@ import assertk.assertions.isTrue
 import mu.KLogging
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.test.applyHashInPairs
 import pt.um.masb.common.test.crypter
 import pt.um.masb.common.test.randomDouble
@@ -21,13 +22,15 @@ import pt.um.masb.ledger.storage.Transaction
 import java.math.BigDecimal
 
 class TestMerkleTree {
+    private val hasher =
+        AvailableHashAlgorithms.SHA256Hasher
 
     private val id = arrayOf(
         Identity("test1"),
         Identity("test2")
     )
 
-    private val ts7 = makeXTransactions(id, 7)
+    private val ts7 = generateXTransactions(id, 7)
 
 
     private fun logMerkle(
@@ -67,8 +70,8 @@ class TestMerkleTree {
 
     @Nested
     inner class BalancedMerkleTree {
-        private val ts8 = makeXTransactions(id, 8)
-        private val tree8 = MerkleTree.buildMerkleTree(ts8)
+        private val ts8 = generateXTransactions(id, 8)
+        private val tree8 = MerkleTree(hasher, ts8)
 
         @Test
         fun `merkle tree creation`() {
@@ -181,7 +184,7 @@ class TestMerkleTree {
         @Test
         fun `all transaction verification`() {
             val coinbase7 = generateCoinbase(id, ts7)
-            val tree7WithCoinbase = MerkleTree.buildMerkleTree(coinbase7, ts7)
+            val tree7WithCoinbase = MerkleTree(hasher, coinbase7, ts7)
 
 
             //Log constructed merkle
@@ -202,11 +205,11 @@ class TestMerkleTree {
 
     @Nested
     inner class UnbalancedMerkleTree {
-        private val ts5 = makeXTransactions(id, 5)
+        private val ts5 = generateXTransactions(id, 5)
         private val coinbase5 = generateCoinbase(id, ts5)
-        private val tree5WithCoinbase = MerkleTree.buildMerkleTree(coinbase5, ts5)
-        private val ts6 = makeXTransactions(id, 6)
-        private val tree6 = MerkleTree.buildMerkleTree(ts6)
+        private val tree5WithCoinbase = MerkleTree(hasher, coinbase5, ts5)
+        private val ts6 = generateXTransactions(id, 6)
+        private val tree6 = MerkleTree(hasher, ts6)
 
 
         @Test
@@ -373,7 +376,7 @@ class TestMerkleTree {
                 "Unbalanced 5-transaction tree is correct"
             }
 
-            val tree7 = MerkleTree.buildMerkleTree(ts7)
+            val tree7 = MerkleTree(hasher, ts7)
 
             //Log constructed merkle
             logMerkle(ts7, tree7)
@@ -411,7 +414,7 @@ class TestMerkleTree {
         fun `all transaction verification`() {
 
             val coinbase6 = generateCoinbase(id, ts6)
-            val tree6WithCoinbase = MerkleTree.buildMerkleTree(coinbase6, ts6)
+            val tree6WithCoinbase = MerkleTree(hasher, coinbase6, ts6)
 
             //Log constructed merkle
             logMerkle(coinbase6, ts6, tree6WithCoinbase)
@@ -454,10 +457,11 @@ class TestMerkleTree {
                         temperature = BigDecimal(randomDouble() * 100),
                         unit = TUnit.CELSIUS
                     )
-                )
+                ),
+                hasher
             )
         )
-        val tree = MerkleTree.buildMerkleTree(ts)
+        val tree = MerkleTree(hasher, ts)
 
         //Log constructed merkle
         logMerkle(ts, tree)
