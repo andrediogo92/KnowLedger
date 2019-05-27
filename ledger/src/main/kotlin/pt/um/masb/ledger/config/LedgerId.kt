@@ -2,6 +2,7 @@ package pt.um.masb.ledger.config
 
 import com.squareup.moshi.JsonClass
 import mu.KLogging
+import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.common.hash.Hashable
@@ -19,16 +20,21 @@ data class LedgerId(
     val uuid: UUID,
     val timestamp: Instant,
     val params: LedgerParams,
-    override var hashId: Hash
+    internal var hash: Hash
 ) : Hashable, Hashed, LedgerContract {
+    override val hashId: Hash
+        get() = hash
+
 
     internal constructor(
         id: String,
+        params: LedgerParams,
         uuid: UUID = UUID.randomUUID(),
-        timestamp: Instant = Instant.now(),
-        params: LedgerParams = LedgerParams()
+        timestamp: Instant = Instant.now()
     ) : this(id, uuid, timestamp, params, emptyHash) {
-        hashId = digest(params.crypter)
+        hash = digest(
+            AvailableHashAlgorithms.getHasher(params.crypter)
+        )
     }
 
     override fun digest(c: Hasher): Hash =
@@ -38,7 +44,7 @@ data class LedgerId(
                 timestamp.epochSecond.bytes(),
                 timestamp.nano.bytes(),
                 id.toByteArray(),
-                params.crypter.id.bytes,
+                params.crypter.bytes,
                 params.blockParams.blockLength.bytes(),
                 params.blockParams.blockMemSize.bytes(),
                 params.recalcTrigger.bytes(),
