@@ -11,8 +11,15 @@ import pt.um.masb.common.database.StorageResults
 
 data class OrientSession(
     internal val db: OrientDB,
+    val dbName: String,
     val dbInfo: OrientDatabaseInfo
 ) : ManagedSession {
+    override val isClosed: Boolean
+        get() = session.isClosed
+
+    internal var session: ODatabaseDocument =
+        openSession()
+
     override fun makeActive() {
         session.activateOnCurrentThread()
     }
@@ -38,8 +45,9 @@ data class OrientSession(
     override fun query(query: String, params: Map<String, Any>): StorageResults =
         DocumentResults(session.query(query, params))
 
-    private var session: ODatabaseDocument =
-        openSession()
+    override fun query(query: String): StorageResults =
+        DocumentResults(session.query(query))
+
 
     override val managedSchemas: ManagedSchemas =
         OrientSchemas(session.metadata.schema)
@@ -70,14 +78,14 @@ data class OrientSession(
 
     private fun openSession(): ODatabaseDocument =
         let {
-            if (!db.exists(dbInfo.dbName)) {
+            if (!db.exists(dbName)) {
                 db.create(
-                    dbInfo.dbName,
-                    dbInfo.mode.toOType()
+                    dbName,
+                    dbInfo.databaseType.toOType()
                 )
             }
             db.open(
-                dbInfo.dbName,
+                dbName,
                 dbInfo.user,
                 dbInfo.password
             )
