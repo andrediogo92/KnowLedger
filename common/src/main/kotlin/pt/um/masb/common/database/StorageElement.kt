@@ -15,27 +15,20 @@ interface StorageElement : Discardable<StorageElement> {
     fun getPayoutProperty(name: String): Payout
     fun getStorageIDs(name: String): List<StorageID>
     fun <T> getStorageProperty(name: String): T
-
-    fun <T> setStorageProperty(
-        name: String, property: T
-    ): StorageElement
-
     fun getStorageBytes(name: String): StorageBytes
     fun getElementList(
         name: String
     ): List<StorageElement>
-
     fun getElementSet(
         name: String
     ): Set<StorageElement>
-
     fun getElementMap(
         name: String
     ): Map<String, StorageElement>
-
     fun getHashSet(name: String): MutableSet<Hash>
     fun getHashList(name: String): List<Hash>
     fun getLinked(name: String): StorageElement
+
 
 
     fun setDifficultyProperty(
@@ -43,21 +36,25 @@ interface StorageElement : Discardable<StorageElement> {
         difficulty: Difficulty,
         session: NewInstanceSession
     ): StorageElement
-
     fun setHashProperty(
         name: String, hash: Hash
     ): StorageElement
-
     fun setHashList(
         name: String, hashes: List<Hash>
     ): StorageElement
-
     fun setHashSet(
         name: String, hashes: Set<Hash>
     ): StorageElement
-
     fun setPayoutProperty(
         name: String, payout: Payout
+    ): StorageElement
+
+    fun <T> setStorageProperty(
+        name: String, property: T
+    ): StorageElement
+
+    fun setStorageBytes(
+        name: String, property: StorageBytes
     ): StorageElement
 
     fun setLinked(

@@ -15,7 +15,7 @@ import java.math.BigDecimal
 import java.math.BigInteger
 
 data class DocumentElement internal constructor(
-    internal val elem: OElement
+    val elem: OElement
 ) : StorageElement, OElement by elem {
     override fun getStorageIDs(
         name: String
@@ -237,6 +237,12 @@ data class DocumentElement internal constructor(
     ): StorageElement =
         apply {
             elem.setProperty(name, property)
+        }
+
+    override fun setStorageBytes(name: String, property: StorageBytes): StorageElement =
+        apply {
+            val blob = property as DocumentBytes
+            elem.setProperty(name, blob.blob)
         }
 
     override fun print(): String =
