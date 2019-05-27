@@ -1,6 +1,6 @@
 package pt.um.masb.common.database
 
 interface ManagedDatabase {
-    fun newManagedSession(): ManagedSession
+    fun newManagedSession(dbName: String): ManagedSession
     fun close()
 }
