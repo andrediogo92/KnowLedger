@@ -5,8 +5,8 @@ import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
 import pt.um.masb.common.Sizeable
 import pt.um.masb.common.data.DataFormula
+import pt.um.masb.common.data.DefaultDiff
 import pt.um.masb.common.data.Payout
-import pt.um.masb.common.data.calculateDiff
 import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
@@ -15,10 +15,12 @@ import pt.um.masb.common.hash.Hashed
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.flattenBytes
 import pt.um.masb.common.storage.LedgerContract
+import pt.um.masb.ledger.config.CoinbaseParams
 import pt.um.masb.ledger.data.PhysicalData
+import pt.um.masb.ledger.data.PhysicalData.Companion.MATH_CONTEXT
+import pt.um.masb.ledger.service.Identity
+import pt.um.masb.ledger.service.LedgerContainer
 import java.math.BigDecimal
-import java.math.MathContext
-import java.math.RoundingMode
 import java.security.PublicKey
 import java.time.temporal.ChronoField
 
@@ -33,11 +35,18 @@ import java.time.temporal.ChronoField
 data class Coinbase(
     val payoutTXO: MutableSet<TransactionOutput>,
     var coinbase: Payout,
-    override var hashId: Hash,
+    internal var hash: Hash,
     @Transient
-    private val payoutFormula: DataFormula = ::calculateDiff
+    val hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher,
+    @Transient
+    private val formula: DataFormula = DefaultDiff,
+    @Transient
+    private val coinbaseParams: CoinbaseParams = CoinbaseParams()
 ) : Sizeable, Hashed, Hashable, LedgerContract {
 
+
+    override val hashId: Hash
+        get() = hash
 
     override val approximateSize: Long
         get() {
@@ -51,32 +60,18 @@ data class Coinbase(
                 .instanceSize()
         }
 
-    init {
-        if (hashId.contentEquals(
-                emptyHash
-            )
-        ) {
-            hashId = digest(crypter)
-        }
-    }
-
-    constructor() : this(
+    constructor(
+        container: LedgerContainer
+    ) : this(
         mutableSetOf(),
         Payout(BigDecimal.ZERO),
         emptyHash,
-        ::calculateDiff
-    )
-
-    constructor(
-        payoutTXO: MutableSet<TransactionOutput>,
-        coinbase: Payout,
-        hashId: Hash
-    ) : this(
-        payoutTXO,
-        coinbase,
-        hashId,
-        ::calculateDiff
-    )
+        container.hasher,
+        container.formula,
+        container.coinbaseParams
+    ) {
+        hash = digest(container.hasher)
+    }
 
     /**
      * Takes the [newTransaction] and attempts to calculate a
@@ -107,21 +102,23 @@ data class Coinbase(
 
         //None are known for this area.
         if (latestKnown == null) {
-            payout = payoutFormula(
-                BASE,
-                TIME_BASE,
+            payout = formula.calculateDiff(
+                coinbaseParams.baseIncentive,
+                coinbaseParams.timeIncentive,
                 BigDecimal.ONE,
-                VALUE_BASE,
+                coinbaseParams.valueIncentive,
                 BigDecimal.ONE,
                 newTransaction.data.dataConstant,
-                THRESHOLD,
+                coinbaseParams.dividingThreshold,
                 MATH_CONTEXT
             )
             lkHash = emptyHash
         } else {
             payout = calculatePayout(
                 newTransaction.data,
-                latestKnown.data
+                latestKnown.data,
+                formula,
+                coinbaseParams
             )
             lkHash = latestKnown.hashId
         }
@@ -133,7 +130,7 @@ data class Coinbase(
             lkHash,
             payout
         )
-        hashId = digest(crypter)
+        hash = digest(hasher)
     }
 
     private fun getTimeDelta(
@@ -188,7 +185,8 @@ data class Coinbase(
                     previousUTXO,
                     payout,
                     newTransaction,
-                    previousTransaction
+                    previousTransaction,
+                    hasher
                 )
             )
 
@@ -196,16 +194,18 @@ data class Coinbase(
 
     private fun calculatePayout(
         dt: PhysicalData,
-        dt2: PhysicalData
+        dt2: PhysicalData,
+        payoutFormula: DataFormula,
+        coinbaseParams: CoinbaseParams
     ): Payout =
-        payoutFormula(
-            BASE,
-            TIME_BASE,
+        payoutFormula.calculateDiff(
+            coinbaseParams.baseIncentive,
+            coinbaseParams.timeIncentive,
             getTimeDelta(dt, dt2),
-            VALUE_BASE,
+            coinbaseParams.valueIncentive,
             dt.calculateDiff(dt2.data),
             dt.dataConstant,
-            THRESHOLD,
+            coinbaseParams.dividingThreshold,
             MATH_CONTEXT
         )
 
@@ -227,11 +227,15 @@ data class Coinbase(
         if (this === other) return true
         if (other !is Coinbase) return false
 
-        if (!payoutTXO.containsAll(other.payoutTXO)) return false
         if (payoutTXO.size != other.payoutTXO.size) return false
-        if (coinbase != other.coinbase) return false
+        if (!payoutTXO.asSequence()
+                .zip(other.payoutTXO.asSequence())
+                .all { (tx1, tx2) ->
+                    tx1 == tx2
+                }
+        ) return false
+        if (!coinbase.contentEquals(other.coinbase)) return false
         if (!hashId.contentEquals(other.hashId)) return false
-        if (payoutFormula != other.payoutFormula) return false
 
         return true
     }
@@ -240,23 +244,9 @@ data class Coinbase(
         var result = payoutTXO.hashCode()
         result = 31 * result + coinbase.hashCode()
         result = 31 * result + hashId.contentHashCode()
-        result = 31 * result + payoutFormula.hashCode()
         return result
     }
 
-    companion object : KLogging() {
-        const val TIME_BASE = 5
-        const val VALUE_BASE = 2
-        const val BASE = 3
-        const val THRESHOLD = 100000
-        const val OTHER = 50
-        const val DATA = 5
-        val MATH_CONTEXT = MathContext(
-            12,
-            RoundingMode.HALF_EVEN
-        )
-        val crypter = AvailableHashAlgorithms.SHA256Hasher
-    }
-
+    companion object : KLogging()
 }
 

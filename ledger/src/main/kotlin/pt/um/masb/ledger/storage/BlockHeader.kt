@@ -15,21 +15,28 @@ import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
 import pt.um.masb.common.storage.LedgerContract
 import pt.um.masb.ledger.config.BlockParams
+import pt.um.masb.ledger.data.MerkleTree
 import java.time.Instant
 
 @JsonClass(generateAdapter = true)
 data class BlockHeader(
     val ledgerId: Hash,
+    @Transient
+    val hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher,
     // Difficulty is fixed at block generation time.
     val difficulty: Difficulty,
     val blockheight: Long,
-    override var hashId: Hash,
+    internal var hash: Hash,
     var merkleRoot: Hash,
     val previousHash: Hash,
     val params: BlockParams,
     var timestamp: Instant = Instant.now(),
     var nonce: Long = 0
 ) : Sizeable, Hashed, Hashable, LedgerContract {
+
+
+    override val hashId: Hash
+        get() = hash
 
     override val approximateSize: Long =
         ClassLayout
@@ -39,19 +46,23 @@ data class BlockHeader(
 
     constructor (
         blockChainId: Hash,
+        hasher: Hasher,
         previousHash: Hash,
         difficulty: Difficulty,
         blockheight: Long,
         blockParams: BlockParams
     ) : this(
         blockChainId,
+        hasher,
         difficulty,
         blockheight,
         emptyHash,
         emptyHash,
         previousHash,
         blockParams
-    )
+    ) {
+        updateHash()
+    }
 
     /**
      * Hash is a cryptographic digest calculated from previous hashId,
@@ -59,7 +70,7 @@ data class BlockHeader(
      * and each [Transaction]'s hashId.
      */
     fun updateHash() {
-        hashId = digest(crypter)
+        hash = digest(hasher)
     }
 
 
@@ -128,7 +139,5 @@ data class BlockHeader(
         return result
     }
 
-    companion object : KLogging() {
-        val crypter = AvailableHashAlgorithms.SHA256Hasher
-    }
+    companion object : KLogging()
 }

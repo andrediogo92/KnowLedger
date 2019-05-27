@@ -9,6 +9,7 @@ import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.storage.LedgerContract
 import pt.um.masb.ledger.config.BlockParams
 import pt.um.masb.ledger.data.MerkleTree
+import pt.um.masb.ledger.service.LedgerHandle
 
 @JsonClass(generateAdapter = true)
 data class Block(
@@ -55,15 +56,16 @@ data class Block(
         params: BlockParams
     ) : this(
         mutableListOf(),
-        Coinbase(),
+        Coinbase(LedgerHandle.getContainer(ledgerId)!!),
         BlockHeader(
             ledgerId,
+            LedgerHandle.getHasher(ledgerId)!!,
             previousHash,
             difficulty,
             blockheight,
             params
         ),
-        MerkleTree()
+        MerkleTree(LedgerHandle.getHasher(ledgerId)!!)
     ) {
         headerSize = header.approximateSize
     }

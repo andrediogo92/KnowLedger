@@ -13,6 +13,7 @@ import pt.um.masb.common.misc.flattenBytes
 import pt.um.masb.common.misc.generateSignature
 import pt.um.masb.common.misc.verifyECDSASig
 import pt.um.masb.common.storage.LedgerContract
+import pt.um.masb.ledger.data.MerkleTree
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.service.Identity
 import java.security.PrivateKey
@@ -24,15 +25,21 @@ data class Transaction(
     val publicKey: PublicKey,
     val data: PhysicalData,
     // This is to identify unequivocally an agent.
-    val signature: ByteArray
+    internal var signatureInternal: ByteArray,
+    internal var hash: Hash,
+    @Transient
+    val hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher
 ) : Sizeable,
     Hashed,
     Hashable,
     LedgerContract {
 
 
-    // This is also the hashId of the transaction.
-    override val hashId = digest(crypter)
+    val signature: ByteArray
+        get() = signatureInternal
+
+    override val hashId: Hash
+        get() = hash
 
     /**
      * Calculate the approximate size of the transaction.
@@ -47,32 +54,53 @@ data class Transaction(
 
     constructor(
         identity: Identity,
-        data: PhysicalData
+        data: PhysicalData,
+        hasher: Hasher
     ) : this(
         identity.publicKey,
         data,
-        generateSignature(
+        ByteArray(0),
+        Hash.emptyHash,
+        hasher
+    ) {
+        signatureInternal = generateSignature(
             identity.privateKey,
             identity.publicKey,
             data,
-            crypter
+            hasher
         )
-    )
+        updateHash(hasher)
+    }
 
     constructor(
         privateKey: PrivateKey,
         publicKey: PublicKey,
-        data: PhysicalData
+        data: PhysicalData,
+        hasher: Hasher
     ) : this(
         publicKey,
         data,
-        generateSignature(
+        ByteArray(0),
+        Hash.emptyHash,
+        hasher
+    ) {
+        signatureInternal = generateSignature(
             privateKey,
             publicKey,
             data,
-            crypter
+            hasher
         )
-    )
+        updateHash(hasher)
+    }
+
+    /**
+     * Hash is a cryptographic digest calculated from previous hashId,
+     * internalNonce, internalTimestamp, [MerkleTree]'s root
+     * and each [Transaction]'s hashId.
+     */
+    fun updateHash(hasher: Hasher) {
+        hash = digest(hasher)
+    }
 
     /**
      * Verifies the data we signed hasn't been
@@ -81,12 +109,15 @@ data class Transaction(
      * @return Whether the data was signed with the
      * corresponding private key.
      */
-    fun verifySignature(): Boolean =
-        verifyECDSASig(
+    fun verifySignature(): Boolean {
+        return verifyECDSASig(
             publicKey,
-            publicKey.encoded + data.digest(crypter).bytes,
+            publicKey.encoded + data.digest(
+                hasher
+            ).bytes,
             signature
         )
+    }
 
     /**
      * TODO: Transaction verification.
@@ -111,8 +142,10 @@ data class Transaction(
         if (this === other) return true
         if (other !is Transaction) return false
 
+        if (!hashId.contentEquals(other.hashId))
+            return false
         if (!publicKey.encoded!!.contentEquals(
-                other.publicKey.encoded
+                other.publicKey.encoded!!
             )
         ) return false
         if (data != other.data) return false
@@ -120,11 +153,6 @@ data class Transaction(
                 other.signature
             )
         ) return false
-        if (!hashId.contentEquals(
-                other.hashId
-            )
-        ) return false
-
         return true
     }
 
@@ -136,8 +164,6 @@ data class Transaction(
         return result
     }
 
-    companion object : KLogging() {
-        val crypter = AvailableHashAlgorithms.SHA256Hasher
-    }
+    companion object : KLogging()
 
 }

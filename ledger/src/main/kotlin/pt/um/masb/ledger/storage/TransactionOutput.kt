@@ -20,11 +20,16 @@ import java.security.PublicKey
 data class TransactionOutput(
     val publicKey: PublicKey,
     val prevCoinbase: Hash,
-    override var hashId: Hash,
+    internal var hash: Hash,
     var payout: Payout,
-    var tx: MutableSet<Hash>
+    var tx: MutableSet<Hash>,
+    @Transient
+    val hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher
 ) : Sizeable, Hashed, Hashable,
     LedgerContract {
+
+    override val hashId: Hash
+        get() = hash
 
     override val approximateSize: Long
         get() = GraphLayout
@@ -37,13 +42,15 @@ data class TransactionOutput(
         prevCoinbase: Hash,
         cumUTXO: Payout,
         newT: Hash,
-        prev: Hash
+        prev: Hash,
+        hasher: Hasher
     ) : this(
         publicKey,
         prevCoinbase,
         emptyHash,
         Payout(BigDecimal.ZERO),
-        mutableSetOf<Hash>()
+        mutableSetOf<Hash>(),
+        hasher
     ) {
         addToPayout(cumUTXO, newT, prev)
     }
@@ -56,7 +63,7 @@ data class TransactionOutput(
     ) {
         this.tx.add(prev + tx)
         this.payout = this.payout.add(payout)
-        hashId = digest(crypter)
+        hash = digest(hasher)
     }
 
     /**
@@ -73,42 +80,36 @@ data class TransactionOutput(
             )
         )
 
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is TransactionOutput)
-            return false
+        if (other !is TransactionOutput) return false
 
-        if (!publicKey.encoded!!.contentEquals(
+        if (publicKey.encoded!!.contentEquals(
                 other.publicKey.encoded
             )
-        )
-            return false
-        if (!prevCoinbase.contentEquals(
-                other.prevCoinbase
-            )
-        )
-            return false
-        if (!hashId.contentEquals(other.hashId))
-            return false
-        if (payout != other.payout)
-            return false
-        if (!tx.containsAll(other.tx)) return false
+        ) return false
+        if (prevCoinbase.contentEquals(other.prevCoinbase)) return false
+        if (hash.contentEquals(other.hash)) return false
+        if (payout.contentEquals(other.payout)) return false
         if (tx.size != other.tx.size) return false
-
+        if (!tx.asSequence()
+                .zip(other.tx.asSequence())
+                .all { (tx1, tx2) ->
+                    tx1.contentEquals(tx2)
+                }
+        ) return false
         return true
     }
 
     override fun hashCode(): Int {
         var result = publicKey.hashCode()
-        result = 31 * result + prevCoinbase.contentHashCode()
-        result = 31 * result + hashId.contentHashCode()
+        result = 31 * result + prevCoinbase.hashCode()
+        result = 31 * result + hash.hashCode()
         result = 31 * result + payout.hashCode()
         result = 31 * result + tx.hashCode()
         return result
     }
 
-    companion object : KLogging() {
-        val crypter = AvailableHashAlgorithms.SHA256Hasher
-    }
+
+    companion object : KLogging()
 }
