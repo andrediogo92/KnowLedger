@@ -2,6 +2,8 @@ package pt.um.masb.common.database.orient
 
 import com.orientechnologies.orient.core.db.ODatabaseType
 import com.orientechnologies.orient.core.metadata.schema.OType
+import pt.um.masb.common.database.DatabaseMode
+import pt.um.masb.common.database.DatabaseType
 import pt.um.masb.common.database.StorageType
 
 fun StorageType.toOType(): OType =
@@ -21,10 +23,20 @@ fun StorageType.toOType(): OType =
         StorageType.SET -> OType.LINKSET
         StorageType.MAP -> OType.LINKMAP
         StorageType.LISTEMBEDDED -> OType.EMBEDDEDLIST
+        StorageType.HASH -> OType.BINARY
+        StorageType.PAYOUT -> OType.DECIMAL
+        StorageType.DIFFICULTY -> OType.BINARY
     }
 
-fun OrientDatabaseType.toOType(): ODatabaseType =
+fun DatabaseType.toOType(): ODatabaseType =
     when (this) {
-        OrientDatabaseType.MEMORY -> ODatabaseType.MEMORY
-        OrientDatabaseType.LOCAL -> ODatabaseType.PLOCAL
+        DatabaseType.MEMORY -> ODatabaseType.MEMORY
+        DatabaseType.LOCAL -> ODatabaseType.PLOCAL
+    }
+
+val DatabaseMode.mode: String
+    get() = when (this) {
+        DatabaseMode.EMBEDDED -> "plocal"
+        DatabaseMode.REMOTE -> "remote"
+        DatabaseMode.MEMORY -> "memory"
     }
