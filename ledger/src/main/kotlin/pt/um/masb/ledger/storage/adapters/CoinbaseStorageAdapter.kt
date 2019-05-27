@@ -4,25 +4,22 @@ import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.ledger.results.collapse
-import pt.um.masb.ledger.results.intoLoad
-import pt.um.masb.ledger.results.tryOrLoadQueryFailure
-import pt.um.masb.ledger.service.results.LoadListResult
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
+import pt.um.masb.ledger.service.LedgerHandle
+import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.Coinbase
 
-class CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
-    val transactionOutputStorageAdapter =
-        TransactionOutputStorageAdapter()
-
+object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
     override val id: String
         get() = "Coinbase"
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "payoutTXOs" to StorageType.SET,
-            "coinbase" to StorageType.DECIMAL,
-            "hashId" to StorageType.BYTES
+            "coinbase" to StorageType.PAYOUT,
+            "hashId" to StorageType.HASH
         )
 
     override fun store(
@@ -30,54 +27,42 @@ class CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
         session: NewInstanceSession
     ): StorageElement =
         session.newInstance(id).apply {
-            setElementSet(
-                "payoutTXOs",
-                toStore
-                    .payoutTXO
-                    .asSequence()
-                    .map {
-                        transactionOutputStorageAdapter.store(
-                            it, session
-                        )
-                    }.toSet()
-            )
-            setPayoutProperty(
-                "coinbase", toStore.coinbase
-            )
-            setHashProperty(
-                "hashId", toStore.hashId
-            )
+            this
+                .setElementSet(
+                    "payoutTXOs",
+                    toStore
+                        .payoutTXO
+                        .asSequence()
+                        .map {
+                            TransactionOutputStorageAdapter.store(
+                                it, session
+                            )
+                        }.toSet()
+                ).setPayoutProperty("coinbase", toStore.coinbase)
+                .setHashProperty("hashId", toStore.hashId)
         }
 
     override fun load(
-        hash: Hash,
-        element: StorageElement
-    ): LoadResult<Coinbase> =
-        tryOrLoadQueryFailure {
-            val pTXOs =
-                element
-                    .getElementSet("payoutTXOs")
-                    .asSequence()
-                    .map {
-                        transactionOutputStorageAdapter.load(hash, it)
-                    }.collapse()
-
-            if (pTXOs !is LoadListResult.Success) {
-                return@tryOrLoadQueryFailure pTXOs.intoLoad<Coinbase>()
-            }
-
-            val coinbase =
-                element.getPayoutProperty("coinbase")
-
-            val hashId =
-                element.getHashProperty("hashId")
-
-            LoadResult.Success(
-                Coinbase(
-                    pTXOs.data.toMutableSet(),
-                    coinbase,
-                    hashId
-                )
-            )
+        ledgerHash: Hash, element: StorageElement
+    ): Outcome<Coinbase, LoadFailure> =
+        tryOrLoadUnknownFailure {
+            element
+                .getElementSet("payoutTXOs")
+                .asSequence()
+                .map {
+                    TransactionOutputStorageAdapter.load(ledgerHash, it)
+                }.collapse()
+                .flatMapSuccess {
+                    val container =
+                        LedgerHandle.getContainer(ledgerHash)!!
+                    Coinbase(
+                        this.toMutableSet(),
+                        element.getPayoutProperty("coinbase"),
+                        element.getHashProperty("hashId"),
+                        container.hasher,
+                        container.formula,
+                        container.coinbaseParams
+                    )
+                }
         }
 }

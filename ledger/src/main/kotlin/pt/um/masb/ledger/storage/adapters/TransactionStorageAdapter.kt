@@ -1,20 +1,20 @@
 package pt.um.masb.ledger.storage.adapters
 
 
+import mu.KLogging
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.misc.byteEncodeToPublicKey
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.ledger.data.adapters.PhysicalDataStorageAdapter
-import pt.um.masb.ledger.results.intoLoad
-import pt.um.masb.ledger.results.tryOrLoadQueryFailure
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
+import pt.um.masb.ledger.service.LedgerHandle
+import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.Transaction
 
-class TransactionStorageAdapter : LedgerStorageAdapter<Transaction> {
-    val physicalDataStorageAdapter = PhysicalDataStorageAdapter()
-
+object TransactionStorageAdapter : KLogging(), LedgerStorageAdapter<Transaction> {
     override val id: String
         get() = "Transaction"
 
@@ -23,7 +23,7 @@ class TransactionStorageAdapter : LedgerStorageAdapter<Transaction> {
             "publicKey" to StorageType.BYTES,
             "data" to StorageType.LINK,
             "signature" to StorageType.LINK,
-            "hashId" to StorageType.BYTES
+            "hashId" to StorageType.HASH
         )
 
     override fun store(
@@ -31,51 +31,45 @@ class TransactionStorageAdapter : LedgerStorageAdapter<Transaction> {
         session: NewInstanceSession
     ): StorageElement =
         session.newInstance(id).apply {
-            setStorageProperty(
-                "publicKey", toStore.publicKey.encoded
-            )
-            setLinked(
-                "data", physicalDataStorageAdapter,
-                toStore.data, session
-            )
-            setStorageProperty(
-                "signature",
-                session.newInstance(
-                    toStore.signature
-                )
-            )
-            setHashProperty(
-                "hashId", toStore.hashId
-            )
+            this
+                .setStorageProperty("publicKey", toStore.publicKey.encoded)
+                .setLinked(
+                    "data", PhysicalDataStorageAdapter,
+                    toStore.data, session
+                ).setStorageBytes(
+                    "signature",
+                    session.newInstance(
+                        toStore.signature
+                    )
+                ).setHashProperty("hashId", toStore.hashId)
         }
 
     override fun load(
-        hash: Hash,
+        ledgerHash: Hash,
         element: StorageElement
-    ): LoadResult<Transaction> =
-        tryOrLoadQueryFailure {
+    ): Outcome<Transaction, LoadFailure> =
+        tryOrLoadUnknownFailure {
             val publicKey = byteEncodeToPublicKey(
                 element.getStorageProperty("publicKey")
             )
 
-            val data = physicalDataStorageAdapter.load(
-                hash,
+            PhysicalDataStorageAdapter.load(
+                ledgerHash,
                 element.getLinked("data")
-            )
+            ).flatMapSuccess {
+                val signature =
+                    element.getStorageBytes("signature").bytes
 
-            if (data !is LoadResult.Success) {
-                return@tryOrLoadQueryFailure data.intoLoad<Transaction>()
-            }
+                val hash =
+                    element.getHashProperty("hashId")
 
-            val signature =
-                element.getStorageBytes("signature").bytes
-
-            LoadResult.Success(
                 Transaction(
                     publicKey,
-                    data.data,
-                    signature
+                    this,
+                    signature,
+                    hash,
+                    LedgerHandle.getHasher(ledgerHash)!!
                 )
-            )
+            }
         }
 }

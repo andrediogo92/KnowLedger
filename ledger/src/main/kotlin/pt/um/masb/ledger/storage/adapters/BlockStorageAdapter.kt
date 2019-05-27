@@ -4,20 +4,17 @@ import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.results.Outcome
 import pt.um.masb.ledger.data.adapters.MerkleTreeStorageAdapter
 import pt.um.masb.ledger.results.collapse
-import pt.um.masb.ledger.results.intoLoad
-import pt.um.masb.ledger.results.tryOrLoadQueryFailure
-import pt.um.masb.ledger.service.results.LoadListResult
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
+import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.Block
+import pt.um.masb.ledger.storage.BlockHeader
+import pt.um.masb.ledger.storage.Coinbase
+import pt.um.masb.ledger.storage.Transaction
 
-class BlockStorageAdapter : LedgerStorageAdapter<Block> {
-    val coinbaseStorageAdapter = CoinbaseStorageAdapter()
-    val transactionStorageAdapter = TransactionStorageAdapter()
-    val blockHeaderStorageAdapter = BlockHeaderStorageAdapter()
-    val merkleTreeStorageAdapter = MerkleTreeStorageAdapter()
-
+object BlockStorageAdapter : LedgerStorageAdapter<Block> {
     override val id: String
         get() = "Block"
 
@@ -37,89 +34,70 @@ class BlockStorageAdapter : LedgerStorageAdapter<Block> {
             setElementList(
                 "data",
                 toStore.data.map {
-                    transactionStorageAdapter.store(
+                    TransactionStorageAdapter.store(
                         it, session
                     )
                 }
-            )
-            setLinked(
-                "coinbase", coinbaseStorageAdapter,
+            ).setLinked(
+                "coinbase", CoinbaseStorageAdapter,
                 toStore.coinbase, session
-            )
-            setLinked(
-                "header", blockHeaderStorageAdapter,
+            ).setLinked(
+                "header", BlockHeaderStorageAdapter,
                 toStore.header, session
-            )
-            setLinked(
-                "merkleTree", merkleTreeStorageAdapter,
+            ).setLinked(
+                "merkleTree", MerkleTreeStorageAdapter,
                 toStore.merkleTree, session
             )
         }
 
 
     override fun load(
-        hash: Hash, element: StorageElement
-    ): LoadResult<Block> =
-        tryOrLoadQueryFailure {
-            val data: List<StorageElement> =
-                element.getElementList("data")
+        ledgerHash: Hash, element: StorageElement
+    ): Outcome<Block, LoadFailure> =
+        tryOrLoadUnknownFailure {
+            lateinit var coinbase: Coinbase
+            lateinit var data: MutableList<Transaction>
+            lateinit var header: BlockHeader
 
-            val listT =
-                data.asSequence()
-                    .map {
-                        transactionStorageAdapter.load(
-                            hash,
-                            it
+            element
+                .getElementList("data")
+                .asSequence()
+                .map {
+                    TransactionStorageAdapter.load(
+                        ledgerHash, it
+                    )
+                }.collapse()
+                .mapSuccess {
+                    data = this.data.toMutableList()
+                    CoinbaseStorageAdapter.load(
+                        ledgerHash,
+                        element.getLinked(
+                            "coinbase"
                         )
-                    }.collapse()
-
-            if (listT !is LoadListResult.Success) {
-                return@tryOrLoadQueryFailure listT.intoLoad<Block>()
-            }
-
-            val coinbase =
-                coinbaseStorageAdapter.load(
-                    hash,
-                    element.getLinked(
-                        "coinbase"
                     )
-                )
-
-            if (coinbase !is LoadResult.Success) {
-                return@tryOrLoadQueryFailure coinbase.intoLoad<Block>()
-            }
-
-            val header =
-                blockHeaderStorageAdapter.load(
-                    hash,
-                    element.getLinked(
-                        "header"
+                }.mapSuccess {
+                    coinbase = this.data
+                    BlockHeaderStorageAdapter.load(
+                        ledgerHash,
+                        element.getLinked(
+                            "header"
+                        )
                     )
-                )
-
-            if (header !is LoadResult.Success) {
-                return@tryOrLoadQueryFailure header.intoLoad<Block>()
-            }
-
-            val merkleTree =
-                merkleTreeStorageAdapter.load(
-                    hash,
-                    element.getLinked(
-                        "merkleTree"
+                }.mapSuccess {
+                    header = this.data
+                    MerkleTreeStorageAdapter.load(
+                        ledgerHash,
+                        element.getLinked(
+                            "merkleTree"
+                        )
                     )
-                )
-
-            if (merkleTree !is LoadResult.Success) {
-                return@tryOrLoadQueryFailure merkleTree.intoLoad<Block>()
-            }
-
-            LoadResult.Success(
-                Block(
-                    listT.data.toMutableList(),
-                    coinbase.data,
-                    header.data,
-                    merkleTree.data
-                )
-            )
+                }.flatMapSuccess {
+                    Block(
+                        data,
+                        coinbase,
+                        header,
+                        this
+                    )
+                }
         }
 }
