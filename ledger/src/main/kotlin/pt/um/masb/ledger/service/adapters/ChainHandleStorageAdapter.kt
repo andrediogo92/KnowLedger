@@ -3,30 +3,23 @@ package pt.um.masb.ledger.service.adapters
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
-import pt.um.masb.common.hash.Hash
-import pt.um.masb.ledger.config.LedgerParams
-import pt.um.masb.ledger.config.adapters.LedgerParamsStorageAdapter
-import pt.um.masb.ledger.results.intoLedger
-import pt.um.masb.ledger.results.tryOrLedgerQueryFailure
+import pt.um.masb.common.results.Outcome
+import pt.um.masb.ledger.results.tryOrLedgerUnknownFailure
 import pt.um.masb.ledger.service.ChainHandle
-import pt.um.masb.ledger.service.results.LedgerResult
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.service.results.LedgerFailure
 import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
 
-class ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
-    val ledgerParamsStorageAdapter = LedgerParamsStorageAdapter()
-
+object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
     override val id: String
         get() = "ChainHandle"
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "clazz" to StorageType.STRING,
-            "hashId" to StorageType.BYTES,
-            "difficultyTarget" to StorageType.BYTES,
+            "hashId" to StorageType.HASH,
+            "difficultyTarget" to StorageType.DIFFICULTY,
             "lastRecalc" to StorageType.INTEGER,
-            "currentBlockheight" to StorageType.LONG,
-            "params" to StorageType.LINK
+            "currentBlockheight" to StorageType.LONG
         )
 
     override fun store(
@@ -49,17 +42,13 @@ class ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
                 "currentBlockheight",
                 toStore.currentBlockheight
             )
-            setLinked(
-                "params", ledgerParamsStorageAdapter,
-                toStore.params, session
-            )
         }
 
     override fun load(
         persistenceWrapper: PersistenceWrapper,
-        hash: Hash, element: StorageElement
-    ): LedgerResult<ChainHandle> =
-        tryOrLedgerQueryFailure {
+        element: StorageElement
+    ): Outcome<ChainHandle, LedgerFailure> =
+        tryOrLedgerUnknownFailure {
             val clazz: String =
                 element.getStorageProperty("clazz")
 
@@ -75,22 +64,15 @@ class ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
             val currentBlockheight: Long =
                 element.getStorageProperty("currentBlockheight")
 
-            val ledgerParams: LoadResult<LedgerParams> =
-                ledgerParamsStorageAdapter.load(
-                    hash,
-                    element.getLinked("params")
-                )
-
-            ledgerParams.intoLedger {
+            Outcome.Ok<ChainHandle, LedgerFailure>(
                 ChainHandle(
-                    persistenceWrapper,
-                    this,
                     clazz,
                     hash,
                     difficulty,
                     lastRecalc,
                     currentBlockheight
                 )
-            }
+            )
+
         }
 }

@@ -6,13 +6,14 @@ import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.misc.stringToPrivateKey
 import pt.um.masb.common.misc.stringToPublicKey
-import pt.um.masb.ledger.results.tryOrLoadQueryFailure
+import pt.um.masb.common.results.Outcome
+import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
 import pt.um.masb.ledger.service.Identity
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.adapters.LedgerStorageAdapter
 import java.security.KeyPair
 
-class IdentityStorageAdapter : LedgerStorageAdapter<Identity> {
+object IdentityStorageAdapter : LedgerStorageAdapter<Identity> {
     override val id: String
         get() = "Identity"
 
@@ -37,9 +38,10 @@ class IdentityStorageAdapter : LedgerStorageAdapter<Identity> {
         }
 
     override fun load(
-        hash: Hash, element: StorageElement
-    ): LoadResult<Identity> =
-        tryOrLoadQueryFailure {
+        ledgerHash: Hash,
+        element: StorageElement
+    ): Outcome<Identity, LoadFailure> =
+        tryOrLoadUnknownFailure {
             val keyPair = KeyPair(
                 stringToPublicKey(
                     element.getStorageProperty("publicKey")
@@ -48,6 +50,8 @@ class IdentityStorageAdapter : LedgerStorageAdapter<Identity> {
                     element.getStorageProperty("privateKey")
                 )
             )
-            LoadResult.Success(Identity(id, keyPair))
+            Outcome.Ok<Identity, LoadFailure>(
+                Identity(id, keyPair)
+            )
         }
 }

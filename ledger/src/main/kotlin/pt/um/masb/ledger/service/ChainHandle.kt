@@ -1,22 +1,24 @@
 package pt.um.masb.ledger.service
 
 import mu.KLogging
+import pt.um.masb.common.config.LedgerConfiguration
 import pt.um.masb.common.data.Difficulty
 import pt.um.masb.common.data.Difficulty.Companion.INIT_DIFFICULTY
 import pt.um.masb.common.data.Difficulty.Companion.MAX_DIFFICULTY
 import pt.um.masb.common.data.Difficulty.Companion.MIN_DIFFICULTY
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
-import pt.um.masb.common.results.Failable
-import pt.um.masb.common.storage.results.QueryResult
+import pt.um.masb.common.hash.Hasher
+import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.ledger.config.BlockParams
+import pt.um.masb.ledger.config.CoinbaseParams
 import pt.um.masb.ledger.config.LedgerParams
 import pt.um.masb.ledger.data.DummyData
 import pt.um.masb.ledger.data.MerkleTree
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.results.intoQuery
-import pt.um.masb.ledger.service.results.LoadListResult
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.Block
 import pt.um.masb.ledger.storage.BlockHeader
 import pt.um.masb.ledger.storage.Coinbase
@@ -33,11 +35,23 @@ import java.time.ZonedDateTime
  * unique chain in the ledger represented by the [ledgerHash].
  */
 data class ChainHandle internal constructor(
-    private val pw: PersistenceWrapper,
-    val params: LedgerParams,
     val clazz: String,
     val ledgerHash: Hash
 ) : ServiceHandle {
+    private val pw: PersistenceWrapper
+    private val hasher: Hasher
+    val ledgerParams: LedgerParams
+    val coinbaseParams: CoinbaseParams
+
+    init {
+        val container = LedgerHandle.getContainer(
+            ledgerHash
+        )!!
+        pw = container.persistenceWrapper
+        hasher = container.hasher
+        ledgerParams = container.ledgerParams
+        coinbaseParams = container.coinbaseParams
+    }
 
     private var difficultyTarget =
         INIT_DIFFICULTY
@@ -57,32 +71,28 @@ data class ChainHandle internal constructor(
         get() = blockheight
 
     /**
-     * Returns a [LoadResult] for the tail-end
+     * Returns a [LoadFailure] for the tail-end
      * [Block] in the ledger.
      */
-    val lastBlock: LoadResult<Block>
+    val lastBlock: Outcome<Block, LoadFailure>
         get() = pw.getLatestBlock(ledgerHash)
 
 
     /**
-     * Returns a [LoadResult] for the tail-end
-     * [Blockheader] in the ledger.
+     * Returns a [LoadFailure] for the tail-end
+     * [BlockHeader] in the ledger.
      */
-    val lastBlockHeader: LoadResult<BlockHeader>
+    val lastBlockHeader: Outcome<BlockHeader, LoadFailure>
         get() = pw.getLatestBlockHeader(ledgerHash)
 
 
     internal constructor(
-        pw: PersistenceWrapper,
-        params: LedgerParams,
         clazz: String,
         ledgerHash: Hash,
         difficulty: Difficulty,
         lastRecalc: Long,
         currentBlockheight: Long
     ) : this(
-        pw,
-        params,
         clazz,
         ledgerHash
     ) {
@@ -142,46 +152,51 @@ data class ChainHandle internal constructor(
      * Checks integrity of the entire cached ledger.
      *
      * TODO: actually check entire ledger in
-     * ranges of [ChainHandle.CACHE_SIZE] blocks.
+     * ranges of [LedgerConfiguration.CACHE_SIZE] blocks.
      *
      * Returns whether the chain is valid.
      */
-    fun isChainValid(): QueryResult<Boolean> {
-        var blocksLeft = true
+    fun isChainValid(): Outcome<Boolean, QueryFailure> {
+        val cacheSize = LedgerConfiguration.CACHE_SIZE
         var valid = true
-        var blockResult =
+        val blockResult =
             pw.getBlockByBlockHeight(ledgerHash, 1)
         lateinit var previousLastBlock: Block
-        var result: QueryResult<Boolean>
-        result = if (blockResult !is LoadResult.Success) {
-            valid = false
-            blockResult.intoQuery()
-        } else {
-            previousLastBlock = blockResult.data
-            QueryResult.Success(true)
-
-        }
-        var lowIndex = -CACHE_SIZE.toLong() + 2
-        var highIndex = 2L
-        while (blocksLeft && valid) {
-            lowIndex += CACHE_SIZE.toLong()
-            highIndex += CACHE_SIZE.toLong()
-            val blocks =
-                pw.getBlockListByBlockHeightInterval(
-                    lowIndex,
-                    highIndex,
-                    ledgerHash
-                )
-            if (blocks is LoadListResult.Success) {
-                valid = checkBlocks(
-                    previousLastBlock, blocks.data.iterator()
-                )
-            } else {
-                result = blocks.intoQuery()
+        var failure: Outcome<Boolean, QueryFailure>
+        failure = when (blockResult) {
+            is Outcome.Error -> {
                 valid = false
+                Outcome.Error(blockResult.failure.intoQuery())
+            }
+            is Outcome.Ok -> {
+                previousLastBlock = blockResult.data
+                Outcome.Ok(true)
             }
         }
-        return result
+        var lowIndex = -cacheSize + 2
+        var highIndex = 2L
+        while (highIndex - cacheSize <= blockheight && valid) {
+            lowIndex += cacheSize
+            highIndex += cacheSize
+            val blocks =
+                pw.getBlockListByBlockHeightInterval(
+                    ledgerHash,
+                    lowIndex,
+                    highIndex
+                )
+            when (blocks) {
+                is Outcome.Ok -> {
+                    valid = checkBlocks(
+                        previousLastBlock, blocks.data.iterator()
+                    )
+                }
+                is Outcome.Error -> {
+                    failure = Outcome.Error(blocks.failure.intoQuery())
+                    valid = false
+                }
+            }
+        }
+        return failure
     }
 
     private fun checkBlocks(
@@ -192,7 +207,7 @@ data class ChainHandle internal constructor(
         while (data.hasNext()) {
             val currentBlock = data.next()
             val curHeader = currentBlock.header
-            val cmpHash = curHeader.digest(params.crypter)
+            val cmpHash = curHeader.digest(hasher)
             // compare registered hashId and calculated hashId:
             if (!curHeader.hashId.contentEquals(cmpHash)) {
                 logger.debug {
@@ -234,33 +249,34 @@ data class ChainHandle internal constructor(
     }
 
     /**
-     * Takes the [hash] of a block and returns a [LoadResult]
+     * Takes the [hash] of a block and returns a [LoadFailure]
      * over a [Block] with the provided [hash].
      */
-    fun getBlock(hash: Hash): LoadResult<Block> =
+    fun getBlock(hash: Hash): Outcome<Block, LoadFailure> =
         pw.getBlockByHeaderHash(
-            ledgerHash,
-            hash
+            ledgerHash, hash
         )
 
     /**
-     * Takes a [blockheight] and returns a [LoadResult]
+     * Takes a [blockheight] and returns a [LoadFailure]
      * over a [Block] with the provided [blockheight].
      */
-    fun getBlockByHeight(blockheight: Long): LoadResult<Block> =
+    fun getBlockByHeight(
+        blockheight: Long
+    ): Outcome<Block, LoadFailure> =
         pw.getBlockByBlockHeight(
-            ledgerHash,
-            blockheight
+            ledgerHash, blockheight
         )
 
     /**
-     * Takes the [hash] of a block and returns a [LoadResult]
+     * Takes the [hash] of a block and returns a [LoadFailure]
      * over a [BlockHeader] with the provided [hash].
      */
-    fun getBlockHeaderByHash(hash: Hash): LoadResult<BlockHeader> =
+    fun getBlockHeaderByHash(
+        hash: Hash
+    ): Outcome<BlockHeader, LoadFailure> =
         pw.getBlockHeaderByHash(
-            ledgerHash,
-            hash
+            ledgerHash, hash
         )
 
     /**
@@ -268,37 +284,34 @@ data class ChainHandle internal constructor(
      */
     fun hasBlock(hash: Hash): Boolean =
         (pw.getBlockByHeaderHash(
-            ledgerHash,
-            hash
-        ) is LoadResult.Success)
+            ledgerHash, hash
+        ) is Outcome.Ok<*, *>)
 
     /**
-     * Takes the hash of a block and returns a [LoadResult] over
+     * Takes the hash of a block and returns a [LoadFailure] over
      * the [Block] previous to that which has [hash].
      */
     fun getPrevBlock(
         hash: Hash
-    ): LoadResult<Block> =
+    ): Outcome<Block, LoadFailure> =
         pw.getBlockByPrevHeaderHash(
-            ledgerHash,
-            hash
+            ledgerHash, hash
         )
 
     /**
-     * Takes the hash of a block and returns a [LoadResult] over
+     * Takes the hash of a block and returns a [LoadFailure] over
      * the [BlockHeader] previous to that which has [hash].
      */
     fun getPrevBlockHeaderByHash(
         hash: Hash
-    ): LoadResult<BlockHeader> =
+    ): Outcome<BlockHeader, LoadFailure> =
         pw.getBlockHeaderByPrevHeaderHash(
-            ledgerHash,
-            hash
+            ledgerHash, hash
         )
 
 
     /**
-     * Returns a [LoadListResult] over the requested list of [Block]
+     * Returns an [Outcome] over the requested [Sequence] of [Block]
      * for the specified blockheight [range].
      */
     fun getBlockChunk(range: LongRange) =
@@ -306,17 +319,17 @@ data class ChainHandle internal constructor(
 
 
     /**
-     * Preferrable overload, returns a [LoadListResult] over
-     * [Blocks] for the specified blockheight interval, from
+     * Preferrable overload, returns an [Outcome] over
+     * [Block]s for the specified blockheight interval, from
      * [startInclusive] to [endInclusive].
      */
     fun getBlockChunk(
         startInclusive: Long, endInclusive: Long
-    ): LoadListResult<Block> =
+    ): Outcome<Sequence<Block>, LoadFailure> =
         pw.getBlockListByBlockHeightInterval(
+            ledgerHash,
             startInclusive,
-            endInclusive,
-            ledgerHash
+            endInclusive
         )
 
 
@@ -330,37 +343,40 @@ data class ChainHandle internal constructor(
      *
      * Returns whether the block was successfully added.
      */
-    fun addBlock(block: Block): QueryResult<Boolean> =
-        lastBlockHeader.let {
-            val recalcTrigger = params.recalcTrigger
-            val valid = it.intoQuery {
-                if (validateBlock(
-                        this.hashId,
-                        block
-                    )
-                ) {
-                    if (lastRecalc == recalcTrigger) {
-                        recalculateDifficulty(block)
-                        lastRecalc = 0
-                    } else {
-                        lastRecalc++
-                    }
-                    true
+    fun addBlock(block: Block): Outcome<Boolean, QueryFailure> =
+        lastBlockHeader.mapSuccess {
+            val recalcTrigger = ledgerParams.recalcTrigger
+            if (validateBlock(this.data.hash, block)) {
+                if (lastRecalc == recalcTrigger) {
+                    recalculateDifficulty(block)
+                    lastRecalc = 0
                 } else {
-                    false
+                    lastRecalc++
                 }
-            }
-            if (valid is QueryResult.Success) {
-                pw.persistEntity(
-                    block,
-                    BlockStorageAdapter()
-                ).intoQuery {
-                    true
-                }
+                Outcome.Ok<Boolean, LoadFailure>(true)
             } else {
-                valid
+                Outcome.Ok(false)
             }
-        }
+        }.mapToNew(
+            {
+                Outcome.Error<Boolean, QueryFailure>(
+                    this.failure.intoQuery()
+                )
+            },
+            {
+                if (this.data) {
+                    pw.persistEntity(
+                        block,
+                        BlockStorageAdapter
+                    ).flatMapSuccess {
+                        true
+                    }
+                } else {
+                    Outcome.Ok(this.data)
+                }
+            }
+        )
+
 
     /**
      * Will check if the block beats the current difficulty,
@@ -389,10 +405,10 @@ data class ChainHandle internal constructor(
     /**
      * Difficulty is recalculated based on timestamp
      * difference between [triggerBlock] at current blockheight
-     * and Block at current blockheight - [params]'s recalcTrigger.
+     * and Block at current blockheight - [ledgerParams]'s recalcTrigger.
      *
      * This difference is measured as a percentage of
-     * [params]'s recalcTime which is used to multiply by current
+     * [ledgerParams]'s recalcTime which is used to multiply by current
      * difficulty target.
      *
      * Returns the recalculated difficulty or the same
@@ -403,34 +419,25 @@ data class ChainHandle internal constructor(
     ): Difficulty {
         val cmp = triggerBlock.header.blockheight
         val cstamp = triggerBlock.header.timestamp.epochSecond
-        val fromHeight = cmp - params.recalcTrigger
-        val recalcBlock = pw.getBlockByBlockHeight(ledgerHash, fromHeight)
+        val fromHeight = cmp - ledgerParams.recalcTrigger
+        val recalcBlock =
+            pw.getBlockByBlockHeight(ledgerHash, fromHeight)
         return when (recalcBlock) {
-            is LoadResult.Success -> {
+            is Outcome.Ok<Block, *> -> {
                 val pstamp = recalcBlock.data.header.timestamp.epochSecond
                 val deltaStamp = cstamp - pstamp
                 recalc(triggerBlock, recalcBlock.data, deltaStamp)
             }
-            is Failable -> {
+            is Outcome.Error<Block, LoadFailure> -> {
                 logger.error {
                     """
                     | Difficulty retrigger without 2048 blocks existent?
                     |   Grab from Index: $fromHeight
-                    |   Cause: ${recalcBlock.cause}
+                    |   Cause: ${recalcBlock.failure.cause}
                     """.trimMargin()
                 }
                 difficultyTarget
             }
-            else -> {
-                logger.error {
-                    """
-                    | Difficulty retrigger without 2048 blocks existent?
-                    |   Grab from Index: $fromHeight
-                    """.trimMargin()
-                }
-                difficultyTarget
-            }
-
         }
     }
 
@@ -450,13 +457,15 @@ data class ChainHandle internal constructor(
         recalcBlock: Block,
         deltaStamp: Long
     ): Difficulty {
-        val deltax = BigDecimal(params.recalcTime - deltaStamp)
-        val deltadiv = (deltax * RECALC_MULT)
-            .divideToIntegralValue(BigDecimal(params.recalcTime))
+        val recalcMult = LedgerConfiguration.RECALC_MULT
+        val recalcDiv = LedgerConfiguration.RECALC_DIV
+        val deltax = BigDecimal(ledgerParams.recalcTime - deltaStamp)
+        val deltadiv = (deltax * recalcMult)
+            .divideToIntegralValue(BigDecimal(ledgerParams.recalcTime))
             .toBigInteger()
         val difficulty = BigInteger(difficultyTarget.bytes)
         val newDiff = difficulty + (difficulty * deltadiv)
-        return padOrMax(Difficulty(newDiff / RECALC_DIV))
+        return padOrMax(Difficulty(newDiff / recalcDiv))
     }
 
     /**
@@ -486,17 +495,14 @@ data class ChainHandle internal constructor(
 
 
     companion object : KLogging() {
-        const val CACHE_SIZE = 40
-
-        val RECALC_DIV = BigInteger("10000000000000")
-        val RECALC_MULT = BigDecimal("10000000000000")
-
+        val identity = Identity("")
 
         fun getOriginHeader(
             blockChainId: Hash
         ): BlockHeader =
             BlockHeader(
                 blockChainId,
+                LedgerHandle.getHasher(blockChainId)!!,
                 MAX_DIFFICULTY,
                 0,
                 emptyHash,
@@ -521,18 +527,21 @@ data class ChainHandle internal constructor(
         fun getOriginBlock(
             blockChainId: Hash
         ): Block =
-            Block(
-                mutableListOf(),
-                Coinbase(),
-                getOriginHeader(blockChainId),
-                MerkleTree()
-            ).apply {
-                this.addTransaction(
-                    Transaction(
-                        Identity(""),
-                        PhysicalData(DummyData.DUMMY)
+            LedgerHandle.getContainer(blockChainId)!!.let {
+                Block(
+                    mutableListOf(),
+                    Coinbase(it),
+                    getOriginHeader(blockChainId),
+                    MerkleTree(it.hasher)
+                ).apply {
+                    this.addTransaction(
+                        Transaction(
+                            identity,
+                            PhysicalData(DummyData.DUMMY),
+                            it.hasher
+                        )
                     )
-                )
+                }
             }
 
     }
