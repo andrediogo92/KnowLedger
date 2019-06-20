@@ -3,11 +3,13 @@ package pt.um.masb.agent.messaging.block
 import jade.content.onto.BasicOntology
 import jade.content.onto.BeanOntology
 
-object BlockOntology : BeanOntology("JBlock-Ontology", BasicOntology.getInstance()) {
+object BlockOntology : BeanOntology(
+    "JBlockOntology", BasicOntology.getInstance()
+) {
 
-    const val ONTOLOGY_NAME = "JBlock-Ontology"
+    const val ONTOLOGY_NAME = "JBlockOntology"
 
     init {
-        add("pt.um.lei.masb.agent.messaging.block.ontology")
+        add("pt.um.masb.agent.messaging.block.ontology")
     }
 }
