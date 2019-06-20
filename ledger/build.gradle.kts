@@ -26,7 +26,6 @@ dependencies {
     //implementation(Libs.arrowK)
     implementation(Libs.bouncyCastle)
     //implementation(Libs.coroutines)
-    implementation(Libs.klog)
     implementation(Libs.jol)
     Libs.moshi.forEach {
         implementation(it)
@@ -35,7 +34,7 @@ dependencies {
 //        implementation(it)
 //    }
     //implementation(Libs.serialization)
-    Libs.slf4j.forEach {
+    Libs.tinylog.forEach {
         implementation(it)
     }
 

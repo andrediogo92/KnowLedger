@@ -2,8 +2,8 @@ package pt.um.masb.ledger.test
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import mu.KLogging
 import org.junit.jupiter.api.Test
+import org.tinylog.kotlin.Logger
 import pt.um.masb.common.misc.getStringFromKey
 import pt.um.masb.common.misc.hexString
 import pt.um.masb.common.misc.stringToPrivateKey
@@ -55,7 +55,7 @@ class TestPubKeyCodec {
         assertThat(decpub).isEqualTo(pub)
         assertThat(decpr).isEqualTo(pr)
 
-        logger.debug {
+        Logger.debug {
             """
                 |Key:
                 |  private: $pr
@@ -75,8 +75,4 @@ class TestPubKeyCodec {
             """.trimMargin()
         }
     }
-
-
-    companion object : KLogging()
-
 }

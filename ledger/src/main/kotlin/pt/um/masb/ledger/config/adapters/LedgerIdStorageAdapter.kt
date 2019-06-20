@@ -5,6 +5,7 @@ import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.ledger.config.LedgerId
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
 import pt.um.masb.ledger.service.results.LoadFailure
@@ -64,12 +65,12 @@ object LedgerIdStorageAdapter : LedgerStorageAdapter<LedgerId> {
             LedgerParamsStorageAdapter.load(
                 ledgerHash,
                 element.getLinked("ledgerParams")
-            ).flatMapSuccess {
+            ).mapSuccess {
                 LedgerId(
                     element.getStorageProperty("id"),
                     uuid,
                     timestamp,
-                    this,
+                    it,
                     ledgerHash
                 )
             }

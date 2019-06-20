@@ -1,7 +1,6 @@
 package pt.um.masb.ledger.service
 
 import com.squareup.moshi.JsonClass
-import mu.KLogging
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import pt.um.masb.common.storage.LedgerContract
 import java.security.KeyPair
@@ -28,8 +27,7 @@ data class Identity(
     constructor(id: String) : this(id, generateNewKeyPair())
 
 
-
-    companion object : KLogging() {
+    companion object {
         init {
             //Ensure Bouncy Castle Crypto provider is present
             if (Security.getProvider("BC") == null) {

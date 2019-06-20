@@ -5,7 +5,8 @@ import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
-import pt.um.masb.ledger.results.collapse
+import pt.um.masb.common.results.allValues
+import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
 import pt.um.masb.ledger.service.LedgerHandle
 import pt.um.masb.ledger.service.results.LoadFailure
@@ -51,12 +52,12 @@ object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
                 .asSequence()
                 .map {
                     TransactionOutputStorageAdapter.load(ledgerHash, it)
-                }.collapse()
-                .flatMapSuccess {
+                }.allValues()
+                .mapSuccess {
                     val container =
                         LedgerHandle.getContainer(ledgerHash)!!
                     Coinbase(
-                        this.toMutableSet(),
+                        it.toMutableSet(),
                         element.getPayoutProperty("coinbase"),
                         element.getHashProperty("hashId"),
                         container.hasher,

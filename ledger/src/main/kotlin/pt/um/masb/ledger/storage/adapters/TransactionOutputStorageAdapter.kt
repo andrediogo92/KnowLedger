@@ -55,7 +55,7 @@ object TransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutput>
                 element.getPayoutProperty("payout")
             val txSet = element.getHashSet("txSet")
 
-            Outcome.Ok<TransactionOutput, LoadFailure>(
+            Outcome.Ok(
                 TransactionOutput(
                     publicKey,
                     prevCoinbase,

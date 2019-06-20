@@ -3,7 +3,7 @@ package pt.um.masb.ledger.test
 import assertk.fail
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
-import mu.KLogger
+import org.tinylog.kotlin.Logger
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.DataFormula
 import pt.um.masb.common.data.DefaultDiff
@@ -14,6 +14,7 @@ import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.results.peekFailure
 import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.common.test.randomByteArray
@@ -191,10 +192,9 @@ internal fun logActualToExpectedLists(
     explanationActual: String,
     actualList: List<Any>,
     explanationExpected: String,
-    expectedList: List<Any>,
-    logger: KLogger
+    expectedList: List<Any>
 ) {
-    logger.info {
+    Logger.info {
         """
             |
             |$explanationActual
@@ -224,50 +224,50 @@ internal fun StringBuilder.appendByLine(toPrint: Collection<String>): StringBuil
     return this
 }
 
-fun <T : Any> Outcome<T, LoadFailure>.failOnLoadError() {
-    this.mapError<LoadFailure> {
-        when (this.failure) {
+fun <T> Outcome<T, LoadFailure>.failOnLoadError() {
+    this.peekFailure {
+        when (it) {
             is LoadFailure.UnknownFailure ->
-                (this.failure as LoadFailure.UnknownFailure).exception?.let {
-                    throw it
+                it.exception?.let { ex ->
+                    throw ex
                 }
         }
-        fail(this.failure.cause)
+        fail(it.cause)
     }
 }
 
-fun <T : Any> Outcome<T, DataFailure>.failOnDataError() {
-    this.mapError<DataFailure> {
-        when (this.failure) {
+fun <T> Outcome<T, DataFailure>.failOnDataError() {
+    this.peekFailure {
+        when (it) {
             is DataFailure.UnknownFailure ->
-                (this.failure as DataFailure.UnknownFailure).exception?.let {
-                    throw it
+                it.exception?.let { ex ->
+                    throw ex
                 }
         }
-        fail(this.failure.cause)
+        fail(it.cause)
     }
 }
 
 fun <T : Any> Outcome<T, LedgerFailure>.failOnLedgerError() {
-    this.mapError<LedgerFailure> {
-        when (this.failure) {
+    this.peekFailure {
+        when (it) {
             is LedgerFailure.UnknownFailure ->
-                (this.failure as LedgerFailure.UnknownFailure).exception?.let {
-                    throw it
+                it.exception?.let { ex ->
+                    throw ex
                 }
         }
-        fail(this.failure.cause)
+        fail(it.cause)
     }
 }
 
 fun <T : Any> Outcome<T, QueryFailure>.failOnQueryError() {
-    this.mapError<QueryFailure> {
-        when (this.failure) {
+    this.peekFailure {
+        when (it) {
             is QueryFailure.UnknownFailure ->
-                (this.failure as QueryFailure.UnknownFailure).exception?.let {
-                    throw it
+                it.exception?.let { ex ->
+                    throw ex
                 }
         }
-        fail(this.failure.cause)
+        fail(it.cause)
     }
 }

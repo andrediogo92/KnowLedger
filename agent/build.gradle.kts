@@ -31,7 +31,6 @@ dependencies {
     Libs.jade.forEach {
         implementation(it)
     }
-    implementation(Libs.klog)
     Libs.ktor.forEach {
         implementation(it)
     }
@@ -39,8 +38,8 @@ dependencies {
         implementation(it)
     }
     //implementation(Libs.serialization)
-    Libs.slf4j.forEach {
-        runtimeOnly(it)
+    Libs.tinylog.forEach {
+        implementation(it)
     }
 
     //Test dependencies

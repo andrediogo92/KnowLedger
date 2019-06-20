@@ -1,7 +1,6 @@
 package pt.um.masb.ledger.storage
 
 import com.squareup.moshi.JsonClass
-import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
 import pt.um.masb.common.Sizeable
 import pt.um.masb.common.data.Difficulty
@@ -138,6 +137,4 @@ data class BlockHeader(
         result = 31 * result + nonce.hashCode()
         return result
     }
-
-    companion object : KLogging()
 }

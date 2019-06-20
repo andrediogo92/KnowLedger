@@ -12,7 +12,7 @@ import java.math.BigDecimal
 
 /**
  *
- * Traffic Flow (https://developer.tomtom.com/online-traffic/online-traffic-documentation/flow-segment-data):
+ * Traffic Flow (https://developer.tomtom.com/online-traffic/online-traffic-documentation/flow-segment-value):
  * https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?key=<API_KEY>&point=41.503122,-8.480000
  *
  **/
@@ -24,7 +24,7 @@ class TrafficFlowData(
     var currentTravelTime: Int, //Current travel time in sec based on fused real-time measurements
     var freeFlowTravelTime: Int,    //The travel time in sec which would be expected under ideal free flow conditions
     var confidence: Double,   //Measure of the quality of the provided travel time and speed
-    var realtimeRatio: Double,   //The ratio between live and the historical data used to provide the response
+    var realtimeRatio: Double,   //The ratio between live and the historical value used to provide the response
     city: String = "TBD",
     citySeqNum: Int = 1
 ) : pt.um.masb.ledger.data.AbstractTrafficIncident(

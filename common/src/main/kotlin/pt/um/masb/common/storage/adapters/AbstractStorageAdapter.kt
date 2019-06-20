@@ -1,6 +1,5 @@
 package pt.um.masb.common.storage.adapters
 
-import mu.KLogging
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.hash.AvailableHashAlgorithms
@@ -34,7 +33,7 @@ abstract class AbstractStorageAdapter<T : BlockChainData>(
                 if (tName == name) {
                     loader(document)
                 } else {
-                    Outcome.Error<T, DataFailure>(
+                    Outcome.Error<DataFailure>(
                         DataFailure.UnexpectedClass(
                             "Got document with unexpected class: $name"
                         )
@@ -55,6 +54,4 @@ abstract class AbstractStorageAdapter<T : BlockChainData>(
             )
         }
     }
-
-    companion object : KLogging()
 }

@@ -11,7 +11,6 @@ import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageID
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.storage.adapters.Storable
-import java.math.BigDecimal
 import java.math.BigInteger
 
 data class DocumentElement internal constructor(
@@ -29,7 +28,7 @@ data class DocumentElement internal constructor(
             elem.unload<OElement>()
         }
 
-    override val presentProperties
+    override val presentProperties: MutableSet<String>
         get() = elem.propertyNames
 
     override val schema: String?
@@ -50,7 +49,7 @@ data class DocumentElement internal constructor(
     override fun getHashProperty(
         name: String
     ): Hash =
-        Hash(elem.getProperty<ByteArray>(name))
+        Hash(elem.getProperty(name))
 
     override fun getHashList(
         name: String
@@ -73,7 +72,7 @@ data class DocumentElement internal constructor(
     override fun getPayoutProperty(
         name: String
     ): Payout =
-        Payout(elem.getProperty<BigDecimal>(name))
+        Payout(elem.getProperty(name))
 
     override val identity: StorageID
         get() = DocumentID(elem.identity)
@@ -81,7 +80,7 @@ data class DocumentElement internal constructor(
     override fun getStorageBytes(
         name: String
     ): StorageBytes =
-        DocumentBytes(elem.getProperty<OBlob>(name))
+        DocumentBytes(elem.getProperty(name))
 
     override fun getElementList(
         name: String
@@ -114,13 +113,13 @@ data class DocumentElement internal constructor(
     override fun getLinked(
         name: String
     ): StorageElement =
-        DocumentElement(elem.getProperty<OElement>(name))
+        DocumentElement(elem.getProperty(name))
 
 
     override fun <T> getStorageProperty(
         name: String
     ): T =
-        elem.getProperty<T>(name)
+        elem.getProperty(name)
 
 
     override fun setDifficultyProperty(

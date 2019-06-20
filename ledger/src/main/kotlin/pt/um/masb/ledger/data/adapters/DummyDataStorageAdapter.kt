@@ -32,7 +32,7 @@ object DummyDataStorageAdapter : AbstractStorageAdapter<DummyData>(
         element: StorageElement
     ): Outcome<DummyData, DataFailure> =
         commonLoad(element, id) {
-            Outcome.Ok<DummyData, DataFailure>(
+            Outcome.Ok(
                 DummyData.DUMMY
             )
         }

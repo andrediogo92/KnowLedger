@@ -5,8 +5,10 @@ import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.results.allValues
+import pt.um.masb.common.results.flatMapSuccess
+import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.ledger.data.adapters.MerkleTreeStorageAdapter
-import pt.um.masb.ledger.results.collapse
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
 import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.Block
@@ -20,7 +22,7 @@ object BlockStorageAdapter : LedgerStorageAdapter<Block> {
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "data" to StorageType.LIST,
+            "value" to StorageType.LIST,
             "coinbase" to StorageType.LINK,
             "header" to StorageType.LINK,
             "merkleTree" to StorageType.LINK
@@ -32,7 +34,7 @@ object BlockStorageAdapter : LedgerStorageAdapter<Block> {
     ): StorageElement =
         session.newInstance(id).apply {
             setElementList(
-                "data",
+                "value",
                 toStore.data.map {
                     TransactionStorageAdapter.store(
                         it, session
@@ -60,43 +62,43 @@ object BlockStorageAdapter : LedgerStorageAdapter<Block> {
             lateinit var header: BlockHeader
 
             element
-                .getElementList("data")
+                .getElementList("value")
                 .asSequence()
                 .map {
                     TransactionStorageAdapter.load(
                         ledgerHash, it
                     )
-                }.collapse()
-                .mapSuccess {
-                    data = this.data.toMutableList()
+                }.allValues()
+                .flatMapSuccess {
+                    data = it.toMutableList()
                     CoinbaseStorageAdapter.load(
                         ledgerHash,
                         element.getLinked(
                             "coinbase"
                         )
                     )
-                }.mapSuccess {
-                    coinbase = this.data
+                }.flatMapSuccess {
+                    coinbase = it
                     BlockHeaderStorageAdapter.load(
                         ledgerHash,
                         element.getLinked(
                             "header"
                         )
                     )
-                }.mapSuccess {
-                    header = this.data
+                }.flatMapSuccess {
+                    header = it
                     MerkleTreeStorageAdapter.load(
                         ledgerHash,
                         element.getLinked(
                             "merkleTree"
                         )
                     )
-                }.flatMapSuccess {
+                }.mapSuccess {
                     Block(
                         data,
                         coinbase,
                         header,
-                        this
+                        it
                     )
                 }
         }

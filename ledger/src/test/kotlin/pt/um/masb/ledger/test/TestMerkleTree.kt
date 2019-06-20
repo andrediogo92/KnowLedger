@@ -5,9 +5,9 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
-import mu.KLogging
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.tinylog.kotlin.Logger
 import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.test.applyHashInPairs
 import pt.um.masb.common.test.crypter
@@ -38,19 +38,19 @@ class TestMerkleTree {
         tree: MerkleTree
     ) {
         tree.collapsedTree.forEachIndexed { i, it ->
-            logger.debug {
+            Logger.debug {
                 "Naked tree @$i -> ${it.print}"
             }
         }
 
         tree.levelIndex.forEachIndexed { i, it ->
-            logger.debug {
+            Logger.debug {
                 "Level @$i -> Starts from $it"
             }
         }
 
         ts.forEachIndexed { i, it ->
-            logger.debug {
+            Logger.debug {
                 "Transactions @$i -> ${it.hashId.print}"
             }
         }
@@ -62,7 +62,7 @@ class TestMerkleTree {
         tree: MerkleTree
     ) {
         logMerkle(ts, tree)
-        logger.debug {
+        Logger.debug {
             "Coinbase is ${coinbase.hashId.print}"
         }
     }
@@ -176,7 +176,7 @@ class TestMerkleTree {
                 tree8.verifyTransaction(ts8[5].hashId)
             ).isTrue()
 
-            logger.debug {
+            Logger.debug {
                 "Balanced 8-transaction tree is correct"
             }
         }
@@ -195,7 +195,7 @@ class TestMerkleTree {
                 tree7WithCoinbase.verifyBlockTransactions(coinbase7, ts7)
             ).isTrue()
 
-            logger.debug {
+            Logger.debug {
                 "Balanced 7-transaction tree with coinbase is correct"
             }
         }
@@ -372,7 +372,7 @@ class TestMerkleTree {
                 tree5WithCoinbase.verifyTransaction(ts5[4].hashId)
             ).isTrue()
 
-            logger.debug {
+            Logger.debug {
                 "Unbalanced 5-transaction tree is correct"
             }
 
@@ -405,7 +405,7 @@ class TestMerkleTree {
                 tree7.verifyTransaction(ts7[6].hashId)
             ).isTrue()
 
-            logger.debug {
+            Logger.debug {
                 "Unbalanced 7-transaction tree is correct"
             }
         }
@@ -424,7 +424,7 @@ class TestMerkleTree {
                 tree6WithCoinbase.verifyBlockTransactions(coinbase6, ts6)
             ).isTrue()
 
-            logger.debug {
+            Logger.debug {
                 "Unbalanced 6-transaction tree with coinbase is correct"
             }
 
@@ -437,7 +437,7 @@ class TestMerkleTree {
                 tree5WithCoinbase.verifyBlockTransactions(coinbase5, ts5)
             ).isTrue()
 
-            logger.debug {
+            Logger.debug {
                 "Unbalanced 5-transaction tree with coinbase is correct"
             }
 
@@ -471,8 +471,4 @@ class TestMerkleTree {
         assertThat(tree.root.bytes).containsExactly(*ts[0].hashId.bytes)
         assertThat(tree.collapsedTree.size).isEqualTo(1)
     }
-
-    companion object : KLogging()
-
-
 }

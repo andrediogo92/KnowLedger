@@ -4,14 +4,14 @@ import jade.content.lang.sl.SLCodec
 import jade.core.behaviours.Behaviour
 import jade.lang.acl.ACLMessage
 import jade.lang.acl.MessageTemplate
-import mu.KLogging
+import org.tinylog.kotlin.Logger
 import pt.um.masb.agent.data.convertToJadeBlock
 import pt.um.masb.agent.messaging.block.BlockOntology
 import pt.um.masb.agent.messaging.block.ontology.actions.DiffuseBlock
 import pt.um.masb.agent.messaging.transaction.TransactionOntology
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.ledger.service.ChainHandle
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.Block
 import pt.um.masb.ledger.storage.Transaction
 
@@ -72,7 +72,7 @@ class ReceiveMessages(
             val sendMissingNum = blocksReq.createReply()
             var missingNum = sc.lastBlockHeader.let {
                 when (it) {
-                    is LoadResult.Success -> it.data.blockheight - rHeight
+                    is LoadFailure.Success -> it.data.blockheight - rHeight
                     else -> -1
                 }
             }
@@ -85,7 +85,7 @@ class ReceiveMessages(
                 val blmsg = ACLMessage(ACLMessage.INFORM)
                 val blk = sc.getBlockByHeight(rHeight)
                 when (blk) {
-                    is LoadResult.Success -> {
+                    is LoadFailure.Success -> {
                         myAgent.contentManager
                             .fillContent(
                                 blmsg,
@@ -101,7 +101,7 @@ class ReceiveMessages(
                         missingNum--
                     }
                     else -> {
-                        logger.error {
+                        Logger.error {
                             "Nonexistent block referenced at height: $rHeight"
                         }
                         break@loop
@@ -114,6 +114,4 @@ class ReceiveMessages(
     override fun done(): Boolean {
         return false
     }
-
-    companion object : KLogging()
 }

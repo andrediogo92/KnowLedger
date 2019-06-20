@@ -48,13 +48,13 @@ object NoiseDataStorageAdapter : AbstractStorageAdapter<NoiseData>(
                 else -> null
             }
             if (unit == null) {
-                Outcome.Error<NoiseData, DataFailure>(
+                Outcome.Error<DataFailure>(
                     DataFailure.UnrecognizedUnit(
                         "Unit is not one of the expected: $prop"
                     )
                 )
             } else {
-                Outcome.Ok<NoiseData, DataFailure>(
+                Outcome.Ok(
                     NoiseData(
                         getStorageProperty("noiseLevel"),
                         getStorageProperty("peakOrBase"),

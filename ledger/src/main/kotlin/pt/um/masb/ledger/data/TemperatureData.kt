@@ -11,7 +11,7 @@ import java.io.InvalidClassException
 import java.math.BigDecimal
 
 /**
- * Temperature data specifies a decimal temperature value
+ * Temperature value specifies a decimal temperature value
  * and a Temperature unit ([TUnit.CELSIUS],
  * [TUnit.FAHRENHEIT], [TUnit.RANKINE] and [TUnit.KELVIN])
  * with idempotent methods to convert between them as needed.

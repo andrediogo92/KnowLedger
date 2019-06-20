@@ -2,7 +2,7 @@ package pt.um.masb.ledger.data
 
 
 import com.squareup.moshi.JsonClass
-import mu.KLogging
+import org.tinylog.kotlin.Logger
 import pt.um.masb.common.Sizeable
 import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
@@ -143,7 +143,7 @@ data class MerkleTree(
     }
 
     /**
-     * Verifies entire [MerkleTree] against the transaction data.
+     * Verifies entire [MerkleTree] against the transaction value.
      *
      * Takes the special [coinbase] transaction + the other [data]
      * transactions in the block and returns whether the entire
@@ -178,7 +178,7 @@ data class MerkleTree(
         //2 fors evaluate to essentially checking level by level
         //starting at the second to last.
         //We already checked the last level immediately
-        //against the data provided.
+        //against the value provided.
         var level = level
         while (level >= 0) {
             var i = levelIndex[level]
@@ -361,7 +361,7 @@ data class MerkleTree(
                 levelIndex = listOf(0)
             }
             else -> {
-                logger.warn { "Empty merkle tree" }
+                Logger.warn { "Empty merkle tree" }
                 collapsedTree = emptyList()
                 levelIndex = emptyList()
             }
@@ -431,10 +431,6 @@ data class MerkleTree(
         result = 31 * result + levelIndex.hashCode()
         return result
     }
-
-
-    companion object : KLogging()
-
 
 }
 

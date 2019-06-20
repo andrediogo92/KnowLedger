@@ -64,7 +64,7 @@ object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
             val currentBlockheight: Long =
                 element.getStorageProperty("currentBlockheight")
 
-            Outcome.Ok<ChainHandle, LedgerFailure>(
+            Outcome.Ok(
                 ChainHandle(
                     clazz,
                     hash,

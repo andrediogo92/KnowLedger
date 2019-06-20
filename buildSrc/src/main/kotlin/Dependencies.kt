@@ -1,24 +1,31 @@
 object Versions {
     const val arrowK = "0.9"
-    const val assertK = "0.13"
+    const val assertK = "0.17"
     const val autoService = "1.0-rc5"
     const val bouncyCastle = "1.61"
     const val commons = "1.2"
-    const val coroutines = "1.2.0"
+    const val coroutines = "1.3.0-M1"
     const val eclipsePaho = "1.2.0"
     const val jade = "4.5.0"
     const val jadeMisc = "2.8.0"
     const val jol = "0.9"
     const val jUnit = "5.4.2"
     const val jUnitRunner = "1.4.2"
-    const val klog = "1.6.26"
-    const val kotlin = "1.3.31"
-    const val ktor = "1.1.4"
+    const val kotlin = "1.3.40"
+    const val ktor = "1.2.2"
     const val moshi = "1.8.0"
     const val kotlinPoet = "1.2.0"
     const val orientDB = "3.0.14"
+    const val serial = "0.11.1"
+    const val tinylog = "2.0.0-M4.3"
+
+    /*
+    * Deprecate old logging methods,
+    * for tinylog.
+    *
     const val slf4j = "1.8.0-beta2"
-    const val serial = "0.11.0"
+    const val klog = "1.6.26"
+    */
 }
 
 object Libs {
@@ -57,8 +64,6 @@ object Libs {
         "org.junit.platform:junit-platform-runner:${Versions.jUnitRunner}"
     )
 
-    const val klog = "io.github.microutils:kotlin-logging:${Versions.klog}"
-
     val ktor = listOf(
         "io.ktor:ktor-client-core:${Versions.ktor}",
         "io.ktor:ktor-client-cio:${Versions.ktor}",
@@ -89,10 +94,20 @@ object Libs {
     const val serialization =
         "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serial}"
 
+    val tinylog = listOf(
+        "org.tinylog:tinylog-api-kotlin:${Versions.tinylog}",
+        "org.tinylog:tinylog-impl:${Versions.tinylog}"
+    )
 
+    /*
+    * Deprecate old logging methods,
+    * for tinylog.
+    *
+    const val klog = "io.github.microutils:kotlin-logging:${Versions.klog}"
     val slf4j = listOf(
         "org.slf4j:slf4j-api:${Versions.slf4j}",
         "org.slf4j:slf4j-simple:${Versions.slf4j}"
     )
+    */
 
 }

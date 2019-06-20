@@ -1,64 +1,10 @@
 package pt.um.masb.ledger.results
 
-import pt.um.masb.common.results.Failable
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.ledger.service.results.LedgerFailure
 import pt.um.masb.ledger.service.results.LoadFailure
-
-
-// ---------------------------------------
-// List Reductions
-// ---------------------------------------
-
-
-fun <T : Any, U : Failable> Sequence<Outcome<T, U>>.collapse(): Outcome<Sequence<T>, U> {
-    val accumulator: MutableList<T> = mutableListOf()
-    var short = false
-    lateinit var shorter: U
-    loop@ for (shorting in this) {
-        when (shorting) {
-            is Outcome.Ok -> accumulator += shorting.data
-            is Outcome.Error -> {
-                shorter = shorting.failure
-                short = true
-                break@loop
-            }
-        }
-    }
-    return if (short) {
-        Outcome.Error(shorter)
-    } else {
-        Outcome.Ok(
-            accumulator.asSequence()
-        )
-    }
-}
-
-
-fun <T : Any, U : Failable> List<Outcome<T, U>>.collapse(): Outcome<List<T>, U> {
-    val accumulator: MutableList<T> = mutableListOf()
-    var short = false
-    lateinit var shorter: U
-    loop@ for (shorting in this) {
-        when (shorting) {
-            is Outcome.Ok -> accumulator += shorting.data
-            is Outcome.Error -> {
-                shorter = shorting.failure
-                short = true
-                break@loop
-            }
-        }
-    }
-    return if (short) {
-        Outcome.Error(shorter)
-    } else {
-        Outcome.Ok(
-            accumulator
-        )
-    }
-}
 
 //-----------------------------------------
 // Exception Handlers
@@ -123,4 +69,4 @@ fun deadCode(): Nothing {
     throw RuntimeException("Dead code invoked")
 }
 
-fun <T : Any> T.checkSealed() {}
+fun <T> T.checkSealed() {}

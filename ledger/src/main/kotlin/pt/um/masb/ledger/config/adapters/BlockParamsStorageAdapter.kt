@@ -38,7 +38,7 @@ object BlockParamsStorageAdapter : LedgerStorageAdapter<BlockParams> {
         element: StorageElement
     ): Outcome<BlockParams, LoadFailure> =
         tryOrLoadUnknownFailure {
-            Outcome.Ok<BlockParams, LoadFailure>(
+            Outcome.Ok(
                 BlockParams(
                     element.getStorageProperty("blockMemSize"),
                     element.getStorageProperty("blockLength")

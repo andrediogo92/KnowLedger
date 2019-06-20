@@ -11,7 +11,7 @@ import java.io.InvalidClassException
 import java.math.BigDecimal
 
 /**
- * Luminosity data might be output by an ambient light
+ * Luminosity value might be output by an ambient light
  * sensor, using lux units ([LUnit.LUX]) or a lighting unit,
  * outputting a specific amount of lumens ([LUnit.LUMENS]),
  * according to [unit].

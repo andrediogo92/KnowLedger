@@ -71,7 +71,7 @@ object TrafficFlowDataStorageAdapter : AbstractStorageAdapter<TrafficFlowData>(
         element: StorageElement
     ): Outcome<TrafficFlowData, DataFailure> =
         commonLoad(element, id) {
-            Outcome.Ok<TrafficFlowData, DataFailure>(
+            Outcome.Ok(
                 TrafficFlowData(
                     getStorageProperty("functionalRoadClass"),
                     getStorageProperty("currentSpeed"),

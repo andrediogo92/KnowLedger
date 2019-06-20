@@ -18,7 +18,7 @@ object PollutionOWMDataStorageAdapter : AbstractStorageAdapter<PollutionOWMData>
             "unit" to StorageType.STRING,
             "parameter" to StorageType.INTEGER,
             "value" to StorageType.DOUBLE,
-            "data" to StorageType.LISTEMBEDDED,
+            "value" to StorageType.LISTEMBEDDED,
             "city" to StorageType.STRING,
             "citySeqNum" to StorageType.STRING
         )
@@ -41,7 +41,7 @@ object PollutionOWMDataStorageAdapter : AbstractStorageAdapter<PollutionOWMData>
             setStorageProperty("value", pollutionData.value)
             setStorageProperty("unit", pollutionData.unit)
             setStorageProperty("city", pollutionData.city)
-            setStorageProperty("data", emptyList<List<Double>>())
+            setStorageProperty("value", emptyList<List<Double>>())
             setStorageProperty("citySeqNum", pollutionData.citySeqNum)
         }
     }
@@ -61,18 +61,18 @@ object PollutionOWMDataStorageAdapter : AbstractStorageAdapter<PollutionOWMData>
                 else -> null
             }
             if (param == null) {
-                Outcome.Error<PollutionOWMData, DataFailure>(
+                Outcome.Error<DataFailure>(
                     DataFailure.UnrecognizedUnit(
                         "Parameter is not one of the expected types: $prop"
                     )
                 )
             } else {
-                Outcome.Ok<PollutionOWMData, DataFailure>(
+                Outcome.Ok(
                     PollutionOWMData(
                         getStorageProperty("unit"),
                         param,
                         getStorageProperty("value"),
-                        getStorageProperty("data"),
+                        getStorageProperty("value"),
                         getStorageProperty("city"),
                         getStorageProperty("citySeqNum")
                     )

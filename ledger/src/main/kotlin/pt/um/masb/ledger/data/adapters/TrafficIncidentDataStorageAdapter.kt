@@ -80,7 +80,7 @@ object TrafficIncidentDataStorageAdapter : AbstractStorageAdapter<TrafficInciden
         element: StorageElement
     ): Outcome<TrafficIncidentData, DataFailure> =
         commonLoad(element, id) {
-            Outcome.Ok<TrafficIncidentData, DataFailure>(
+            Outcome.Ok(
                 TrafficIncidentData(
                     getStorageProperty("trafficModelId"),
                     getStorageProperty("id"),

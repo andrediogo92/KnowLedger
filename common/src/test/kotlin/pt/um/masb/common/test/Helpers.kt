@@ -1,12 +1,14 @@
 package pt.um.masb.common.test
 
+import org.apache.commons.rng.RestorableUniformRandomProvider
 import org.apache.commons.rng.simple.RandomSource
 import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
 import java.security.Security
 
-val r = RandomSource.create(RandomSource.SPLIT_MIX_64)
+val r: RestorableUniformRandomProvider =
+    RandomSource.create(RandomSource.SPLIT_MIX_64)
 
 fun randomDouble(): Double =
     r.nextDouble()

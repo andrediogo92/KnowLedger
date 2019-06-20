@@ -4,8 +4,8 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
-import mu.KLogging
 import org.junit.jupiter.api.Test
+import org.tinylog.kotlin.Logger
 import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.storage.Block
 
@@ -37,7 +37,7 @@ class TestSerialization {
 
         val json = moshi.adapter(Block::class.java)
         val resultingBlock = json.toJson(block)
-        logger.debug {
+        Logger.debug {
             resultingBlock
         }
         val rebuiltBlock = json.fromJson(resultingBlock)!!
@@ -46,6 +46,4 @@ class TestSerialization {
         //Deserialization is unnecessary though.
         assertThat(rebuiltBlock).isEqualTo(block)
     }
-
-    companion object : KLogging()
 }

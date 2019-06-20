@@ -1,7 +1,6 @@
 package pt.um.masb.ledger.config
 
 import com.squareup.moshi.JsonClass
-import mu.KLogging
 import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
@@ -85,5 +84,4 @@ data class LedgerId(
         return result
     }
 
-    companion object : KLogging()
 }

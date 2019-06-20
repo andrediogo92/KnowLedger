@@ -43,7 +43,7 @@ object MerkleTreeStorageAdapter : LedgerStorageAdapter<MerkleTree> {
                 element.getHashList("collapsedTree")
             val levelIndex: List<Int> =
                 element.getStorageProperty("levelIndex")
-            Outcome.Ok<MerkleTree, LoadFailure>(
+            Outcome.Ok(
                 MerkleTree(
                     LedgerHandle.getHasher(ledgerHash)!!,
                     collapsedTree,

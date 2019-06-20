@@ -4,15 +4,16 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
-import mu.KLogging
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.tinylog.kotlin.Logger
 import pt.um.masb.common.data.Difficulty.Companion.MIN_DIFFICULTY
 import pt.um.masb.common.database.DatabaseMode
 import pt.um.masb.common.database.DatabaseType
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.common.hash.Hasher
+import pt.um.masb.common.results.unwrap
 import pt.um.masb.ledger.config.BlockParams
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.data.TemperatureData
@@ -120,7 +121,7 @@ class TestOrientDatabase {
                 assertThat(block.data[0])
                     .isNotNull()
                     .isEqualTo(testTraffic)
-                logger.info {
+                Logger.info {
                     moshi.adapter(Block::class.java).toJson(block)
                 }
             }
@@ -132,6 +133,4 @@ class TestOrientDatabase {
         ledger.close()
     }
 
-
-    companion object : KLogging()
 }

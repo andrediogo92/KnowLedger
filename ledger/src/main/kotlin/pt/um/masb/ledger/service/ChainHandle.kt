@@ -1,6 +1,6 @@
 package pt.um.masb.ledger.service
 
-import mu.KLogging
+import org.tinylog.kotlin.Logger
 import pt.um.masb.common.config.LedgerConfiguration
 import pt.um.masb.common.data.Difficulty
 import pt.um.masb.common.data.Difficulty.Companion.INIT_DIFFICULTY
@@ -10,6 +10,9 @@ import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.results.flatMapSuccess
+import pt.um.masb.common.results.fold
+import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.ledger.config.BlockParams
 import pt.um.masb.ledger.config.CoinbaseParams
@@ -110,7 +113,7 @@ data class ChainHandle internal constructor(
     if (invalidate && time) {
     merkleTree = MerkleTree.buildMerkleTree(
     coinbase,
-    data
+    value
     )
     header.merkleRoot = merkleTree.root
     header.timestamp = ZonedDateTime
@@ -120,7 +123,7 @@ data class ChainHandle internal constructor(
     } else if (invalidate) {
     merkleTree = MerkleTree.buildMerkleTree(
     coinbase,
-    data
+    value
     )
     header.merkleRoot = merkleTree.root
     header.nonce = 0
@@ -169,7 +172,7 @@ data class ChainHandle internal constructor(
                 Outcome.Error(blockResult.failure.intoQuery())
             }
             is Outcome.Ok -> {
-                previousLastBlock = blockResult.data
+                previousLastBlock = blockResult.value
                 Outcome.Ok(true)
             }
         }
@@ -187,7 +190,7 @@ data class ChainHandle internal constructor(
             when (blocks) {
                 is Outcome.Ok -> {
                     valid = checkBlocks(
-                        previousLastBlock, blocks.data.iterator()
+                        previousLastBlock, blocks.value.iterator()
                     )
                 }
                 is Outcome.Error -> {
@@ -210,7 +213,7 @@ data class ChainHandle internal constructor(
             val cmpHash = curHeader.digest(hasher)
             // compare registered hashId and calculated hashId:
             if (!curHeader.hashId.contentEquals(cmpHash)) {
-                logger.debug {
+                Logger.debug {
                     """
                     |Current Hashes not equal:
                     |   ${curHeader.hashId.print}
@@ -223,7 +226,7 @@ data class ChainHandle internal constructor(
             val prevHeader = previousBlock.header
             // compare previous hashId and registered previous hashId
             if (!prevHeader.hashId.contentEquals(curHeader.previousHash)) {
-                logger.debug {
+                Logger.debug {
                     """
                     |Previous Hashes not equal:
                     |   ${prevHeader.hashId.print}
@@ -237,7 +240,7 @@ data class ChainHandle internal constructor(
             val hashTarget = curHeader.difficulty
             val curDiff = curHeader.hashId.difficulty
             if (curDiff > hashTarget) {
-                logger.debug {
+                Logger.debug {
                     "Unmined block: ${curHeader.hashId.print}"
                 }
                 return false
@@ -285,7 +288,7 @@ data class ChainHandle internal constructor(
     fun hasBlock(hash: Hash): Boolean =
         (pw.getBlockByHeaderHash(
             ledgerHash, hash
-        ) is Outcome.Ok<*, *>)
+        ) is Outcome.Ok<*>)
 
     /**
      * Takes the hash of a block and returns a [LoadFailure] over
@@ -344,35 +347,35 @@ data class ChainHandle internal constructor(
      * Returns whether the block was successfully added.
      */
     fun addBlock(block: Block): Outcome<Boolean, QueryFailure> =
-        lastBlockHeader.mapSuccess {
+        lastBlockHeader.flatMapSuccess {
             val recalcTrigger = ledgerParams.recalcTrigger
-            if (validateBlock(this.data.hash, block)) {
+            if (validateBlock(it.hash, block)) {
                 if (lastRecalc == recalcTrigger) {
                     recalculateDifficulty(block)
                     lastRecalc = 0
                 } else {
                     lastRecalc++
                 }
-                Outcome.Ok<Boolean, LoadFailure>(true)
+                Outcome.Ok(true)
             } else {
                 Outcome.Ok(false)
             }
-        }.mapToNew(
+        }.fold(
             {
-                Outcome.Error<Boolean, QueryFailure>(
-                    this.failure.intoQuery()
+                Outcome.Error(
+                    it.intoQuery()
                 )
             },
             {
-                if (this.data) {
+                if (it) {
                     pw.persistEntity(
                         block,
                         BlockStorageAdapter
-                    ).flatMapSuccess {
+                    ).mapSuccess {
                         true
                     }
                 } else {
-                    Outcome.Ok(this.data)
+                    Outcome.Ok(it)
                 }
             }
         )
@@ -423,13 +426,13 @@ data class ChainHandle internal constructor(
         val recalcBlock =
             pw.getBlockByBlockHeight(ledgerHash, fromHeight)
         return when (recalcBlock) {
-            is Outcome.Ok<Block, *> -> {
-                val pstamp = recalcBlock.data.header.timestamp.epochSecond
+            is Outcome.Ok<Block> -> {
+                val pstamp = recalcBlock.value.header.timestamp.epochSecond
                 val deltaStamp = cstamp - pstamp
-                recalc(triggerBlock, recalcBlock.data, deltaStamp)
+                recalc(triggerBlock, recalcBlock.value, deltaStamp)
             }
-            is Outcome.Error<Block, LoadFailure> -> {
-                logger.error {
+            is Outcome.Error<LoadFailure> -> {
+                Logger.error {
                     """
                     | Difficulty retrigger without 2048 blocks existent?
                     |   Grab from Index: $fromHeight
@@ -477,7 +480,7 @@ data class ChainHandle internal constructor(
             calcDiff < MIN_DIFFICULTY -> MIN_DIFFICULTY
             calcDiff > MAX_DIFFICULTY -> MAX_DIFFICULTY
             else -> {
-                logger.error {
+                Logger.error {
                     "Difficulty not within expected bounds: $calcDiff"
                 }
                 calcDiff
@@ -494,7 +497,7 @@ data class ChainHandle internal constructor(
     }
 
 
-    companion object : KLogging() {
+    companion object {
         val identity = Identity("")
 
         fun getOriginHeader(

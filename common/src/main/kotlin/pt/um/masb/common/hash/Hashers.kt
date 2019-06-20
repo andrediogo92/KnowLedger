@@ -1,6 +1,5 @@
 package pt.um.masb.common.hash
 
-import mu.KLogging
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
@@ -8,12 +7,12 @@ import java.security.MessageDigest
 import java.security.Security
 
 
-sealed class AvailableHashAlgorithms : KLogging() {
+sealed class AvailableHashAlgorithms {
     class NoSuchHasherRegistered : Exception()
 
     object SHA256Hasher : Hasher, AvailableHashAlgorithms() {
 
-        val digester = MessageDigest.getInstance(
+        val digester: MessageDigest = MessageDigest.getInstance(
             "SHA-256"
         )
 
@@ -54,7 +53,7 @@ sealed class AvailableHashAlgorithms : KLogging() {
         }
     }
 
-    companion object : KLogging() {
+    companion object {
         init {
             //Ensure Bouncy Castle Crypto provider is present
             if (Security.getProvider("BC") == null) {

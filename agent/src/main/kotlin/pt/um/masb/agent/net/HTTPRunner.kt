@@ -5,7 +5,7 @@ import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.util.KtorExperimentalAPI
-import mu.KLogging
+import org.tinylog.kotlin.Logger
 import pt.um.masb.agent.data.DataSource
 import pt.um.masb.agent.data.apis.ApiAdapter
 import kotlin.collections.set
@@ -47,13 +47,10 @@ class HTTPRunner {
         if (i < registeredApis() && i > 0) {
             runApiQuery(i)
         } else {
-            logger.error("", IndexOutOfBoundsException())
+            Logger.error(IndexOutOfBoundsException())
             null
         }
 
     private suspend fun runApiQuery(i: Int) =
         matchers[apis[i].id]?.query(client, apis[i])
-
-
-    companion object : KLogging()
 }

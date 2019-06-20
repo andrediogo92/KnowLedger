@@ -5,6 +5,7 @@ import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.results.fold
 import pt.um.masb.common.storage.adapters.StorageAdapterNotRegistered
 import pt.um.masb.ledger.data.GeoCoords
 import pt.um.masb.ledger.data.PhysicalData
@@ -23,7 +24,7 @@ object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
         get() = mapOf(
             "seconds" to StorageType.LONG,
             "nanos" to StorageType.INTEGER,
-            "data" to StorageType.LINK
+            "value" to StorageType.LINK
         )
 
     override fun store(
@@ -42,7 +43,7 @@ object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
                 "nanos", toStore.instant.nano
             )
             setLinked(
-                "data", dataStorageAdapter,
+                "value", dataStorageAdapter,
                 toStore.data, session
             )
             toStore.geoCoords?.let {
@@ -58,41 +59,46 @@ object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
         ledgerHash: Hash, element: StorageElement
     ): Outcome<PhysicalData, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val dataElem = element.getLinked("data")
+            val dataElem = element.getLinked("value")
             val dataName = dataElem.schema
             val loader = dataName?.let {
                 LedgerHandle.getStorageAdapter(dataName)
             }
             if (dataName != null && loader != null) {
-                loader.load(dataElem).flatMapSuccess {
-                    val instant = Instant.ofEpochSecond(
-                        element.getStorageProperty("seconds"),
-                        element.getStorageProperty("nanos")
-                    )
-                    if (element.presentProperties.contains("latitude")) {
-                        PhysicalData(
-                            instant,
-                            GeoCoords(
-                                element.getStorageProperty("latitude"),
-                                element.getStorageProperty("longitude"),
-                                element.getStorageProperty("altitude")
-                            ),
-                            this
-                        )
-
-                    } else {
-                        PhysicalData(
-                            instant,
-                            this
-                        )
-                    }
-                }.mapError {
-                    Outcome.Error<PhysicalData, LoadFailure>(this.failure.intoLoad())
-                }
+                loader
+                    .load(dataElem)
+                    .fold(
+                        {
+                            Outcome.Error(it.intoLoad())
+                        },
+                        {
+                            val instant = Instant.ofEpochSecond(
+                                element.getStorageProperty("seconds"),
+                                element.getStorageProperty("nanos")
+                            )
+                            Outcome.Ok(
+                                if (element.presentProperties.contains("latitude")) {
+                                    PhysicalData(
+                                        instant,
+                                        GeoCoords(
+                                            element.getStorageProperty("latitude"),
+                                            element.getStorageProperty("longitude"),
+                                            element.getStorageProperty("altitude")
+                                        ),
+                                        it
+                                    )
+                                } else {
+                                    PhysicalData(
+                                        instant,
+                                        it
+                                    )
+                                }
+                            )
+                        })
             } else {
-                Outcome.Error<PhysicalData, LoadFailure>(
+                Outcome.Error<LoadFailure>(
                     LoadFailure.UnrecognizedDataType(
-                        "Data property was unrecognized in physical data loader: $dataElem"
+                        "Data property was unrecognized in physical value loader: $dataElem"
                     )
                 )
             }

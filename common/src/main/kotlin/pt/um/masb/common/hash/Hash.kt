@@ -1,13 +1,12 @@
 package pt.um.masb.common.hash
 
-import mu.KLogging
 import pt.um.masb.common.data.Difficulty
 import pt.um.masb.common.misc.printHexBinary
 import java.math.BigInteger
 
 /**
  * Hash symbolizes a **unique identifier** for
- * a data structure instance which subsumes its data
+ * a value structure instance which subsumes its value
  * into an index.
  */
 inline class Hash(val bytes: ByteArray) {
@@ -36,7 +35,7 @@ inline class Hash(val bytes: ByteArray) {
         get() = Difficulty(BigInteger(bytes))
 
 
-    companion object : KLogging() {
+    companion object {
         const val TRUNC = 10
 
         val emptyHash: Hash = Hash(ByteArray(0))

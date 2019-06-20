@@ -4,7 +4,7 @@ import jade.content.lang.sl.SLCodec
 import jade.core.behaviours.Behaviour
 import jade.domain.FIPAException
 import jade.lang.acl.ACLMessage
-import mu.KLogging
+import org.tinylog.kotlin.Logger
 import pt.um.masb.agent.data.convertToJadeTransaction
 import pt.um.masb.agent.messaging.transaction.TransactionOntology
 import pt.um.masb.agent.messaging.transaction.ontology.actions.DiffuseTransaction
@@ -44,7 +44,7 @@ class SendMessages(
                 }
             }
         } catch (e: FIPAException) {
-            logger.error(e) { }
+            Logger.error(e)
         }
 
     }
@@ -53,5 +53,4 @@ class SendMessages(
         return false
     }
 
-    companion object : KLogging()
 }

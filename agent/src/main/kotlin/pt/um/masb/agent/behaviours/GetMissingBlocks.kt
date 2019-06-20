@@ -6,10 +6,10 @@ import jade.content.onto.OntologyException
 import jade.core.behaviours.Behaviour
 import jade.lang.acl.ACLMessage
 import jade.lang.acl.MessageTemplate
-import mu.KLogging
+import org.tinylog.kotlin.Logger
 import pt.um.masb.agent.messaging.block.BlockOntology
 import pt.um.masb.ledger.service.ChainHandle
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.service.results.LoadFailure
 import kotlin.random.Random
 
 
@@ -37,7 +37,7 @@ class GetMissingBlocks(
                 msg.addReceiver(agent)
                 msg.content = bc.lastBlockHeader.let {
                     when (it) {
-                        is LoadResult.Success -> it.data.blockheight.toString()
+                        is LoadFailure.Success -> it.data.blockheight.toString()
                         else -> null
                     }
                 }
@@ -63,7 +63,7 @@ class GetMissingBlocks(
                                     TODO: Make JBlocks and JTransactions predicates
                                     if (blce is JBlock) {
                                         val bl = blce as JBlock
-                                        //Convert JBlock to Block
+                                        //Convert JBlock to StorageUnawareBlock
                                         bc.addBlock(d.convertFromJadeBlock(bl))
                                     }
                                     */
@@ -71,9 +71,9 @@ class GetMissingBlocks(
                                     break
                                 }
                             } catch (e: Codec.CodecException) {
-                                logger.error(e) {}
+                                Logger.error(e)
                             } catch (e: OntologyException) {
-                                logger.error(e) {}
+                                Logger.error(e)
                             }
                             numR++
                         }
@@ -90,5 +90,4 @@ class GetMissingBlocks(
         return false
     }
 
-    companion object : KLogging()
 }

@@ -2,7 +2,7 @@ package pt.um.masb.agent.data
 
 import kotlinx.io.ByteArrayInputStream
 import kotlinx.io.ByteArrayOutputStream
-import mu.KotlinLogging
+import org.tinylog.Logger
 import pt.um.masb.agent.messaging.block.ontology.concepts.JBlock
 import pt.um.masb.agent.messaging.block.ontology.concepts.JBlockHeader
 import pt.um.masb.agent.messaging.block.ontology.concepts.JCoinbase
@@ -15,6 +15,7 @@ import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.Difficulty
 import pt.um.masb.common.data.Payout
 import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.base64Decode
 import pt.um.masb.common.misc.base64DecodeToHash
 import pt.um.masb.common.misc.base64Encode
@@ -53,8 +54,8 @@ fun convertToJadeBlock(
 
 fun convertToJadeMerkleTree(merkleTree: MerkleTree): JMerkleTree =
     JMerkleTree(
-        merkleTree.collapsedTree.map { base64Encode(it) },
-        merkleTree.levelIndex
+        merkleTree.nakedTree.map { base64Encode(it) },
+        merkleTree.levelIndexes
     )
 
 fun convertToJadeBlockHeader(header: BlockHeader): JBlockHeader =
@@ -169,34 +170,42 @@ fun convertToJadePhysicalData(data: PhysicalData): JPhysicalData {
 
 fun convertFromJadeBlock(
     b: JBlock,
+    hasher: Hasher,
     clazz: Class<out BlockChainData>
 ): Block =
     if (clazz.simpleName == b.clazz) {
         Block(
             b.data.map {
-                convertFromJadeTransaction(it)
+                convertFromJadeTransaction(hasher, it)
             }.toMutableList(),
             convertFromJadeCoinbase(b.coinbase),
-            convertFromJadeBlockHeader(b.header),
-            convertFromJadeMerkleTree(b.merkleTree)
+            convertFromJadeBlockHeader(hasher, b.header),
+            convertFromJadeMerkleTree(hasher, b.merkleTree)
         )
     } else {
         val err = "Incompatible types on JBlock of type ${b.clazz} and Block of type ${clazz.simpleName}"
-        KotlinLogging.logger {}
-            .error { err }
+        Logger.error { err }
         throw InvalidClassException(err)
     }
 
-fun convertFromJadeMerkleTree(merkleTree: JMerkleTree): MerkleTree =
+fun convertFromJadeMerkleTree(
+    hasher: Hasher,
+    merkleTree: JMerkleTree
+): MerkleTree =
     MerkleTree(
+        hasher,
         merkleTree.hashes.map { base64DecodeToHash(it) },
         merkleTree.levelIndex
     )
 
 
-fun convertFromJadeBlockHeader(header: JBlockHeader): BlockHeader =
+fun convertFromJadeBlockHeader(
+    hasher: Hasher,
+    header: JBlockHeader
+): BlockHeader =
     BlockHeader(
         base64DecodeToHash(header.blid),
+        hasher,
         Difficulty(BigInteger(header.difficulty)),
         header.blockheight,
         base64DecodeToHash(header.hash),
@@ -243,12 +252,15 @@ private fun convertFromJadeTransactionOutput(
 
 
 fun convertFromJadeTransaction(
+    hasher: Hasher,
     t: JTransaction
 ): Transaction =
     Transaction(
         stringToPublicKey(t.publicKey),
         convertFromJadePhysicalData(t.data),
-        base64Decode(t.signature)
+        base64Decode(t.signature),
+        base64DecodeToHash(t.transactionId),
+        hasher
     )
 
 fun convertFromJadePhysicalData(

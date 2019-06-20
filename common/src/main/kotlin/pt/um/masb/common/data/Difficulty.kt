@@ -1,6 +1,5 @@
 package pt.um.masb.common.data
 
-import mu.KLogging
 import java.math.BigInteger
 
 /**
@@ -18,7 +17,7 @@ inline class Difficulty(val difficulty: BigInteger) {
     val print: String
         get() = difficulty.toString(HEXR)
 
-    companion object : KLogging() {
+    companion object {
         const val HEXR = 16
         const val SIZE = 32
 

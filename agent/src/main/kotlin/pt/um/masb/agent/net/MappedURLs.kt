@@ -1,7 +1,6 @@
 package pt.um.masb.agent.net
 
 import com.squareup.moshi.JsonClass
-import mu.KLogging
 import pt.um.masb.agent.data.DataSource
 import java.io.File
 import java.io.FileReader
@@ -15,7 +14,7 @@ data class MappedURLs(
     val tcp: List<DataSource> = emptyList(),
     val jade: List<DataSource> = emptyList()
 ) {
-    companion object : KLogging() {
+    companion object {
         val apiScheme = Regex.fromLiteral("http(s)?")
         val tcpScheme = Regex.fromLiteral("tcp")
         val jadeScheme = Regex.fromLiteral("jade")

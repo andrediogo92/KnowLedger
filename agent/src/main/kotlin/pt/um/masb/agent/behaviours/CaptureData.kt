@@ -1,8 +1,9 @@
 package pt.um.masb.agent.behaviours
 
 import jade.core.behaviours.Behaviour
-import mu.KLogging
+import org.tinylog.kotlin.Logger
 import pt.um.masb.agent.data.captureSound
+import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.ledger.data.NUnit
 import pt.um.masb.ledger.data.NoiseData
 import pt.um.masb.ledger.data.PhysicalData
@@ -27,7 +28,7 @@ class CaptureData(
                 sc.second,
                 NUnit.RMS
             )
-            logger.info {
+            Logger.info {
                 "$noise"
             }
             val sd = PhysicalData(
@@ -37,7 +38,9 @@ class CaptureData(
                 noise
             )
 
-            val t = Transaction(id, sd)
+            //Use standard SHA256
+            //TODO: Take as parameter.
+            val t = Transaction(id, sd, AvailableHashAlgorithms.SHA256Hasher)
 
             handle.addTransaction(t)
 
@@ -49,7 +52,5 @@ class CaptureData(
     override fun done(): Boolean {
         return false
     }
-
-    companion object : KLogging()
 
 }

@@ -3,11 +3,11 @@ package pt.um.masb.ledger.storage.transactions.test
 import assertk.assertAll
 import assertk.assertThat
 import assertk.assertions.*
-import mu.KLogging
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.tinylog.kotlin.Logger
 import pt.um.masb.common.database.DatabaseMode
 import pt.um.masb.common.database.DatabaseType
 import pt.um.masb.common.database.ManagedDatabase
@@ -16,6 +16,9 @@ import pt.um.masb.common.database.orient.OrientDatabase
 import pt.um.masb.common.database.orient.OrientDatabaseInfo
 import pt.um.masb.common.database.orient.OrientSession
 import pt.um.masb.common.misc.base64Encode
+import pt.um.masb.common.results.mapSuccess
+import pt.um.masb.common.results.peekFailure
+import pt.um.masb.common.results.unwrap
 import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.ledger.data.adapters.TemperatureDataStorageAdapter
 import pt.um.masb.ledger.service.Identity
@@ -58,7 +61,7 @@ class TestPersistence {
     fun `initialize DB and transactions`() {
         session.makeActive()
 
-        logger.info {
+        Logger.info {
             """LedgerHash is ${hash.print}
                 | Base64: ${base64Encode(hash)}
             """.trimMargin()
@@ -76,22 +79,19 @@ class TestPersistence {
             pw.persistEntity(
                 it,
                 TransactionStorageAdapter
-            ).mapError {
-                when (this.failure) {
+            ).peekFailure {
+                when (it) {
                     is QueryFailure.UnknownFailure ->
-                        (this.failure as QueryFailure.UnknownFailure)
-                            .exception
-                            ?.let { exception ->
-                                throw exception
-                            } ?: logger.error {
-                            this.failure.cause
+                        it.exception?.let { exception ->
+                            throw exception
+                        } ?: Logger.error {
+                            it.cause
                         }
                     else ->
-                        logger.error {
-                            this.failure.cause
+                        Logger.error {
+                            it.cause
                         }
                 }
-                this
             }
         }
 
@@ -104,7 +104,7 @@ class TestPersistence {
         fun `Test created clusters`() {
             val plug = (session as OrientSession)
             val clusterNames = plug.clustersPresent
-            logger.info {
+            Logger.info {
                 StringBuilder()
                     .append("Clusters present in ${plug.name}")
                     .appendByLine(clusterNames)
@@ -135,7 +135,7 @@ class TestPersistence {
             ).let { set ->
                 val l = set.asSequence().toList()
                 l.forEach { res ->
-                    logger.info {
+                    Logger.info {
                         res.element.print()
                     }
                 }
@@ -183,14 +183,16 @@ class TestPersistence {
             assertThat(present.size).isEqualTo(testTransactions.size)
             val schemaProps =
                 TransactionStorageAdapter.properties.keys.toTypedArray()
-            for (p in present) {
-                assertThat(
-                    p.presentProperties
-                ).isNotNull().containsAll(
-                    *schemaProps
-                )
+            assertAll {
+                present.forEach {
+                    assertThat(
+                        it.presentProperties
+                    ).isNotNull().containsAll(
+                        *schemaProps
+                    )
+                }
             }
-            logger.info {
+            Logger.info {
                 StringBuilder("Properties in Transaction:")
                     .appendByLine(present[0].presentProperties)
                     .toString()
@@ -201,8 +203,7 @@ class TestPersistence {
                     it.getHashProperty("hashId").print
                 },
                 "Transactions' hashes from test:",
-                testTransactions.map { it.hashId.print },
-                logger
+                testTransactions.map { it.hashId.print }
             )
         }
 
@@ -211,14 +212,13 @@ class TestPersistence {
             pw.getTransactionsByClass(
                 hash,
                 TemperatureDataStorageAdapter.id
-            ).flatMapSuccess {
-                this.toList().apply {
+            ).mapSuccess { seq ->
+                seq.toList().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
                         this.map { it.hashId.print },
                         "Transactions' hashes from test:",
-                        testTransactions.map { it.hashId.print },
-                        logger
+                        testTransactions.map { it.hashId.print }
                     )
                     assertThat(this.size).isEqualTo(
                         testTransactions.size
@@ -227,7 +227,6 @@ class TestPersistence {
                         *testTransactions.toTypedArray()
                     )
                 }
-
             }.failOnLoadError()
         }
 
@@ -235,15 +234,14 @@ class TestPersistence {
         fun `Test loading by timestamp`() {
             pw.getTransactionsOrderedByTimestamp(
                 hash
-            ).flatMapSuccess {
-                this.toList().apply {
+            ).mapSuccess { seq ->
+                seq.toList().apply {
                     val reversed = testTransactions.asReversed()
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
                         this.map { it.hashId.print },
                         "Transactions' hashes from test:",
-                        reversed.map { it.hashId.print },
-                        logger
+                        reversed.map { it.hashId.print }
                     )
                     assertThat(this.size).isEqualTo(
                         testTransactions.size
@@ -261,14 +259,13 @@ class TestPersistence {
         fun `Test loading by Public Key`() {
             pw.getTransactionsFromAgent(
                 hash, ident.publicKey
-            ).flatMapSuccess {
-                this.toList().apply {
+            ).mapSuccess { seq ->
+                seq.toList().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
                         this.map { it.hashId.print },
                         "Transactions' hashes from test:",
-                        testTransactions.map { it.hashId.print },
-                        logger
+                        testTransactions.map { it.hashId.print }
                     )
                     assertThat(this.size).isEqualTo(
                         testTransactions.size
@@ -285,8 +282,8 @@ class TestPersistence {
             pw.getTransactionByHash(
                 hash,
                 testTransactions[2].hashId
-            ).flatMapSuccess {
-                assertThat(this)
+            ).mapSuccess {
+                assertThat(it)
                     .isNotNull()
                     .isEqualTo(testTransactions[2])
             }.failOnLoadError()
@@ -299,6 +296,4 @@ class TestPersistence {
         session.close()
         database.close()
     }
-
-    companion object : KLogging()
 }

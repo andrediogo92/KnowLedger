@@ -17,10 +17,9 @@ dependencies {
         implementation(it)
     }
     implementation(Libs.bouncyCastle)
-    implementation(Libs.klog)
     implementation(Libs.jol)
-    Libs.slf4j.forEach {
-        runtime(it)
+    Libs.tinylog.forEach {
+        implementation(it)
     }
 
     testImplementation(Libs.assertK)
@@ -58,7 +57,7 @@ val testJar by tasks.registering(Jar::class) {
 }
 
 // Create a configuration for runtime
-val testRuntimeElements by configurations.creating {
+val testRuntimeElements: Configuration by configurations.creating {
     isCanBeConsumed = true
     isCanBeResolved = false
     attributes {
@@ -70,8 +69,9 @@ val testRuntimeElements by configurations.creating {
     }
 }
 
-// Second configuration declaration, this is because of the API vs runtime difference Gradle makes and rules around valid multiple variant selection
-val testApiElements by configurations.creating {
+// Second configuration declaration, this is because of the API vs runtime difference Gradle 
+// makes and rules around valid multiple variant selection
+val testApiElements: Configuration by configurations.creating {
     isCanBeConsumed = true
     isCanBeResolved = false
     attributes {

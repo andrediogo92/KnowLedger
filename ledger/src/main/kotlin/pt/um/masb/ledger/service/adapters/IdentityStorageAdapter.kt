@@ -50,7 +50,7 @@ object IdentityStorageAdapter : LedgerStorageAdapter<Identity> {
                     element.getStorageProperty("privateKey")
                 )
             )
-            Outcome.Ok<Identity, LoadFailure>(
+            Outcome.Ok(
                 Identity(id, keyPair)
             )
         }

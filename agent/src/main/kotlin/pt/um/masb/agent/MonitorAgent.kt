@@ -3,7 +3,6 @@ package pt.um.masb.agent
 import com.squareup.moshi.Moshi
 import io.ktor.util.Hash
 import jade.core.Agent
-import mu.KLogging
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttToken
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient
@@ -11,15 +10,15 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
+import org.tinylog.kotlin.Logger
 import pt.um.masb.agent.data.feed.AdafruitPublish
 import pt.um.masb.agent.data.feed.Reduxer
-import pt.um.masb.common.results.Failable
+import pt.um.masb.common.results.reduce
+import pt.um.masb.common.results.unwrap
 import pt.um.masb.ledger.data.PhysicalData
-import pt.um.masb.ledger.results.checkSealed
 import pt.um.masb.ledger.service.ChainHandle
 import pt.um.masb.ledger.service.LedgerHandle
-import pt.um.masb.ledger.service.results.LedgerListResult
-import pt.um.masb.ledger.service.results.LoadResult
+import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.Block
 import pt.um.masb.ledger.storage.Transaction
 import java.util.*
@@ -46,55 +45,53 @@ class MonitorAgent(
         connOpts.userName = "MASBlockchain"
         connOpts.password = "312758ce04d64a6c80fa169860489b6d".toCharArray()
         connOpts.sslProperties = Properties()
-        logger.info("Connecting to broker: $broker")
+        Logger.info("Connecting to broker: $broker")
         mqttClient.connect(connOpts, guardCounter, MonitorCallback())
-        logger.info("Connected")
-        var chains: List<ChainHandle> = listOf()
-        val res = ledgerHandle.knownChains
-        when (res) {
-            is LedgerListResult.Success -> chains = res.data
-            is LedgerListResult.QueryFailure,
-            is LedgerListResult.NonExistentData,
-            is LedgerListResult.NonMatchingCrypter,
-            is LedgerListResult.UnregisteredCrypter,
-            is LedgerListResult.Propagated -> logger.error {
-                (res as Failable).cause
-            }
-        }.checkSealed()
-        for (cl in chains) {
-            var i = 0L
+        Logger.info("Connected")
+        for (cl in ledgerHandle.knownChains.unwrap()) {
+            val i = 0L
             var fail = false
             while (!fail) {
-                fail = tryLoad(cl.clazz, cl, i, 0)
+                fail = tryLoad(cl.clazz, cl, i)
             }
         }
         mqttClient.disconnect()
-        logger.info("Disconnected")
+        Logger.info("Disconnected")
     }
 
-    private tailrec fun tryLoad(cl: String, ch: ChainHandle, i: Long, l: Int): Boolean =
-        if (l < 3) {
-            val bl = ch.getBlockByHeight(i)
-            when (bl) {
-                is LoadResult.NonExistentData ->
-                    false
-                is LoadResult.Success -> {
-                    publishToFeed(cl, bl.data)
-                    true
+    private fun tryLoad(
+        cl: String, ch: ChainHandle,
+        i: Long
+    ): Boolean {
+        var l = 0L
+        var result = true
+        while (l < 3 && result) {
+            ch.getBlockByHeight(i).reduce(
+                {
+                    publishToFeed(cl, it)
+                },
+                {
+                    when (it) {
+                        is LoadFailure.NonExistentData ->
+                            result = false
+                        is LoadFailure.UnknownFailure -> {
+                            l += 1
+                        }
+                        else -> {
+                            Logger.warn {
+                                it.cause
+                            }
+                        }
+                    }
                 }
-                is LoadResult.QueryFailure -> {
-                    tryLoad(cl, ch, i, l + 1)
-                }
-                is Failable -> {
-                    logger.warn { bl.cause }
-                    true
-                }
-                else ->
-                    true
-            }
-        } else {
-            false
+            )
         }
+        return if (l >= 3) {
+            false
+        } else {
+            result
+        }
+    }
 
     private fun publishToFeed(cl: String, bl: Block) {
         if (reduxers.containsKey(cl)) {
@@ -108,7 +105,7 @@ class MonitorAgent(
     private fun publishTransaction(rx: Reduxer, dt: Transaction) {
         val topic = "MASBlockchain/feeds/${rx.type()}/json"
         setData(rx, dt.data)
-        val adapter = moshi.adapter<AdafruitPublish>(AdafruitPublish::class.java)
+        val adapter = moshi.adapter(AdafruitPublish::class.java)
         val content = adapter.toJson(json)
         val qos = 2
 
@@ -116,20 +113,20 @@ class MonitorAgent(
             this.doWait()
         }
         try {
-            logger.info("Publishing message: $content")
+            Logger.info("Publishing message: $content")
             val message = MqttMessage(content.toByteArray())
             message.qos = qos
             mqttClient.publish(topic, message)
         } catch (me: MqttException) {
-            logger.error(me) {}
+            Logger.error(me)
         }
     }
 
 
     /**
-     * Collect all the data into the JSON adapter class
+     * Collect all the store into the JSON adapter class
      *
-     * @param t The sensor data to fill in
+     * @param t The sensor store to fill in
      */
     private fun setData(rx: Reduxer, t: PhysicalData) {
         json.created_at = t.instant.toString()
@@ -143,7 +140,7 @@ class MonitorAgent(
         override fun onSuccess(token: IMqttToken) {
             val guardCounter = token.userContext as AtomicLong
             guardCounter.decrementAndGet()
-            logger.info { "Message ${token.messageId} sent." }
+            Logger.info { "Message ${token.messageId} sent." }
             this@MonitorAgent.doWake()
         }
 
@@ -153,11 +150,9 @@ class MonitorAgent(
         ) {
             val guardCounter = token.userContext as AtomicLong
             guardCounter.decrementAndGet()
-            logger.error(exception) { "Message ${token.messageId} excepted." }
+            Logger.error(exception) { "Message ${token.messageId} excepted." }
             this@MonitorAgent.doWake()
         }
     }
-
-    companion object : KLogging()
 }
 

@@ -39,7 +39,7 @@ object CoinbaseParamsStorageAdapter : LedgerStorageAdapter<CoinbaseParams> {
         ledgerHash: Hash, element: StorageElement
     ): Outcome<CoinbaseParams, LoadFailure> =
         tryOrLoadUnknownFailure {
-            Outcome.Ok<CoinbaseParams, LoadFailure>(
+            Outcome.Ok(
                 CoinbaseParams(
                     element.getStorageProperty("timeIncentive"),
                     element.getStorageProperty("valueIncentive"),

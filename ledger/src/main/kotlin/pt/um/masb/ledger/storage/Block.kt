@@ -1,8 +1,8 @@
 package pt.um.masb.ledger.storage
 
 import com.squareup.moshi.JsonClass
-import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
+import org.tinylog.kotlin.Logger
 import pt.um.masb.common.Sizeable
 import pt.um.masb.common.data.Difficulty
 import pt.um.masb.common.hash.Hash
@@ -89,21 +89,21 @@ data class Block(
                 if (transaction.processTransaction()) {
                     insertSorted(transaction)
                     transactionsSize += transactionSize
-                    logger.info {
+                    Logger.info {
                         "Transaction Successfully added to Block"
                     }
                     return true
                 }
             }
         }
-        logger.info {
+        Logger.info {
             "Transaction failed to process. Discarded."
         }
         return false
     }
 
     /**
-     * Transactions are sorted in descending order of data internalTimestamp.
+     * Transactions are sorted in descending order of value internalTimestamp.
      *
      * @param transaction Transaction to insert in descending order.
      */
@@ -141,7 +141,5 @@ data class Block(
             data
         )
     }
-
-    companion object : KLogging()
 
 }

@@ -69,13 +69,13 @@ object PollutionAQDataStorageAdapter : AbstractStorageAdapter<PollutionAQData>(
                 else -> null
             }
             if (param == null) {
-                Outcome.Error<PollutionAQData, DataFailure>(
+                Outcome.Error<DataFailure>(
                     DataFailure.UnrecognizedUnit(
                         "Parameter is not one of the expected types: $prop"
                     )
                 )
             } else {
-                Outcome.Ok<PollutionAQData, DataFailure>(
+                Outcome.Ok(
                     PollutionAQData(
                         getStorageProperty("lastUpdated"),
                         getStorageProperty("unit"),

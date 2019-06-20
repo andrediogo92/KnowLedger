@@ -45,13 +45,13 @@ object LuminosityDataAdapter : AbstractStorageAdapter<LuminosityData>(
                 else -> null
             }
             if (unit == null) {
-                Outcome.Error<LuminosityData, DataFailure>(
+                Outcome.Error<DataFailure>(
                     DataFailure.UnrecognizedUnit(
                         "LUnit is not one of the expected: $prop"
                     )
                 )
             } else {
-                Outcome.Ok<LuminosityData, DataFailure>(
+                Outcome.Ok(
                     LuminosityData(
                         getStorageProperty("lum"),
                         unit

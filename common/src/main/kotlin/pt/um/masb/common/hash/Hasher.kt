@@ -3,7 +3,7 @@ package pt.um.masb.common.hash
 
 /**
  * A simple interface for hashing a unique string
- * representation of data.
+ * representation of value.
  */
 interface Hasher {
 

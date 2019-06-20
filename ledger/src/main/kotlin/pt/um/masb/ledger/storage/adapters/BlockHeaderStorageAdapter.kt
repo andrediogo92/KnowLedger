@@ -5,6 +5,7 @@ import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.ledger.config.adapters.BlockParamsStorageAdapter
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
 import pt.um.masb.ledger.service.LedgerHandle
@@ -77,7 +78,7 @@ object BlockHeaderStorageAdapter : LedgerStorageAdapter<BlockHeader> {
             BlockParamsStorageAdapter.load(
                 ledgerHash,
                 element.getLinked("ledgerParams")
-            ).flatMapSuccess {
+            ).mapSuccess {
                 val seconds: Long =
                     element.getStorageProperty("seconds")
 
@@ -99,7 +100,7 @@ object BlockHeaderStorageAdapter : LedgerStorageAdapter<BlockHeader> {
                     hash,
                     merkleRoot,
                     previousHash,
-                    this,
+                    it,
                     instant,
                     nonce
                 )

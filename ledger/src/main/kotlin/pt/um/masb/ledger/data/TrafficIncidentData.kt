@@ -1,7 +1,6 @@
 package pt.um.masb.ledger.data
 
 import com.squareup.moshi.JsonClass
-import mu.KLogging
 import pt.um.masb.common.data.SelfInterval
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
@@ -191,6 +190,4 @@ class TrafficIncidentData(
     override fun toString(): String {
         return "TrafficIncidentData(trafficModelId='$trafficModelId', id='$id', iconLat=$iconLat, iconLon=$iconLon, incidentCategory=$incidentCategory, magnitudeOfDelay=$magnitudeOfDelay, clusterSize=$clusterSize, description='$description', causeOfAccident='$causeOfAccident', from='$from', to='$to', length=$length, delayInSeconds=$delayInSeconds, affectedRoads='$affectedRoads', incidentCategoryDesc='$incidentCategoryDesc', magnitudeOfDelayDesc='$magnitudeOfDelayDesc')"
     }
-
-    companion object : KLogging()
 }

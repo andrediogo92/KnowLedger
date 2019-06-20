@@ -113,7 +113,7 @@ class PollutionOWMData(
 
 
     override fun toString(): String {
-        return "PollutionOWMData(parameter=$parameter, value=$value, data=$data)"
+        return "PollutionOWMData(parameter=$parameter, value=$value, value=$data)"
     }
 
 

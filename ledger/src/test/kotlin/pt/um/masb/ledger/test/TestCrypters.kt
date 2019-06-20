@@ -2,14 +2,12 @@ package pt.um.masb.ledger.test
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
-import mu.KLogging
 import org.junit.jupiter.api.Test
+import org.tinylog.kotlin.Logger
 import pt.um.masb.common.misc.base64Encode
 import pt.um.masb.common.test.crypter
 
 class TestCrypters {
-    companion object : KLogging()
-
     @Test
     fun `Test SHA256 encryption and base64 encoding`() {
         val shaer = crypter
@@ -29,7 +27,7 @@ class TestCrypters {
             "66A-X3HpwVxjvJEUrhSrt0dcc_27SpL6ymh3sM5gH1s="
         )
 
-        logger.debug {
+        Logger.debug {
             """
                 | Input: "thisissampletext"
                 | Hex: $print

@@ -46,13 +46,13 @@ object HumidityDataStorageAdapter : AbstractStorageAdapter<HumidityData>(
                 else -> null
             }
             if (unit == null) {
-                Outcome.Error<HumidityData, DataFailure>(
+                Outcome.Error<DataFailure>(
                     DataFailure.UnrecognizedUnit(
                         "HUnit is not one of the expected: $prop"
                     )
                 )
             } else {
-                Outcome.Ok<HumidityData, DataFailure>(
+                Outcome.Ok(
                     HumidityData(
                         getStorageProperty("hum"),
                         unit

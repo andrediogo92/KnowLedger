@@ -3,10 +3,10 @@ package pt.um.masb.common.test
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
-import mu.KLogging
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
+import org.tinylog.kotlin.Logger
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.misc.bytes
 import pt.um.masb.common.misc.flattenBytes
@@ -114,7 +114,7 @@ class TestUtils {
 
         @Test
         fun `byte flattening`() {
-            logger.debug {
+            Logger.debug {
                 """Expected: ${randomHashes.joinToString {
                     it.bytes.hexString
                 }}"""
@@ -143,7 +143,7 @@ class TestUtils {
             assertThat(test.size).isEqualTo(expected.bytes.size)
             assertThat(test2.size).isEqualTo(expectedShort.size)
             assertThat(test3.size).isEqualTo(expected.bytes.size)
-            logger.debug {
+            Logger.debug {
                 """
                 |
                 |Expected:
@@ -153,7 +153,7 @@ class TestUtils {
             """.trimMargin()
             }
             assertThat(test).containsExactly(*expected.bytes)
-            logger.debug {
+            Logger.debug {
                 """
                 |
                 |Expected:
@@ -163,7 +163,7 @@ class TestUtils {
             """.trimMargin()
             }
             assertThat(test2).containsExactly(*expectedShort)
-            logger.debug {
+            Logger.debug {
                 """
                 |
                 |Expected:
@@ -207,7 +207,7 @@ class TestUtils {
                 )
             )
 
-            logger.debug {
+            Logger.debug {
                 """
                 |
                 | Test: ${test.print}
@@ -249,7 +249,7 @@ class TestUtils {
                 )
             )
 
-            logger.info {
+            Logger.info {
                 """
                 |
                 | Test: ${test.print}
@@ -296,7 +296,4 @@ class TestUtils {
             }
         }
     }
-
-
-    companion object : KLogging()
 }

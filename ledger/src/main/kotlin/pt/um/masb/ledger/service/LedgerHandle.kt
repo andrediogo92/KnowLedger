@@ -1,6 +1,5 @@
 package pt.um.masb.ledger.service
 
-import mu.KLogging
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.DataFormula
 import pt.um.masb.common.data.DefaultDiff
@@ -20,6 +19,9 @@ import pt.um.masb.common.misc.stringToPrivateKey
 import pt.um.masb.common.misc.stringToPublicKey
 import pt.um.masb.common.results.Failable
 import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.results.flatMapSuccess
+import pt.um.masb.common.results.fold
+import pt.um.masb.common.results.unwrap
 import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
 import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.ledger.config.CoinbaseParams
@@ -93,15 +95,16 @@ class LedgerHandle internal constructor(
     ): Outcome<ChainHandle, LedgerFailure> =
         ChainHandle(
             clazz.name, ledgerId.hashId
-        ).let {
+        ).let { ch ->
             addStorageAdapter(adapter)
-            pw.tryAddChainHandle(it).mapToNew(
+            pw.tryAddChainHandle(ch).fold(
                 {
-                    Outcome.Error<ChainHandle, LedgerFailure>(
-                        this.failure.intoLedger()
+                    Outcome.Error(
+                        it.intoLedger()
                     )
-                }, {
-                    Outcome.Ok(it)
+                },
+                {
+                    Outcome.Ok(ch)
                 }
             )
         }
@@ -212,17 +215,17 @@ class LedgerHandle internal constructor(
             }
 
         fun build(): Outcome<LedgerHandle, Failure> =
-            generateLedgerParams().mapResult {
+            generateLedgerParams().flatMap {
                 attemptToResolveId()
-            }.mapSuccess {
+            }.flatMapSuccess {
                 generateDB()
-                Outcome.Ok<LedgerHandle, Failure>(
+                Outcome.Ok(
                     LedgerHandle(this@Builder)
                 )
             }
 
-        private fun generateLedgerParams(): Outcome.Ok<Unit, Failure> =
-            Outcome.Ok<Unit, Failure>(Unit).also {
+        private fun generateLedgerParams(): Outcome.Ok<Unit> =
+            Outcome.Ok(Unit).also {
                 if (ledgerParams == null) {
                     ledgerParams = LedgerParams()
                 }
@@ -293,7 +296,7 @@ class LedgerHandle internal constructor(
     }
 
 
-    companion object : KLogging() {
+    companion object {
         private val dataAdapters =
             mutableSetOf<AbstractStorageAdapter<out BlockChainData>>(
                 DummyDataStorageAdapter

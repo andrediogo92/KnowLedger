@@ -1,7 +1,6 @@
 package pt.um.masb.ledger.storage
 
 import com.squareup.moshi.JsonClass
-import mu.KLogging
 import org.openjdk.jol.info.ClassLayout
 import pt.um.masb.common.Sizeable
 import pt.um.masb.common.hash.AvailableHashAlgorithms
@@ -103,10 +102,10 @@ data class Transaction(
     }
 
     /**
-     * Verifies the data we signed hasn't been
+     * Verifies the value we signed hasn't been
      * tampered with.
      *
-     * @return Whether the data was signed with the
+     * @return Whether the value was signed with the
      * corresponding private key.
      */
     fun verifySignature(): Boolean {
@@ -163,7 +162,4 @@ data class Transaction(
         result = 31 * result + hashId.contentHashCode()
         return result
     }
-
-    companion object : KLogging()
-
 }

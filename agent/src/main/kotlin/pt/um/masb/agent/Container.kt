@@ -4,12 +4,8 @@ import jade.core.Profile
 import jade.core.ProfileImpl
 import jade.core.Runtime
 import jade.wrapper.ContainerController
-import mu.KLogging
-import pt.um.masb.agent.utils.unpackOrThrow
-import pt.um.masb.agent.utils.unpackOrThrowAndDoOnNonExistent
-import pt.um.masb.common.hash.Hash.Companion.emptyHash
+import pt.um.masb.common.results.unwrap
 import pt.um.masb.ledger.service.LedgerHandle
-import pt.um.masb.ledger.service.LedgerService
 
 class Container {
     private lateinit var rt: Runtime
@@ -58,21 +54,17 @@ class Container {
     fun startAEInPlatform(
         name: String,
         classpath: String,
-        service: LedgerService,
         handle: LedgerHandle
     ) {
-        container.createNewAgent(name, classpath, arrayOf(service, handle)).start()
+        container.createNewAgent(name, classpath, arrayOf(handle)).start()
     }
 
-    companion object : KLogging() {
+    companion object {
         @JvmStatic
         fun main() {
 
             val a = Container()
-            val service = LedgerService()
-            val handle = service.getLedgerHandleByHash(hash = emptyHash).unpackOrThrowAndDoOnNonExistent {
-                service.newLedgerHandle("smarthub").unpackOrThrow()
-            }
+            val handle = LedgerHandle.Builder().build().unwrap()
 
             a.initMainContainerInPlatform(
                 "localhost",
@@ -83,7 +75,6 @@ class Container {
             a.startAEInPlatform(
                 "MinerAgent",
                 "pt.um.lei.masb.agent.SingleChainAgent",
-                service,
                 handle
             )
 

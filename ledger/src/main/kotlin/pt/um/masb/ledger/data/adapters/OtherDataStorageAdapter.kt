@@ -21,7 +21,7 @@ object OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
 ) {
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "data" to StorageType.LINK
+            "value" to StorageType.LINK
         )
 
     override fun store(
@@ -55,7 +55,7 @@ object OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
                     )
                 )
             }
-            setStorageProperty("data", blobs)
+            setStorageProperty("value", blobs)
         }
     }
 
@@ -64,7 +64,7 @@ object OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
         commonLoad(element, id) {
             val bos = ByteArrayOutputStream()
             val chunkIds: List<StorageID> =
-                getStorageIDs("data")
+                getStorageIDs("value")
             for (id in chunkIds) {
                 val chunk = id.getBytes()
                 chunk.toOutputStream(bos)
@@ -76,7 +76,7 @@ object OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
                     bos.toByteArray()
                 )
             ).use {
-                Outcome.Ok<OtherData, DataFailure>(
+                Outcome.Ok(
                     OtherData(
                         it.readObject() as Serializable
                     )

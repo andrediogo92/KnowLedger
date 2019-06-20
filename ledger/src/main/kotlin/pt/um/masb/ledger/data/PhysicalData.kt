@@ -18,9 +18,9 @@ import java.math.RoundingMode
 import java.time.Instant
 
 /**
- * Physical data is the main class in which to store ledger data.
+ * Physical value is the main class in which to store ledger value.
  *
- * It requires an [instant] in which the data was recorded and
+ * It requires an [instant] in which the value was recorded and
  * optionally geo coordinates for where it was recorded.
  */
 @JsonClass(generateAdapter = true)

@@ -4,9 +4,9 @@ import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 
 /**
- * Describes a contract for storing any type of data into
+ * Describes a contract for storing any type of value into
  * a persistent storage by acessing a [NewInstanceSession]
- * capable of creating [StorageElement]s and the data
+ * capable of creating [StorageElement]s and the value
  * being stored.
  *
  * The result must be a storage element that describes all

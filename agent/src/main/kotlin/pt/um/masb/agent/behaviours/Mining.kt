@@ -1,7 +1,7 @@
 package pt.um.masb.agent.behaviours
 
 import jade.core.behaviours.Behaviour
-import mu.KLogging
+import org.tinylog.kotlin.Logger
 import pt.um.masb.ledger.service.ChainHandle
 import pt.um.masb.ledger.storage.Block
 
@@ -40,16 +40,14 @@ class Mining(
 
     override fun done(): Boolean {
         if (block != null) {
-            logger.debug {
+            Logger.debug {
                 "Finished mining ${block!!.header.blockheight} -> ${block!!.header.merkleRoot}"
             }
             sc.addBlock(block!!)
             block = null
         } else {
-            logger.debug { "No block" }
+            Logger.debug { "No block" }
         }
         return mined
     }
-
-    companion object : KLogging()
 }

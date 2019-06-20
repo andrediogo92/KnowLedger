@@ -1,14 +1,14 @@
 package pt.um.masb.agent.data
 
-import mu.KotlinLogging
+import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 import javax.sound.sampled.AudioFormat
 import javax.sound.sampled.AudioSystem
 import javax.sound.sampled.DataLine
 import javax.sound.sampled.TargetDataLine
 import kotlin.experimental.and
-
-private val logger = KotlinLogging.logger {}
+import kotlin.math.abs
+import kotlin.math.sqrt
 
 fun captureSound(): Pair<BigDecimal, BigDecimal>? {
     var max: Short = -1
@@ -29,7 +29,7 @@ fun captureSound(): Pair<BigDecimal, BigDecimal>? {
     val info = DataLine.Info(TargetDataLine::class.java, format) // format is an AudioFormat object
 
     return if (!AudioSystem.isLineSupported(info)) {
-        logger.error { "Line not supported" }
+        Logger.error { "Line not supported" }
         null
     } else {
         // Obtain and open the line.
@@ -61,7 +61,7 @@ fun captureSound(): Pair<BigDecimal, BigDecimal>? {
 
         for (sample in samples) {
 
-            val abs = Math.abs(sample)
+            val abs = abs(sample)
             if (abs > peak) {
                 peak = abs
             }
@@ -69,6 +69,6 @@ fun captureSound(): Pair<BigDecimal, BigDecimal>? {
             rms += sample * sample
         }
 
-        Pair(BigDecimal(Math.sqrt(rms / samples.size)), BigDecimal(peak))
+        Pair(BigDecimal(sqrt(rms / samples.size)), BigDecimal(peak))
     }
 }

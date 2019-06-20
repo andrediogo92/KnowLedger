@@ -12,7 +12,7 @@ import java.math.BigDecimal
 
 
 /**
- * Humidity data can be expressed in Absolute/Volumetric
+ * Humidity value can be expressed in Absolute/Volumetric
  * or Relative humidity. As such possible measurements
  * can be in g/Kg ([HUnit.G_BY_KG]), Kg/Kg ([HUnit.KG_BY_KG])
  * or percentage ([HUnit.RELATIVE]) expressed by the [unit].

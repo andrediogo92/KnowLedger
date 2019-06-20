@@ -55,13 +55,13 @@ object TemperatureDataStorageAdapter : AbstractStorageAdapter<TemperatureData>(
                 else -> null
             }
             if (unit == null) {
-                Outcome.Error<TemperatureData, DataFailure>(
+                Outcome.Error<DataFailure>(
                     DataFailure.UnrecognizedUnit(
                     "Unit is not one of the expected: $prop"
                     )
                 )
             } else {
-                Outcome.Ok<TemperatureData, DataFailure>(
+                Outcome.Ok(
                     TemperatureData(
                         element.getStorageProperty("temperature"),
                         unit

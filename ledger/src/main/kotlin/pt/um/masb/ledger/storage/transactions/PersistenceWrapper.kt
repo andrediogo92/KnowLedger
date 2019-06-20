@@ -1,6 +1,5 @@
 package pt.um.masb.ledger.storage.transactions
 
-import mu.KLogging
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.database.ManagedSchemas
 import pt.um.masb.common.database.ManagedSession
@@ -13,6 +12,7 @@ import pt.um.masb.common.database.query.GenericSelect
 import pt.um.masb.common.database.query.SimpleBinaryOperator
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.results.allValues
 import pt.um.masb.common.storage.LedgerContract
 import pt.um.masb.common.storage.adapters.Loadable
 import pt.um.masb.common.storage.adapters.SchemaProvider
@@ -26,7 +26,6 @@ import pt.um.masb.ledger.config.adapters.LedgerParamsStorageAdapter
 import pt.um.masb.ledger.data.adapters.DummyDataStorageAdapter
 import pt.um.masb.ledger.data.adapters.MerkleTreeStorageAdapter
 import pt.um.masb.ledger.data.adapters.PhysicalDataStorageAdapter
-import pt.um.masb.ledger.results.collapse
 import pt.um.masb.ledger.results.tryOrDataUnknownFailure
 import pt.um.masb.ledger.results.tryOrLedgerUnknownFailure
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
@@ -190,7 +189,7 @@ class PersistenceWrapper(
             if (res.hasNext()) {
                 loader.load(res.next().element)
             } else {
-                Outcome.Error<T, DataFailure>(
+                Outcome.Error<DataFailure>(
                     DataFailure.NonExistentData(
                         "Empty ResultSet for ${query.query}"
                     )
@@ -224,7 +223,7 @@ class PersistenceWrapper(
                     res.next().element
                 )
             } else {
-                Outcome.Error<T, LoadFailure>(
+                Outcome.Error<LoadFailure>(
                     LoadFailure.NonExistentData(
                         "Empty ResultSet for ${query.query}"
                     )
@@ -263,7 +262,7 @@ class PersistenceWrapper(
                     this, res.next().element
                 )
             } else {
-                Outcome.Error<T, LedgerFailure>(
+                Outcome.Error<LedgerFailure>(
                     LedgerFailure.NonExistentData(
                         "Empty ResultSet for ${query.query}"
                     )
@@ -296,7 +295,7 @@ class PersistenceWrapper(
             if (res.hasNext()) {
                 loader.load(res.next().element)
             } else {
-                Outcome.Error<T, QueryFailure>(
+                Outcome.Error<QueryFailure>(
                     QueryFailure.NonExistentData(
                         "Empty ResultSet for ${query.query}"
                     )
@@ -326,7 +325,7 @@ class PersistenceWrapper(
                 .asSequence()
                 .map {
                     loader.load(it.element)
-                }.collapse()
+                }.allValues()
         }
 
     /**
@@ -352,7 +351,7 @@ class PersistenceWrapper(
                 .asSequence()
                 .map {
                     loader.load(ledgerHash, it.element)
-                }.collapse()
+                }.allValues()
         }
 
     /**
@@ -383,7 +382,7 @@ class PersistenceWrapper(
                 .asSequence()
                 .map {
                     loader.load(this, it.element)
-                }.collapse()
+                }.allValues()
         }
 
 
@@ -410,7 +409,7 @@ class PersistenceWrapper(
                 .asSequence()
                 .map {
                     loader.load(it.element)
-                }.collapse()
+                }.allValues()
         }
 
 
@@ -438,9 +437,9 @@ class PersistenceWrapper(
             val elem = storable.store(element, session)
             val r = session.save(elem)
             if (r != null) {
-                Outcome.Ok<StorageID, QueryFailure>(r.identity)
+                Outcome.Ok(r.identity)
             } else {
-                Outcome.Error<StorageID, QueryFailure>(
+                Outcome.Error<QueryFailure>(
                     QueryFailure.NonExistentData(
                         "Failed to save element ${elem.print()}"
                     )
@@ -465,9 +464,9 @@ class PersistenceWrapper(
             val elem = storable.store(element, session)
             val r = session.save(elem, cluster)
             if (r != null) {
-                Outcome.Ok<StorageID, QueryFailure>(r.identity)
+                Outcome.Ok(r.identity)
             } else {
-                Outcome.Error<StorageID, QueryFailure>(
+                Outcome.Error<QueryFailure>(
                     QueryFailure.NonExistentData(
                         "Failed to save element ${elem.print()}"
                     )
@@ -743,7 +742,7 @@ class PersistenceWrapper(
                     it.id
                 ).withSimpleFilter(
                     Filters.ORDER,
-                    "data.seconds DESC, data.nanos DESC"
+                    "value.seconds DESC, value.nanos DESC"
                 ),
                 it
             )
@@ -761,7 +760,7 @@ class PersistenceWrapper(
                     it.id
                 ).withSimpleFilter(
                     Filters.WHERE,
-                    "data.data.@class",
+                    "value.value.@class",
                     "typeName",
                     typeName
                 ),
@@ -858,5 +857,4 @@ class PersistenceWrapper(
             )
         }
 
-    companion object : KLogging()
 }
