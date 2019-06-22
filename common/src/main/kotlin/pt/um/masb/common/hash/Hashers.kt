@@ -7,39 +7,49 @@ import java.security.MessageDigest
 import java.security.Security
 
 
-sealed class AvailableHashAlgorithms : Hasher {
-    class NoSuchHasherRegistered : Exception()
-
-    object SHA256Hasher : AvailableHashAlgorithms() {
-
-        val digester: MessageDigest by lazy {
-            MessageDigest.getInstance(
-                "SHA-256"
-            )
-        }
-
-        override fun applyHash(input: ByteArray): Hash =
-            Hash(digester.digest(input))
-
-
-        override val hashSize: Long = 32
-
-        override val id: Hash by lazy {
-            val provider = digester.provider
-
-            Hash(
-                digester.digest(
-                    flattenBytes(
-                        digester.algorithm.toByteArray(),
-                        provider.name.toByteArray(),
-                        provider.version.bytes()
-                    )
-                )
-            )
-        }
+sealed class AvailableHashAlgorithms(algorithmTag: String) : Hasher {
+    val digester: MessageDigest by lazy {
+        MessageDigest.getInstance(
+            algorithmTag
+        )
     }
 
+    override fun applyHash(input: ByteArray): Hash =
+        Hash(digester.digest(input))
+
+
+    override val hashSize: Int by lazy {
+        digester.digestLength
+    }
+
+    override val id: Hash by lazy {
+        val provider = digester.provider
+
+        Hash(
+            digester.digest(
+                flattenBytes(
+                    digester.digestLength.bytes(),
+                    digester.algorithm.toByteArray(),
+                    provider.name.toByteArray(),
+                    provider.version.bytes()
+                )
+            )
+        )
+    }
+
+    object SHA256Hasher : AvailableHashAlgorithms("SHA-256")
+    object SHA512Hasher : AvailableHashAlgorithms("SHA-512")
+    object Blake2s256Hasher : AvailableHashAlgorithms("BLAKE2S-256")
+    object Blake2b256Hasher : AvailableHashAlgorithms("BLAKE2B-256")
+    object Blake2b512Hasher : AvailableHashAlgorithms("BLAKE2B-512")
+    object SHA3256Hasher : AvailableHashAlgorithms("SHA3-256")
+    object SHA3512Hasher : AvailableHashAlgorithms("SHA3-512")
+    object Keccak256Hasher : AvailableHashAlgorithms("KECCAK-256")
+    object Keccak512Hasher : AvailableHashAlgorithms("KECCAK-512")
+
     companion object {
+        class NoSuchHasherRegistered : Exception()
+
         init {
             //Ensure Bouncy Castle Crypto provider is present
             if (Security.getProvider("BC") == null) {

@@ -7,7 +7,7 @@ package pt.um.masb.common.hash
  */
 interface Hasher {
     val id: Hash
-    val hashSize: Long
+    val hashSize: Int
 
 
     /**
