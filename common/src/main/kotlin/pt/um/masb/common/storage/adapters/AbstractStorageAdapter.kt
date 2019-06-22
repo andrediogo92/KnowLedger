@@ -2,8 +2,7 @@ package pt.um.masb.common.storage.adapters
 
 import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.database.StorageElement
-import pt.um.masb.common.hash.AvailableHashAlgorithms
-import pt.um.masb.common.misc.base64Encode
+import pt.um.masb.common.misc.extractIdFromClass
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.storage.results.DataFailure
 
@@ -16,11 +15,9 @@ import pt.um.masb.common.storage.results.DataFailure
 abstract class AbstractStorageAdapter<T : BlockChainData>(
     val clazz: Class<out T>
 ) : StorageAdapter<T> {
-    override val id: String = base64Encode(
-        AvailableHashAlgorithms.SHA256Hasher.applyHash(
-            clazz.toGenericString()
-        )
-    )
+    override val id: String by lazy {
+        extractIdFromClass(clazz)
+    }
 
     protected inline fun <T : BlockChainData> commonLoad(
         document: StorageElement,
