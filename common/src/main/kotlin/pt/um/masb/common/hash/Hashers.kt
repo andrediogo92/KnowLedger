@@ -7,31 +7,17 @@ import java.security.MessageDigest
 import java.security.Security
 
 
-sealed class AvailableHashAlgorithms {
+sealed class AvailableHashAlgorithms : Hasher {
     class NoSuchHasherRegistered : Exception()
 
-    object SHA256Hasher : Hasher, AvailableHashAlgorithms() {
+    object SHA256Hasher : AvailableHashAlgorithms() {
 
-        val digester: MessageDigest = MessageDigest.getInstance(
-            "SHA-256"
-        )
+        val digester: MessageDigest by lazy {
+            MessageDigest.getInstance(
+                "SHA-256"
+            )
+        }
 
-        /**
-         * Applies Sha256 to an already hashed [input] and returns the resulting [Hash].
-         */
-        override fun applyHash(input: Hash): Hash =
-            Hash(digester.digest(input.bytes))
-
-
-        /**
-         * Applies Sha256 to a string [input] and returns the resulting [Hash].
-         */
-        override fun applyHash(input: String): Hash =
-            Hash(digester.digest(input.toByteArray()))
-
-        /**
-         * Applies Sha256 to a string [input] and returns the resulting [Hash].
-         */
         override fun applyHash(input: ByteArray): Hash =
             Hash(digester.digest(input))
 
