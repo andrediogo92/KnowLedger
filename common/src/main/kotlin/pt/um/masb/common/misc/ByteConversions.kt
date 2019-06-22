@@ -9,33 +9,36 @@ val ByteArray.hexString: String
 
 fun Long.bytes(): ByteArray {
     val magic = Long.SIZE_BYTES / Byte.SIZE_BYTES
+    val bits = Byte.SIZE_BITS
     val result = ByteArray(magic)
     var l = this
     for (i in magic - 1 downTo 0) {
         result[i] = (l.toByte() and 0xFF.toByte())
-        l = l shr magic
+        l = l shr bits
     }
     return result
 }
 
 fun Int.bytes(): ByteArray {
     val magic = Int.SIZE_BYTES / Byte.SIZE_BYTES
+    val bits = Byte.SIZE_BITS
     val result = ByteArray(magic)
     var l = this
     for (i in magic - 1 downTo 0) {
         result[i] = (l.toByte() and 0xFF.toByte())
-        l = l shr magic
+        l = l shr bits
     }
     return result
 }
 
 fun Double.bytes(): ByteArray {
     val magic = Long.SIZE_BYTES / Byte.SIZE_BYTES
+    val bits = Byte.SIZE_BITS
     val result = ByteArray(magic)
     var l = this.toRawBits()
     for (i in magic - 1 downTo 0) {
         result[i] = (l.toByte() and 0xFF.toByte())
-        l = l shr magic
+        l = l shr bits
     }
     return result
 }
