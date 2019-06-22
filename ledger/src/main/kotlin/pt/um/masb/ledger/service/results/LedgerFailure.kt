@@ -13,7 +13,7 @@ sealed class LedgerFailure : Failable {
         override val cause: String
     ) : LedgerFailure()
 
-    data class UnregisteredCrypter(
+    data class NoKnownStorageAdapter(
         override val cause: String
     ) : LedgerFailure()
 

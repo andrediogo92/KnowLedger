@@ -16,7 +16,6 @@ import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.results.unwrap
 import pt.um.masb.ledger.config.BlockParams
 import pt.um.masb.ledger.data.PhysicalData
-import pt.um.masb.ledger.data.TemperatureData
 import pt.um.masb.ledger.data.TrafficFlowData
 import pt.um.masb.ledger.data.adapters.TemperatureDataStorageAdapter
 import pt.um.masb.ledger.data.adapters.TrafficFlowDataStorageAdapter
@@ -56,12 +55,10 @@ class TestOrientDatabase {
     @Nested
     inner class TestQuerying {
         val temperatureChain: ChainHandle = ledger.registerNewChainHandleOf(
-            TemperatureData::class.java,
             TemperatureDataStorageAdapter
         ).unwrap()
 
         val trafficChain: ChainHandle = ledger.registerNewChainHandleOf(
-            TrafficFlowData::class.java,
             TrafficFlowDataStorageAdapter
         ).unwrap()
 

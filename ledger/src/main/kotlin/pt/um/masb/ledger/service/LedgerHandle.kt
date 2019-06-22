@@ -73,28 +73,42 @@ class LedgerHandle internal constructor(
         }
     }
 
+    /**
+     * Adds the specified adapter to known adapters and returns
+     * true if the element has been added, false if the adapter
+     * is already known.
+     */
     fun addStorageAdapter(
         adapter: AbstractStorageAdapter<out BlockChainData>
     ): Boolean =
-        dataAdapters.add(adapter).also {
-            pw.registerSchema(adapter)
+        dataAdapters.add(adapter).apply {
+            if (this) {
+                pw.registerSchema(adapter)
+            }
         }
 
 
     fun <T : BlockChainData> getChainHandleOf(
         clazz: Class<in T>
     ): Outcome<ChainHandle, LedgerFailure> =
-        pw.getChainHandle(
-            ledgerId.hashId,
-            clazz
-        )
+        if (dataAdapters.any { it.clazz == clazz }) {
+            pw.getChainHandle(
+                ledgerId.hashId,
+                clazz
+            )
+        } else {
+            Outcome.Error(
+                LedgerFailure.NoKnownStorageAdapter(
+                    "No known storage adapter for ${clazz.name}"
+                )
+            )
+        }
 
     fun <T : BlockChainData> registerNewChainHandleOf(
-        clazz: Class<out T>,
         adapter: AbstractStorageAdapter<out T>
     ): Outcome<ChainHandle, LedgerFailure> =
         ChainHandle(
-            clazz.name, ledgerId.hashId
+            adapter.id, ledgerId.hashId
         ).let { ch ->
             addStorageAdapter(adapter)
             pw.tryAddChainHandle(ch).fold(
