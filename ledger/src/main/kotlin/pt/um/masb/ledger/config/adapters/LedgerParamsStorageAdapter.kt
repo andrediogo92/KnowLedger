@@ -50,10 +50,10 @@ object LedgerParamsStorageAdapter : LedgerStorageAdapter<LedgerParams> {
                 element.getLinked("blockParams")
             ).mapSuccess {
                 LedgerParams(
+                    element.getHashProperty("crypter"),
                     element.getStorageProperty("recalcTime"),
                     element.getStorageProperty("recalcTrigger"),
-                    it,
-                    element.getHashProperty("crypter")
+                    it
                 )
             }
 

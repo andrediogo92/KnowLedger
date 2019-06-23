@@ -6,24 +6,28 @@ import pt.um.masb.common.hash.Hashed
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.flattenBytes
 import pt.um.masb.common.storage.LedgerContract
-import java.time.Instant
-import java.util.*
 
 @JsonClass(generateAdapter = true)
-data class LedgerId internal constructor(
+data class ChainId internal constructor(
     val tag: String,
+    val ledgerHash: Hash,
     override val hashId: Hash
 ) : Hashed, LedgerContract {
 
     internal constructor(
         tag: String,
+        ledgerHash: Hash,
         hasher: Hasher
-    ) : this(tag, generateLedgerHandleHash(hasher, tag))
+    ) : this(
+        tag, ledgerHash,
+        generateChainHandleHash(hasher, tag, ledgerHash)
+    )
 
 
     override fun toString(): String = """
-        |       LedgerId {
+        |       ChainId {
         |           Tag: $tag
+        |           Ledger: ${ledgerHash.print}
         |           Hash: ${hashId.print}
         |       }
     """.trimMargin()
@@ -45,16 +49,17 @@ data class LedgerId internal constructor(
     }
 
     companion object {
-        private fun generateLedgerHandleHash(
+        private fun generateChainHandleHash(
             hasher: Hasher,
-            tag: String
+            tag: String,
+            ledgerHash: Hash
         ): Hash =
             hasher.applyHash(
                 flattenBytes(
                     tag.toByteArray(),
-                    UUID.randomUUID().toString().toByteArray(),
-                    Instant.now().toString().toByteArray()
+                    ledgerHash.bytes
                 )
             )
     }
+
 }

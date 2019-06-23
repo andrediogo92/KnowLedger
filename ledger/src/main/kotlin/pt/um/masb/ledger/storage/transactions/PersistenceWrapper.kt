@@ -21,6 +21,8 @@ import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.ledger.config.LedgerId
 import pt.um.masb.ledger.config.adapters.BlockParamsStorageAdapter
+import pt.um.masb.ledger.config.adapters.ChainIdStorageAdapter
+import pt.um.masb.ledger.config.adapters.LedgerConfigStorageAdapter
 import pt.um.masb.ledger.config.adapters.LedgerIdStorageAdapter
 import pt.um.masb.ledger.config.adapters.LedgerParamsStorageAdapter
 import pt.um.masb.ledger.data.adapters.DummyDataStorageAdapter
@@ -69,20 +71,24 @@ class PersistenceWrapper(
     private fun registerDefaultSchemas(
     ) {
         val schemas = setOf<SchemaProvider<out Any>>(
+            //Configuration Adapters
+            BlockParamsStorageAdapter,
+            ChainIdStorageAdapter,
+            CoinbaseStorageAdapter,
+            LedgerConfigStorageAdapter,
+            LedgerIdStorageAdapter,
+            LedgerParamsStorageAdapter,
             //ServiceAdapters
             ChainHandleStorageAdapter,
-            //StorageAdapters
             IdentityStorageAdapter,
+            //StorageAdapters
             BlockHeaderStorageAdapter,
             BlockStorageAdapter,
             CoinbaseStorageAdapter,
-            TransactionOutputStorageAdapter,
-            TransactionStorageAdapter,
-            BlockParamsStorageAdapter,
-            LedgerIdStorageAdapter,
-            LedgerParamsStorageAdapter,
             MerkleTreeStorageAdapter,
             PhysicalDataStorageAdapter,
+            TransactionOutputStorageAdapter,
+            TransactionStorageAdapter,
             //DataAdapters
             DummyDataStorageAdapter
         )
