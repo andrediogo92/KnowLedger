@@ -19,12 +19,13 @@ import pt.um.masb.common.misc.stringToPrivateKey
 import pt.um.masb.common.misc.stringToPublicKey
 import pt.um.masb.common.results.Failable
 import pt.um.masb.common.results.Outcome
-import pt.um.masb.common.results.flatMapSuccess
 import pt.um.masb.common.results.fold
+import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.common.results.unwrap
 import pt.um.masb.common.storage.adapters.AbstractStorageAdapter
 import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.ledger.config.CoinbaseParams
+import pt.um.masb.ledger.config.LedgerConfig
 import pt.um.masb.ledger.config.LedgerId
 import pt.um.masb.ledger.config.LedgerParams
 import pt.um.masb.ledger.data.adapters.DummyDataStorageAdapter
@@ -41,8 +42,8 @@ import java.security.KeyPair
 class LedgerHandle internal constructor(
     builder: Builder
 ) : ServiceHandle {
-    private val pw: PersistenceWrapper = builder.persistenceWrapper!!
-    val ledgerId: LedgerId = builder.ledgerId!!
+    private val pw: PersistenceWrapper = builder.persistenceWrapper
+    val ledgerConfig: LedgerConfig = builder.ledgerConfig!!
     val isClosed: Boolean
         get() = pw.isClosed
 
@@ -93,7 +94,7 @@ class LedgerHandle internal constructor(
     ): Outcome<ChainHandle, LedgerFailure> =
         if (dataAdapters.any { it.clazz == clazz }) {
             pw.getChainHandle(
-                ledgerId.hashId,
+                ledgerConfig.ledgerId.hashId,
                 clazz
             )
         } else {
@@ -108,7 +109,7 @@ class LedgerHandle internal constructor(
         adapter: AbstractStorageAdapter<out T>
     ): Outcome<ChainHandle, LedgerFailure> =
         ChainHandle(
-            adapter.id, ledgerId.hashId
+            adapter.id, ledgerConfig.ledgerId.hashId
         ).let { ch ->
             addStorageAdapter(adapter)
             pw.tryAddChainHandle(ch).fold(
@@ -135,10 +136,11 @@ class LedgerHandle internal constructor(
         private var dbUser: String = "admin"
         private var dbPassword: String = "admin"
 
-        internal var persistenceWrapper: PersistenceWrapper? = null
-        internal var ledgerId: LedgerId? = null
+        internal lateinit var persistenceWrapper: PersistenceWrapper
+        internal var ledgerConfig: LedgerConfig? = null
         internal var identity: String = ""
         internal var hash: Hash = Hash.emptyHash
+        internal var hasher: Hasher = AvailableHashAlgorithms.Blake2b256Hasher
 
         fun withDBPath(path: File): Outcome<Builder, Failure> =
             if (!path.exists() || path.isDirectory) {
@@ -158,6 +160,11 @@ class LedgerHandle internal constructor(
         fun withDBPath(path: String): Builder =
             apply {
                 this.path = path
+            }
+
+        fun withHasher(hasher: Hasher): Builder =
+            apply {
+                this.hasher = hasher
             }
 
         fun withLedgerIdentity(ledgerId: String): Outcome<Builder, Failure> =
@@ -228,25 +235,22 @@ class LedgerHandle internal constructor(
                 persistenceWrapper = pw
             }
 
-        fun build(): Outcome<LedgerHandle, Failure> =
-            generateLedgerParams().flatMap {
-                attemptToResolveId()
-            }.flatMapSuccess {
+        fun build(): Outcome<LedgerHandle, Failure> {
+            generateLedgerParams()
+            return attemptToResolveId().mapSuccess {
                 generateDB()
-                Outcome.Ok(
-                    LedgerHandle(this@Builder)
-                )
+                LedgerHandle(this@Builder)
             }
+        }
 
-        private fun generateLedgerParams(): Outcome.Ok<Unit> =
-            Outcome.Ok(Unit).also {
-                if (ledgerParams == null) {
-                    ledgerParams = LedgerParams()
-                }
-                if (coinbaseParams == null) {
-                    coinbaseParams = CoinbaseParams()
-                }
+        private fun generateLedgerParams() {
+            if (ledgerParams == null) {
+                ledgerParams = LedgerParams(hasher.id)
             }
+            if (coinbaseParams == null) {
+                coinbaseParams = CoinbaseParams()
+            }
+        }
 
 
         private fun attemptToResolveId(): Outcome<Unit, Failure> =
@@ -256,7 +260,7 @@ class LedgerHandle internal constructor(
                 )
             } else {
                 if (identity != "") {
-                    ledgerId = LedgerId(identity, ledgerParams!!)
+                    ledgerConfig = LedgerConfig(LedgerId(identity, hasher), ledgerParams!!)
                 }
                 Outcome.Ok(Unit)
             }
@@ -270,28 +274,31 @@ class LedgerHandle internal constructor(
                     )
                 )
             }
+            val ledgerParams = ledgerParams as LedgerParams
             if (session == null) {
-                if (ledgerId == null && hash != Hash.emptyHash) {
-                    session = db!!.newManagedSession(base64Encode(hash))
+                if (ledgerConfig == null && hash != Hash.emptyHash) {
+                    session = db?.newManagedSession(base64Encode(hash))
                     persistenceWrapper = PersistenceWrapper(session!!)
-                    ledgerId = persistenceWrapper!!.getId(hash).unwrap()
+                    ledgerConfig = LedgerConfig(persistenceWrapper.getId(hash).unwrap(), ledgerParams)
                 } else {
-                    session = db!!.newManagedSession(base64Encode(ledgerId!!.hashId))
-                    persistenceWrapper = PersistenceWrapper(session!!)
+                    session = db?.newManagedSession(base64Encode(ledgerConfig!!.ledgerId.hashId))
+                    val session = session as ManagedSession
+                    persistenceWrapper = PersistenceWrapper(session)
                 }
             } else {
-                if (ledgerId == null && hash != Hash.emptyHash) {
-                    ledgerId = persistenceWrapper!!.getId(hash).unwrap()
+                if (ledgerConfig == null && hash != Hash.emptyHash) {
+                    ledgerConfig = LedgerConfig(persistenceWrapper.getId(hash).unwrap(), ledgerParams)
                 }
             }
-            containers[base64Encode(ledgerId!!.hashId)] = LedgerContainer(
-                ledgerId!!.hashId,
+            val ledgerConfig = ledgerConfig as LedgerConfig
+            containers[base64Encode(ledgerConfig.ledgerId.hashId)] = LedgerContainer(
+                ledgerConfig.ledgerId.hashId,
                 AvailableHashAlgorithms.getHasher(
-                    ledgerId!!.params.crypter
+                    hasher.id
                 ),
-                ledgerParams!!,
+                ledgerParams,
                 coinbaseParams!!,
-                persistenceWrapper!!,
+                persistenceWrapper,
                 DefaultDiff
             )
 

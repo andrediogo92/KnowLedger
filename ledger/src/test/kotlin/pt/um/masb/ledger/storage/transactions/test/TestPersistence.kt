@@ -53,7 +53,7 @@ class TestPersistence {
             .build()
             .unwrap()
 
-    val hash = ledgerHandle.ledgerId.hashId
+    val hash = ledgerHandle.ledgerConfig.ledgerId.hashId
     val testTransactions = generateXTransactions(ident, 25)
 
 

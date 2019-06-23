@@ -43,7 +43,7 @@ class TestOrientDatabase {
         .build()
         .unwrap()
 
-    val hash = ledger.ledgerId.hashId
+    val hash = ledger.ledgerConfig.ledgerId.hashId
     val trunc = hash.truncated
 
     val hasher: Hasher = LedgerHandle.getHasher(hash)!!
