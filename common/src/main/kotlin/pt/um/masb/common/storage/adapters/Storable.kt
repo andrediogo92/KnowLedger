@@ -16,7 +16,7 @@ import pt.um.masb.common.database.StorageElement
  * implementations in order to produce storage elements
  * to link.
  */
-interface Storable<in T: Any> {
+interface Storable<in T> {
     fun store(
         toStore: T,
         session: NewInstanceSession

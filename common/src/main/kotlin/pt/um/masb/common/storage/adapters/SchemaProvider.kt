@@ -7,7 +7,7 @@ import pt.um.masb.common.database.StorageType
  * persisent storage. It's properties must abide by possible
  * types defined by [StorageType].
  */
-interface SchemaProvider<T : Any> {
+interface SchemaProvider<T> {
     val id: String
     val properties: Map<String, StorageType>
 }

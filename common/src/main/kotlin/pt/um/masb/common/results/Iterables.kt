@@ -19,7 +19,7 @@ fun <T, U : Failable> List<Outcome<T, U>>.allValues(): Outcome<List<T>, U> =
 /**
  * Attempts to extract all values or short circuits on first failure.
  */
-fun <T : Any, U : Failable> Sequence<Outcome<T, U>>.allValues(): Outcome<Sequence<T>, U> {
+fun <T, U : Failable> Sequence<Outcome<T, U>>.allValues(): Outcome<Sequence<T>, U> {
     val accumulator: MutableList<T> = mutableListOf()
     var short = false
     lateinit var shorter: U

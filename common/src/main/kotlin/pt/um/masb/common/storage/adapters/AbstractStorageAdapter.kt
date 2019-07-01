@@ -1,6 +1,6 @@
 package pt.um.masb.common.storage.adapters
 
-import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.misc.extractIdFromClass
 import pt.um.masb.common.results.Outcome
@@ -12,14 +12,14 @@ import pt.um.masb.common.storage.results.DataFailure
  *
  * The hashed id is based on the class name extracted via reflection.
  */
-abstract class AbstractStorageAdapter<T : BlockChainData>(
+abstract class AbstractStorageAdapter<T : LedgerData>(
     val clazz: Class<out T>
 ) : StorageAdapter<T> {
     override val id: String by lazy {
         extractIdFromClass(clazz)
     }
 
-    protected inline fun <T : BlockChainData> commonLoad(
+    protected inline fun <T : LedgerData> commonLoad(
         document: StorageElement,
         tName: String,
         loader: StorageElement.() -> Outcome<T, DataFailure>

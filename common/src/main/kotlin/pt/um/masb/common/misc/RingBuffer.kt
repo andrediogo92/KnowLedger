@@ -9,7 +9,7 @@ import java.util.*
  * An evicting queue implementation.
  * @param <E> the element type to store.
  */
-class RingBuffer<E : Any>(
+class RingBuffer<E>(
     val capacity: Int
 ) : AbstractCollection<E>(), Queue<E>, Cloneable, Serializable {
 
