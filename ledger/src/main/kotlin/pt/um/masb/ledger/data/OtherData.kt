@@ -2,7 +2,7 @@ package pt.um.masb.ledger.data
 
 import com.squareup.moshi.JsonClass
 import pt.um.masb.common.config.LedgerConfiguration.OTHER_BASE
-import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.data.SelfInterval
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
@@ -13,7 +13,7 @@ import java.math.BigDecimal
 @JsonClass(generateAdapter = true)
 data class OtherData(
     val data: java.io.Serializable
-) : BlockChainData {
+) : LedgerData {
     override fun digest(c: Hasher): Hash {
         val bao = ByteArrayOutputStream(256)
         ObjectOutputStream(bao).use {

@@ -1,11 +1,11 @@
 package pt.um.masb.ledger.data
 
-import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.data.LedgerData
 
 abstract class AbstractTrafficIncident(
     var cityName: String,
     var citySeqNum: Int
-) : BlockChainData {
+) : LedgerData {
 
     abstract override fun toString(): String
 }

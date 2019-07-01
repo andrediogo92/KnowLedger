@@ -1,7 +1,7 @@
 package pt.um.masb.ledger.data
 
 import com.squareup.moshi.JsonClass
-import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.data.SelfInterval
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
@@ -11,7 +11,7 @@ import java.math.BigDecimal
  * Dummy value type used for the origin block.
  */
 @JsonClass(generateAdapter = true)
-class DummyData : BlockChainData {
+class DummyData : LedgerData {
 
     override val approximateSize: Long
         get() = 0

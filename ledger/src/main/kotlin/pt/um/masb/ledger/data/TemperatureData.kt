@@ -2,7 +2,7 @@ package pt.um.masb.ledger.data
 
 import com.squareup.moshi.JsonClass
 import pt.um.masb.common.config.LedgerConfiguration
-import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.data.SelfInterval
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
@@ -20,7 +20,7 @@ import java.math.BigDecimal
 data class TemperatureData(
     val temperature: BigDecimal,
     val unit: TUnit
-) : BlockChainData {
+) : LedgerData {
     override fun digest(c: Hasher): Hash =
         c.applyHash(
             temperature.unscaledValue().toByteArray() + unit.ordinal.bytes()

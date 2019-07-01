@@ -1,6 +1,6 @@
 package pt.um.masb.ledger.data.adapters
 
-import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageBytes
 import pt.um.masb.common.database.StorageElement
@@ -25,7 +25,7 @@ object OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
         )
 
     override fun store(
-        toStore: BlockChainData, session: NewInstanceSession
+        toStore: LedgerData, session: NewInstanceSession
     ): StorageElement {
         val otherData = toStore as OtherData
         return session.newInstance(id).apply {

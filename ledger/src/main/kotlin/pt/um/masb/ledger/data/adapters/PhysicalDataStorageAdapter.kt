@@ -11,7 +11,7 @@ import pt.um.masb.ledger.data.GeoCoords
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.results.intoLoad
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
-import pt.um.masb.ledger.service.LedgerHandle
+import pt.um.masb.ledger.service.handles.LedgerHandle
 import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.adapters.LedgerStorageAdapter
 import java.time.Instant

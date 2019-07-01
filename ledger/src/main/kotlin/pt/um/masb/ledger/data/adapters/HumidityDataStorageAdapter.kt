@@ -1,6 +1,6 @@
 package pt.um.masb.ledger.data.adapters
 
-import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
@@ -20,7 +20,7 @@ object HumidityDataStorageAdapter : AbstractStorageAdapter<HumidityData>(
         )
 
     override fun store(
-        toStore: BlockChainData, session: NewInstanceSession
+        toStore: LedgerData, session: NewInstanceSession
     ): StorageElement {
         val humidityData = toStore as HumidityData
         return session.newInstance(id).apply {

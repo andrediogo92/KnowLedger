@@ -1,6 +1,6 @@
 package pt.um.masb.ledger.data.adapters
 
-import pt.um.masb.common.data.BlockChainData
+import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
@@ -21,7 +21,7 @@ object NoiseDataStorageAdapter : AbstractStorageAdapter<NoiseData>(
         )
 
     override fun store(
-        toStore: BlockChainData, session: NewInstanceSession
+        toStore: LedgerData, session: NewInstanceSession
     ): StorageElement {
         val noiseData = toStore as NoiseData
         return session.newInstance(id).apply {

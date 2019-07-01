@@ -3,8 +3,8 @@ package pt.um.masb.ledger.data
 import com.squareup.moshi.JsonClass
 import org.openjdk.jol.info.ClassLayout
 import pt.um.masb.common.Sizeable
-import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.DataCategory
+import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.data.SelfInterval
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hashable
@@ -27,7 +27,7 @@ import java.time.Instant
 data class PhysicalData(
     val instant: Instant,
     val geoCoords: GeoCoords?,
-    val data: BlockChainData
+    val data: LedgerData
 ) : Sizeable,
     Hashable,
     LedgerContract,
@@ -40,25 +40,25 @@ data class PhysicalData(
             .instanceSize() + data.approximateSize
 
     constructor(
-        data: BlockChainData
+        data: LedgerData
     ) : this(Instant.now(), null, data)
 
     constructor(
-        instant: Instant, data: BlockChainData
+        instant: Instant, data: LedgerData
     ) : this(instant, null, data)
 
     constructor(
-        geoCoords: GeoCoords, data: BlockChainData
+        geoCoords: GeoCoords, data: LedgerData
     ) : this(Instant.now(), geoCoords, data)
 
     constructor(
         lat: BigDecimal, lng: BigDecimal,
-        data: BlockChainData
+        data: LedgerData
     ) : this(Instant.now(), GeoCoords(lat, lng), data)
 
     constructor(
         instant: Instant, lat: BigDecimal,
-        lng: BigDecimal, data: BlockChainData
+        lng: BigDecimal, data: LedgerData
     ) : this(instant, GeoCoords(lat, lng), data)
 
     override fun digest(c: Hasher): Hash =
