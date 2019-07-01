@@ -13,6 +13,7 @@ import pt.um.masb.common.data.Payout
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.common.hash.Hasher
+import pt.um.masb.common.misc.decodeUTF8ToString
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.results.peekFailure
 import pt.um.masb.common.storage.results.DataFailure
@@ -20,6 +21,7 @@ import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.common.test.randomByteArray
 import pt.um.masb.common.test.randomDouble
 import pt.um.masb.ledger.config.BlockParams
+import pt.um.masb.ledger.config.ChainId
 import pt.um.masb.ledger.config.CoinbaseParams
 import pt.um.masb.ledger.data.MerkleTree
 import pt.um.masb.ledger.data.PhysicalData
@@ -58,6 +60,15 @@ internal val moshi by lazy {
         .build()
 }
 
+internal fun generateChainId(
+    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
+): ChainId =
+    ChainId(
+        randomByteArray(32).decodeUTF8ToString(),
+        Hash(randomByteArray(32)), hasher
+    )
+
+
 internal fun generateBlock(
     id: Array<Identity>,
     ts: List<Transaction>,
@@ -73,7 +84,7 @@ internal fun generateBlock(
         mutableListOf(),
         coinbase,
         BlockHeader(
-            Hash(randomByteArray(32)),
+            generateChainId(hasher),
             hasher,
             Hash(randomByteArray(32)),
             Difficulty.INIT_DIFFICULTY, 2,
@@ -93,6 +104,7 @@ internal fun generateXTransactions(
         val index = i % id.size
         ts.add(
             Transaction(
+                generateChainId(hasher),
                 id[index].privateKey,
                 id[index].publicKey,
                 PhysicalData(
@@ -119,6 +131,90 @@ internal fun generateXTransactions(
     for (i in 0 until size) {
         ts.add(
             Transaction(
+                generateChainId(hasher),
+                id.privateKey,
+                id.publicKey,
+                PhysicalData(
+                    TemperatureData(
+                        BigDecimal(
+                            randomDouble() * 100
+                        ),
+                        TUnit.CELSIUS
+                    )
+                ),
+                hasher
+            )
+        )
+    }
+    return ts
+}
+
+internal fun generateBlockWithChain(
+    chainId: ChainId,
+    id: Array<Identity>,
+    ts: List<Transaction>,
+    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
+    formula: DataFormula = DefaultDiff,
+    coinbaseParams: CoinbaseParams = CoinbaseParams(),
+    blockParams: BlockParams = BlockParams()
+): Block {
+    val coinbase = generateCoinbase(
+        id, ts, hasher, formula, coinbaseParams
+    )
+    return Block(
+        mutableListOf(),
+        coinbase,
+        BlockHeader(
+            chainId,
+            hasher,
+            Hash(randomByteArray(32)),
+            Difficulty.INIT_DIFFICULTY, 2,
+            blockParams
+        ),
+        MerkleTree(hasher, coinbase, ts)
+    )
+}
+
+internal fun generateXTransactionsWithChain(
+    chainId: ChainId,
+    id: Array<Identity>,
+    size: Int,
+    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
+): List<Transaction> {
+    val ts: MutableList<Transaction> = mutableListOf()
+    for (i in 0 until size) {
+        val index = i % id.size
+        ts.add(
+            Transaction(
+                chainId,
+                id[index].privateKey,
+                id[index].publicKey,
+                PhysicalData(
+                    TemperatureData(
+                        BigDecimal(
+                            randomDouble() * 100
+                        ),
+                        TUnit.CELSIUS
+                    )
+                ),
+                hasher
+            )
+        )
+    }
+    return ts
+}
+
+internal fun generateXTransactionsWithChain(
+    chainId: ChainId,
+    id: Identity,
+    size: Int,
+    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
+): List<Transaction> {
+    val ts: MutableList<Transaction> = mutableListOf()
+    for (i in 0 until size) {
+        ts.add(
+            Transaction(
+                chainId,
                 id.privateKey,
                 id.publicKey,
                 PhysicalData(
