@@ -1,5 +1,8 @@
 package pt.um.masb.common.misc
 
+import java.math.BigDecimal
+import java.time.Instant
+import java.util.*
 import kotlin.experimental.and
 
 // Only convert on print.
@@ -42,6 +45,26 @@ fun Double.bytes(): ByteArray {
     }
     return result
 }
+
+/**
+ * Byte concatenation of epoch seconds and leftover nanos.
+ */
+fun Instant.bytes(): ByteArray =
+    epochSecond.bytes() + nano.bytes()
+
+/**
+ * Byte concatenation of [UUID] via [UUID.getMostSignificantBits] +
+ * [UUID.getLeastSignificantBits] (big-endian order).
+ */
+fun UUID.bytes(): ByteArray =
+    mostSignificantBits.bytes() + leastSignificantBits.bytes()
+
+/**
+ * Extracts bytes from [BigDecimal.unscaledValue] directly
+ * converted to [ByteArray].
+ */
+fun BigDecimal.bytes(): ByteArray =
+    unscaledValue().toByteArray()
 
 fun flattenBytes(
     byteArrays: Array<ByteArray>,

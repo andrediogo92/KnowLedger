@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
 import org.tinylog.kotlin.Logger
 import pt.um.masb.common.misc.bytes
+import java.math.BigDecimal
+import java.time.Instant
 
 class TestByteConversions {
     @Test
@@ -164,4 +166,24 @@ class TestByteConversions {
             assertThat(test1Dot56ToN11.bytes()).containsExactly(*bytes1Dot56ToN11)
         }
     }
+
+    @Test
+    fun `instant to bytes conversions`() {
+        val testSeconds = 85321234L
+        val testNanos = 423
+        val testInstant = Instant.ofEpochSecond(testSeconds, testNanos.toLong())
+        val bytesSeconds = testSeconds.bytes()
+        val bytesNanos = testNanos.bytes()
+
+        assertThat(testInstant.bytes()).containsExactly(*(bytesSeconds + bytesNanos))
+    }
+
+    @Test
+    fun `big decimal to bytes conversions`() {
+        val testDecimal = BigDecimal("3.1415")
+        val bytesDecimal = testDecimal.bytes()
+
+        assertThat(bytesDecimal).containsExactly(*testDecimal.unscaledValue().toByteArray())
+    }
+
 }
