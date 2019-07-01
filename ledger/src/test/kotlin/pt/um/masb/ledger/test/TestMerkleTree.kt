@@ -10,15 +10,10 @@ import org.junit.jupiter.api.Test
 import org.tinylog.kotlin.Logger
 import pt.um.masb.common.config.LedgerConfiguration
 import pt.um.masb.common.test.applyHashInPairs
-import pt.um.masb.common.test.randomDouble
 import pt.um.masb.ledger.data.MerkleTree
-import pt.um.masb.ledger.data.PhysicalData
-import pt.um.masb.ledger.data.TUnit
-import pt.um.masb.ledger.data.TemperatureData
 import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.storage.Coinbase
 import pt.um.masb.ledger.storage.Transaction
-import java.math.BigDecimal
 
 class TestMerkleTree {
     private val hasher =
@@ -447,19 +442,7 @@ class TestMerkleTree {
 
     @Test
     fun `merkle tree creation with just root`() {
-        val ts = listOf(
-            Transaction(
-                id[0].privateKey,
-                id[0].publicKey,
-                PhysicalData(
-                    TemperatureData(
-                        temperature = BigDecimal(randomDouble() * 100),
-                        unit = TUnit.CELSIUS
-                    )
-                ),
-                hasher
-            )
-        )
+        val ts = generateXTransactions(id, 1, hasher)
         val tree = MerkleTree(hasher, ts)
 
         //Log constructed merkle

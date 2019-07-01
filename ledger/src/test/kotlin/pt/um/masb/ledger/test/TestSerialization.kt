@@ -15,15 +15,19 @@ class TestSerialization {
         Identity("test2")
     )
 
+    val chainId = generateChainId()
+
     val testTransactions =
-        generateXTransactions(id, 10)
+        generateXTransactionsWithChain(chainId, id, 10)
             .sortedByDescending {
                 it.data.instant
             }
 
     @Test
     fun `serialization and deserialization of blocks`() {
-        val block = generateBlock(id, testTransactions)
+        val block = generateBlockWithChain(
+            chainId, id, testTransactions
+        )
 
         testTransactions.forEachIndexed { i, t ->
             assertThat(block.addTransaction(t))

@@ -70,7 +70,7 @@ class TestOrientDatabase {
             fun `Test simple insertion`() {
 
                 val block = Block(
-                    hash,
+                    temperatureChain.id,
                     emptyHash,
                     MIN_DIFFICULTY,
                     1,
@@ -87,6 +87,7 @@ class TestOrientDatabase {
             @Test
             fun `Test traffic insertion`() {
                 val testTraffic = Transaction(
+                    trafficChain.id,
                     ident.privateKey,
                     ident.publicKey,
                     PhysicalData(
@@ -106,7 +107,7 @@ class TestOrientDatabase {
                 )
 
                 val block = Block(
-                    hash,
+                    trafficChain.id,
                     emptyHash,
                     MIN_DIFFICULTY,
                     1,

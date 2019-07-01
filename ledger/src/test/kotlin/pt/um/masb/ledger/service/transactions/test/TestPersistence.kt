@@ -1,4 +1,4 @@
-package pt.um.masb.ledger.storage.transactions.test
+package pt.um.masb.ledger.service.transactions.test
 
 import assertk.assertAll
 import assertk.assertThat
@@ -20,18 +20,19 @@ import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.common.results.peekFailure
 import pt.um.masb.common.results.unwrap
 import pt.um.masb.common.storage.results.QueryFailure
+import pt.um.masb.ledger.config.ChainId
 import pt.um.masb.ledger.data.adapters.TemperatureDataStorageAdapter
 import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.service.handles.LedgerHandle
+import pt.um.masb.ledger.service.transactions.PersistenceWrapper
+import pt.um.masb.ledger.service.transactions.getTransactionByHash
+import pt.um.masb.ledger.service.transactions.getTransactionsByClass
+import pt.um.masb.ledger.service.transactions.getTransactionsFromAgent
+import pt.um.masb.ledger.service.transactions.getTransactionsOrderedByTimestamp
 import pt.um.masb.ledger.storage.adapters.TransactionStorageAdapter
-import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
-import pt.um.masb.ledger.storage.transactions.getTransactionByHash
-import pt.um.masb.ledger.storage.transactions.getTransactionsByClass
-import pt.um.masb.ledger.storage.transactions.getTransactionsFromAgent
-import pt.um.masb.ledger.storage.transactions.getTransactionsOrderedByTimestamp
 import pt.um.masb.ledger.test.appendByLine
 import pt.um.masb.ledger.test.failOnLoadError
-import pt.um.masb.ledger.test.generateXTransactions
+import pt.um.masb.ledger.test.generateXTransactionsWithChain
 import pt.um.masb.ledger.test.logActualToExpectedLists
 
 class TestPersistence {
@@ -58,7 +59,9 @@ class TestPersistence {
             .unwrap()
 
     val hash = ledgerHandle.ledgerConfig.ledgerId.hashId
-    val testTransactions = generateXTransactions(ident, 25)
+
+    val chainId = ChainId("tag", hash, hash)
+    val testTransactions = generateXTransactionsWithChain(chainId, ident, 25)
 
 
     @BeforeAll
@@ -222,11 +225,11 @@ class TestPersistence {
                 seq.toList().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
-                        this.map { it.hashId.print },
+                        map { it.hashId.print },
                         "Transactions' hashes from test:",
                         testTransactions.map { it.hashId.print }
                     )
-                    assertThat(this.size).isEqualTo(
+                    assertThat(size).isEqualTo(
                         testTransactions.size
                     )
                     assertThat(this).containsOnly(
@@ -245,11 +248,11 @@ class TestPersistence {
                     val reversed = testTransactions.asReversed()
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
-                        this.map { it.hashId.print },
+                        map { it.hashId.print },
                         "Transactions' hashes from test:",
                         reversed.map { it.hashId.print }
                     )
-                    assertThat(this.size).isEqualTo(
+                    assertThat(size).isEqualTo(
                         testTransactions.size
                     )
                     assertThat(this).containsExactly(
@@ -269,11 +272,11 @@ class TestPersistence {
                 seq.toList().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
-                        this.map { it.hashId.print },
+                        map { it.hashId.print },
                         "Transactions' hashes from test:",
                         testTransactions.map { it.hashId.print }
                     )
-                    assertThat(this.size).isEqualTo(
+                    assertThat(size).isEqualTo(
                         testTransactions.size
                     )
                     assertThat(this).containsOnly(
