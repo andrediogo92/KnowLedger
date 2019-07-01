@@ -22,8 +22,8 @@ class TestPubKeyCodec {
 
     @Test
     fun `Test encode and decode of private and public keys`() {
-        val encpr = getStringFromKey(pr)
-        val encpub = getStringFromKey(pub)
+        val encpr = pr.getStringFromKey()
+        val encpub = pub.getStringFromKey()
         val decpr = stringToPrivateKey(encpr)
         val decpub = stringToPublicKey(encpub)
         //Decode of encode matches decode
@@ -35,21 +35,21 @@ class TestPubKeyCodec {
         ).isEqualTo(decpr)
         //Re-encode matches original encode.
         assertThat(
-            getStringFromKey(decpub)
+            decpub.getStringFromKey()
         ).isEqualTo(encpub)
         assertThat(
-            getStringFromKey(decpr)
+            decpr.getStringFromKey()
         ).isEqualTo(encpr)
         //Encode matches Re-encode
         assertThat(
-            getStringFromKey(decpub)
+            decpub.getStringFromKey()
         ).isEqualTo(
-            getStringFromKey(pub)
+            pub.getStringFromKey()
         )
         assertThat(
-            getStringFromKey(decpr)
+            decpr.getStringFromKey()
         ).isEqualTo(
-            getStringFromKey(pr)
+            pr.getStringFromKey()
         )
         //Keys match.
         assertThat(decpub).isEqualTo(pub)
