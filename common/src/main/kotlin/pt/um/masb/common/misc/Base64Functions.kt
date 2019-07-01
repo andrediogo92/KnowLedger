@@ -1,13 +1,10 @@
 package pt.um.masb.common.misc
 
-import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
-import java.security.Key
 import java.util.*
 
 private val b64Encoder = Base64.getUrlEncoder()
 private val b64Decoder = Base64.getUrlDecoder()
-
 
 fun base64Encode(
     toEncode: Hash
@@ -15,11 +12,10 @@ fun base64Encode(
     base64Encode(toEncode.bytes)
 
 
-@UseExperimental(ExperimentalStdlibApi::class)
 fun base64Encode(
     toEncode: String
 ): String =
-    base64Encode(toEncode.encodeToByteArray())
+    base64Encode(toEncode.encodeStringToUTF8())
 
 fun base64Encode(
     toEncode: ByteArray
@@ -36,20 +32,7 @@ fun base64DecodeToHash(
 ): Hash =
     Hash(base64Decode(toDecode))
 
-@UseExperimental(ExperimentalStdlibApi::class)
 fun base64DecodeToString(
     toDecode: String
 ): String =
-    base64Decode(toDecode).decodeToString()
-
-fun getStringFromKey(
-    key: Key
-): String =
-    base64Encode(key.encoded)
-
-fun <T> extractIdFromClass(clazz: Class<T>): String =
-    base64Encode(
-        AvailableHashAlgorithms.SHA256Hasher.applyHash(
-            clazz.toGenericString()
-        )
-    )
+    base64Decode(toDecode).decodeUTF8ToString()
