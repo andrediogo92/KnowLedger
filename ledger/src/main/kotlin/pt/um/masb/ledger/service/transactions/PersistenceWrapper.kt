@@ -1,12 +1,13 @@
-package pt.um.masb.ledger.storage.transactions
+package pt.um.masb.ledger.service.transactions
 
 import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.database.ManagedSchemas
 import pt.um.masb.common.database.ManagedSession
 import pt.um.masb.common.database.NewInstanceSession
-import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageID
+import pt.um.masb.common.database.query.Filters
 import pt.um.masb.common.database.query.GenericQuery
+import pt.um.masb.common.database.query.GenericSelect
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.results.allValues
@@ -27,6 +28,7 @@ import pt.um.masb.ledger.results.tryOrDataUnknownFailure
 import pt.um.masb.ledger.results.tryOrLedgerUnknownFailure
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
 import pt.um.masb.ledger.results.tryOrQueryUnknownFailure
+import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.service.LedgerConfig
 import pt.um.masb.ledger.service.ServiceClass
 import pt.um.masb.ledger.service.adapters.ChainHandleStorageAdapter
@@ -474,29 +476,33 @@ internal data class PersistenceWrapper(
         }
 
 
-
     // ------------------------------
     // Identity transaction.
     //
     // ------------------------------
 
 
-    internal fun getIdent(id: String): StorageElement? =
-        session.query(
-            "SELECT * FROM ident WHERE id = :id",
-            mapOf(
-                "id" to id
+    internal fun getLedgerIdentityByTag(
+        ledgerHash: Hash,
+        id: String
+    ): Outcome<Identity, LoadFailure> =
+        IdentityStorageAdapter.let {
+            queryUniqueResult(
+                ledgerHash,
+                GenericSelect(
+                    it.id
+                ).withSimpleFilter(
+                    Filters.WHERE,
+                    "id",
+                    "id",
+                    id
+                ),
+                it
             )
-        ).let {
-            if (it.hasNext()) {
-                it.next().element
-            } else {
-                null
-            }
         }
 
 
-    internal fun getId(
+    internal fun getLedgerHandleByHash(
         hashId: Hash
     ): Outcome<LedgerConfig, LedgerHandle.Failure> =
         session.query(

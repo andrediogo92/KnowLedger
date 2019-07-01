@@ -2,13 +2,10 @@ package pt.um.masb.ledger.service.handles
 
 import pt.um.masb.common.data.DataFormula
 import pt.um.masb.common.data.LedgerData
-import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageID
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.base64Encode
-import pt.um.masb.common.misc.stringToPrivateKey
-import pt.um.masb.common.misc.stringToPublicKey
 import pt.um.masb.common.results.Failable
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.results.fold
@@ -24,13 +21,13 @@ import pt.um.masb.ledger.service.handles.builder.AbstractLedgerBuilder
 import pt.um.masb.ledger.service.handles.builder.LedgerByHash
 import pt.um.masb.ledger.service.handles.builder.LedgerByTag
 import pt.um.masb.ledger.service.results.LedgerFailure
-import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
-import pt.um.masb.ledger.storage.transactions.getChainHandle
-import pt.um.masb.ledger.storage.transactions.getKnownChainHandleIDs
-import pt.um.masb.ledger.storage.transactions.getKnownChainHandleTypes
-import pt.um.masb.ledger.storage.transactions.getKnownChainHandles
-import pt.um.masb.ledger.storage.transactions.tryAddChainHandle
-import java.security.KeyPair
+import pt.um.masb.ledger.service.results.LoadFailure
+import pt.um.masb.ledger.service.transactions.PersistenceWrapper
+import pt.um.masb.ledger.service.transactions.getChainHandle
+import pt.um.masb.ledger.service.transactions.getKnownChainHandleIDs
+import pt.um.masb.ledger.service.transactions.getKnownChainHandleTypes
+import pt.um.masb.ledger.service.transactions.getKnownChainHandles
+import pt.um.masb.ledger.service.transactions.tryAddChainHandle
 
 
 /**
@@ -41,15 +38,16 @@ class LedgerHandle internal constructor(
 ) : ServiceClass {
     private val pw: PersistenceWrapper = builder.persistenceWrapper
     val ledgerConfig: LedgerConfig = builder.ledgerConfig
+    val ledgerHash = ledgerConfig.ledgerId.hashId
     val hasher: Hasher = builder.hasher
     val isClosed: Boolean
         get() = pw.isClosed
 
     fun close() {
         pw.closeCurrentSession()
+        containers.remove(base64Encode(ledgerHash))
     }
 
-    //TODO: efficiently retrieve chains registered for this ledger.
     val knownChainTypes: Outcome<Sequence<String>, QueryFailure>
         get() = pw.getKnownChainHandleTypes()
 
@@ -57,20 +55,12 @@ class LedgerHandle internal constructor(
         get() = pw.getKnownChainHandleIDs()
 
     val knownChains: Outcome<Sequence<ChainHandle>, LedgerFailure>
-        get() = pw.getKnownChainHandles(ledgerConfig.ledgerId.hashId)
+        get() = pw.getKnownChainHandles(ledgerHash)
 
-    fun getIdentById(id: String): Identity? {
-        val ident: StorageElement? = pw.getIdent(id)
-        return if (ident != null) {
-            val keyPair = KeyPair(
-                stringToPublicKey(ident.getStorageProperty("publicKey")),
-                stringToPrivateKey(ident.getStorageProperty("privateKey"))
-            )
-            Identity(id, keyPair)
-        } else {
-            null
-        }
-    }
+    fun getIdentityByTag(
+        tag: String
+    ): Outcome<Identity, LoadFailure> =
+        pw.getLedgerIdentityByTag(ledgerHash, tag)
 
     /**
      * Adds the specified adapter to known adapters and returns
@@ -204,8 +194,8 @@ class LedgerHandle internal constructor(
                 it.clazz == clazz
             }
 
-        internal fun getContainer(hash: Hash): LedgerContainer? =
-            containers[base64Encode(hash)]
+        internal fun getContainer(ledgerHash: Hash): LedgerContainer? =
+            containers[base64Encode(ledgerHash)]
 
 
         internal fun getHasher(ledgerHash: Hash): Hasher? =

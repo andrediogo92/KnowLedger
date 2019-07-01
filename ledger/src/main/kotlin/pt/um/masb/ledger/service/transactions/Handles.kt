@@ -1,4 +1,4 @@
-package pt.um.masb.ledger.storage.transactions
+package pt.um.masb.ledger.service.transactions
 
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageID

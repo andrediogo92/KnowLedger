@@ -25,12 +25,12 @@ import pt.um.masb.ledger.results.intoQuery
 import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.service.ServiceClass
 import pt.um.masb.ledger.service.results.LoadFailure
+import pt.um.masb.ledger.service.transactions.*
 import pt.um.masb.ledger.storage.Block
 import pt.um.masb.ledger.storage.BlockHeader
 import pt.um.masb.ledger.storage.Coinbase
 import pt.um.masb.ledger.storage.Transaction
 import pt.um.masb.ledger.storage.adapters.BlockStorageAdapter
-import pt.um.masb.ledger.storage.transactions.*
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.ZoneOffset
@@ -510,11 +510,11 @@ data class ChainHandle internal constructor(
         val identity = Identity("")
 
         fun getOriginHeader(
-            blockChainId: Hash
+            chainId: ChainId
         ): BlockHeader =
             BlockHeader(
-                blockChainId,
-                LedgerHandle.getHasher(blockChainId)!!,
+                chainId,
+                LedgerHandle.getHasher(chainId.ledgerHash)!!,
                 MAX_DIFFICULTY,
                 0,
                 emptyHash,
@@ -537,24 +537,27 @@ data class ChainHandle internal constructor(
             )
 
         fun getOriginBlock(
-            blockChainId: Hash
+            chainId: ChainId
         ): Block =
-            LedgerHandle.getContainer(blockChainId)!!.let {
-                Block(
-                    mutableListOf(),
-                    Coinbase(it),
-                    getOriginHeader(blockChainId),
-                    MerkleTree(it.hasher)
-                ).apply {
-                    this.addTransaction(
-                        Transaction(
-                            identity,
-                            PhysicalData(DummyData.DUMMY),
-                            it.hasher
+            LedgerHandle
+                .getContainer(chainId.ledgerHash)!!
+                .let {
+                    Block(
+                        mutableListOf(),
+                        Coinbase(it),
+                        getOriginHeader(chainId),
+                        MerkleTree(it.hasher)
+                    ).also { bl ->
+                        bl.addTransaction(
+                            Transaction(
+                                chainId,
+                                identity,
+                                PhysicalData(DummyData.DUMMY),
+                                it.hasher
+                            )
                         )
-                    )
+                    }
                 }
-            }
 
     }
 }

@@ -5,7 +5,7 @@ import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.ledger.config.CoinbaseParams
 import pt.um.masb.ledger.config.LedgerParams
-import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
+import pt.um.masb.ledger.service.transactions.PersistenceWrapper
 
 internal data class LedgerContainer(
     val ledgerHash: Hash,

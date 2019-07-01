@@ -13,7 +13,7 @@ import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.results.flatMapSuccess
 import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.ledger.service.handles.LedgerHandle
-import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
+import pt.um.masb.ledger.service.transactions.PersistenceWrapper
 import java.io.File
 
 data class LedgerByHash(
@@ -81,7 +81,7 @@ data class LedgerByHash(
 
     private fun attemptToResolveId() =
         //Get ledger params
-        persistenceWrapper.getId(hash).mapSuccess {
+        persistenceWrapper.getLedgerHandleByHash(hash).mapSuccess {
             hasher = AvailableHashAlgorithms.getHasher(it.ledgerParams.crypter)
             it
         }

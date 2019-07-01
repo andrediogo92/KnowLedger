@@ -15,7 +15,7 @@ import pt.um.masb.ledger.config.LedgerId
 import pt.um.masb.ledger.config.LedgerParams
 import pt.um.masb.ledger.service.LedgerConfig
 import pt.um.masb.ledger.service.handles.LedgerHandle
-import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
+import pt.um.masb.ledger.service.transactions.PersistenceWrapper
 import java.io.File
 
 class LedgerByTag(
