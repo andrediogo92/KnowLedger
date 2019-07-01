@@ -6,8 +6,9 @@ import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.results.mapFailure
-import pt.um.masb.common.results.mapSuccess
+import pt.um.masb.common.results.zip
 import pt.um.masb.ledger.config.adapters.BlockParamsStorageAdapter
+import pt.um.masb.ledger.config.adapters.ChainIdStorageAdapter
 import pt.um.masb.ledger.results.intoLoad
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
 import pt.um.masb.ledger.service.handles.LedgerHandle
@@ -21,7 +22,7 @@ object BlockHeaderStorageAdapter : LedgerStorageAdapter<BlockHeader> {
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "ledgerHash" to StorageType.HASH,
+            "chainId" to StorageType.HASH,
             "difficulty" to StorageType.DIFFICULTY,
             "blockheight" to StorageType.LONG,
             "hashId" to StorageType.HASH,
@@ -38,30 +39,32 @@ object BlockHeaderStorageAdapter : LedgerStorageAdapter<BlockHeader> {
         session: NewInstanceSession
     ): StorageElement =
         session.newInstance(id).apply {
-            this
-                .setHashProperty("ledgerHash", toStore.ledgerId)
-                .setDifficultyProperty(
-                    "difficulty", toStore.difficulty, session
-                ).setStorageProperty("blockheight", toStore.blockheight)
-                .setHashProperty("hashId", toStore.hashId)
-                .setHashProperty("merkleRoot", toStore.merkleRoot)
-                .setHashProperty("previousHash", toStore.previousHash)
-                .setLinked(
-                    "ledgerParams", BlockParamsStorageAdapter,
-                    toStore.params, session
-                ).setStorageProperty(
-                    "seconds", toStore.timestamp.epochSecond
-                ).setStorageProperty("nanos", toStore.timestamp.nano)
-                .setStorageProperty("nonce", toStore.nonce)
+            setLinked(
+                "chainId", ChainIdStorageAdapter,
+                toStore.chainId, session
+            )
+            setDifficultyProperty(
+                "difficulty", toStore.difficulty, session
+            )
+            setStorageProperty("blockheight", toStore.blockheight)
+            setHashProperty("hashId", toStore.hashId)
+            setHashProperty("merkleRoot", toStore.merkleRoot)
+            setHashProperty("previousHash", toStore.previousHash)
+            setLinked(
+                "ledgerParams", BlockParamsStorageAdapter,
+                toStore.params, session
+            )
+            setStorageProperty(
+                "seconds", toStore.timestamp.epochSecond
+            )
+            setStorageProperty("nanos", toStore.timestamp.nano)
+            setStorageProperty("nonce", toStore.nonce)
         }
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<BlockHeader, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val blid =
-                element.getHashProperty("ledgerHash")
-
             val difficulty =
                 element.getDifficultyProperty("difficulty")
 
@@ -77,10 +80,16 @@ object BlockHeaderStorageAdapter : LedgerStorageAdapter<BlockHeader> {
             val previousHash =
                 element.getHashProperty("previousHash")
 
-            BlockParamsStorageAdapter.load(
-                ledgerHash,
-                element.getLinked("ledgerParams")
-            ).mapSuccess {
+            zip(
+                ChainIdStorageAdapter.load(
+                    ledgerHash,
+                    element.getLinked("chainId")
+                ),
+                BlockParamsStorageAdapter.load(
+                    ledgerHash,
+                    element.getLinked("ledgerParams")
+                )
+            ) { chainId, blockParams ->
                 val seconds: Long =
                     element.getStorageProperty("seconds")
 
@@ -95,21 +104,20 @@ object BlockHeaderStorageAdapter : LedgerStorageAdapter<BlockHeader> {
                     nanos.toLong()
                 )
                 BlockHeader(
-                    blid,
-                    LedgerHandle.getHasher(blid)!!,
+                    chainId,
+                    LedgerHandle.getHasher(chainId.ledgerHash)!!,
                     difficulty,
                     blockheight,
                     hash,
                     merkleRoot,
                     previousHash,
-                    it,
+                    blockParams,
                     instant,
                     nonce
                 )
             }.mapFailure {
                 it.intoLoad()
             }
-
 
 
         }

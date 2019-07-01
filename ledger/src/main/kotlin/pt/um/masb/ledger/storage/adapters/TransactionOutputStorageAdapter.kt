@@ -29,14 +29,15 @@ object TransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutput>
         session: NewInstanceSession
     ): StorageElement =
         session.newInstance(id).apply {
-            this
-                .setStorageProperty(
-                    "publicKey", toStore.publicKey.encoded
-                ).setHashProperty(
-                    "prevCoinbase", toStore.prevCoinbase
-                ).setHashProperty("hashId", toStore.hashId)
-                .setPayoutProperty("payout", toStore.payout)
-                .setHashSet("txSet", toStore.tx)
+            setStorageProperty(
+                "publicKey", toStore.publicKey.encoded
+            )
+            setHashProperty(
+                "prevCoinbase", toStore.prevCoinbase
+            )
+            setHashProperty("hashId", toStore.hashId)
+            setPayoutProperty("payout", toStore.payout)
+            setHashSet("txSet", toStore.tx)
         }
 
     override fun load(

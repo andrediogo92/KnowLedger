@@ -6,15 +6,11 @@ import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.results.allValues
-import pt.um.masb.common.results.flatMapSuccess
-import pt.um.masb.common.results.mapSuccess
+import pt.um.masb.common.results.zip
 import pt.um.masb.ledger.data.adapters.MerkleTreeStorageAdapter
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
 import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.Block
-import pt.um.masb.ledger.storage.BlockHeader
-import pt.um.masb.ledger.storage.Coinbase
-import pt.um.masb.ledger.storage.Transaction
 
 object BlockStorageAdapter : LedgerStorageAdapter<Block> {
     override val id: String
@@ -40,13 +36,16 @@ object BlockStorageAdapter : LedgerStorageAdapter<Block> {
                         it, session
                     )
                 }
-            ).setLinked(
+            )
+            setLinked(
                 "coinbase", CoinbaseStorageAdapter,
                 toStore.coinbase, session
-            ).setLinked(
+            )
+            setLinked(
                 "header", BlockHeaderStorageAdapter,
                 toStore.header, session
-            ).setLinked(
+            )
+            setLinked(
                 "merkleTree", MerkleTreeStorageAdapter,
                 toStore.merkleTree, session
             )
@@ -57,49 +56,41 @@ object BlockStorageAdapter : LedgerStorageAdapter<Block> {
         ledgerHash: Hash, element: StorageElement
     ): Outcome<Block, LoadFailure> =
         tryOrLoadUnknownFailure {
-            lateinit var coinbase: Coinbase
-            lateinit var data: MutableList<Transaction>
-            lateinit var header: BlockHeader
-
-            element
-                .getElementList("value")
-                .asSequence()
-                .map {
-                    TransactionStorageAdapter.load(
-                        ledgerHash, it
-                    )
-                }.allValues()
-                .flatMapSuccess {
-                    data = it.toMutableList()
-                    CoinbaseStorageAdapter.load(
-                        ledgerHash,
-                        element.getLinked(
-                            "coinbase"
+            zip(
+                element
+                    .getElementList("value")
+                    .asSequence()
+                    .map {
+                        TransactionStorageAdapter.load(
+                            ledgerHash, it
                         )
+                    }.allValues(),
+                CoinbaseStorageAdapter.load(
+                    ledgerHash,
+                    element.getLinked(
+                        "coinbase"
                     )
-                }.flatMapSuccess {
-                    coinbase = it
-                    BlockHeaderStorageAdapter.load(
-                        ledgerHash,
-                        element.getLinked(
-                            "header"
-                        )
+                ),
+                BlockHeaderStorageAdapter.load(
+                    ledgerHash,
+                    element.getLinked(
+                        "header"
                     )
-                }.flatMapSuccess {
-                    header = it
-                    MerkleTreeStorageAdapter.load(
-                        ledgerHash,
-                        element.getLinked(
-                            "merkleTree"
-                        )
+                ),
+                MerkleTreeStorageAdapter.load(
+                    ledgerHash,
+                    element.getLinked(
+                        "merkleTree"
                     )
-                }.mapSuccess {
-                    Block(
-                        data,
-                        coinbase,
-                        header,
-                        it
-                    )
-                }
+                )
+            )
+            { data, coinbase, header, merkleTree ->
+                Block(
+                    data.toMutableList(),
+                    coinbase,
+                    header,
+                    merkleTree
+                )
+            }
         }
 }

@@ -28,19 +28,19 @@ object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
         session: NewInstanceSession
     ): StorageElement =
         session.newInstance(id).apply {
-            this
-                .setElementSet(
-                    "payoutTXOs",
-                    toStore
-                        .payoutTXO
-                        .asSequence()
-                        .map {
-                            TransactionOutputStorageAdapter.store(
-                                it, session
-                            )
-                        }.toSet()
-                ).setPayoutProperty("coinbase", toStore.coinbase)
-                .setHashProperty("hashId", toStore.hashId)
+            setElementSet(
+                "payoutTXOs",
+                toStore
+                    .payoutTXO
+                    .asSequence()
+                    .map {
+                        TransactionOutputStorageAdapter.store(
+                            it, session
+                        )
+                    }.toSet()
+            )
+            setPayoutProperty("coinbase", toStore.coinbase)
+            setHashProperty("hashId", toStore.hashId)
         }
 
     override fun load(
@@ -53,17 +53,17 @@ object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
                 .map {
                     TransactionOutputStorageAdapter.load(ledgerHash, it)
                 }.allValues()
-                .mapSuccess {
-                    val container =
-                        LedgerHandle.getContainer(ledgerHash)!!
-                    Coinbase(
-                        it.toMutableSet(),
-                        element.getPayoutProperty("coinbase"),
-                        element.getHashProperty("hashId"),
-                        container.hasher,
-                        container.formula,
-                        container.coinbaseParams
-                    )
+                .mapSuccess { txos ->
+                    LedgerHandle.getContainer(ledgerHash)!!.let {
+                        Coinbase(
+                            txos.toMutableSet(),
+                            element.getPayoutProperty("coinbase"),
+                            element.getHashProperty("hashId"),
+                            it.hasher,
+                            it.formula,
+                            it.coinbaseParams
+                        )
+                    }
                 }
         }
 }
