@@ -26,6 +26,7 @@ object ChainIdStorageAdapter : ServiceStorageAdapter<ChainId> {
     ): StorageElement =
         session.newInstance(id).apply {
             setStorageProperty("tag", toStore.tag)
+            setHashProperty("ledgerHash", toStore.ledgerHash)
             setHashProperty("hashId", toStore.hashId)
         }
 
