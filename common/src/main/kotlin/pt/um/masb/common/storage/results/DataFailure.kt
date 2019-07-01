@@ -1,6 +1,8 @@
 package pt.um.masb.common.storage.results
 
 import pt.um.masb.common.results.Failable
+import pt.um.masb.common.results.HardFailure
+import pt.um.masb.common.results.PropagatedFailure
 
 
 sealed class DataFailure : Failable {
@@ -24,24 +26,13 @@ sealed class DataFailure : Failable {
         override val cause: String
     ) : DataFailure()
 
-    /**
-     * Reserved for direct irrecoverable errors.
-     * Query failures will wrap exceptions if thrown.
-     */
     data class UnknownFailure(
         override val cause: String,
-        val exception: Exception? = null
-    ) : DataFailure()
+        override val exception: Exception? = null
+    ) : DataFailure(), HardFailure
 
-    /**
-     * Reserved for indirect irrecoverable errors propagated
-     * by some internal result.
-     */
     data class Propagated(
-        val pointOfFailure: String,
-        val failable: Failable
-    ) : DataFailure() {
-        override val cause: String
-            get() = "$pointOfFailure: ${failable.cause}"
-    }
+        override val pointOfFailure: String,
+        override val failable: Failable
+    ) : DataFailure(), PropagatedFailure
 }

@@ -1,6 +1,8 @@
 package pt.um.masb.ledger.service.results
 
 import pt.um.masb.common.results.Failable
+import pt.um.masb.common.results.HardFailure
+import pt.um.masb.common.results.PropagatedFailure
 import pt.um.masb.common.storage.LedgerContract
 
 
@@ -22,25 +24,15 @@ sealed class LoadFailure : Failable {
     ) : LoadFailure()
 
 
-    /**
-     * Reserved for direct irrecoverable errors.
-     * Query failures will wrap exceptions if thrown.
-     */
     data class UnknownFailure(
         override val cause: String,
-        val exception: Exception? = null
-    ) : LoadFailure()
+        override val exception: Exception? = null
+    ) : LoadFailure(), HardFailure
 
-    /**
-     * Reserved for indirect irrecoverable errors propagated
-     * by some internal result.
-     */
     data class Propagated(
-        val pointOfFailure: String,
-        val failable: Failable
-    ) : LoadFailure() {
-        override val cause: String
-            get() = "$pointOfFailure: ${failable.cause}"
-    }
+        override val pointOfFailure: String,
+        override val failable: Failable
+    ) : LoadFailure(), PropagatedFailure
+
 
 }
