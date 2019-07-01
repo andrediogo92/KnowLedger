@@ -2,7 +2,7 @@ package pt.um.masb.common.test
 
 import org.apache.commons.rng.RestorableUniformRandomProvider
 import org.apache.commons.rng.simple.RandomSource
-import pt.um.masb.common.hash.AvailableHashAlgorithms
+import pt.um.masb.common.config.LedgerConfiguration
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
 import java.security.Security
@@ -28,14 +28,14 @@ fun randomByteArray(size: Int): ByteArray =
         randomBytesIntoArray(it)
     }
 
-val crypter: Hasher =
+internal val crypter: Hasher =
     if (Security.getProvider("BC") == null) {
         Security.addProvider(
             org.bouncycastle.jce.provider.BouncyCastleProvider()
         )
-        AvailableHashAlgorithms.Blake2b256Hasher
+        LedgerConfiguration.DEFAULT_CRYPTER
     } else {
-        AvailableHashAlgorithms.Blake2b256Hasher
+        LedgerConfiguration.DEFAULT_CRYPTER
     }
 
 

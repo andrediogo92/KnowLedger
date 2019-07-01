@@ -21,8 +21,8 @@ import java.io.File
 class LedgerByTag(
     val identity: String
 ) : AbstractLedgerBuilder(), LedgerBuilder<LedgerByTag> {
-    internal var ledgerParams: LedgerParams? = null
-    internal var coinbaseParams: CoinbaseParams? = null
+    private var ledgerParams: LedgerParams? = null
+    private var coinbaseParams: CoinbaseParams? = null
 
     override fun withDBPath(
         path: File

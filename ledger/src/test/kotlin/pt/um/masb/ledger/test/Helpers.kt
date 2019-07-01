@@ -4,12 +4,12 @@ import assertk.fail
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
 import org.tinylog.kotlin.Logger
+import pt.um.masb.common.config.LedgerConfiguration
 import pt.um.masb.common.data.DataFormula
 import pt.um.masb.common.data.DefaultDiff
 import pt.um.masb.common.data.Difficulty
 import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.data.Payout
-import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.common.hash.Hasher
@@ -61,7 +61,7 @@ internal val moshi by lazy {
 internal fun generateBlock(
     id: Array<Identity>,
     ts: List<Transaction>,
-    hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher,
+    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams(),
     blockParams: BlockParams = BlockParams()
@@ -86,7 +86,7 @@ internal fun generateBlock(
 internal fun generateXTransactions(
     id: Array<Identity>,
     size: Int,
-    hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher
+    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
 ): List<Transaction> {
     val ts: MutableList<Transaction> = mutableListOf()
     for (i in 0 until size) {
@@ -113,7 +113,7 @@ internal fun generateXTransactions(
 internal fun generateXTransactions(
     id: Identity,
     size: Int,
-    hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher
+    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
 ): List<Transaction> {
     val ts: MutableList<Transaction> = mutableListOf()
     for (i in 0 until size) {
@@ -140,7 +140,7 @@ internal fun generateXTransactions(
 internal fun generateCoinbase(
     id: Array<Identity>,
     ts: List<Transaction>,
-    hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher,
+    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams()
 ): Coinbase {

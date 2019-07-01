@@ -1,11 +1,11 @@
 package pt.um.masb.ledger.service.handles.builder
 
+import pt.um.masb.common.config.LedgerConfiguration
 import pt.um.masb.common.data.DefaultDiff
 import pt.um.masb.common.database.DatabaseMode
 import pt.um.masb.common.database.DatabaseType
 import pt.um.masb.common.database.ManagedDatabase
 import pt.um.masb.common.database.ManagedSession
-import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.base64Encode
 import pt.um.masb.common.results.Outcome
@@ -26,7 +26,7 @@ abstract class AbstractLedgerBuilder {
 
     internal lateinit var ledgerConfig: LedgerConfig
     internal lateinit var persistenceWrapper: PersistenceWrapper
-    internal var hasher: Hasher = AvailableHashAlgorithms.Blake2b256Hasher
+    internal var hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
 
     fun setDBPath(path: File): Outcome<Unit, LedgerHandle.Failure> =
         if (!path.exists() || path.isDirectory) {

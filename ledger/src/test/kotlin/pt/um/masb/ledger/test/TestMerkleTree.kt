@@ -8,9 +8,8 @@ import assertk.assertions.isTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.tinylog.kotlin.Logger
-import pt.um.masb.common.hash.AvailableHashAlgorithms
+import pt.um.masb.common.config.LedgerConfiguration
 import pt.um.masb.common.test.applyHashInPairs
-import pt.um.masb.common.test.crypter
 import pt.um.masb.common.test.randomDouble
 import pt.um.masb.ledger.data.MerkleTree
 import pt.um.masb.ledger.data.PhysicalData
@@ -23,7 +22,7 @@ import java.math.BigDecimal
 
 class TestMerkleTree {
     private val hasher =
-        AvailableHashAlgorithms.SHA256Hasher
+        LedgerConfiguration.DEFAULT_CRYPTER
 
     private val id = arrayOf(
         Identity("test1"),
@@ -70,7 +69,7 @@ class TestMerkleTree {
 
     @Nested
     inner class BalancedMerkleTree {
-        private val ts8 = generateXTransactions(id, 8)
+        private val ts8 = generateXTransactions(id, 8, hasher)
         private val tree8 = MerkleTree(hasher, ts8)
 
         @Test
@@ -93,22 +92,22 @@ class TestMerkleTree {
             assertThat(nakedTree[14].bytes).containsExactly(*ts8[7].hashId.bytes)
             //Two levels in to the left is a hashId of transaction 1 + 2.
             assertThat(nakedTree[3].bytes).containsExactly(
-                *crypter.applyHash(ts8[0].hashId + ts8[1].hashId).bytes
+                *hasher.applyHash(ts8[0].hashId + ts8[1].hashId).bytes
             )
             assertThat(nakedTree[4].bytes).containsExactly(
-                *crypter.applyHash(ts8[2].hashId + ts8[3].hashId).bytes
+                *hasher.applyHash(ts8[2].hashId + ts8[3].hashId).bytes
             )
             assertThat(nakedTree[5].bytes).containsExactly(
-                *crypter.applyHash(ts8[4].hashId + ts8[5].hashId).bytes
+                *hasher.applyHash(ts8[4].hashId + ts8[5].hashId).bytes
             )
             assertThat(nakedTree[6].bytes).containsExactly(
-                *crypter.applyHash(ts8[6].hashId + ts8[7].hashId).bytes
+                *hasher.applyHash(ts8[6].hashId + ts8[7].hashId).bytes
             )
             //One level to the left is a hashId of the hashId of
             //transactions 1 + 2 + hashId of transactions 3 + 4
             assertThat(nakedTree[1].bytes).containsExactly(
                 *applyHashInPairs(
-                    crypter,
+                    hasher,
                     arrayOf(
                         ts8[0].hashId,
                         ts8[1].hashId,
@@ -121,7 +120,7 @@ class TestMerkleTree {
             //transactions 1 + 2 + hashId of transactions 3 + 4
             assertThat(nakedTree[2].bytes).containsExactly(
                 *applyHashInPairs(
-                    crypter,
+                    hasher,
                     arrayOf(
                         ts8[4].hashId,
                         ts8[5].hashId,
@@ -133,7 +132,7 @@ class TestMerkleTree {
             )
             assertThat(tree8.root.bytes).containsExactly(
                 *applyHashInPairs(
-                    crypter,
+                    hasher,
                     arrayOf(
                         ts8[0].hashId,
                         ts8[1].hashId,
@@ -230,19 +229,19 @@ class TestMerkleTree {
             assertThat(nakedTree[11].bytes).containsExactly(*ts6[5].hashId.bytes)
             //Two levels in to the left is a hashId of transaction 1 + 2.
             assertThat(nakedTree[3].bytes).containsExactly(
-                *crypter.applyHash(ts6[0].hashId + ts6[1].hashId).bytes
+                *hasher.applyHash(ts6[0].hashId + ts6[1].hashId).bytes
             )
             assertThat(nakedTree[4].bytes).containsExactly(
-                *crypter.applyHash(ts6[2].hashId + ts6[3].hashId).bytes
+                *hasher.applyHash(ts6[2].hashId + ts6[3].hashId).bytes
             )
             assertThat(nakedTree[5].bytes).containsExactly(
-                *crypter.applyHash(ts6[4].hashId + ts6[5].hashId).bytes
+                *hasher.applyHash(ts6[4].hashId + ts6[5].hashId).bytes
             )
             //One level to the left is a hashId of the hashId of
             //transactions 1 + 2 and hashId of transactions 3 + 4
             assertThat(nakedTree[1].bytes).containsExactly(
                 *applyHashInPairs(
-                    crypter,
+                    hasher,
                     arrayOf(
                         ts6[0].hashId,
                         ts6[1].hashId,
@@ -255,7 +254,7 @@ class TestMerkleTree {
             //of transactions 1 + 2 * 2
             assertThat(nakedTree[2].bytes).containsExactly(
                 *applyHashInPairs(
-                    crypter,
+                    hasher,
                     arrayOf(
                         ts6[4].hashId,
                         ts6[5].hashId,
@@ -267,7 +266,7 @@ class TestMerkleTree {
             //Root is everything else.
             assertThat(tree6.root.bytes).containsExactly(
                 *applyHashInPairs(
-                    crypter,
+                    hasher,
                     arrayOf(
                         ts6[0].hashId,
                         ts6[1].hashId,
@@ -300,19 +299,19 @@ class TestMerkleTree {
             assertThat(nakedTree[11].bytes).containsExactly(*ts5[4].hashId.bytes)
             //Two levels in to the left is a hashId of transaction 1 + 2.
             assertThat(nakedTree[3].bytes).containsExactly(
-                *crypter.applyHash(coinbase5.hashId + ts5[0].hashId).bytes
+                *hasher.applyHash(coinbase5.hashId + ts5[0].hashId).bytes
             )
             assertThat(nakedTree[4].bytes).containsExactly(
-                *crypter.applyHash(ts5[1].hashId + ts5[2].hashId).bytes
+                *hasher.applyHash(ts5[1].hashId + ts5[2].hashId).bytes
             )
             assertThat(nakedTree[5].bytes).containsExactly(
-                *crypter.applyHash(ts5[3].hashId + ts5[4].hashId).bytes
+                *hasher.applyHash(ts5[3].hashId + ts5[4].hashId).bytes
             )
             //One level to the left is a hashId of the hashId of
             //transactions 1 + 2 and the hashId of transactions 3 + 4
             assertThat(nakedTree[1].bytes).containsExactly(
                 *applyHashInPairs(
-                    crypter,
+                    hasher,
                     arrayOf(
                         coinbase5.hashId,
                         ts5[0].hashId,
@@ -325,7 +324,7 @@ class TestMerkleTree {
             //transactions 5 + 6 * 2
             assertThat(nakedTree[2].bytes).containsExactly(
                 *applyHashInPairs(
-                    crypter,
+                    hasher,
                     arrayOf(
                         ts5[3].hashId,
                         ts5[4].hashId,
@@ -337,7 +336,7 @@ class TestMerkleTree {
             //Root is everything else.
             assertThat(tree5WithCoinbase.root.bytes).containsExactly(
                 *applyHashInPairs(
-                    crypter,
+                    hasher,
                     arrayOf(
                         coinbase5.hashId,
                         ts5[0].hashId,
