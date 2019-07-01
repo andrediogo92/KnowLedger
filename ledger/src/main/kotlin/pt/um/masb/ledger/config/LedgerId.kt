@@ -5,7 +5,7 @@ import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hashed
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.flattenBytes
-import pt.um.masb.common.storage.LedgerContract
+import pt.um.masb.ledger.service.ServiceClass
 import java.time.Instant
 import java.util.*
 
@@ -13,7 +13,7 @@ import java.util.*
 data class LedgerId internal constructor(
     val tag: String,
     override val hashId: Hash
-) : Hashed, LedgerContract {
+) : Hashed, ServiceClass {
 
     internal constructor(
         tag: String,

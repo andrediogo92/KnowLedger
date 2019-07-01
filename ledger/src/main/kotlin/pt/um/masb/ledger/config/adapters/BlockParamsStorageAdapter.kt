@@ -6,11 +6,11 @@ import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.ledger.config.BlockParams
-import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
-import pt.um.masb.ledger.service.results.LoadFailure
-import pt.um.masb.ledger.storage.adapters.LedgerStorageAdapter
+import pt.um.masb.ledger.results.tryOrLedgerUnknownFailure
+import pt.um.masb.ledger.service.adapters.ServiceStorageAdapter
+import pt.um.masb.ledger.service.results.LedgerFailure
 
-object BlockParamsStorageAdapter : LedgerStorageAdapter<BlockParams> {
+object BlockParamsStorageAdapter : ServiceStorageAdapter<BlockParams> {
     override val id: String
         get() = "BlockParams"
 
@@ -36,8 +36,8 @@ object BlockParamsStorageAdapter : LedgerStorageAdapter<BlockParams> {
     override fun load(
         ledgerHash: Hash,
         element: StorageElement
-    ): Outcome<BlockParams, LoadFailure> =
-        tryOrLoadUnknownFailure {
+    ): Outcome<BlockParams, LedgerFailure> =
+        tryOrLedgerUnknownFailure {
             Outcome.Ok(
                 BlockParams(
                     element.getStorageProperty("blockMemSize"),

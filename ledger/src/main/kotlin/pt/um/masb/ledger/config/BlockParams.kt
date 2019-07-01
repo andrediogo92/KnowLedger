@@ -5,13 +5,13 @@ import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hashable
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
-import pt.um.masb.common.storage.LedgerContract
+import pt.um.masb.ledger.service.ServiceClass
 
 @JsonClass(generateAdapter = true)
 data class BlockParams(
     val blockMemSize: Long = 2097152,
     val blockLength: Long = 512
-) : Hashable, LedgerContract {
+) : Hashable, ServiceClass {
 
 
     override fun digest(c: Hasher): Hash =

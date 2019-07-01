@@ -6,11 +6,11 @@ import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.ledger.config.ChainId
-import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
-import pt.um.masb.ledger.service.results.LoadFailure
-import pt.um.masb.ledger.storage.adapters.LedgerStorageAdapter
+import pt.um.masb.ledger.results.tryOrLedgerUnknownFailure
+import pt.um.masb.ledger.service.adapters.ServiceStorageAdapter
+import pt.um.masb.ledger.service.results.LedgerFailure
 
-object ChainIdStorageAdapter : LedgerStorageAdapter<ChainId> {
+object ChainIdStorageAdapter : ServiceStorageAdapter<ChainId> {
     override val id: String
         get() = "ChainId"
 
@@ -33,8 +33,8 @@ object ChainIdStorageAdapter : LedgerStorageAdapter<ChainId> {
     override fun load(
         ledgerHash: Hash,
         element: StorageElement
-    ): Outcome<ChainId, LoadFailure> =
-        tryOrLoadUnknownFailure {
+    ): Outcome<ChainId, LedgerFailure> =
+        tryOrLedgerUnknownFailure {
             val hash =
                 element.getHashProperty("hashId")
 
