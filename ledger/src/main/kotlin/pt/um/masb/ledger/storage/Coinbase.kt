@@ -59,7 +59,7 @@ data class Coinbase(
                 .instanceSize()
         }
 
-    constructor(
+    internal constructor(
         container: LedgerContainer
     ) : this(
         mutableSetOf(),

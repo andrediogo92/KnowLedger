@@ -22,9 +22,13 @@ import pt.um.masb.common.results.unwrap
 import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.ledger.data.adapters.TemperatureDataStorageAdapter
 import pt.um.masb.ledger.service.Identity
-import pt.um.masb.ledger.service.LedgerHandle
+import pt.um.masb.ledger.service.handles.LedgerHandle
 import pt.um.masb.ledger.storage.adapters.TransactionStorageAdapter
 import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
+import pt.um.masb.ledger.storage.transactions.getTransactionByHash
+import pt.um.masb.ledger.storage.transactions.getTransactionsByClass
+import pt.um.masb.ledger.storage.transactions.getTransactionsFromAgent
+import pt.um.masb.ledger.storage.transactions.getTransactionsOrderedByTimestamp
 import pt.um.masb.ledger.test.appendByLine
 import pt.um.masb.ledger.test.failOnLoadError
 import pt.um.masb.ledger.test.generateXTransactions
@@ -41,15 +45,15 @@ class TestPersistence {
 
     val session: ManagedSession =
         database.newManagedSession("test")
-    val pw = PersistenceWrapper(session)
+    internal val pw = PersistenceWrapper(session)
     val ident = Identity("test")
 
     val ledgerHandle =
         LedgerHandle
             .Builder()
-            .withCustomDB(database, session, pw)
             .withLedgerIdentity("test")
             .unwrap()
+            .withCustomDB(database, session, pw)
             .build()
             .unwrap()
 

@@ -9,7 +9,7 @@ import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.storage.LedgerContract
 import pt.um.masb.ledger.config.BlockParams
 import pt.um.masb.ledger.data.MerkleTree
-import pt.um.masb.ledger.service.LedgerHandle
+import pt.um.masb.ledger.service.handles.LedgerHandle
 
 @JsonClass(generateAdapter = true)
 data class Block(

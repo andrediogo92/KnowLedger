@@ -5,10 +5,12 @@ import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.results.mapFailure
 import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.ledger.config.adapters.BlockParamsStorageAdapter
+import pt.um.masb.ledger.results.intoLoad
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
-import pt.um.masb.ledger.service.LedgerHandle
+import pt.um.masb.ledger.service.handles.LedgerHandle
 import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.BlockHeader
 import java.time.Instant
@@ -104,6 +106,8 @@ object BlockHeaderStorageAdapter : LedgerStorageAdapter<BlockHeader> {
                     instant,
                     nonce
                 )
+            }.mapFailure {
+                it.intoLoad()
             }
 
 

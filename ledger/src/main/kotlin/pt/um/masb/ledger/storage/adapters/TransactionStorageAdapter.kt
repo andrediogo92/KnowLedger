@@ -10,7 +10,7 @@ import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.ledger.data.adapters.PhysicalDataStorageAdapter
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
-import pt.um.masb.ledger.service.LedgerHandle
+import pt.um.masb.ledger.service.handles.LedgerHandle
 import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.Transaction
 

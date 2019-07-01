@@ -4,10 +4,10 @@ import assertk.fail
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
 import org.tinylog.kotlin.Logger
-import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.DataFormula
 import pt.um.masb.common.data.DefaultDiff
 import pt.um.masb.common.data.Difficulty
+import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.data.Payout
 import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
@@ -51,7 +51,7 @@ internal val moshi by lazy {
         .add(BigIntegerJsonAdapter())
         .add(
             PolymorphicJsonAdapterFactory
-                .of(BlockChainData::class.java, "type")
+                .of(LedgerData::class.java, "type")
                 .withSubtype(TemperatureData::class.java, "Temperature")
                 .withSubtype(TrafficFlowData::class.java, "TrafficFlowData")
         )

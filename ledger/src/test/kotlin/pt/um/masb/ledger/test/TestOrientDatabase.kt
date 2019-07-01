@@ -19,9 +19,9 @@ import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.data.TrafficFlowData
 import pt.um.masb.ledger.data.adapters.TemperatureDataStorageAdapter
 import pt.um.masb.ledger.data.adapters.TrafficFlowDataStorageAdapter
-import pt.um.masb.ledger.service.ChainHandle
 import pt.um.masb.ledger.service.Identity
-import pt.um.masb.ledger.service.LedgerHandle
+import pt.um.masb.ledger.service.handles.ChainHandle
+import pt.um.masb.ledger.service.handles.LedgerHandle
 import pt.um.masb.ledger.storage.Block
 import pt.um.masb.ledger.storage.Transaction
 import java.math.BigDecimal
