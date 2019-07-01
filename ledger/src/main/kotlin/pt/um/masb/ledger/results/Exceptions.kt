@@ -3,6 +3,8 @@ package pt.um.masb.ledger.results
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.common.storage.results.QueryFailure
+import pt.um.masb.ledger.service.LedgerConfig
+import pt.um.masb.ledger.service.handles.LedgerHandle
 import pt.um.masb.ledger.service.results.LedgerFailure
 import pt.um.masb.ledger.service.results.LoadFailure
 
@@ -10,8 +12,20 @@ import pt.um.masb.ledger.service.results.LoadFailure
 // Exception Handlers
 //-----------------------------------------
 
+inline fun tryOrHandleUnknownFailure(
+    run: () -> Outcome<LedgerConfig, LedgerHandle.Failure>
+): Outcome<LedgerConfig, LedgerHandle.Failure> =
+    try {
+        run()
+    } catch (e: Exception) {
+        Outcome.Error(
+            LedgerHandle.Failure.UnknownFailure(
+                e.message ?: "", e
+            )
+        )
+    }
 
-inline fun <T : Any> tryOrLedgerUnknownFailure(
+inline fun <T> tryOrLedgerUnknownFailure(
     run: () -> Outcome<T, LedgerFailure>
 ): Outcome<T, LedgerFailure> =
     try {
@@ -25,7 +39,7 @@ inline fun <T : Any> tryOrLedgerUnknownFailure(
     }
 
 
-inline fun <T : Any> tryOrLoadUnknownFailure(
+inline fun <T> tryOrLoadUnknownFailure(
     run: () -> Outcome<T, LoadFailure>
 ): Outcome<T, LoadFailure> =
     try {
@@ -38,7 +52,7 @@ inline fun <T : Any> tryOrLoadUnknownFailure(
         )
     }
 
-inline fun <T : Any> tryOrDataUnknownFailure(
+inline fun <T> tryOrDataUnknownFailure(
     run: () -> Outcome<T, DataFailure>
 ): Outcome<T, DataFailure> =
     try {
@@ -51,7 +65,7 @@ inline fun <T : Any> tryOrDataUnknownFailure(
         )
     }
 
-inline fun <T : Any> tryOrQueryUnknownFailure(
+inline fun <T> tryOrQueryUnknownFailure(
     run: () -> Outcome<T, QueryFailure>
 ): Outcome<T, QueryFailure> =
     try {

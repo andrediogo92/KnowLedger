@@ -3,8 +3,65 @@ package pt.um.masb.ledger.results
 import pt.um.masb.common.results.Failable
 import pt.um.masb.common.storage.results.DataFailure
 import pt.um.masb.common.storage.results.QueryFailure
+import pt.um.masb.ledger.service.handles.LedgerHandle
 import pt.um.masb.ledger.service.results.LedgerFailure
 import pt.um.masb.ledger.service.results.LoadFailure
+
+//---------------------------------------
+//Into Handle Result
+//---------------------------------------
+
+fun LoadFailure.intoHandle(): LedgerHandle.Failure =
+    when (this) {
+        is LoadFailure.UnrecognizedDataType ->
+            LedgerHandle.Failure.Propagated(
+                propagate(this), this
+            )
+        is LoadFailure.NonExistentData ->
+            LedgerHandle.Failure.Propagated(
+                propagate(this), this
+            )
+        is LoadFailure.NonMatchingCrypter ->
+            LedgerHandle.Failure.Propagated(
+                propagate(this), this
+            )
+        is LoadFailure.UnknownFailure ->
+            LedgerHandle.Failure.UnknownFailure(
+                this.cause, this.exception
+            )
+        is LoadFailure.Propagated ->
+            LedgerHandle.Failure.Propagated(
+                "LoadFailure -> $pointOfFailure",
+                failable
+            )
+    }
+
+fun LedgerFailure.intoHandle(): LedgerHandle.Failure =
+    when (this) {
+        is LedgerFailure.NonExistentData ->
+            LedgerHandle.Failure.Propagated(
+                propagate(this), this
+            )
+        is LedgerFailure.NonMatchingCrypter ->
+            LedgerHandle.Failure.Propagated(
+                propagate(this), this
+            )
+        is LedgerFailure.NoKnownStorageAdapter ->
+            LedgerHandle.Failure.Propagated(
+                propagate(this), this
+            )
+
+        is LedgerFailure.UnknownFailure ->
+            LedgerHandle.Failure.UnknownFailure(
+                this.cause, this.exception
+            )
+        is LedgerFailure.Propagated ->
+            LedgerHandle.Failure.Propagated(
+                "LoadFailure -> $pointOfFailure",
+                failable
+            )
+
+    }
 
 
 //---------------------------------------
