@@ -8,6 +8,7 @@ import pt.um.masb.common.data.Difficulty
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.storage.LedgerContract
 import pt.um.masb.ledger.config.BlockParams
+import pt.um.masb.ledger.config.ChainId
 import pt.um.masb.ledger.data.MerkleTree
 import pt.um.masb.ledger.service.handles.LedgerHandle
 
@@ -49,23 +50,23 @@ data class Block(
 
 
     constructor(
-        ledgerId: Hash,
+        chainId: ChainId,
         previousHash: Hash,
         difficulty: Difficulty,
         blockheight: Long,
         params: BlockParams
     ) : this(
         mutableListOf(),
-        Coinbase(LedgerHandle.getContainer(ledgerId)!!),
+        Coinbase(LedgerHandle.getContainer(chainId.ledgerHash)!!),
         BlockHeader(
-            ledgerId,
-            LedgerHandle.getHasher(ledgerId)!!,
+            chainId,
+            LedgerHandle.getHasher(chainId.ledgerHash)!!,
             previousHash,
             difficulty,
             blockheight,
             params
         ),
-        MerkleTree(LedgerHandle.getHasher(ledgerId)!!)
+        MerkleTree(LedgerHandle.getHasher(chainId.ledgerHash)!!)
     ) {
         headerSize = header.approximateSize
     }

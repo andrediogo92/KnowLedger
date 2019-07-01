@@ -3,10 +3,10 @@ package pt.um.masb.ledger.storage
 import com.squareup.moshi.JsonClass
 import org.openjdk.jol.info.ClassLayout
 import pt.um.masb.common.Sizeable
+import pt.um.masb.common.config.LedgerConfiguration
 import pt.um.masb.common.data.DataFormula
 import pt.um.masb.common.data.DefaultDiff
 import pt.um.masb.common.data.Payout
-import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.common.hash.Hashable
@@ -36,7 +36,7 @@ data class Coinbase(
     var coinbase: Payout,
     internal var hash: Hash,
     @Transient
-    val hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher,
+    val hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
     @Transient
     private val formula: DataFormula = DefaultDiff,
     @Transient

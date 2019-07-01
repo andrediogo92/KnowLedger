@@ -3,8 +3,8 @@ package pt.um.masb.ledger.storage
 import com.squareup.moshi.JsonClass
 import org.openjdk.jol.info.GraphLayout
 import pt.um.masb.common.Sizeable
+import pt.um.masb.common.config.LedgerConfiguration
 import pt.um.masb.common.data.Payout
-import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hash.Companion.emptyHash
 import pt.um.masb.common.hash.Hashable
@@ -23,7 +23,7 @@ data class TransactionOutput(
     var payout: Payout,
     var tx: MutableSet<Hash>,
     @Transient
-    val hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher
+    val hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
 ) : Sizeable, Hashed, Hashable,
     LedgerContract {
 

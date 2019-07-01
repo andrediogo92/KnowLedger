@@ -3,7 +3,7 @@ package pt.um.masb.ledger.storage
 import com.squareup.moshi.JsonClass
 import org.openjdk.jol.info.ClassLayout
 import pt.um.masb.common.Sizeable
-import pt.um.masb.common.hash.AvailableHashAlgorithms
+import pt.um.masb.common.config.LedgerConfiguration
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hashable
 import pt.um.masb.common.hash.Hashed
@@ -12,6 +12,7 @@ import pt.um.masb.common.misc.flattenBytes
 import pt.um.masb.common.misc.generateSignature
 import pt.um.masb.common.misc.verifyECDSASig
 import pt.um.masb.common.storage.LedgerContract
+import pt.um.masb.ledger.config.ChainId
 import pt.um.masb.ledger.data.MerkleTree
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.service.Identity
@@ -20,6 +21,7 @@ import java.security.PublicKey
 
 @JsonClass(generateAdapter = true)
 data class Transaction(
+    val chainId: ChainId,
     // Agent's pub key.
     val publicKey: PublicKey,
     val data: PhysicalData,
@@ -27,7 +29,7 @@ data class Transaction(
     internal var signatureInternal: ByteArray,
     internal var hash: Hash,
     @Transient
-    val hasher: Hasher = AvailableHashAlgorithms.SHA256Hasher
+    val hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
 ) : Sizeable,
     Hashed,
     Hashable,
@@ -52,10 +54,12 @@ data class Transaction(
 
 
     constructor(
+        chainId: ChainId,
         identity: Identity,
         data: PhysicalData,
         hasher: Hasher
     ) : this(
+        chainId,
         identity.publicKey,
         data,
         ByteArray(0),
@@ -72,11 +76,13 @@ data class Transaction(
     }
 
     constructor(
+        chainId: ChainId,
         privateKey: PrivateKey,
         publicKey: PublicKey,
         data: PhysicalData,
         hasher: Hasher
     ) : this(
+        chainId,
         publicKey,
         data,
         ByteArray(0),
