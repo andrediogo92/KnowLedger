@@ -23,7 +23,7 @@ data class LuminosityData(
 ) : LedgerData {
     override fun digest(c: Hasher): Hash =
         c.applyHash(
-            lum.unscaledValue().toByteArray() + unit.ordinal.bytes()
+            lum.bytes() + unit.ordinal.bytes()
         )
 
 

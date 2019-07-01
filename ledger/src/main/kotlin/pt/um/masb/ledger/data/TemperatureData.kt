@@ -23,7 +23,7 @@ data class TemperatureData(
 ) : LedgerData {
     override fun digest(c: Hasher): Hash =
         c.applyHash(
-            temperature.unscaledValue().toByteArray() + unit.ordinal.bytes()
+            temperature.bytes() + unit.ordinal.bytes()
         )
 
     override fun calculateDiff(

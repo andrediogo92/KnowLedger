@@ -34,8 +34,8 @@ data class NoiseData(
     override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
-                noiseLevel.unscaledValue().toByteArray(),
-                peakOrBase.unscaledValue().toByteArray(),
+                noiseLevel.bytes(),
+                peakOrBase.bytes(),
                 unit.ordinal.bytes()
             )
         )

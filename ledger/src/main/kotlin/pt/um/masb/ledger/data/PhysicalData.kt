@@ -65,17 +65,15 @@ data class PhysicalData(
         c.applyHash(
             if (geoCoords != null) {
                 flattenBytes(
-                    instant.epochSecond.bytes(),
-                    instant.nano.bytes(),
-                    geoCoords.latitude.unscaledValue().toByteArray(),
-                    geoCoords.longitude.unscaledValue().toByteArray(),
-                    geoCoords.altitude.unscaledValue().toByteArray(),
+                    instant.bytes(),
+                    geoCoords.latitude.bytes(),
+                    geoCoords.longitude.bytes(),
+                    geoCoords.altitude.bytes(),
                     data.digest(c).bytes
                 )
             } else {
                 flattenBytes(
-                    instant.epochSecond.bytes(),
-                    instant.nano.bytes(),
+                    instant.bytes(),
                     data.digest(c).bytes
                 )
             }

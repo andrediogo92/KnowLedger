@@ -4,6 +4,8 @@ import com.squareup.moshi.JsonClass
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hashed
 import pt.um.masb.common.hash.Hasher
+import pt.um.masb.common.misc.bytes
+import pt.um.masb.common.misc.encodeStringToUTF8
 import pt.um.masb.common.misc.flattenBytes
 import pt.um.masb.ledger.service.ServiceClass
 import java.time.Instant
@@ -51,9 +53,9 @@ data class LedgerId internal constructor(
         ): Hash =
             hasher.applyHash(
                 flattenBytes(
-                    tag.toByteArray(),
-                    UUID.randomUUID().toString().toByteArray(),
-                    Instant.now().toString().toByteArray()
+                    tag.encodeStringToUTF8(),
+                    UUID.randomUUID().bytes(),
+                    Instant.now().bytes()
                 )
             )
     }

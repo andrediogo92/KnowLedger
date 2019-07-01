@@ -9,7 +9,7 @@ import java.security.PublicKey
 class PublicKeyJsonAdapter {
     @ToJson
     fun publicKeyToJson(publicKey: PublicKey): String =
-        getStringFromKey(publicKey)
+        publicKey.getStringFromKey()
 
     @FromJson
     fun publicKeyFromJson(publicKey: String): PublicKey =

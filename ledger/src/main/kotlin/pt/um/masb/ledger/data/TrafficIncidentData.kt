@@ -5,6 +5,7 @@ import pt.um.masb.common.data.SelfInterval
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
+import pt.um.masb.common.misc.encodeStringToUTF8
 import pt.um.masb.common.misc.flattenBytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
@@ -74,21 +75,21 @@ class TrafficIncidentData(
     override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
-                trafficModelId.toByteArray(),
-                id.toByteArray(),
+                trafficModelId.encodeStringToUTF8(),
+                id.encodeStringToUTF8(),
                 iconLat.bytes(),
                 iconLon.bytes(),
                 incidentCategory.bytes(),
                 magnitudeOfDelay.bytes(),
                 clusterSize.bytes(),
-                description.toByteArray(),
-                causeOfAccident.toByteArray(),
-                from.toByteArray(),
-                to.toByteArray(),
+                description.encodeStringToUTF8(),
+                causeOfAccident.encodeStringToUTF8(),
+                from.encodeStringToUTF8(),
+                to.encodeStringToUTF8(),
                 length.bytes(),
                 delayInSeconds.bytes(),
-                affectedRoads.toByteArray(),
-                cityName.toByteArray(),
+                affectedRoads.encodeStringToUTF8(),
+                cityName.encodeStringToUTF8(),
                 citySeqNum.bytes()
             )
         )

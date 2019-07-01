@@ -2,9 +2,10 @@ package pt.um.masb.ledger.config
 
 import com.squareup.moshi.JsonClass
 import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.hash.Hashable
 import pt.um.masb.common.hash.Hashed
 import pt.um.masb.common.hash.Hasher
-import pt.um.masb.common.misc.flattenBytes
+import pt.um.masb.common.misc.encodeStringToUTF8
 import pt.um.masb.ledger.service.ServiceClass
 
 @JsonClass(generateAdapter = true)
@@ -12,7 +13,11 @@ data class ChainId internal constructor(
     val tag: String,
     val ledgerHash: Hash,
     override val hashId: Hash
-) : Hashed, ServiceClass {
+) : Hashed, Hashable, ServiceClass {
+    override fun digest(c: Hasher): Hash =
+        c.applyHash(
+            tag.encodeStringToUTF8() + ledgerHash.bytes
+        )
 
     internal constructor(
         tag: String,
@@ -55,10 +60,7 @@ data class ChainId internal constructor(
             ledgerHash: Hash
         ): Hash =
             hasher.applyHash(
-                flattenBytes(
-                    tag.toByteArray(),
-                    ledgerHash.bytes
-                )
+                tag.encodeStringToUTF8() + ledgerHash.bytes
             )
     }
 

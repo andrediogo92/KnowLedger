@@ -5,6 +5,7 @@ import pt.um.masb.common.data.SelfInterval
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
+import pt.um.masb.common.misc.encodeStringToUTF8
 import pt.um.masb.common.misc.flattenBytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
@@ -77,12 +78,12 @@ class PollutionAQData(
     override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
-                lastUpdated.toByteArray(),
-                unit.toByteArray(),
+                lastUpdated.encodeStringToUTF8(),
+                unit.encodeStringToUTF8(),
                 parameter.ordinal.bytes(),
                 value.bytes(),
-                sourceName.toByteArray(),
-                city.toByteArray(),
+                sourceName.encodeStringToUTF8(),
+                city.encodeStringToUTF8(),
                 citySeqNum.bytes()
             )
         )

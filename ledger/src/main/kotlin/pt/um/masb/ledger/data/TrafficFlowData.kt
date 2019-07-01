@@ -6,6 +6,7 @@ import pt.um.masb.common.data.SelfInterval
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
+import pt.um.masb.common.misc.encodeStringToUTF8
 import pt.um.masb.common.misc.flattenBytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
@@ -53,14 +54,14 @@ class TrafficFlowData(
     override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(
-                functionalRoadClass.toByteArray(),
+                functionalRoadClass.encodeStringToUTF8(),
                 currentSpeed.bytes(),
                 freeFlowSpeed.bytes(),
                 currentTravelTime.bytes(),
                 freeFlowTravelTime.bytes(),
                 confidence.bytes(),
                 realtimeRatio.bytes(),
-                cityName.toByteArray(),
+                cityName.encodeStringToUTF8(),
                 citySeqNum.bytes()
             )
         )

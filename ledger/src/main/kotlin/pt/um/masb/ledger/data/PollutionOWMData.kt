@@ -5,6 +5,7 @@ import pt.um.masb.common.data.SelfInterval
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.bytes
+import pt.um.masb.common.misc.encodeStringToUTF8
 import pt.um.masb.common.misc.flattenBytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
@@ -103,9 +104,9 @@ class PollutionOWMData(
                         it.bytes()
                     }
                 },
-                unit.toByteArray(),
+                unit.encodeStringToUTF8(),
                 value.bytes(),
-                city.toByteArray(),
+                city.encodeStringToUTF8(),
                 citySeqNum.bytes(),
                 parameter.ordinal.bytes()
             )

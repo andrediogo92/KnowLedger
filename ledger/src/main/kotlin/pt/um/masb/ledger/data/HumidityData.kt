@@ -24,7 +24,7 @@ data class HumidityData(
 ) : LedgerData {
     override fun digest(c: Hasher): Hash =
         c.applyHash(
-            hum.unscaledValue().toByteArray() + unit.ordinal.bytes()
+            hum.bytes() + unit.ordinal.bytes()
         )
 
 
