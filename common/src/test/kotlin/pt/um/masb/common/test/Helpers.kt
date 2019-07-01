@@ -33,9 +33,9 @@ val crypter: Hasher =
         Security.addProvider(
             org.bouncycastle.jce.provider.BouncyCastleProvider()
         )
-        AvailableHashAlgorithms.SHA256Hasher
+        AvailableHashAlgorithms.Blake2b256Hasher
     } else {
-        AvailableHashAlgorithms.SHA256Hasher
+        AvailableHashAlgorithms.Blake2b256Hasher
     }
 
 

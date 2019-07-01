@@ -39,6 +39,7 @@ tasks {
 
     withType<KotlinCompile> {
         kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
+        kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
         kotlinOptions.jvmTarget = "1.8"
     }
 }

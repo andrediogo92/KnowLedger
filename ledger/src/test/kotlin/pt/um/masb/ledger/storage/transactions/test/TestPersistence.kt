@@ -66,8 +66,10 @@ class TestPersistence {
         session.makeActive()
 
         Logger.info {
-            """LedgerHash is ${hash.print}
-                | Base64: ${base64Encode(hash)}
+            """
+                |
+                |LedgerHash is ${hash.print}
+                |   Base64: ${base64Encode(hash)}
             """.trimMargin()
         }
 
@@ -105,7 +107,7 @@ class TestPersistence {
     @Nested
     inner class TestClusters {
         @Test
-        fun `Test created clusters`() {
+        fun `created clusters`() {
             val plug = (session as OrientSession)
             val clusterNames = plug.clustersPresent
             Logger.info {
@@ -131,7 +133,7 @@ class TestPersistence {
         }
 
         @Test
-        fun `Test cluster query`() {
+        fun `cluster query`() {
             //Query from first cluster.
             session.query(
                 "select from cluster:transaction_1",
@@ -162,7 +164,7 @@ class TestPersistence {
         }
 
         @Test
-        fun `Test binary records`() {
+        fun `binary records`() {
             val t = session.query(
                 "select from transaction"
             )
@@ -179,7 +181,7 @@ class TestPersistence {
     @Nested
     inner class TestTransactions {
         @Test
-        fun `Test insertion successful all properties present`() {
+        fun `insertion successful all properties present`() {
             val orient = (session as OrientSession)
             val present = orient.browseClass(
                 TransactionStorageAdapter.id
@@ -212,7 +214,7 @@ class TestPersistence {
         }
 
         @Test
-        fun `Test loading transactions`() {
+        fun `loading transactions`() {
             pw.getTransactionsByClass(
                 hash,
                 TemperatureDataStorageAdapter.id
@@ -235,7 +237,7 @@ class TestPersistence {
         }
 
         @Test
-        fun `Test loading by timestamp`() {
+        fun `loading transactions by timestamp`() {
             pw.getTransactionsOrderedByTimestamp(
                 hash
             ).mapSuccess { seq ->
@@ -260,7 +262,7 @@ class TestPersistence {
         }
 
         @Test
-        fun `Test loading by Public Key`() {
+        fun `loading transactions by Public Key`() {
             pw.getTransactionsFromAgent(
                 hash, ident.publicKey
             ).mapSuccess { seq ->
@@ -282,7 +284,7 @@ class TestPersistence {
         }
 
         @Test
-        fun `Test loading by hash`() {
+        fun `loading transaction by hash`() {
             pw.getTransactionByHash(
                 hash,
                 testTransactions[2].hashId

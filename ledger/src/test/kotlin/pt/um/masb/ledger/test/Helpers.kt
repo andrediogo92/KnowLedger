@@ -200,15 +200,15 @@ internal fun logActualToExpectedLists(
             |$explanationActual
             |${actualList.joinToString(
             """,
-
-            """.trimIndent()
+                |
+            """.trimMargin()
         ) { it.toString() }}
             |
             |$explanationExpected
             |${expectedList.joinToString(
             """,
-
-            """.trimIndent()
+                |
+            """.trimMargin()
         ) { it.toString() }}
         """.trimMargin()
     }

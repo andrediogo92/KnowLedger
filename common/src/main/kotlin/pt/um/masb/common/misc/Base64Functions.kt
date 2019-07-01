@@ -12,8 +12,14 @@ private val b64Decoder = Base64.getUrlDecoder()
 fun base64Encode(
     toEncode: Hash
 ): String =
-    b64Encoder.encodeToString(toEncode.bytes)
+    base64Encode(toEncode.bytes)
 
+
+@UseExperimental(ExperimentalStdlibApi::class)
+fun base64Encode(
+    toEncode: String
+): String =
+    base64Encode(toEncode.encodeToByteArray())
 
 fun base64Encode(
     toEncode: ByteArray
@@ -28,7 +34,13 @@ fun base64Decode(
 fun base64DecodeToHash(
     toDecode: String
 ): Hash =
-    Hash(b64Decoder.decode(toDecode))
+    Hash(base64Decode(toDecode))
+
+@UseExperimental(ExperimentalStdlibApi::class)
+fun base64DecodeToString(
+    toDecode: String
+): String =
+    base64Decode(toDecode).decodeToString()
 
 fun getStringFromKey(
     key: Key

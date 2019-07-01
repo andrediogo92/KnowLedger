@@ -22,7 +22,10 @@ class TestHashers {
             assertThat(AvailableHashAlgorithms.SHA512Hasher.applyHash(test).print)
                 .isEqualTo("3ED19606CF37AD45E9E6D152EB30BE6813576237E08829AFC90312A1FD908214D7B3B7C194520AC1808375AB83A4CE65712C98995083A55704985F91C419963E")
         }
+    }
 
+    @Nested
+    inner class Blake2 {
         @Test
         fun `apply blake2s-256`() {
             assertThat(AvailableHashAlgorithms.Blake2s256Hasher.applyHash(test).print)
@@ -43,7 +46,11 @@ class TestHashers {
             assertThat(AvailableHashAlgorithms.Blake2b512Hasher.applyHash(test).print)
                 .isEqualTo("9268B2FCE73C20D8E4CEFF7BB401968D77B0AA044F63025885E509714EA930F283E57D91919960B1EB573ED60EC303E15236469045F9570A44DB93A2AAE62405")
         }
+    }
 
+
+    @Nested
+    inner class SHA3 {
         @Test
         fun `apply sha3-256`() {
             assertThat(AvailableHashAlgorithms.SHA3256Hasher.applyHash(test).print)
@@ -55,7 +62,10 @@ class TestHashers {
             assertThat(AvailableHashAlgorithms.SHA3512Hasher.applyHash(test).print)
                 .isEqualTo("19B24FE949322476C9131D16F55D240B3B3CA288A8E0F379250101C3698ED06C8AC134DD4A80576051159DD3641B1421491223934C1F4E54D297E8FFA147DFE2")
         }
+    }
 
+    @Nested
+    inner class Keccak {
         /**
          * BEWARE: Not entirely verified externally to be matching some other reference implementation.
          */
