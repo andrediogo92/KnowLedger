@@ -1,7 +1,7 @@
 package pt.um.masb.ledger.service.handles
 
-import pt.um.masb.common.data.BlockChainData
 import pt.um.masb.common.data.DataFormula
+import pt.um.masb.common.data.LedgerData
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageID
 import pt.um.masb.common.hash.Hash
@@ -19,6 +19,7 @@ import pt.um.masb.ledger.results.intoLedger
 import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.service.LedgerConfig
 import pt.um.masb.ledger.service.LedgerContainer
+import pt.um.masb.ledger.service.ServiceClass
 import pt.um.masb.ledger.service.handles.builder.AbstractLedgerBuilder
 import pt.um.masb.ledger.service.handles.builder.LedgerByHash
 import pt.um.masb.ledger.service.handles.builder.LedgerByTag
@@ -37,7 +38,7 @@ import java.security.KeyPair
  */
 class LedgerHandle internal constructor(
     builder: AbstractLedgerBuilder
-) : ServiceHandle {
+) : ServiceClass {
     private val pw: PersistenceWrapper = builder.persistenceWrapper
     val ledgerConfig: LedgerConfig = builder.ledgerConfig
     val hasher: Hasher = builder.hasher
@@ -77,7 +78,7 @@ class LedgerHandle internal constructor(
      * is already known.
      */
     fun addStorageAdapter(
-        adapter: AbstractStorageAdapter<out BlockChainData>
+        adapter: AbstractStorageAdapter<out LedgerData>
     ): Boolean =
         dataAdapters.add(adapter).apply {
             if (this) {
@@ -86,7 +87,7 @@ class LedgerHandle internal constructor(
         }
 
 
-    fun <T : BlockChainData> getChainHandleOf(
+    fun <T : LedgerData> getChainHandleOf(
         clazz: Class<in T>
     ): Outcome<ChainHandle, LedgerFailure> =
         if (dataAdapters.any { it.clazz == clazz }) {
@@ -102,7 +103,7 @@ class LedgerHandle internal constructor(
             )
         }
 
-    fun <T : BlockChainData> registerNewChainHandleOf(
+    fun <T : LedgerData> registerNewChainHandleOf(
         adapter: AbstractStorageAdapter<out T>
     ): Outcome<ChainHandle, LedgerFailure> =
         ChainHandle(
@@ -182,7 +183,7 @@ class LedgerHandle internal constructor(
 
     companion object {
         private val dataAdapters =
-            mutableSetOf<AbstractStorageAdapter<out BlockChainData>>(
+            mutableSetOf<AbstractStorageAdapter<out LedgerData>>(
                 DummyDataStorageAdapter
             )
 
@@ -191,14 +192,14 @@ class LedgerHandle internal constructor(
 
         fun getStorageAdapter(
             dataName: String
-        ): AbstractStorageAdapter<out BlockChainData>? =
+        ): AbstractStorageAdapter<out LedgerData>? =
             dataAdapters.find {
                 it.id == dataName
             }
 
         fun getStorageAdapter(
-            clazz: Class<out BlockChainData>
-        ): AbstractStorageAdapter<out BlockChainData>? =
+            clazz: Class<out LedgerData>
+        ): AbstractStorageAdapter<out LedgerData>? =
             dataAdapters.find {
                 it.clazz == clazz
             }

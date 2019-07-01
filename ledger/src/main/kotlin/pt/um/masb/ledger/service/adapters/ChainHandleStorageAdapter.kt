@@ -3,11 +3,13 @@ package pt.um.masb.ledger.service.adapters
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageType
+import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
+import pt.um.masb.common.results.mapSuccess
+import pt.um.masb.ledger.config.adapters.ChainIdStorageAdapter
 import pt.um.masb.ledger.results.tryOrLedgerUnknownFailure
-import pt.um.masb.ledger.service.ChainHandle
+import pt.um.masb.ledger.service.handles.ChainHandle
 import pt.um.masb.ledger.service.results.LedgerFailure
-import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
 
 object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
     override val id: String
@@ -15,8 +17,7 @@ object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "clazz" to StorageType.STRING,
-            "hashId" to StorageType.HASH,
+            "id" to StorageType.LINK,
             "difficultyTarget" to StorageType.DIFFICULTY,
             "lastRecalc" to StorageType.INTEGER,
             "currentBlockheight" to StorageType.LONG
@@ -27,8 +28,10 @@ object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
         session: NewInstanceSession
     ): StorageElement =
         session.newInstance(id).apply {
-            setStorageProperty("clazz", toStore.clazz)
-            setHashProperty("hashId", toStore.ledgerHash)
+            setLinked(
+                "id", ChainIdStorageAdapter,
+                toStore.id, session
+            )
             setDifficultyProperty(
                 "difficultyTarget",
                 toStore.currentDifficulty,
@@ -45,16 +48,10 @@ object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
         }
 
     override fun load(
-        persistenceWrapper: PersistenceWrapper,
+        ledgerHash: Hash,
         element: StorageElement
     ): Outcome<ChainHandle, LedgerFailure> =
         tryOrLedgerUnknownFailure {
-            val clazz: String =
-                element.getStorageProperty("clazz")
-
-            val hash =
-                element.getHashProperty("hashId")
-
             val difficulty =
                 element.getDifficultyProperty("difficultyTarget")
 
@@ -64,15 +61,17 @@ object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
             val currentBlockheight: Long =
                 element.getStorageProperty("currentBlockheight")
 
-            Outcome.Ok(
-                ChainHandle(
-                    clazz,
-                    hash,
-                    difficulty,
-                    lastRecalc,
-                    currentBlockheight
-                )
-            )
+            ChainIdStorageAdapter
+                .load(ledgerHash, element.getLinked("tag"))
+                .mapSuccess {
+                    ChainHandle(
+                        it,
+                        difficulty,
+                        lastRecalc,
+                        currentBlockheight
+                    )
+                }
+
 
         }
 }

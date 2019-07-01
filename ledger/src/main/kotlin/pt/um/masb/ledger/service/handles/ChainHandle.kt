@@ -23,13 +23,14 @@ import pt.um.masb.ledger.data.MerkleTree
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.results.intoQuery
 import pt.um.masb.ledger.service.Identity
+import pt.um.masb.ledger.service.ServiceClass
 import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.Block
 import pt.um.masb.ledger.storage.BlockHeader
 import pt.um.masb.ledger.storage.Coinbase
 import pt.um.masb.ledger.storage.Transaction
 import pt.um.masb.ledger.storage.adapters.BlockStorageAdapter
-import pt.um.masb.ledger.storage.transactions.PersistenceWrapper
+import pt.um.masb.ledger.storage.transactions.*
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.ZoneOffset
@@ -41,7 +42,7 @@ import java.time.ZonedDateTime
  */
 data class ChainHandle internal constructor(
     val id: ChainId
-) : ServiceHandle {
+) : ServiceClass {
     val ledgerHash = id.ledgerHash
     private val hasher: Hasher
     private val pw: PersistenceWrapper
