@@ -1,4 +1,4 @@
-package pt.um.masb.ledger.service
+package pt.um.masb.ledger.service.handles
 
 import org.tinylog.kotlin.Logger
 import pt.um.masb.common.config.LedgerConfiguration
@@ -15,12 +15,14 @@ import pt.um.masb.common.results.fold
 import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.ledger.config.BlockParams
+import pt.um.masb.ledger.config.ChainId
 import pt.um.masb.ledger.config.CoinbaseParams
 import pt.um.masb.ledger.config.LedgerParams
 import pt.um.masb.ledger.data.DummyData
 import pt.um.masb.ledger.data.MerkleTree
 import pt.um.masb.ledger.data.PhysicalData
 import pt.um.masb.ledger.results.intoQuery
+import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.service.results.LoadFailure
 import pt.um.masb.ledger.storage.Block
 import pt.um.masb.ledger.storage.BlockHeader
@@ -38,23 +40,26 @@ import java.time.ZonedDateTime
  * unique chain in the ledger represented by the [ledgerHash].
  */
 data class ChainHandle internal constructor(
-    val clazz: String,
-    val ledgerHash: Hash
+    val id: ChainId
 ) : ServiceHandle {
-    private val pw: PersistenceWrapper
+    val ledgerHash = id.ledgerHash
     private val hasher: Hasher
+    private val pw: PersistenceWrapper
     val ledgerParams: LedgerParams
     val coinbaseParams: CoinbaseParams
 
+
     init {
-        val container = LedgerHandle.getContainer(
+        LedgerHandle.getContainer(
             ledgerHash
-        )!!
-        pw = container.persistenceWrapper
-        hasher = container.hasher
-        ledgerParams = container.ledgerParams
-        coinbaseParams = container.coinbaseParams
+        )!!.let {
+            hasher = it.hasher
+            pw = it.persistenceWrapper
+            ledgerParams = it.ledgerParams
+            coinbaseParams = it.coinbaseParams
+        }
     }
+
 
     private var difficultyTarget =
         INIT_DIFFICULTY
@@ -90,15 +95,18 @@ data class ChainHandle internal constructor(
 
 
     internal constructor(
-        clazz: String,
+        tag: String,
         ledgerHash: Hash,
+        hasher: Hasher
+    ) : this(ChainId(tag, ledgerHash, hasher))
+
+
+    internal constructor(
+        id: ChainId,
         difficulty: Difficulty,
         lastRecalc: Long,
         currentBlockheight: Long
-    ) : this(
-        clazz,
-        ledgerHash
-    ) {
+    ) : this(id) {
         this.difficultyTarget = difficulty
         this.lastRecalc = lastRecalc
         this.blockheight = currentBlockheight
