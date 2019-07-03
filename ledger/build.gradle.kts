@@ -46,7 +46,7 @@ dependencies {
     testImplementation(project(":common")) {
         capabilities {
             // Indicate we want a variant with a specific capability
-            requireCapability("pt.um.masb.common:test")
+            requireCapability("org.knowledger.common:test")
         }
     }
     Libs.jUnitRuntime.forEach {

@@ -1,4 +1,4 @@
-rootProject.name = "KnowledgerMAS"
+rootProject.name = "Knowledger"
 include(
     "ledger", "agent", "annotations",
     "generation", "common"

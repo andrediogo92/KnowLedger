@@ -26,8 +26,8 @@ plugins {
 
 allprojects {
 
-    group = "pt.um.masb"
-    version = "1.0-SNAPSHOT"
+    group = "org.knowledger"
+    version = "0.1"
 
     repositories {
         mavenCentral()

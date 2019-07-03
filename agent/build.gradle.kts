@@ -52,7 +52,7 @@ dependencies {
 
 
 configure<ApplicationPluginConvention> {
-    mainClassName = "pt.um.lei.masb.agent.Container"
+    mainClassName = "org.knowledger.agent.Container"
 }
 
 tasks {

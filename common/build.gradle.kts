@@ -66,7 +66,7 @@ val testRuntimeElements: Configuration by configurations.creating {
     }
     outgoing {
         // Indicate a different capability (defaults to group:name:version)
-        capability("pt.um.masb.common:test:$version")
+        capability("org.knowledger.common:test:$version")
     }
 }
 
@@ -81,7 +81,7 @@ val testApiElements: Configuration by configurations.creating {
     }
     outgoing {
         // Same capability
-        capability("pt.um.masb.common:test:$version")
+        capability("org.knowledger.common:test:$version")
     }
 }
 
