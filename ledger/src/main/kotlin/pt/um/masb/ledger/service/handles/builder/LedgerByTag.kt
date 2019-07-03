@@ -71,11 +71,10 @@ class LedgerByTag(
         }
 
     internal fun withCustomDB(
-        db: ManagedDatabase, session: ManagedSession,
-        persistenceWrapper: PersistenceWrapper
+        db: ManagedDatabase, session: ManagedSession
     ) =
         apply {
-            setCustomDB(db, session, persistenceWrapper)
+            setCustomDB(db, session)
         }
 
 
@@ -88,18 +87,12 @@ class LedgerByTag(
         }
     }
 
-    private fun attemptToResolveId(): Outcome<Unit, LedgerHandle.Failure> =
-        if (identity == "") {
-            Outcome.Error(
-                LedgerHandle.Failure.NoIdentitySupplied
-            )
-        } else {
+    private fun attemptToResolveId() {
             ledgerConfig = LedgerConfig(
                 LedgerId(identity, hasher), ledgerParams!!,
                 coinbaseParams!!
             )
-            Outcome.Ok(Unit)
-        }
+    }
 
     private fun generateDB() {
         if (db == null) {
@@ -112,17 +105,17 @@ class LedgerByTag(
         }
         if (session == null) {
             session = db?.newManagedSession(base64Encode(ledgerConfig.ledgerId.hashId))
-            persistenceWrapper = PersistenceWrapper(session!!)
         }
+        persistenceWrapper = PersistenceWrapper(ledgerConfig.ledgerId.hashId, session!!)
+        persistenceWrapper.registerDefaultSchemas()
     }
 
     override fun build(): Outcome<LedgerHandle, LedgerHandle.Failure> {
         generateLedgerParams()
-        return attemptToResolveId().mapSuccess {
-            generateDB()
-            addToContainers()
-            LedgerHandle(this)
-        }
+        attemptToResolveId()
+        generateDB()
+        addToContainers()
+        return Outcome.Ok(LedgerHandle(this))
     }
 
 }

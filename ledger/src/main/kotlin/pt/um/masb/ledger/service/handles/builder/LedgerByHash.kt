@@ -10,7 +10,6 @@ import pt.um.masb.common.hash.AvailableHashAlgorithms
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.misc.base64Encode
 import pt.um.masb.common.results.Outcome
-import pt.um.masb.common.results.flatMapSuccess
 import pt.um.masb.common.results.mapSuccess
 import pt.um.masb.ledger.service.handles.LedgerHandle
 import pt.um.masb.ledger.service.transactions.PersistenceWrapper
@@ -48,21 +47,12 @@ data class LedgerByHash(
         }
 
     internal fun withCustomDB(
-        db: ManagedDatabase, session: ManagedSession,
-        persistenceWrapper: PersistenceWrapper
+        db: ManagedDatabase, session: ManagedSession
     ) =
         apply {
-            setCustomDB(db, session, persistenceWrapper)
+            setCustomDB(db, session)
         }
 
-    private fun checkHash(): Outcome<Unit, LedgerHandle.Failure> =
-        if (hash != Hash.emptyHash) {
-            Outcome.Ok(Unit)
-        } else {
-            Outcome.Error(
-                LedgerHandle.Failure.NoIdentitySupplied
-            )
-        }
 
     private fun generateDB() {
         if (db == null) {
@@ -74,9 +64,9 @@ data class LedgerByHash(
             )
         }
         if (session == null) {
-            session = db?.newManagedSession(base64Encode(ledgerConfig.ledgerId.hashId))
-            persistenceWrapper = PersistenceWrapper(session!!)
+            session = db?.newManagedSession(base64Encode(hash))
         }
+        persistenceWrapper = PersistenceWrapper(hash, session!!)
     }
 
     private fun attemptToResolveId() =
@@ -87,10 +77,8 @@ data class LedgerByHash(
         }
 
     override fun build(): Outcome<LedgerHandle, LedgerHandle.Failure> {
-        return checkHash().flatMapSuccess {
-            generateDB()
-            attemptToResolveId()
-        }.mapSuccess {
+        generateDB()
+        return attemptToResolveId().mapSuccess {
             ledgerConfig = it
             addToContainers()
             LedgerHandle(this)

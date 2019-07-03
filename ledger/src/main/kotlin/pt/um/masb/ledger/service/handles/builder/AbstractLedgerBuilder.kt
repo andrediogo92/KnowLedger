@@ -61,12 +61,10 @@ abstract class AbstractLedgerBuilder {
 
     internal fun setCustomDB(
         db: ManagedDatabase,
-        session: ManagedSession,
-        pw: PersistenceWrapper
+        session: ManagedSession
     ) {
         this.db = db
         this.session = session
-        persistenceWrapper = pw
     }
 
     protected fun addToContainers() {
