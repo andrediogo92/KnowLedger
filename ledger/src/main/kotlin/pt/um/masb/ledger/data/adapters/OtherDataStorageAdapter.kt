@@ -66,7 +66,7 @@ object OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
             val chunkIds: List<StorageID> =
                 getStorageIDs("value")
             for (id in chunkIds) {
-                val chunk = id.getBytes()
+                val chunk = id.bytes
                 chunk.toOutputStream(bos)
                 chunk.discard()
             }
