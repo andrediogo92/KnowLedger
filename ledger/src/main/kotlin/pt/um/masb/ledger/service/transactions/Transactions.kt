@@ -1,7 +1,6 @@
 package pt.um.masb.ledger.service.transactions
 
-import pt.um.masb.common.database.query.Filters
-import pt.um.masb.common.database.query.GenericSelect
+import pt.um.masb.common.database.query.UnspecificQuery
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.ledger.service.results.LoadFailure
@@ -17,38 +16,44 @@ import java.security.PublicKey
 // Execution must be runtime determined.
 // ------------------------------
 internal fun PersistenceWrapper.getTransactionsFromAgent(
-    ledgerHash: Hash,
+    chainHash: Hash,
     publicKey: PublicKey
 ): Outcome<Sequence<Transaction>, LoadFailure> =
     TransactionStorageAdapter.let {
         queryResults(
-            ledgerHash,
-            GenericSelect(
-                it.id
-            ).withSimpleFilter(
-                Filters.WHERE,
-                "publicKey",
-                "publicKey",
-                publicKey.encoded
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${it.id}
+                    WHERE chainId.hashId = :chainHash
+                        AND publicKey = :publicKey
+                """.trimIndent(),
+                mapOf(
+                    "chainHash" to chainHash.bytes,
+                    "publicKey" to publicKey.encoded
+                )
             ),
             it
         )
     }
 
 internal fun PersistenceWrapper.getTransactionByHash(
-    ledgerHash: Hash,
+    chainHash: Hash,
     hash: Hash
 ): Outcome<Transaction, LoadFailure> =
     TransactionStorageAdapter.let {
         queryUniqueResult(
-            ledgerHash,
-            GenericSelect(
-                it.id
-            ).withSimpleFilter(
-                Filters.WHERE,
-                "hashId",
-                "hashId",
-                hash.bytes
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${it.id}
+                    WHERE chainId.hashId = :chainHash
+                        AND hashId = :hash
+                """.trimIndent(),
+                mapOf(
+                    "chainHash" to chainHash.bytes,
+                    "hash" to hash.bytes
+                )
             ),
             it
         )
@@ -58,16 +63,20 @@ internal fun PersistenceWrapper.getTransactionByHash(
 
 //Execution must be runtime determined.
 internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
-    ledgerHash: Hash
+    chainHash: Hash
 ): Outcome<Sequence<Transaction>, LoadFailure> =
     TransactionStorageAdapter.let {
         queryResults(
-            ledgerHash,
-            GenericSelect(
-                it.id
-            ).withSimpleFilter(
-                Filters.ORDER,
-                "value.seconds DESC, value.nanos DESC"
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${it.id}
+                    WHERE chainId.hashId = :chainHash
+                    ORDER BY value.seconds DESC, value.nanos DESC
+                """.trimIndent(),
+                mapOf(
+                    "chainHash" to chainHash.bytes
+                )
             ),
             it
         )
@@ -75,19 +84,22 @@ internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
     }
 
 internal fun PersistenceWrapper.getTransactionsByClass(
-    ledgerHash: Hash,
+    chainHash: Hash,
     typeName: String
 ): Outcome<Sequence<Transaction>, LoadFailure> =
     TransactionStorageAdapter.let {
         queryResults(
-            ledgerHash,
-            GenericSelect(
-                it.id
-            ).withSimpleFilter(
-                Filters.WHERE,
-                "value.value.@class",
-                "typeName",
-                typeName
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${it.id}
+                    WHERE chainId.hashId = :chainHash
+                        AND value.value.@class = :typeName
+                """.trimIndent(),
+                mapOf(
+                    "chainHash" to chainHash.bytes,
+                    "typeName" to typeName
+                )
             ),
             it
         )

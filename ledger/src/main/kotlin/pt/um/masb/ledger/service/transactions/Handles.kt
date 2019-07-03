@@ -2,9 +2,7 @@ package pt.um.masb.ledger.service.transactions
 
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageID
-import pt.um.masb.common.database.query.Filters
-import pt.um.masb.common.database.query.GenericSelect
-import pt.um.masb.common.hash.Hash
+import pt.um.masb.common.database.query.UnspecificQuery
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.storage.results.QueryFailure
 import pt.um.masb.ledger.service.adapters.ChainHandleStorageAdapter
@@ -15,20 +13,18 @@ import pt.um.masb.ledger.storage.adapters.QueryLoadable
 //-------------------------
 // LedgerHandle Transactions
 //-------------------------
-internal fun <T> PersistenceWrapper.getChainHandle(
-    ledgerHash: Hash,
-    clazz: Class<in T>
+internal fun PersistenceWrapper.getChainHandle(
+    id: String
 ): Outcome<ChainHandle, LedgerFailure> =
     ChainHandleStorageAdapter.let {
         queryUniqueResult(
-            ledgerHash,
-            GenericSelect(
-                it.id
-            ).withSimpleFilter(
-                Filters.WHERE,
-                "clazz",
-                "clazz",
-                clazz.name
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${it.id} 
+                    WHERE id.tag = :id
+                """.trimIndent(),
+                mapOf("id" to id)
             ),
             it
         )
@@ -45,17 +41,18 @@ internal fun PersistenceWrapper.tryAddChainHandle(
 internal fun PersistenceWrapper.getKnownChainHandleTypes(
 ): Outcome<Sequence<String>, QueryFailure> =
     queryResults(
-        GenericSelect(
-            ChainHandleStorageAdapter.id
-        ).withProjection(
-            "clazz"
+        UnspecificQuery(
+            """
+                SELECT id.tag as tag 
+                FROM ${ChainHandleStorageAdapter.id}
+            """.trimIndent()
         ),
         object : QueryLoadable<String> {
             override fun load(
                 element: StorageElement
             ): Outcome<String, QueryFailure> =
                 Outcome.Ok(
-                    element.getStorageProperty("clazz")
+                    element.getStorageProperty("tag")
                 )
         }
     )
@@ -63,8 +60,11 @@ internal fun PersistenceWrapper.getKnownChainHandleTypes(
 internal fun PersistenceWrapper.getKnownChainHandleIDs(
 ): Outcome<Sequence<StorageID>, QueryFailure> =
     queryResults(
-        GenericSelect(
-            ChainHandleStorageAdapter.id
+        UnspecificQuery(
+            """
+                SELECT 
+                FROM ${ChainHandleStorageAdapter.id}
+            """.trimIndent()
         ),
         object : QueryLoadable<StorageID> {
             override fun load(
@@ -76,13 +76,14 @@ internal fun PersistenceWrapper.getKnownChainHandleIDs(
 
 
 internal fun PersistenceWrapper.getKnownChainHandles(
-    ledgerHash: Hash
 ): Outcome<Sequence<ChainHandle>, LedgerFailure> =
     ChainHandleStorageAdapter.let {
         queryResults(
-            ledgerHash,
-            GenericSelect(
-                it.id
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${it.id}
+                """.trimIndent()
             ),
             it
         )

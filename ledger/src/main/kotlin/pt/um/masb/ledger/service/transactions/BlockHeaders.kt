@@ -1,7 +1,6 @@
 package pt.um.masb.ledger.service.transactions
 
-import pt.um.masb.common.database.query.Filters
-import pt.um.masb.common.database.query.GenericSelect
+import pt.um.masb.common.database.query.UnspecificQuery
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.ledger.service.results.LoadFailure
@@ -16,19 +15,22 @@ import pt.um.masb.ledger.storage.adapters.BlockHeaderStorageAdapter
 
 
 internal fun PersistenceWrapper.getBlockHeaderByHash(
-    ledgerHash: Hash,
+    chainHash: Hash,
     hash: Hash
 ): Outcome<BlockHeader, LoadFailure> =
     BlockHeaderStorageAdapter.let {
         queryUniqueResult(
-            ledgerHash,
-            GenericSelect(
-                it.id
-            ).withSimpleFilter(
-                Filters.WHERE,
-                "hashId",
-                "hashId",
-                hash
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${it.id} 
+                    WHERE hashId = :hashId 
+                        AND chainId.hashId = :chainHash
+                    """.trimIndent(),
+                mapOf(
+                    "hashId" to hash.bytes,
+                    "chainHash" to chainHash.bytes
+                )
             ),
             it
         )
@@ -36,39 +38,45 @@ internal fun PersistenceWrapper.getBlockHeaderByHash(
 
 
 internal fun PersistenceWrapper.getBlockHeaderByBlockHeight(
-    ledgerHash: Hash,
+    chainHash: Hash,
     height: Long
 ): Outcome<BlockHeader, LoadFailure> =
     BlockHeaderStorageAdapter.let {
         queryUniqueResult(
-            ledgerHash,
-            GenericSelect(
-                it.id
-            ).withSimpleFilter(
-                Filters.WHERE, "blockheight",
-                "blockheight",
-                height
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${it.id} 
+                    WHERE blockheight = :blockheight 
+                        AND chainId.hashId = :chainHash
+                """.trimIndent(),
+                mapOf(
+                    "blockheight" to height,
+                    "chainHash" to chainHash.bytes
+                )
             ),
             it
         )
-
     }
 
 
 internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
-    ledgerHash: Hash,
+    chainHash: Hash,
     hash: Hash
 ): Outcome<BlockHeader, LoadFailure> =
     BlockHeaderStorageAdapter.let {
         queryUniqueResult(
-            ledgerHash,
-            GenericSelect(
-                it.id
-            ).withSimpleFilter(
-                Filters.WHERE,
-                "previousHash",
-                "hashId",
-                hash
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${it.id} 
+                    WHERE previousHash = :previousHash 
+                        AND chainId.hashId = :chainHash
+                """.trimIndent(),
+                mapOf(
+                    "previousHash" to hash.bytes,
+                    "chainHash" to chainHash.bytes
+                )
             ),
             it
         )
@@ -76,14 +84,20 @@ internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
     }
 
 internal fun PersistenceWrapper.getLatestBlockHeader(
-    ledgerHash: Hash
+    chainHash: Hash
 ): Outcome<BlockHeader, LoadFailure> =
     BlockHeaderStorageAdapter.let {
         queryUniqueResult(
-            ledgerHash,
-            GenericSelect(
-                it.id,
-                "max(blockheight), *"
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${it.id} 
+                    WHERE blockheight = max(blockheight) 
+                        AND chainId.hashId = :chainHash
+                """.trimIndent(),
+                mapOf(
+                    "chainHash" to chainHash.bytes
+                )
             ),
             it
         )
