@@ -8,6 +8,7 @@ import pt.um.masb.common.database.ManagedSession
 import pt.um.masb.common.database.StorageBytes
 import pt.um.masb.common.database.StorageElement
 import pt.um.masb.common.database.StorageResults
+import pt.um.masb.common.database.query.GenericQuery
 
 data class OrientSession(
     internal val db: OrientDB,
@@ -20,9 +21,38 @@ data class OrientSession(
     internal var session: ODatabaseDocument =
         openSession()
 
-    override fun makeActive() {
-        session.activateOnCurrentThread()
-    }
+    override val managedSchemas: ManagedSchemas =
+        OrientSchemas(session.metadata.schema)
+
+    val clustersPresent: List<String>
+        get() = session.clusterNames.toMutableList()
+
+    val name: String
+        get() = session.name
+
+
+    override fun close() =
+        apply {
+            session.close()
+        }
+
+    override fun makeActive(): ManagedSession =
+        apply {
+            session.activateOnCurrentThread()
+        }
+
+    override fun reOpenIfNecessary() =
+        apply {
+            if (session.isClosed) {
+                session = openSession()
+            }
+        }
+
+    override fun query(query: GenericQuery): StorageResults =
+        DocumentResults(session.query(query.query, query.params))
+
+    override fun query(query: String): StorageResults =
+        DocumentResults(session.query(query))
 
     override fun save(elem: StorageElement): StorageElement? =
         if (elem is DocumentElement) {
@@ -42,18 +72,6 @@ data class OrientSession(
             null
         }
 
-    override fun query(query: String, params: Map<String, Any>): StorageResults =
-        DocumentResults(session.query(query, params))
-
-    override fun query(query: String): StorageResults =
-        DocumentResults(session.query(query))
-
-
-    override val managedSchemas: ManagedSchemas =
-        OrientSchemas(session.metadata.schema)
-
-    override fun close() = session.close()
-
     override fun newInstance(): StorageElement =
         DocumentElement(session.newElement())
 
@@ -64,17 +82,21 @@ data class OrientSession(
         DocumentBytes(session.newBlob(bytes))
 
 
-    override fun reOpenIfNecessary() {
-        if (session.isClosed) {
-            session = openSession()
+    override fun begin(): ManagedSession =
+        apply {
+            session.begin()
         }
-    }
 
-    val clustersPresent: List<String>
-        get() = session.clusterNames.toMutableList()
+    override fun commit(): ManagedSession =
+        apply {
+            session.commit()
+        }
 
-    val name: String
-        get() = session.name
+    override fun rollback(): ManagedSession =
+        apply {
+            session.rollback()
+        }
+
 
     private fun openSession(): ODatabaseDocument =
         let {
@@ -95,6 +117,5 @@ data class OrientSession(
         session.browseClass(clazz).toList().map {
             DocumentElement(it)
         }
-
 
 }

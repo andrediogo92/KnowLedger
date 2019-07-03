@@ -1,14 +1,17 @@
 package pt.um.masb.common.database
 
-interface ManagedSession : NewInstanceSession {
+import pt.um.masb.common.database.query.GenericQuery
+
+interface ManagedSession : NewInstanceSession,
+                           TransactionableSession {
     val isClosed: Boolean
     val managedSchemas: ManagedSchemas
 
-    fun reOpenIfNecessary()
-    fun close()
-    fun query(query: String, params: Map<String, Any>): StorageResults
+    fun close(): ManagedSession
+    fun makeActive(): ManagedSession
+    fun reOpenIfNecessary(): ManagedSession
+    fun query(query: GenericQuery): StorageResults
     fun query(query: String): StorageResults
     fun save(elem: StorageElement): StorageElement?
     fun save(elem: StorageElement, cluster: String): StorageElement?
-    fun makeActive()
 }
