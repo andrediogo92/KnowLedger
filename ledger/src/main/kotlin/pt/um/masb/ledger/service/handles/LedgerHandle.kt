@@ -6,6 +6,7 @@ import pt.um.masb.common.database.StorageID
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.hash.Hasher
 import pt.um.masb.common.misc.base64Encode
+import pt.um.masb.common.misc.extractIdFromClass
 import pt.um.masb.common.results.Failable
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.results.fold
@@ -55,12 +56,12 @@ class LedgerHandle internal constructor(
         get() = pw.getKnownChainHandleIDs()
 
     val knownChains: Outcome<Sequence<ChainHandle>, LedgerFailure>
-        get() = pw.getKnownChainHandles(ledgerHash)
+        get() = pw.getKnownChainHandles()
 
     fun getIdentityByTag(
         tag: String
     ): Outcome<Identity, LoadFailure> =
-        pw.getLedgerIdentityByTag(ledgerHash, tag)
+        pw.getLedgerIdentityByTag(tag)
 
     /**
      * Adds the specified adapter to known adapters and returns
@@ -82,8 +83,7 @@ class LedgerHandle internal constructor(
     ): Outcome<ChainHandle, LedgerFailure> =
         if (dataAdapters.any { it.clazz == clazz }) {
             pw.getChainHandle(
-                ledgerConfig.ledgerId.hashId,
-                clazz
+                clazz.extractIdFromClass()
             )
         } else {
             Outcome.Error(
