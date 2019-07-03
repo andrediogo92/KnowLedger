@@ -1,7 +1,7 @@
 package org.knowledger.common.hash
 
 import org.knowledger.common.data.Difficulty
-import org.knowledger.common.misc.printHexBinary
+import org.knowledger.common.misc.hexString
 import java.math.BigInteger
 
 /**
@@ -21,14 +21,14 @@ inline class Hash(val bytes: ByteArray) {
 
     // Only convert on print.
     val print: String
-        get() = printHexBinary(bytes)
+        get() = bytes.hexString
 
     // Only convert on truncation.
     val truncated: String
         get() = if (bytes.size > TRUNC) {
-            printHexBinary(bytes.sliceArray(0..TRUNC))
+            bytes.sliceArray(0..TRUNC).hexString
         } else {
-            printHexBinary(bytes)
+            bytes.hexString
         }
 
     val difficulty: Difficulty

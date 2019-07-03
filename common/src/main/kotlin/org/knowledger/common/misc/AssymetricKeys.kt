@@ -2,13 +2,13 @@ package org.knowledger.common.misc
 
 import org.knowledger.common.hash.Hashable
 import org.knowledger.common.hash.Hasher
+import java.security.Key
 import java.security.KeyFactory
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
-import java.util.*
 
 /**
  * Signs the [data]'s digest appended to the [publicKey]
@@ -92,12 +92,12 @@ fun verifyECDSASig(
  * and returns the resulting ECDSA [PublicKey] via
  * an [X509EncodedKeySpec].
  */
-fun byteEncodeToPublicKey(bytes: ByteArray): PublicKey =
+fun ByteArray.byteEncodeToPublicKey(): PublicKey =
     KeyFactory.getInstance(
         "ECDSA",
         "BC"
     ).generatePublic(
-        X509EncodedKeySpec(bytes)
+        X509EncodedKeySpec(this)
     )
 
 
@@ -105,26 +105,29 @@ fun byteEncodeToPublicKey(bytes: ByteArray): PublicKey =
  * Accepts a [bytes] [ByteArray] encoded [PublicKey]
  * and returns the resulting ECDSA [PrivateKey] via an [X509EncodedKeySpec].
  */
-fun byteEncodeToPrivateKey(bytes: ByteArray): PrivateKey =
+fun ByteArray.byteEncodeToPrivateKey(): PrivateKey =
     KeyFactory.getInstance(
         "ECDSA",
         "BC"
     ).generatePrivate(
-        PKCS8EncodedKeySpec(bytes)
+        PKCS8EncodedKeySpec(this)
     )
 
 
 /**
- * Accepts an [s] [Base64] encoded string and returns
+ * Accepts a base64 encoded string and returns
  * a ECDSA [PublicKey] via an [X509EncodedKeySpec].
  */
-fun stringToPublicKey(s: String): PublicKey =
-    byteEncodeToPublicKey(base64Decode(s))
+fun String.stringToPublicKey(): PublicKey =
+    base64Decode().byteEncodeToPublicKey()
 
 
 /**
- * Accepts an [s] [Base64] encoded string and returns
+ * Accepts a base64 encoded string and returns
  * a ECDSA [PrivateKey] via an [X509EncodedKeySpec].
  */
-fun stringToPrivateKey(s: String): PrivateKey =
-    byteEncodeToPrivateKey(base64Decode(s))
+fun String.stringToPrivateKey(): PrivateKey =
+    base64Decode().byteEncodeToPrivateKey()
+
+fun Key.getStringFromKey(): String =
+    encoded.base64Encode()

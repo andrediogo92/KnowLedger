@@ -4,8 +4,8 @@ import org.knowledger.common.database.NewInstanceSession
 import org.knowledger.common.database.StorageElement
 import org.knowledger.common.database.StorageType
 import org.knowledger.common.hash.Hash
-import org.knowledger.common.misc.stringToPrivateKey
-import org.knowledger.common.misc.stringToPublicKey
+import org.knowledger.common.misc.byteEncodeToPrivateKey
+import org.knowledger.common.misc.byteEncodeToPublicKey
 import org.knowledger.common.results.Outcome
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.Identity
@@ -42,13 +42,14 @@ object IdentityStorageAdapter : LedgerStorageAdapter<Identity> {
         element: StorageElement
     ): Outcome<Identity, LoadFailure> =
         tryOrLoadUnknownFailure {
+            val publicKeyString: ByteArray =
+                element.getStorageProperty("publicKey")
+            val privateKeyString: ByteArray =
+                element.getStorageProperty("privateKey")
+
             val keyPair = KeyPair(
-                stringToPublicKey(
-                    element.getStorageProperty("publicKey")
-                ),
-                stringToPrivateKey(
-                    element.getStorageProperty("privateKey")
-                )
+                publicKeyString.byteEncodeToPublicKey(),
+                privateKeyString.byteEncodeToPrivateKey()
             )
             Outcome.Ok(
                 Identity(id, keyPair)

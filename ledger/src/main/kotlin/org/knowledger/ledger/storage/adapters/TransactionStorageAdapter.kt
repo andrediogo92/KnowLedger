@@ -58,9 +58,8 @@ object TransactionStorageAdapter : LedgerStorageAdapter<Transaction> {
         element: StorageElement
     ): Outcome<Transaction, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val publicKey = byteEncodeToPublicKey(
+            val publicKeyString: ByteArray =
                 element.getStorageProperty("publicKey")
-            )
 
             zip(
                 ChainIdStorageAdapter.load(
@@ -81,7 +80,7 @@ object TransactionStorageAdapter : LedgerStorageAdapter<Transaction> {
 
                 Transaction(
                     chainId,
-                    publicKey,
+                    publicKeyString.byteEncodeToPublicKey(),
                     data,
                     signature,
                     hash,

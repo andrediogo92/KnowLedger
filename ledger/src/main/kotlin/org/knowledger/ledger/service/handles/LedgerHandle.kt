@@ -46,7 +46,7 @@ class LedgerHandle internal constructor(
 
     fun close() {
         pw.closeCurrentSession()
-        containers.remove(base64Encode(ledgerHash))
+        containers.remove(ledgerHash.base64Encode())
     }
 
     val knownChainTypes: Outcome<Sequence<String>, QueryFailure>
@@ -195,13 +195,13 @@ class LedgerHandle internal constructor(
             }
 
         internal fun getContainer(ledgerHash: Hash): LedgerContainer? =
-            containers[base64Encode(ledgerHash)]
+            containers[ledgerHash.base64Encode()]
 
 
         internal fun getHasher(ledgerHash: Hash): Hasher? =
-            containers[base64Encode(ledgerHash)]?.hasher
+            containers[ledgerHash.base64Encode()]?.hasher
 
         internal fun getFormula(ledgerHash: Hash): DataFormula? =
-            containers[base64Encode(ledgerHash)]?.formula
+            containers[ledgerHash.base64Encode()]?.formula
     }
 }

@@ -45,9 +45,8 @@ object TransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutput>
         element: StorageElement
     ): Outcome<TransactionOutput, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val publicKey = byteEncodeToPublicKey(
+            val publicKeyString: ByteArray =
                 element.getStorageProperty("publicKey")
-            )
             val prevCoinbase =
                 element.getHashProperty("prevCoinbase")
             val hashId =
@@ -58,7 +57,7 @@ object TransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutput>
 
             Outcome.Ok(
                 TransactionOutput(
-                    publicKey,
+                    publicKeyString.byteEncodeToPublicKey(),
                     prevCoinbase,
                     hashId,
                     payout,

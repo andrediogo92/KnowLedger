@@ -13,5 +13,5 @@ class PublicKeyJsonAdapter {
 
     @FromJson
     fun publicKeyFromJson(publicKey: String): PublicKey =
-        stringToPublicKey(publicKey)
+        publicKey.stringToPublicKey()
 }

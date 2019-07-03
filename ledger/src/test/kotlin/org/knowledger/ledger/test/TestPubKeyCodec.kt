@@ -24,14 +24,14 @@ class TestPubKeyCodec {
     fun `Test encode and decode of private and public keys`() {
         val encpr = pr.getStringFromKey()
         val encpub = pub.getStringFromKey()
-        val decpr = stringToPrivateKey(encpr)
-        val decpub = stringToPublicKey(encpub)
+        val decpr = encpr.stringToPrivateKey()
+        val decpub = encpub.stringToPublicKey()
         //Decode of encode matches decode
         assertThat(
-            stringToPublicKey(encpub)
+            encpub.stringToPublicKey()
         ).isEqualTo(decpub)
         assertThat(
-            stringToPrivateKey(encpr)
+            encpr.stringToPrivateKey()
         ).isEqualTo(decpr)
         //Re-encode matches original encode.
         assertThat(

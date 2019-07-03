@@ -103,10 +103,11 @@ class LedgerByTag(
                 )
             )
         }
+        val hash = ledgerConfig.ledgerId.hashId
         if (session == null) {
-            session = db?.newManagedSession(base64Encode(ledgerConfig.ledgerId.hashId))
+            session = db?.newManagedSession(hash.base64Encode())
         }
-        persistenceWrapper = PersistenceWrapper(ledgerConfig.ledgerId.hashId, session!!)
+        persistenceWrapper = PersistenceWrapper(hash, session!!)
         persistenceWrapper.registerDefaultSchemas()
     }
 

@@ -5,11 +5,6 @@ import java.time.Instant
 import java.util.*
 import kotlin.experimental.and
 
-// Only convert on print.
-val ByteArray.hexString: String
-    get() = printHexBinary(this)
-
-
 fun Long.bytes(): ByteArray {
     val magic = Long.SIZE_BYTES / Byte.SIZE_BYTES
     val bits = Byte.SIZE_BITS
@@ -66,6 +61,7 @@ fun UUID.bytes(): ByteArray =
 fun BigDecimal.bytes(): ByteArray =
     unscaledValue().toByteArray()
 
+
 fun flattenBytes(
     byteArrays: Array<ByteArray>,
     vararg bytes: Byte
@@ -82,7 +78,9 @@ fun flattenBytes(
     return final
 }
 
-fun flattenBytes(vararg byteArrays: ByteArray): ByteArray {
+fun flattenBytes(
+    vararg byteArrays: ByteArray
+): ByteArray {
     val final = ByteArray(byteArrays.sumBy { it.size })
     var into = 0
     byteArrays.forEach {

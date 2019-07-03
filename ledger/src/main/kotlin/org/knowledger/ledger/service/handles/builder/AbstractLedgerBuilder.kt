@@ -68,9 +68,10 @@ abstract class AbstractLedgerBuilder {
     }
 
     protected fun addToContainers() {
-        LedgerHandle.containers[base64Encode(ledgerConfig.ledgerId.hashId)] =
+        val hash = ledgerConfig.ledgerId.hashId
+        LedgerHandle.containers[hash.base64Encode()] =
             LedgerContainer(
-                ledgerConfig.ledgerId.hashId,
+                hash,
                 hasher,
                 ledgerConfig.ledgerParams,
                 ledgerConfig.coinbaseParams,

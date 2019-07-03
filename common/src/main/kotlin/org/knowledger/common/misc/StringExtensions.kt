@@ -1,7 +1,6 @@
 package org.knowledger.common.misc
 
 import org.knowledger.common.config.LedgerConfiguration
-import java.security.Key
 
 @Suppress("NOTHING_TO_INLINE")
 @UseExperimental(ExperimentalStdlibApi::class)
@@ -13,12 +12,7 @@ inline fun String.encodeStringToUTF8(): ByteArray =
 inline fun ByteArray.decodeUTF8ToString(): String =
     this.decodeToString()
 
-fun Key.getStringFromKey(): String =
-    base64Encode(encoded)
-
 fun <T> Class<T>.extractIdFromClass(): String =
-    base64Encode(
-        LedgerConfiguration.DEFAULT_CRYPTER.applyHash(
-            this.toGenericString()
-        )
-    )
+    LedgerConfiguration.DEFAULT_CRYPTER.applyHash(
+        toGenericString()
+    ).base64Encode()

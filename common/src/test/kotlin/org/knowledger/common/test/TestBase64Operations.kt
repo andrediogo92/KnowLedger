@@ -12,8 +12,8 @@ class TestBase64Operations {
     @Test
     fun `base64 encoding decoding from string`() {
         val check = "thisissampletext"
-        val base64 = base64Encode(check)
-        val decoded = base64DecodeToString(base64)
+        val base64 = check.base64Encode()
+        val decoded = base64.base64DecodeToString()
         assertThat(
             base64
         ).isEqualTo(
@@ -45,8 +45,8 @@ class TestBase64Operations {
             0x6d.toByte(), 0x70, 0x6c.toByte(), 0x65,
             0x74, 0x65, 0x78, 0x74
         )
-        val base64 = base64Encode(check)
-        val decoded = base64Decode(base64)
+        val base64 = check.base64Encode()
+        val decoded = base64.base64Decode()
         assertThat(
             base64
         ).isEqualTo(

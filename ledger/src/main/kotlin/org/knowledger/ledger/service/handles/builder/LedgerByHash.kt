@@ -64,7 +64,7 @@ data class LedgerByHash(
             )
         }
         if (session == null) {
-            session = db?.newManagedSession(base64Encode(hash))
+            session = db?.newManagedSession(hash.base64Encode())
         }
         persistenceWrapper = PersistenceWrapper(hash, session!!)
     }
