@@ -5,9 +5,8 @@ import pt.um.masb.common.database.ManagedSchemas
 import pt.um.masb.common.database.ManagedSession
 import pt.um.masb.common.database.NewInstanceSession
 import pt.um.masb.common.database.StorageID
-import pt.um.masb.common.database.query.Filters
 import pt.um.masb.common.database.query.GenericQuery
-import pt.um.masb.common.database.query.GenericSelect
+import pt.um.masb.common.database.query.UnspecificQuery
 import pt.um.masb.common.hash.Hash
 import pt.um.masb.common.results.Outcome
 import pt.um.masb.common.results.allValues
@@ -28,6 +27,7 @@ import pt.um.masb.ledger.results.tryOrDataUnknownFailure
 import pt.um.masb.ledger.results.tryOrLedgerUnknownFailure
 import pt.um.masb.ledger.results.tryOrLoadUnknownFailure
 import pt.um.masb.ledger.results.tryOrQueryUnknownFailure
+import pt.um.masb.ledger.results.use
 import pt.um.masb.ledger.service.Identity
 import pt.um.masb.ledger.service.LedgerConfig
 import pt.um.masb.ledger.service.ServiceClass
@@ -49,20 +49,17 @@ import pt.um.masb.ledger.storage.adapters.TransactionStorageAdapter
 
 /**
  * A Thread-safe wrapper into a DB context
- * for the ledger library.
+ * for a ledger.
  */
 internal data class PersistenceWrapper(
+    private val ledgerHash: Hash,
     private val session: ManagedSession
 ) : EntityStore, ServiceClass {
     private val schemas = session.managedSchemas
     internal val isClosed
         get() = session.isClosed
 
-    init {
-        registerDefaultSchemas()
-    }
-
-    private fun registerDefaultSchemas(
+    internal fun registerDefaultSchemas(
     ) {
         val schemas: Set<SchemaProvider<out Any>> =
             setOf(
@@ -161,6 +158,22 @@ internal data class PersistenceWrapper(
         }
     }
 
+    private fun beginTransaction() =
+        apply {
+            session.begin()
+        }
+
+    private fun commitTransaction() =
+        apply {
+            session.commit()
+        }
+
+    private fun rollbackTransaction() =
+        apply {
+            session.rollback()
+        }
+
+
     internal fun closeCurrentSession(): PersistenceWrapper =
         apply {
             session.close()
@@ -182,18 +195,16 @@ internal data class PersistenceWrapper(
         loader: Loadable<T>
     ): Outcome<T, DataFailure> =
         tryOrDataUnknownFailure {
-            val res = session.query(
-                query.query,
-                query.params
-            )
-            if (res.hasNext()) {
-                loader.load(res.next().element)
-            } else {
-                Outcome.Error<DataFailure>(
-                    DataFailure.NonExistentData(
-                        "Empty ResultSet for ${query.query}"
+            session.query(query).use {
+                if (this.hasNext()) {
+                    loader.load(this.next().element)
+                } else {
+                    Outcome.Error<DataFailure>(
+                        DataFailure.NonExistentData(
+                            "Empty ResultSet for ${query.query}"
+                        )
                     )
-                )
+                }
             }
         }
 
@@ -208,26 +219,23 @@ internal data class PersistenceWrapper(
      * Returns an [Outcome] with a possible [LoadFailure].
      */
     internal fun <T : LedgerContract> queryUniqueResult(
-        ledgerHash: Hash,
         query: GenericQuery,
         loader: StorageLoadable<T>
     ): Outcome<T, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val res = session.query(
-                query.query,
-                query.params
-            )
-            if (res.hasNext()) {
-                loader.load(
-                    ledgerHash,
-                    res.next().element
-                )
-            } else {
-                Outcome.Error<LoadFailure>(
-                    LoadFailure.NonExistentData(
-                        "Empty ResultSet for ${query.query}"
+            session.query(query).use {
+                if (this.hasNext()) {
+                    loader.load(
+                        ledgerHash,
+                        this.next().element
                     )
-                )
+                } else {
+                    Outcome.Error<LoadFailure>(
+                        LoadFailure.NonExistentData(
+                            "Empty ResultSet for ${query.query}"
+                        )
+                    )
+                }
             }
         }
 
@@ -248,25 +256,22 @@ internal data class PersistenceWrapper(
      * Returns an [Outcome] with a possible [LedgerFailure].
      */
     internal fun <T : ServiceClass> queryUniqueResult(
-        ledgerHash: Hash,
         query: GenericQuery,
         loader: ServiceLoadable<T>
     ): Outcome<T, LedgerFailure> =
         tryOrLedgerUnknownFailure {
-            val res = session.query(
-                query.query,
-                query.params
-            )
-            if (res.hasNext()) {
-                loader.load(
-                    ledgerHash, res.next().element
-                )
-            } else {
-                Outcome.Error<LedgerFailure>(
-                    LedgerFailure.NonExistentData(
-                        "Empty ResultSet for ${query.query}"
+            session.query(query).use {
+                if (this.hasNext()) {
+                    loader.load(
+                        ledgerHash, this.next().element
                     )
-                )
+                } else {
+                    Outcome.Error<LedgerFailure>(
+                        LedgerFailure.NonExistentData(
+                            "Empty ResultSet for ${query.query}"
+                        )
+                    )
+                }
             }
         }
 
@@ -288,18 +293,16 @@ internal data class PersistenceWrapper(
         loader: QueryLoadable<T>
     ): Outcome<T, QueryFailure> =
         tryOrQueryUnknownFailure {
-            val res = session.query(
-                query.query,
-                query.params
-            )
-            if (res.hasNext()) {
-                loader.load(res.next().element)
-            } else {
-                Outcome.Error<QueryFailure>(
-                    QueryFailure.NonExistentData(
-                        "Empty ResultSet for ${query.query}"
+            session.query(query).use {
+                if (this.hasNext()) {
+                    loader.load(this.next().element)
+                } else {
+                    Outcome.Error<QueryFailure>(
+                        QueryFailure.NonExistentData(
+                            "Empty ResultSet for ${query.query}"
+                        )
                     )
-                )
+                }
             }
         }
 
@@ -320,12 +323,11 @@ internal data class PersistenceWrapper(
         loader: Loadable<T>
     ): Outcome<Sequence<T>, DataFailure> =
         tryOrDataUnknownFailure {
-            session
-                .query(query.query, query.params)
-                .asSequence()
-                .map {
+            session.query(query).use {
+                asSequence().map {
                     loader.load(it.element)
                 }.allValues()
+            }
         }
 
     /**
@@ -341,17 +343,15 @@ internal data class PersistenceWrapper(
      * over a [Sequence].
      */
     internal fun <T : LedgerContract> queryResults(
-        ledgerHash: Hash,
         query: GenericQuery,
         loader: StorageLoadable<T>
     ): Outcome<Sequence<T>, LoadFailure> =
         tryOrLoadUnknownFailure {
-            session
-                .query(query.query, query.params)
-                .asSequence()
-                .map {
+            session.query(query).use {
+                asSequence().map {
                     loader.load(ledgerHash, it.element)
                 }.allValues()
+            }
         }
 
     /**
@@ -373,17 +373,15 @@ internal data class PersistenceWrapper(
      * over a [Sequence].
      */
     internal fun <T : ServiceClass> queryResults(
-        ledgerHash: Hash,
         query: GenericQuery,
         loader: ServiceLoadable<T>
     ): Outcome<Sequence<T>, LedgerFailure> =
         tryOrLedgerUnknownFailure {
-            session
-                .query(query.query, query.params)
-                .asSequence()
-                .map {
+            session.query(query).use {
+                asSequence().map {
                     loader.load(ledgerHash, it.element)
                 }.allValues()
+            }
         }
 
 
@@ -405,12 +403,11 @@ internal data class PersistenceWrapper(
         loader: QueryLoadable<T>
     ): Outcome<Sequence<T>, QueryFailure> =
         tryOrQueryUnknownFailure {
-            session
-                .query(query.query, query.params)
-                .asSequence()
-                .map {
+            session.query(query).use {
+                asSequence().map {
                     loader.load(it.element)
                 }.allValues()
+            }
         }
 
 
@@ -424,7 +421,7 @@ internal data class PersistenceWrapper(
 
     /**
      * Persists an [element] to an active [ManagedSession]
-     * in a synchronous manner.
+     * in a synchronous manner, in a transaction context.
      *
      * Returns an [Outcome] with a possible [QueryFailure]
      * over a [StorageID].
@@ -436,10 +433,13 @@ internal data class PersistenceWrapper(
     ): Outcome<StorageID, QueryFailure> =
         tryOrQueryUnknownFailure {
             val elem = storable.store(element, session)
+            beginTransaction()
             val r = session.save(elem)
             if (r != null) {
+                commitTransaction()
                 Outcome.Ok(r.identity)
             } else {
+                rollbackTransaction()
                 Outcome.Error<QueryFailure>(
                     QueryFailure.NonExistentData(
                         "Failed to save element ${elem.print()}"
@@ -483,41 +483,47 @@ internal data class PersistenceWrapper(
 
 
     internal fun getLedgerIdentityByTag(
-        ledgerHash: Hash,
         id: String
     ): Outcome<Identity, LoadFailure> =
         IdentityStorageAdapter.let {
             queryUniqueResult(
-                ledgerHash,
-                GenericSelect(
-                    it.id
-                ).withSimpleFilter(
-                    Filters.WHERE,
-                    "id",
-                    "id",
-                    id
+                UnspecificQuery(
+                    """
+                        SELECT 
+                        FROM ${it.id}
+                        WHERE id = :id
+                    """.trimIndent(),
+                    mapOf(
+                        "id" to id
+                    )
                 ),
                 it
             )
         }
 
-
     internal fun getLedgerHandleByHash(
-        hashId: Hash
+        hash: Hash
     ): Outcome<LedgerConfig, LedgerHandle.Failure> =
         session.query(
-            "SELECT * FROM ${LedgerConfigStorageAdapter.id} WHERE hashId = :hashId",
-            mapOf(
-                "hashId" to hashId
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${LedgerConfigStorageAdapter.id}
+                    WHERE hashId = :hashId
+                """.trimIndent(),
+                mapOf(
+                    "hashId" to hash.bytes
+                )
             )
         ).let {
             if (it.hasNext()) {
-                LedgerConfigStorageAdapter.load(hashId, it.next().element)
+                LedgerConfigStorageAdapter.load(
+                    hash, it.next().element
+                )
             } else {
                 Outcome.Error(
                     LedgerHandle.Failure.NonExistentLedger
                 )
             }
         }
-
 }
