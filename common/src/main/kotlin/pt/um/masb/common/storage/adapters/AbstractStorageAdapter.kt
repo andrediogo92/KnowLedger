@@ -16,7 +16,7 @@ abstract class AbstractStorageAdapter<T : LedgerData>(
     val clazz: Class<out T>
 ) : StorageAdapter<T> {
     override val id: String by lazy {
-        extractIdFromClass(clazz)
+        clazz.extractIdFromClass()
     }
 
     protected inline fun <T : LedgerData> commonLoad(

@@ -16,9 +16,9 @@ inline fun ByteArray.decodeUTF8ToString(): String =
 fun Key.getStringFromKey(): String =
     base64Encode(encoded)
 
-fun <T> extractIdFromClass(clazz: Class<T>): String =
+fun <T> Class<T>.extractIdFromClass(): String =
     base64Encode(
         LedgerConfiguration.DEFAULT_CRYPTER.applyHash(
-            clazz.toGenericString()
+            this.toGenericString()
         )
     )
