@@ -78,6 +78,19 @@ inline fun <T> tryOrQueryUnknownFailure(
         )
     }
 
+/**
+ * Executes the given [block] function on this resource and returns
+ * its result and then closes it down correctly whether an exception
+ * is thrown or not.
+ */
+@Suppress("ConvertTryFinallyToUseCall")
+inline fun <R : AutoCloseable, T> R.use(block: R.() -> T): T =
+    try {
+        this.block()
+    } finally {
+        this.close()
+    }
+
 
 fun deadCode(): Nothing {
     throw RuntimeException("Dead code invoked")
