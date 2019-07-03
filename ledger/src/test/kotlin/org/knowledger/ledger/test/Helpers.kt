@@ -2,12 +2,10 @@ package org.knowledger.ledger.test
 
 import assertk.fail
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
 import org.knowledger.common.config.LedgerConfiguration
 import org.knowledger.common.data.DataFormula
 import org.knowledger.common.data.DefaultDiff
 import org.knowledger.common.data.Difficulty
-import org.knowledger.common.data.LedgerData
 import org.knowledger.common.data.Payout
 import org.knowledger.common.hash.Hash
 import org.knowledger.common.hash.Hash.Companion.emptyHash
@@ -27,11 +25,7 @@ import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.data.TUnit
 import org.knowledger.ledger.data.TemperatureData
 import org.knowledger.ledger.data.TrafficFlowData
-import org.knowledger.ledger.json.BigDecimalJsonAdapter
-import org.knowledger.ledger.json.BigIntegerJsonAdapter
-import org.knowledger.ledger.json.HashJsonAdapter
-import org.knowledger.ledger.json.InstantJsonAdapter
-import org.knowledger.ledger.json.PublicKeyJsonAdapter
+import org.knowledger.ledger.json.addLedgerAdapters
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
@@ -46,16 +40,11 @@ import java.math.BigDecimal
 internal val moshi by lazy {
     Moshi
         .Builder()
-        .add(HashJsonAdapter())
-        .add(PublicKeyJsonAdapter())
-        .add(InstantJsonAdapter())
-        .add(BigDecimalJsonAdapter())
-        .add(BigIntegerJsonAdapter())
-        .add(
-            PolymorphicJsonAdapterFactory
-                .of(LedgerData::class.java, "type")
-                .withSubtype(TemperatureData::class.java, "Temperature")
-                .withSubtype(TrafficFlowData::class.java, "TrafficFlowData")
+        .addLedgerAdapters(
+            mapOf(
+                TemperatureData::class.java to "Temperature",
+                TrafficFlowData::class.java to "TrafficFlowData"
+            )
         )
         .build()
 }
@@ -81,7 +70,7 @@ internal fun generateBlock(
         id, ts, hasher, formula, coinbaseParams
     )
     return Block(
-        mutableListOf(),
+        sortedSetOf(),
         coinbase,
         BlockHeader(
             generateChainId(hasher),
@@ -90,7 +79,7 @@ internal fun generateBlock(
             Difficulty.INIT_DIFFICULTY, 2,
             blockParams
         ),
-        MerkleTree(hasher, coinbase, ts)
+        MerkleTree(hasher, coinbase, ts.toTypedArray())
     )
 }
 
@@ -162,7 +151,7 @@ internal fun generateBlockWithChain(
         id, ts, hasher, formula, coinbaseParams
     )
     return Block(
-        mutableListOf(),
+        sortedSetOf(),
         coinbase,
         BlockHeader(
             chainId,
@@ -171,7 +160,7 @@ internal fun generateBlockWithChain(
             Difficulty.INIT_DIFFICULTY, 2,
             blockParams
         ),
-        MerkleTree(hasher, coinbase, ts)
+        MerkleTree(hasher, coinbase, ts.toTypedArray())
     )
 }
 
