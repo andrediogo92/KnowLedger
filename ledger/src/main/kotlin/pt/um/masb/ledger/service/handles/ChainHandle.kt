@@ -43,7 +43,7 @@ import java.time.ZonedDateTime
 data class ChainHandle internal constructor(
     val id: ChainId
 ) : ServiceClass {
-    val ledgerHash = id.ledgerHash
+    val chainHash = id.hashId
     private val hasher: Hasher
     private val pw: PersistenceWrapper
     val ledgerParams: LedgerParams
@@ -52,7 +52,7 @@ data class ChainHandle internal constructor(
 
     init {
         LedgerHandle.getContainer(
-            ledgerHash
+            id.ledgerHash
         )!!.let {
             hasher = it.hasher
             pw = it.persistenceWrapper
@@ -84,7 +84,7 @@ data class ChainHandle internal constructor(
      * [Block] in the ledger.
      */
     val lastBlock: Outcome<Block, LoadFailure>
-        get() = pw.getLatestBlock(ledgerHash)
+        get() = pw.getLatestBlock(chainHash)
 
 
     /**
@@ -92,7 +92,7 @@ data class ChainHandle internal constructor(
      * [BlockHeader] in the ledger.
      */
     val lastBlockHeader: Outcome<BlockHeader, LoadFailure>
-        get() = pw.getLatestBlockHeader(ledgerHash)
+        get() = pw.getLatestBlockHeader(chainHash)
 
 
     internal constructor(
@@ -172,7 +172,7 @@ data class ChainHandle internal constructor(
         val cacheSize = LedgerConfiguration.CACHE_SIZE
         var valid = true
         val blockResult =
-            pw.getBlockByBlockHeight(ledgerHash, 1)
+            pw.getBlockByBlockHeight(chainHash, 1)
         lateinit var previousLastBlock: Block
         var failure: Outcome<Boolean, QueryFailure>
         failure = when (blockResult) {
@@ -192,7 +192,7 @@ data class ChainHandle internal constructor(
             highIndex += cacheSize
             val blocks =
                 pw.getBlockListByBlockHeightInterval(
-                    ledgerHash,
+                    chainHash,
                     lowIndex,
                     highIndex
                 )
@@ -266,7 +266,7 @@ data class ChainHandle internal constructor(
      */
     fun getBlock(hash: Hash): Outcome<Block, LoadFailure> =
         pw.getBlockByHeaderHash(
-            ledgerHash, hash
+            chainHash, hash
         )
 
     /**
@@ -277,7 +277,7 @@ data class ChainHandle internal constructor(
         blockheight: Long
     ): Outcome<Block, LoadFailure> =
         pw.getBlockByBlockHeight(
-            ledgerHash, blockheight
+            chainHash, blockheight
         )
 
     /**
@@ -288,7 +288,7 @@ data class ChainHandle internal constructor(
         hash: Hash
     ): Outcome<BlockHeader, LoadFailure> =
         pw.getBlockHeaderByHash(
-            ledgerHash, hash
+            chainHash, hash
         )
 
     /**
@@ -296,7 +296,7 @@ data class ChainHandle internal constructor(
      */
     fun hasBlock(hash: Hash): Boolean =
         (pw.getBlockByHeaderHash(
-            ledgerHash, hash
+            chainHash, hash
         ) is Outcome.Ok<*>)
 
     /**
@@ -307,7 +307,7 @@ data class ChainHandle internal constructor(
         hash: Hash
     ): Outcome<Block, LoadFailure> =
         pw.getBlockByPrevHeaderHash(
-            ledgerHash, hash
+            chainHash, hash
         )
 
     /**
@@ -318,7 +318,7 @@ data class ChainHandle internal constructor(
         hash: Hash
     ): Outcome<BlockHeader, LoadFailure> =
         pw.getBlockHeaderByPrevHeaderHash(
-            ledgerHash, hash
+            chainHash, hash
         )
 
 
@@ -339,7 +339,7 @@ data class ChainHandle internal constructor(
         startInclusive: Long, endInclusive: Long
     ): Outcome<Sequence<Block>, LoadFailure> =
         pw.getBlockListByBlockHeightInterval(
-            ledgerHash,
+            chainHash,
             startInclusive,
             endInclusive
         )
@@ -433,7 +433,7 @@ data class ChainHandle internal constructor(
         val cstamp = triggerBlock.header.timestamp.epochSecond
         val fromHeight = cmp - ledgerParams.recalcTrigger
         val recalcBlock =
-            pw.getBlockByBlockHeight(ledgerHash, fromHeight)
+            pw.getBlockByBlockHeight(chainHash, fromHeight)
         return when (recalcBlock) {
             is Outcome.Ok<Block> -> {
                 val pstamp = recalcBlock.value.header.timestamp.epochSecond
