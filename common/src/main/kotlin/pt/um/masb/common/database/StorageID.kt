@@ -1,5 +1,6 @@
 package pt.um.masb.common.database
 
 interface StorageID {
-    fun getBytes(): StorageBytes
+    val element: StorageElement
+    val bytes: StorageBytes
 }
