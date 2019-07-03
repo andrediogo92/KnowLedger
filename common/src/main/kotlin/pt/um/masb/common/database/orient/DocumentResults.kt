@@ -9,6 +9,10 @@ import java.util.function.Consumer
 internal inline class DocumentResults constructor(
     internal val results: OResultSet
 ) : StorageResults {
+    override fun close() {
+        results.close()
+    }
+
     override fun hasNext(): Boolean =
         results.hasNext()
 
