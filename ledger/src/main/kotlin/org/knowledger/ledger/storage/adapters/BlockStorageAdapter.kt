@@ -18,7 +18,7 @@ object BlockStorageAdapter : LedgerStorageAdapter<Block> {
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "value" to StorageType.LIST,
+            "data" to StorageType.SET,
             "coinbase" to StorageType.LINK,
             "header" to StorageType.LINK,
             "merkleTree" to StorageType.LINK
@@ -30,7 +30,7 @@ object BlockStorageAdapter : LedgerStorageAdapter<Block> {
     ): StorageElement =
         session.newInstance(id).apply {
             setElementList(
-                "value",
+                "data",
                 toStore.data.map {
                     TransactionStorageAdapter.store(
                         it, session
@@ -58,7 +58,7 @@ object BlockStorageAdapter : LedgerStorageAdapter<Block> {
         tryOrLoadUnknownFailure {
             zip(
                 element
-                    .getElementList("value")
+                    .getElementSet("data")
                     .asSequence()
                     .map {
                         TransactionStorageAdapter.load(
@@ -86,7 +86,7 @@ object BlockStorageAdapter : LedgerStorageAdapter<Block> {
             )
             { data, coinbase, header, merkleTree ->
                 Block(
-                    data.toMutableList(),
+                    data.toSortedSet(),
                     coinbase,
                     header,
                     merkleTree

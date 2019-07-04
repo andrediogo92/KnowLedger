@@ -268,7 +268,7 @@ class TestOrientDatabase {
                 )
                 assertThat(block.addTransaction(transactions[0]))
                     .isTrue()
-                assertThat(block.data[0])
+                assertThat(block.data.first())
                     .isNotNull()
                     .isEqualTo(transactions[0])
             }
@@ -306,7 +306,7 @@ class TestOrientDatabase {
                 assertThat(block).isNotNull()
                 assertThat(block.addTransaction(testTraffic))
                     .isTrue()
-                assertThat(block.data[0])
+                assertThat(block.data.first())
                     .isNotNull()
                     .isEqualTo(testTraffic)
                 Logger.info {

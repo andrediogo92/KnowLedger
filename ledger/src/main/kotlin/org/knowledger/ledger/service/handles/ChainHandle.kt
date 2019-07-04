@@ -543,7 +543,7 @@ data class ChainHandle internal constructor(
                 .getContainer(chainId.ledgerHash)!!
                 .let {
                     Block(
-                        mutableListOf(),
+                        sortedSetOf(),
                         Coinbase(it),
                         getOriginHeader(chainId),
                         MerkleTree(it.hasher)

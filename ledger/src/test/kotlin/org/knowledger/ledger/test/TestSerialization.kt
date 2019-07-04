@@ -1,6 +1,8 @@
 package org.knowledger.ledger.test
 
+import assertk.assertAll
 import assertk.assertThat
+import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
@@ -29,10 +31,10 @@ class TestSerialization {
             chainId, id, testTransactions
         )
 
-        testTransactions.forEachIndexed { i, t ->
+        testTransactions.forEach { t ->
             assertThat(block.addTransaction(t))
                 .isTrue()
-            assertThat(block.data[i])
+            assertThat(block.data.last())
                 .isNotNull()
                 .isEqualTo(t)
         }
@@ -48,6 +50,12 @@ class TestSerialization {
         //Even though everything seems absolutely fine
         //this blows up.
         //Deserialization is unnecessary though.
-        assertThat(rebuiltBlock).isEqualTo(block)
+        assertAll {
+            assertThat(rebuiltBlock.coinbase).isEqualTo(block.coinbase)
+            assertThat(rebuiltBlock.data.toTypedArray()).containsExactly(*block.data.toTypedArray())
+            assertThat(rebuiltBlock.header).isEqualTo(block.header)
+            assertThat(rebuiltBlock.merkleTree).isEqualTo(block.merkleTree)
+            assertThat(rebuiltBlock).isEqualTo(block)
+        }
     }
 }

@@ -91,10 +91,10 @@ data class TransactionOutput(
         if (hash.contentEquals(other.hash)) return false
         if (payout.contentEquals(other.payout)) return false
         if (tx.size != other.tx.size) return false
-        if (!tx.asSequence()
+        if (tx.asSequence()
                 .zip(other.tx.asSequence())
-                .all { (tx1, tx2) ->
-                    tx1.contentEquals(tx2)
+                .any { (tx1, tx2) ->
+                    !tx1.contentEquals(tx2)
                 }
         ) return false
         return true

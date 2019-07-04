@@ -33,7 +33,12 @@ data class Transaction(
 ) : Sizeable,
     Hashed,
     Hashable,
-    LedgerContract {
+    LedgerContract,
+    Comparable<Transaction> {
+    override fun compareTo(other: Transaction): Int =
+        compareByDescending<Transaction> {
+            it.data.instant
+        }.compare(this, other)
 
 
     val signature: ByteArray

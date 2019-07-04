@@ -11,10 +11,11 @@ import org.knowledger.ledger.data.MerkleTree
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.openjdk.jol.info.ClassLayout
 import org.tinylog.kotlin.Logger
+import java.util.*
 
 @JsonClass(generateAdapter = true)
 data class Block(
-    val data: MutableList<Transaction>,
+    val data: SortedSet<Transaction>,
     val coinbase: Coinbase,
     val header: BlockHeader,
     var merkleTree: MerkleTree
@@ -56,7 +57,7 @@ data class Block(
         blockheight: Long,
         params: BlockParams
     ) : this(
-        mutableListOf(),
+        sortedSetOf(),
         Coinbase(LedgerHandle.getContainer(chainId.ledgerHash)!!),
         BlockHeader(
             chainId,
@@ -88,7 +89,7 @@ data class Block(
         ) {
             if (data.size < header.params.blockLength) {
                 if (transaction.processTransaction()) {
-                    insertSorted(transaction)
+                    data.add(transaction)
                     transactionsSize += transactionSize
                     Logger.info {
                         "Transaction Successfully added to Block"
@@ -101,20 +102,6 @@ data class Block(
             "Transaction failed to process. Discarded."
         }
         return false
-    }
-
-    /**
-     * Transactions are sorted in descending order of value internalTimestamp.
-     *
-     * @param transaction Transaction to insert in descending order.
-     */
-    private fun insertSorted(
-        transaction: Transaction
-    ) {
-        data.add(transaction)
-        data.sortByDescending {
-            it.data.instant
-        }
     }
 
     /**
@@ -139,7 +126,7 @@ data class Block(
     fun verifyTransactions(): Boolean {
         return merkleTree.verifyBlockTransactions(
             coinbase,
-            data
+            data.toTypedArray()
         )
     }
 

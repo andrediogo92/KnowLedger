@@ -228,10 +228,11 @@ data class Coinbase(
         if (other !is Coinbase) return false
 
         if (payoutTXO.size != other.payoutTXO.size) return false
-        if (!payoutTXO.asSequence()
+        if (payoutTXO
+                .asSequence()
                 .zip(other.payoutTXO.asSequence())
-                .all { (tx1, tx2) ->
-                    tx1 == tx2
+                .any { (tx1, tx2) ->
+                    tx1 != tx2
                 }
         ) return false
         if (!coinbase.contentEquals(other.coinbase)) return false
