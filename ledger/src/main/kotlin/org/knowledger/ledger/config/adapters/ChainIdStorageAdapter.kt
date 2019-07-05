@@ -6,7 +6,9 @@ import org.knowledger.common.database.StorageType
 import org.knowledger.common.hash.Hash
 import org.knowledger.common.results.Outcome
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.results.tryOrLedgerUnknownFailure
+import org.knowledger.ledger.config.StorageAwareChainId
+import org.knowledger.ledger.config.StorageUnawareChainId
+import org.knowledger.ledger.results.deadCode
 import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
 import org.knowledger.ledger.service.results.LedgerFailure
 
@@ -24,10 +26,13 @@ object ChainIdStorageAdapter : ServiceStorageAdapter<ChainId> {
     override fun store(
         toStore: ChainId, session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setStorageProperty("tag", toStore.tag)
-            setHashProperty("ledgerHash", toStore.ledgerHash)
-            setHashProperty("hashId", toStore.hashId)
+        when (toStore) {
+            is StorageAwareChainId ->
+                SAChainIdStorageAdapter.store(toStore, session)
+            is StorageUnawareChainId ->
+                SUChainIdStorageAdapter.store(toStore, session)
+            else ->
+                deadCode()
         }
 
 
@@ -35,21 +40,5 @@ object ChainIdStorageAdapter : ServiceStorageAdapter<ChainId> {
         ledgerHash: Hash,
         element: StorageElement
     ): Outcome<ChainId, LedgerFailure> =
-        tryOrLedgerUnknownFailure {
-            val hash =
-                element.getHashProperty("hashId")
-
-            val ledger =
-                element.getHashProperty("ledgerHash")
-
-            assert(ledger.contentEquals(ledgerHash))
-
-            Outcome.Ok(
-                ChainId(
-                    element.getStorageProperty("tag"),
-                    ledger,
-                    hash
-                )
-            )
-        }
+        SAChainIdStorageAdapter.load(ledgerHash, element)
 }
