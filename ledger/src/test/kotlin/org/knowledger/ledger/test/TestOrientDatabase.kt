@@ -42,6 +42,7 @@ import org.knowledger.ledger.service.transactions.getTransactionsByClass
 import org.knowledger.ledger.service.transactions.getTransactionsFromAgent
 import org.knowledger.ledger.service.transactions.getTransactionsOrderedByTimestamp
 import org.knowledger.ledger.storage.Block
+import org.knowledger.ledger.storage.StorageUnawareBlock
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
@@ -259,7 +260,7 @@ class TestOrientDatabase {
             @Test
             fun `Test simple insertion`() {
 
-                val block = Block(
+                val block = StorageUnawareBlock(
                     temperatureChain.id,
                     emptyHash,
                     MIN_DIFFICULTY,
@@ -296,7 +297,7 @@ class TestOrientDatabase {
                     hasher
                 )
 
-                val block = Block(
+                val block = StorageUnawareBlock(
                     trafficChain.id,
                     emptyHash,
                     MIN_DIFFICULTY,
@@ -310,7 +311,8 @@ class TestOrientDatabase {
                     .isNotNull()
                     .isEqualTo(testTraffic)
                 Logger.info {
-                    moshi.adapter(Block::class.java).toJson(block)
+                    moshi.adapter<Block>(Block::class.java)
+                        .toJson(block)
                 }
             }
 

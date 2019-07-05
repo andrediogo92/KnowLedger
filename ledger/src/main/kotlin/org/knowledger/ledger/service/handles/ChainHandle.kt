@@ -17,6 +17,8 @@ import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.LedgerParams
+import org.knowledger.ledger.config.StorageAwareChainId
+import org.knowledger.ledger.config.StorageUnawareChainId
 import org.knowledger.ledger.data.DummyData
 import org.knowledger.ledger.data.MerkleTree
 import org.knowledger.ledger.data.PhysicalData
@@ -28,6 +30,7 @@ import org.knowledger.ledger.service.transactions.*
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
+import org.knowledger.ledger.storage.StorageUnawareBlock
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 import org.tinylog.kotlin.Logger
@@ -99,7 +102,11 @@ data class ChainHandle internal constructor(
         tag: String,
         ledgerHash: Hash,
         hasher: Hasher
-    ) : this(ChainId(tag, ledgerHash, hasher))
+    ) : this(
+        StorageAwareChainId(
+            StorageUnawareChainId(tag, ledgerHash, hasher)
+        )
+    )
 
 
     internal constructor(
@@ -542,7 +549,7 @@ data class ChainHandle internal constructor(
             LedgerHandle
                 .getContainer(chainId.ledgerHash)!!
                 .let {
-                    Block(
+                    StorageUnawareBlock(
                         sortedSetOf(),
                         Coinbase(it),
                         getOriginHeader(chainId),

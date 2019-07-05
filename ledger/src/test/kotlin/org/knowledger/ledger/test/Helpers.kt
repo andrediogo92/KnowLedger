@@ -20,6 +20,8 @@ import org.knowledger.common.test.randomDouble
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
+import org.knowledger.ledger.config.StorageAwareChainId
+import org.knowledger.ledger.config.StorageUnawareChainId
 import org.knowledger.ledger.data.MerkleTree
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.data.TUnit
@@ -32,6 +34,7 @@ import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
+import org.knowledger.ledger.storage.StorageUnawareBlock
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.TransactionOutput
 import org.tinylog.kotlin.Logger
@@ -42,7 +45,7 @@ internal val moshi by lazy {
         .Builder()
         .addLedgerAdapters(
             mapOf(
-                TemperatureData::class.java to "Temperature",
+                TemperatureData::class.java to "TemperatureData",
                 TrafficFlowData::class.java to "TrafficFlowData"
             )
         )
@@ -52,9 +55,11 @@ internal val moshi by lazy {
 internal fun generateChainId(
     hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
 ): ChainId =
-    ChainId(
-        randomByteArray(32).decodeUTF8ToString(),
-        Hash(randomByteArray(32)), hasher
+    StorageAwareChainId(
+        StorageUnawareChainId(
+            randomByteArray(32).decodeUTF8ToString(),
+            Hash(randomByteArray(32)), hasher
+        )
     )
 
 
@@ -69,7 +74,7 @@ internal fun generateBlock(
     val coinbase = generateCoinbase(
         id, ts, hasher, formula, coinbaseParams
     )
-    return Block(
+    return StorageUnawareBlock(
         sortedSetOf(),
         coinbase,
         BlockHeader(
@@ -150,7 +155,7 @@ internal fun generateBlockWithChain(
     val coinbase = generateCoinbase(
         id, ts, hasher, formula, coinbaseParams
     )
-    return Block(
+    return StorageUnawareBlock(
         sortedSetOf(),
         coinbase,
         BlockHeader(
