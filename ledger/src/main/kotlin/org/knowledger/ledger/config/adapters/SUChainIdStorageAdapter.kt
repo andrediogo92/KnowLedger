@@ -20,11 +20,11 @@ object SUChainIdStorageAdapter : ServiceStorageAdapter<StorageUnawareChainId> {
     override fun store(
         toStore: StorageUnawareChainId, session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setStorageProperty("tag", toStore.tag)
-            setHashProperty("ledgerHash", toStore.ledgerHash)
-            setHashProperty("hashId", toStore.hashId)
-        }
+        session
+            .newInstance(id)
+            .setStorageProperty("tag", toStore.tag)
+            .setHashProperty("ledgerHash", toStore.ledgerHash)
+            .setHashProperty("hashId", toStore.hashId)
 
 
     override fun load(

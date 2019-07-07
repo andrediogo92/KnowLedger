@@ -24,12 +24,12 @@ object TemperatureDataStorageAdapter : AbstractStorageAdapter<TemperatureData>(
         toStore: LedgerData, session: NewInstanceSession
     ): StorageElement =
         (toStore as TemperatureData).let {
-            session.newInstance(id).apply {
-                setStorageProperty(
+            session
+                .newInstance(id)
+                .setStorageProperty(
                     "temperature",
                     it.temperature
-                )
-                setStorageProperty(
+                ).setStorageProperty(
                     "unit",
                     when (it.unit) {
                         TUnit.CELSIUS -> TUnit.CELSIUS.ordinal
@@ -38,7 +38,6 @@ object TemperatureDataStorageAdapter : AbstractStorageAdapter<TemperatureData>(
                         TUnit.RANKINE -> TUnit.RANKINE.ordinal
                     }
                 )
-            }
         }
 
 
@@ -57,7 +56,7 @@ object TemperatureDataStorageAdapter : AbstractStorageAdapter<TemperatureData>(
             if (unit == null) {
                 Outcome.Error<DataFailure>(
                     DataFailure.UnrecognizedUnit(
-                    "Unit is not one of the expected: $prop"
+                        "Unit is not one of the expected: $prop"
                     )
                 )
             } else {

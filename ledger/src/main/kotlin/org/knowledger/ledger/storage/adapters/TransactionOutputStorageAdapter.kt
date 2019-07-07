@@ -28,17 +28,15 @@ object TransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutput>
         toStore: TransactionOutput,
         session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setStorageProperty(
+        session
+            .newInstance(id)
+            .setStorageProperty(
                 "publicKey", toStore.publicKey.encoded
-            )
-            setHashProperty(
+            ).setHashProperty(
                 "prevCoinbase", toStore.prevCoinbase
-            )
-            setHashProperty("hashId", toStore.hashId)
-            setPayoutProperty("payout", toStore.payout)
-            setHashSet("txSet", toStore.tx)
-        }
+            ).setHashProperty("hashId", toStore.hashId)
+            .setPayoutProperty("payout", toStore.payout)
+            .setHashSet("txSet", toStore.tx)
 
     override fun load(
         ledgerHash: Hash,
@@ -53,7 +51,7 @@ object TransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutput>
                 element.getHashProperty("hashId")
             val payout =
                 element.getPayoutProperty("payout")
-            val txSet = element.getHashSet("txSet")
+            val txSet = element.getMutableHashSet("txSet")
 
             Outcome.Ok(
                 TransactionOutput(

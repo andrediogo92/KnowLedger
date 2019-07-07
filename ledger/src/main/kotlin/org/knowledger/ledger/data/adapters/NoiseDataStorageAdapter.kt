@@ -22,19 +22,19 @@ object NoiseDataStorageAdapter : AbstractStorageAdapter<NoiseData>(
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement {
-        val noiseData = toStore as NoiseData
-        return session.newInstance(id).apply {
-            setStorageProperty("noiseLevel", noiseData.noiseLevel)
-            setStorageProperty("peakOrBase", noiseData.peakOrBase)
-            setStorageProperty(
-                "unit", when (noiseData.unit) {
-                    NUnit.DBSPL -> NUnit.DBSPL.ordinal.toByte()
-                    NUnit.RMS -> NUnit.RMS.ordinal.toByte()
-                }
-            )
+    ): StorageElement =
+        (toStore as NoiseData).let {
+            session
+                .newInstance(id)
+                .setStorageProperty("noiseLevel", it.noiseLevel)
+                .setStorageProperty("peakOrBase", it.peakOrBase)
+                .setStorageProperty(
+                    "unit", when (it.unit) {
+                        NUnit.DBSPL -> NUnit.DBSPL.ordinal.toByte()
+                        NUnit.RMS -> NUnit.RMS.ordinal.toByte()
+                    }
+                )
         }
-    }
 
 
     override fun load(

@@ -5,7 +5,8 @@ import org.knowledger.common.database.StorageElement
 import org.knowledger.common.database.StorageType
 import org.knowledger.common.hash.Hash
 import org.knowledger.common.results.Outcome
-import org.knowledger.common.results.fold
+import org.knowledger.common.results.mapFailure
+import org.knowledger.common.results.mapSuccess
 import org.knowledger.common.storage.adapters.StorageAdapterNotRegistered
 import org.knowledger.ledger.data.GeoCoords
 import org.knowledger.ledger.data.PhysicalData
@@ -29,31 +30,27 @@ object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
 
     override fun store(
         toStore: PhysicalData, session: NewInstanceSession
-    ): StorageElement {
-        val dataStorageAdapter =
-            LedgerHandle.getStorageAdapter(
-                toStore.data.javaClass
-            ) ?: throw StorageAdapterNotRegistered()
+    ): StorageElement =
+        LedgerHandle.getStorageAdapter(
+            toStore.data.javaClass
+        )?.let {
+            session
+                .newInstance(id).setStorageProperty(
+                    "seconds", toStore.instant.epochSecond
+                ).setStorageProperty(
+                    "nanos", toStore.instant.nano
+                ).setLinked(
+                    "value", it,
+                    toStore.data, session
+                ).also { elem ->
+                    toStore.geoCoords?.let { geo ->
+                        elem.setStorageProperty("latitude", geo.latitude)
+                            .setStorageProperty("longitude", geo.longitude)
+                            .setStorageProperty("altitude", geo.altitude)
+                    }
+                }
+        } ?: throw StorageAdapterNotRegistered()
 
-        return session.newInstance(id).apply {
-            setStorageProperty(
-                "seconds", toStore.instant.epochSecond
-            )
-            setStorageProperty(
-                "nanos", toStore.instant.nano
-            )
-            setLinked(
-                "value", dataStorageAdapter,
-                toStore.data, session
-            )
-            toStore.geoCoords?.let {
-                setStorageProperty("latitude", it.latitude)
-                setStorageProperty("longitude", it.longitude)
-                setStorageProperty("altitude", it.altitude)
-            }
-        }
-
-    }
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
@@ -67,34 +64,30 @@ object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
             if (dataName != null && loader != null) {
                 loader
                     .load(dataElem)
-                    .fold(
-                        {
-                            Outcome.Error(it.intoLoad())
-                        },
-                        {
-                            val instant = Instant.ofEpochSecond(
-                                element.getStorageProperty("seconds"),
-                                element.getStorageProperty("nanos")
+                    .mapFailure {
+                        it.intoLoad()
+                    }.mapSuccess {
+                        val instant = Instant.ofEpochSecond(
+                            element.getStorageProperty("seconds"),
+                            element.getStorageProperty("nanos")
+                        )
+                        if (element.presentProperties.contains("latitude")) {
+                            PhysicalData(
+                                instant,
+                                GeoCoords(
+                                    element.getStorageProperty("latitude"),
+                                    element.getStorageProperty("longitude"),
+                                    element.getStorageProperty("altitude")
+                                ),
+                                it
                             )
-                            Outcome.Ok(
-                                if (element.presentProperties.contains("latitude")) {
-                                    PhysicalData(
-                                        instant,
-                                        GeoCoords(
-                                            element.getStorageProperty("latitude"),
-                                            element.getStorageProperty("longitude"),
-                                            element.getStorageProperty("altitude")
-                                        ),
-                                        it
-                                    )
-                                } else {
-                                    PhysicalData(
-                                        instant,
-                                        it
-                                    )
-                                }
+                        } else {
+                            PhysicalData(
+                                instant,
+                                it
                             )
-                        })
+                        }
+                    }
             } else {
                 Outcome.Error<LoadFailure>(
                     LoadFailure.UnrecognizedDataType(

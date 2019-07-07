@@ -34,47 +34,46 @@ object TrafficIncidentDataStorageAdapter : AbstractStorageAdapter<TrafficInciden
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement {
-        val trafficIncident = toStore as TrafficIncidentData
-        return session.newInstance(id).apply {
-            this
+    ): StorageElement =
+        (toStore as TrafficIncidentData).let {
+            session
+                .newInstance(id)
                 .setStorageProperty(
                     "trafficModelId",
-                    trafficIncident.trafficModelId
-                ).setStorageProperty("id", trafficIncident.id)
+                    it.trafficModelId
+                ).setStorageProperty("id", it.id)
                 .setStorageProperty(
-                    "iconLat", trafficIncident.iconLat
+                    "iconLat", it.iconLat
                 ).setStorageProperty(
-                    "iconLon", trafficIncident.iconLon
+                    "iconLon", it.iconLon
                 ).setStorageProperty(
                     "incidentCategory",
-                    trafficIncident.incidentCategory
+                    it.incidentCategory
                 ).setStorageProperty(
                     "magnitudeOfDelay",
-                    trafficIncident.magnitudeOfDelay
+                    it.magnitudeOfDelay
                 ).setStorageProperty(
-                    "clusterSize", trafficIncident.clusterSize
+                    "clusterSize", it.clusterSize
                 ).setStorageProperty(
-                    "description", trafficIncident.description
+                    "description", it.description
                 ).setStorageProperty(
                     "causeOfAccident",
-                    trafficIncident.causeOfAccident
-                ).setStorageProperty("from", trafficIncident.from)
-                .setStorageProperty("to", trafficIncident.to)
-                .setStorageProperty("length", trafficIncident.length)
+                    it.causeOfAccident
+                ).setStorageProperty("from", it.from)
+                .setStorageProperty("to", it.to)
+                .setStorageProperty("length", it.length)
                 .setStorageProperty(
-                    "delayInSeconds",
-                    trafficIncident.delayInSeconds
+                    "delayInSeconds", it.delayInSeconds
                 ).setStorageProperty(
-                    "affectedRoads",
-                    trafficIncident.affectedRoads
+                    "affectedRoads", it.affectedRoads
                 ).setStorageProperty(
-                    "cityName", trafficIncident.cityName
+                    "cityName", it.cityName
                 ).setStorageProperty(
-                    "citySeqNum", trafficIncident.citySeqNum
+                    "citySeqNum", it.citySeqNum
                 )
+
         }
-    }
+
 
     override fun load(
         element: StorageElement

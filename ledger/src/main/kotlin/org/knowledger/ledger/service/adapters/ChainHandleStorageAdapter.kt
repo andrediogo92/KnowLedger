@@ -5,7 +5,7 @@ import org.knowledger.common.database.StorageElement
 import org.knowledger.common.database.StorageType
 import org.knowledger.common.hash.Hash
 import org.knowledger.common.results.Outcome
-import org.knowledger.common.results.mapSuccess
+import org.knowledger.common.results.zip
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.results.tryOrLedgerUnknownFailure
 import org.knowledger.ledger.service.handles.ChainHandle
@@ -18,6 +18,7 @@ object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "id" to StorageType.LINK,
+            "transactionPool" to StorageType.LINK,
             "difficultyTarget" to StorageType.DIFFICULTY,
             "lastRecalc" to StorageType.INTEGER,
             "currentBlockheight" to StorageType.LONG
@@ -27,25 +28,25 @@ object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
         toStore: ChainHandle,
         session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setLinked(
+        session
+            .newInstance(id)
+            .setLinked(
                 "id", ChainIdStorageAdapter,
                 toStore.id, session
-            )
-            setDifficultyProperty(
+            ).setLinked(
+                "transactionPool", TransactionPoolStorageAdapter,
+                toStore.transactionPool, session
+            ).setDifficultyProperty(
                 "difficultyTarget",
                 toStore.currentDifficulty,
                 session
-            )
-            setStorageProperty(
+            ).setStorageProperty(
                 "lastRecalc",
                 toStore.lastRecalculation
-            )
-            setStorageProperty(
+            ).setStorageProperty(
                 "currentBlockheight",
                 toStore.currentBlockheight
             )
-        }
 
     override fun load(
         ledgerHash: Hash,
@@ -61,16 +62,21 @@ object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
             val currentBlockheight: Long =
                 element.getStorageProperty("currentBlockheight")
 
-            ChainIdStorageAdapter
-                .load(ledgerHash, element.getLinked("tag"))
-                .mapSuccess {
-                    ChainHandle(
-                        it,
-                        difficulty,
-                        lastRecalc,
-                        currentBlockheight
-                    )
-                }
+            zip(
+                ChainIdStorageAdapter
+                    .load(ledgerHash, element.getLinked("tag")),
+                TransactionPoolStorageAdapter.load(
+                    ledgerHash, element.getLinked("transactionPool")
+                )
+            ) { id, transactionPool ->
+                ChainHandle(
+                    id,
+                    transactionPool,
+                    difficulty,
+                    lastRecalc,
+                    currentBlockheight
+                )
+            }
 
 
         }

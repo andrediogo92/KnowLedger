@@ -23,14 +23,13 @@ object BlockParamsStorageAdapter : ServiceStorageAdapter<BlockParams> {
     override fun store(
         toStore: BlockParams, session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setStorageProperty(
+        session
+            .newInstance(id)
+            .setStorageProperty(
                 "blockMemSize", toStore.blockMemSize
-            )
-            setStorageProperty(
+            ).setStorageProperty(
                 "blockLength", toStore.blockLength
             )
-        }
 
 
     override fun load(

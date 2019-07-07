@@ -26,31 +26,31 @@ object PollutionAQDataStorageAdapter : AbstractStorageAdapter<PollutionAQData>(
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement {
-        val pollutionData = toStore as PollutionAQData
-        return session.newInstance(id).apply {
-            setStorageProperty("lastUpdated", pollutionData.lastUpdated)
-            setStorageProperty("unit", pollutionData.unit)
-            //Byte encode the enum.
-            val byte =
-                when (pollutionData.parameter) {
-                    PollutionType.PM25 -> PollutionType.PM25.ordinal
-                    PollutionType.PM10 -> PollutionType.PM10.ordinal
-                    PollutionType.SO2 -> PollutionType.SO2.ordinal
-                    PollutionType.NO2 -> PollutionType.NO2.ordinal
-                    PollutionType.O3 -> PollutionType.O3.ordinal
-                    PollutionType.CO -> PollutionType.CO.ordinal
-                    PollutionType.BC -> PollutionType.BC.ordinal
-                    PollutionType.NA -> PollutionType.NA.ordinal
-                    else -> Int.MAX_VALUE
-                }
-            setStorageProperty("parameter", byte)
-            setStorageProperty("value", pollutionData.value)
-            setStorageProperty("sourceName", pollutionData.sourceName)
-            setStorageProperty("city", pollutionData.city)
-            setStorageProperty("citySeqNum", pollutionData.citySeqNum)
+    ): StorageElement =
+        (toStore as PollutionAQData).let {
+            session
+                .newInstance(id)
+                .setStorageProperty("lastUpdated", it.lastUpdated)
+                .setStorageProperty("unit", it.unit)
+                //Byte encode the enum.
+                .setStorageProperty(
+                    "parameter", when (it.parameter) {
+                        PollutionType.PM25 -> PollutionType.PM25.ordinal
+                        PollutionType.PM10 -> PollutionType.PM10.ordinal
+                        PollutionType.SO2 -> PollutionType.SO2.ordinal
+                        PollutionType.NO2 -> PollutionType.NO2.ordinal
+                        PollutionType.O3 -> PollutionType.O3.ordinal
+                        PollutionType.CO -> PollutionType.CO.ordinal
+                        PollutionType.BC -> PollutionType.BC.ordinal
+                        PollutionType.NA -> PollutionType.NA.ordinal
+                        else -> Int.MAX_VALUE
+                    }
+                ).setStorageProperty("value", it.value)
+                .setStorageProperty("sourceName", it.sourceName)
+                .setStorageProperty("city", it.city)
+                .setStorageProperty("citySeqNum", it.citySeqNum)
         }
-    }
+
 
     override fun load(
         element: StorageElement

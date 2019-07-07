@@ -27,45 +27,38 @@ object TrafficFlowDataStorageAdapter : AbstractStorageAdapter<TrafficFlowData>(
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement {
-        val trafficFlowData = toStore as TrafficFlowData
-        return session.newInstance(id).apply {
-            setStorageProperty(
-                "functionalRoadClass",
-                trafficFlowData.functionalRoadClass
-            )
-            setStorageProperty(
-                "currentSpeed",
-                trafficFlowData.currentSpeed
-            )
-            setStorageProperty(
-                "freeFlowSpeed",
-                trafficFlowData.freeFlowSpeed
-            )
-            setStorageProperty(
-                "currentTravelTime",
-                trafficFlowData.currentTravelTime
-            )
-            setStorageProperty(
-                "freeFlowTravelTime",
-                trafficFlowData.freeFlowTravelTime
-            )
-            setStorageProperty(
-                "confidence",
-                trafficFlowData.confidence
-            )
-            setStorageProperty(
-                "realtimeRatio",
-                trafficFlowData.realtimeRatio
-            )
-            setStorageProperty(
-                "cityName", trafficFlowData.cityName
-            )
-            setStorageProperty(
-                "citySeqNum", trafficFlowData.citySeqNum
-            )
+    ): StorageElement =
+        (toStore as TrafficFlowData).let {
+            session
+                .newInstance(id)
+                .setStorageProperty(
+                    "functionalRoadClass",
+                    it.functionalRoadClass
+                ).setStorageProperty(
+                    "currentSpeed",
+                    it.currentSpeed
+                ).setStorageProperty(
+                    "freeFlowSpeed",
+                    it.freeFlowSpeed
+                ).setStorageProperty(
+                    "currentTravelTime",
+                    it.currentTravelTime
+                ).setStorageProperty(
+                    "freeFlowTravelTime",
+                    it.freeFlowTravelTime
+                ).setStorageProperty(
+                    "confidence",
+                    it.confidence
+                ).setStorageProperty(
+                    "realtimeRatio",
+                    it.realtimeRatio
+                ).setStorageProperty(
+                    "cityName", it.cityName
+                ).setStorageProperty(
+                    "citySeqNum", it.citySeqNum
+                )
+
         }
-    }
 
     override fun load(
         element: StorageElement

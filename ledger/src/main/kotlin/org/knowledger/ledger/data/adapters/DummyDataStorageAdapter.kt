@@ -20,12 +20,12 @@ object DummyDataStorageAdapter : AbstractStorageAdapter<DummyData>(
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setStorageProperty(
+        session
+            .newInstance(id)
+            .setStorageProperty(
                 "origin",
                 0xCC.toByte()
             )
-        }
 
 
     override fun load(

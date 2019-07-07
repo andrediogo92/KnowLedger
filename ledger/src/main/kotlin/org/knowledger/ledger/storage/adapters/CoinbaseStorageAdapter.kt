@@ -27,8 +27,8 @@ object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
         toStore: Coinbase,
         session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setElementSet(
+        session.newInstance(id)
+            .setElementSet(
                 "payoutTXOs",
                 toStore
                     .payoutTXO
@@ -38,10 +38,8 @@ object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
                             it, session
                         )
                     }.toSet()
-            )
-            setPayoutProperty("coinbase", toStore.coinbase)
-            setHashProperty("hashId", toStore.hashId)
-        }
+            ).setPayoutProperty("coinbase", toStore.coinbase)
+            .setHashProperty("hashId", toStore.hashId)
 
     override fun load(
         ledgerHash: Hash, element: StorageElement

@@ -25,14 +25,13 @@ object MerkleTreeStorageAdapter : LedgerStorageAdapter<MerkleTree> {
         toStore: MerkleTree,
         session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setHashList(
+        session
+            .newInstance(id)
+            .setHashList(
                 "collapsedTree", toStore.collapsedTree
-            )
-            setStorageProperty(
+            ).setStorageProperty(
                 "levelIndex", toStore.levelIndex
             )
-        }
 
 
     override fun load(

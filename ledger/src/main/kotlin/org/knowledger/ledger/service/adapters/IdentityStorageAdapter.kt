@@ -27,15 +27,14 @@ object IdentityStorageAdapter : LedgerStorageAdapter<Identity> {
     override fun store(
         toStore: Identity, session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setStorageProperty("id", toStore.id)
-            setStorageProperty(
+        session
+            .newInstance(id)
+            .setStorageProperty("id", toStore.id)
+            .setStorageProperty(
                 "privateKey", toStore.privateKey.encoded
-            )
-            setStorageProperty(
+            ).setStorageProperty(
                 "publicKey", toStore.publicKey.encoded
             )
-        }
 
     override fun load(
         ledgerHash: Hash,

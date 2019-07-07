@@ -26,38 +26,38 @@ object OtherDataStorageAdapter : AbstractStorageAdapter<OtherData>(
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement {
-        val otherData = toStore as OtherData
-        return session.newInstance(id).apply {
-            val byteStream = ByteArrayOutputStream(
-                otherData.approximateSize.toInt()
-            )
-            ObjectOutputStream(
-                byteStream
-            ).use {
-                it.writeObject(otherData.data)
-            }
-            val bytes = byteStream.toByteArray()
-            val blobs = mutableListOf<StorageBytes>()
-            var i = 0
-            while (i + 2048 < bytes.size) {
-                blobs.add(
-                    session.newInstance(
-                        bytes.sliceArray(i..i + 2048)
-                    )
+    ): StorageElement =
+        (toStore as OtherData).let { odata ->
+            session.newInstance(id).apply {
+                val byteStream = ByteArrayOutputStream(
+                    odata.approximateSize.toInt()
                 )
-                i += 2048
-            }
-            if (i <= bytes.size - 1) {
-                blobs.add(
-                    session.newInstance(
-                        bytes.sliceArray(i until bytes.size)
+                ObjectOutputStream(
+                    byteStream
+                ).use {
+                    it.writeObject(odata.data)
+                }
+                val bytes = byteStream.toByteArray()
+                val blobs = mutableListOf<StorageBytes>()
+                var i = 0
+                while (i + 2048 < bytes.size) {
+                    blobs.add(
+                        session.newInstance(
+                            bytes.sliceArray(i..i + 2048)
+                        )
                     )
-                )
+                    i += 2048
+                }
+                if (i <= bytes.size - 1) {
+                    blobs.add(
+                        session.newInstance(
+                            bytes.sliceArray(i until bytes.size)
+                        )
+                    )
+                }
+                setStorageProperty("value", blobs)
             }
-            setStorageProperty("value", blobs)
         }
-    }
 
 
     override fun load(element: StorageElement): Outcome<OtherData, DataFailure> =

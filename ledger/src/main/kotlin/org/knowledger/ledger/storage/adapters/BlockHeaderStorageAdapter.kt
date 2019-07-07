@@ -38,28 +38,24 @@ object BlockHeaderStorageAdapter : LedgerStorageAdapter<BlockHeader> {
         toStore: BlockHeader,
         session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setLinked(
+        session
+            .newInstance(id)
+            .setLinked(
                 "chainId", ChainIdStorageAdapter,
                 toStore.chainId, session
-            )
-            setDifficultyProperty(
+            ).setDifficultyProperty(
                 "difficulty", toStore.difficulty, session
-            )
-            setStorageProperty("blockheight", toStore.blockheight)
-            setHashProperty("hashId", toStore.hashId)
-            setHashProperty("merkleRoot", toStore.merkleRoot)
-            setHashProperty("previousHash", toStore.previousHash)
-            setLinked(
+            ).setStorageProperty("blockheight", toStore.blockheight)
+            .setHashProperty("hashId", toStore.hashId)
+            .setHashProperty("merkleRoot", toStore.merkleRoot)
+            .setHashProperty("previousHash", toStore.previousHash)
+            .setLinked(
                 "ledgerParams", BlockParamsStorageAdapter,
                 toStore.params, session
-            )
-            setStorageProperty(
+            ).setStorageProperty(
                 "seconds", toStore.timestamp.epochSecond
-            )
-            setStorageProperty("nanos", toStore.timestamp.nano)
-            setStorageProperty("nonce", toStore.nonce)
-        }
+            ).setStorageProperty("nanos", toStore.timestamp.nano)
+            .setStorageProperty("nonce", toStore.nonce)
 
     override fun load(
         ledgerHash: Hash, element: StorageElement

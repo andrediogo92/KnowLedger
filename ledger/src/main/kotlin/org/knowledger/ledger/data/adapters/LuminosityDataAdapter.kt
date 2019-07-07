@@ -21,18 +21,18 @@ object LuminosityDataAdapter : AbstractStorageAdapter<LuminosityData>(
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement {
-        val luminosityData = toStore as LuminosityData
-        return session.newInstance(id).apply {
-            setStorageProperty("lum", luminosityData.lum)
-            setStorageProperty(
-                "unit", when (luminosityData.unit) {
-                    LUnit.LUMENS -> LUnit.LUMENS.ordinal
-                    LUnit.LUX -> LUnit.LUX.ordinal
-                }
-            )
+    ): StorageElement =
+        (toStore as LuminosityData).let {
+            session
+                .newInstance(id)
+                .setStorageProperty("lum", it.lum)
+                .setStorageProperty(
+                    "unit", when (it.unit) {
+                        LUnit.LUMENS -> LUnit.LUMENS.ordinal
+                        LUnit.LUX -> LUnit.LUX.ordinal
+                    }
+                )
         }
-    }
 
     override fun load(
         element: StorageElement

@@ -23,10 +23,10 @@ object LedgerIdStorageAdapter : ServiceStorageAdapter<LedgerId> {
     override fun store(
         toStore: LedgerId, session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setStorageProperty("tag", toStore.tag)
-            setHashProperty("hashId", toStore.hashId)
-        }
+        session
+            .newInstance(id)
+            .setStorageProperty("tag", toStore.tag)
+            .setHashProperty("hashId", toStore.hashId)
 
 
     override fun load(
@@ -38,7 +38,6 @@ object LedgerIdStorageAdapter : ServiceStorageAdapter<LedgerId> {
                 element.getHashProperty("hashId")
 
             assert(hash.contentEquals(ledgerHash))
-
 
             Outcome.Ok(
                 LedgerId(

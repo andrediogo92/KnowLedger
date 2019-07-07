@@ -22,9 +22,12 @@ object CoinbaseParamsStorageAdapter : ServiceStorageAdapter<CoinbaseParams> {
             "dividingThreshold" to StorageType.LONG
         )
 
-    override fun store(toStore: CoinbaseParams, session: NewInstanceSession): StorageElement =
-        session.newInstance(id).apply {
-            setStorageProperty(
+    override fun store(
+        toStore: CoinbaseParams, session: NewInstanceSession
+    ): StorageElement =
+        session
+            .newInstance(id)
+            .setStorageProperty(
                 "timeIncentive", toStore.timeIncentive
             ).setStorageProperty(
                 "valueIncentive", toStore.valueIncentive
@@ -33,7 +36,6 @@ object CoinbaseParamsStorageAdapter : ServiceStorageAdapter<CoinbaseParams> {
             ).setStorageProperty(
                 "dividingThreshold", toStore.dividingThreshold
             )
-        }
 
     override fun load(
         ledgerHash: Hash, element: StorageElement

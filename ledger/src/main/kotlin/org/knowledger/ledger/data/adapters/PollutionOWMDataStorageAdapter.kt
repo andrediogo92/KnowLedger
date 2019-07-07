@@ -25,26 +25,28 @@ object PollutionOWMDataStorageAdapter : AbstractStorageAdapter<PollutionOWMData>
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement {
-        val pollutionData = toStore as PollutionOWMData
-        return session.newInstance(id).apply {
-            val parameter = when (pollutionData.parameter) {
-                PollutionType.O3 -> PollutionType.O3.ordinal
-                PollutionType.UV -> PollutionType.UV.ordinal
-                PollutionType.CO -> PollutionType.CO.ordinal
-                PollutionType.SO2 -> PollutionType.SO2.ordinal
-                PollutionType.NO2 -> PollutionType.NO2.ordinal
-                PollutionType.NA -> PollutionType.NA.ordinal
-                else -> Int.MAX_VALUE
-            }
-            setStorageProperty("parameter", parameter)
-            setStorageProperty("value", pollutionData.value)
-            setStorageProperty("unit", pollutionData.unit)
-            setStorageProperty("city", pollutionData.city)
-            setStorageProperty("value", emptyList<List<Double>>())
-            setStorageProperty("citySeqNum", pollutionData.citySeqNum)
+    ): StorageElement =
+        (toStore as PollutionOWMData).let {
+            session
+                .newInstance(id)
+                .setStorageProperty(
+                    "parameter", when (it.parameter) {
+                        PollutionType.O3 -> PollutionType.O3.ordinal
+                        PollutionType.UV -> PollutionType.UV.ordinal
+                        PollutionType.CO -> PollutionType.CO.ordinal
+                        PollutionType.SO2 -> PollutionType.SO2.ordinal
+                        PollutionType.NO2 -> PollutionType.NO2.ordinal
+                        PollutionType.NA -> PollutionType.NA.ordinal
+                        else -> Int.MAX_VALUE
+                    }
+                )
+                .setStorageProperty("value", it.value)
+                .setStorageProperty("unit", it.unit)
+                .setStorageProperty("city", it.city)
+                .setStorageProperty("value", emptyList<List<Double>>())
+                .setStorageProperty("citySeqNum", it.citySeqNum)
         }
-    }
+
 
     override fun load(
         element: StorageElement

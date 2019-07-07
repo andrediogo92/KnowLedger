@@ -26,19 +26,17 @@ object LedgerParamsStorageAdapter : ServiceStorageAdapter<LedgerParams> {
     override fun store(
         toStore: LedgerParams, session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setHashProperty("crypter", toStore.crypter)
-            setStorageProperty(
+        session
+            .newInstance(id)
+            .setHashProperty("crypter", toStore.crypter)
+            .setStorageProperty(
                 "recalcTime", toStore.recalcTime
-            )
-            setStorageProperty(
+            ).setStorageProperty(
                 "recalcTrigger", toStore.recalcTrigger
-            )
-            setLinked(
+            ).setLinked(
                 "blockParams", BlockParamsStorageAdapter,
                 toStore.blockParams, session
             )
-        }
 
 
     override fun load(

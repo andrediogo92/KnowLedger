@@ -5,10 +5,8 @@ import org.knowledger.common.database.StorageElement
 import org.knowledger.common.database.StorageType
 import org.knowledger.common.hash.Hash
 import org.knowledger.common.results.Outcome
-import org.knowledger.common.results.flatMapSuccess
 import org.knowledger.common.results.mapFailure
-import org.knowledger.ledger.config.LedgerId
-import org.knowledger.ledger.config.LedgerParams
+import org.knowledger.common.results.zip
 import org.knowledger.ledger.config.adapters.CoinbaseParamsStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerParamsStorageAdapter
@@ -32,20 +30,18 @@ object LedgerConfigStorageAdapter : HandleStorageAdapter {
     override fun store(
         toStore: LedgerConfig, session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setLinked(
+        session
+            .newInstance(id)
+            .setLinked(
                 "ledgerId", LedgerIdStorageAdapter,
                 toStore.ledgerId, session
-            )
-            setLinked(
+            ).setLinked(
                 "ledgerParams", LedgerParamsStorageAdapter,
                 toStore.ledgerParams, session
-            )
-            setLinked(
+            ).setLinked(
                 "coinbaseParams", CoinbaseParamsStorageAdapter,
                 toStore.coinbaseParams, session
             )
-        }
 
 
     override fun load(
@@ -56,29 +52,20 @@ object LedgerConfigStorageAdapter : HandleStorageAdapter {
             val ledger = element.getLinked("ledgerId")
             val ledgerP = element.getLinked("ledgerParams")
             val coinbaseParams = element.getLinked("coinbaseParams")
-            lateinit var ledgerId: LedgerId
-            lateinit var ledgerParams: LedgerParams
-            LedgerIdStorageAdapter.load(ledgerHash, ledger)
-                .flatMapSuccess {
-                    ledgerId = it
-                    LedgerParamsStorageAdapter.load(
-                        ledgerHash, ledgerP
-                    )
-                }.flatMapSuccess {
-                    ledgerParams = it
-                    CoinbaseParamsStorageAdapter.load(
-                        ledgerHash, coinbaseParams
-                    )
-                }.flatMapSuccess {
-                    Outcome.Ok(
-                        LedgerConfig(
-                            ledgerId,
-                            ledgerParams,
-                            it
-                        )
-                    )
-                }.mapFailure {
-                    it.intoHandle()
-                }
+            zip(
+                LedgerIdStorageAdapter.load(ledgerHash, ledger),
+                LedgerParamsStorageAdapter.load(ledgerHash, ledgerP),
+                CoinbaseParamsStorageAdapter.load(
+                    ledgerHash, coinbaseParams
+                )
+            ) { ledgerId, ledgerParams, coinbaseParams ->
+                LedgerConfig(
+                    ledgerId,
+                    ledgerParams,
+                    coinbaseParams
+                )
+            }.mapFailure {
+                it.intoHandle()
+            }
         }
 }

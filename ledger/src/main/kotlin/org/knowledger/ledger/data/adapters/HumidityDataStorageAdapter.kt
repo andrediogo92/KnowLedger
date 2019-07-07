@@ -21,18 +21,19 @@ object HumidityDataStorageAdapter : AbstractStorageAdapter<HumidityData>(
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement {
-        val humidityData = toStore as HumidityData
-        return session.newInstance(id).apply {
-            setStorageProperty("hum", humidityData.hum)
-            val hUnit = when (humidityData.unit) {
-                HUnit.G_BY_KG -> HUnit.G_BY_KG.ordinal
-                HUnit.KG_BY_KG -> HUnit.KG_BY_KG.ordinal
-                HUnit.RELATIVE -> HUnit.RELATIVE.ordinal
-            }
-            setStorageProperty("unit", hUnit)
+    ): StorageElement =
+        (toStore as HumidityData).let {
+            session
+                .newInstance(id)
+                .setStorageProperty("hum", it.hum)
+                .setStorageProperty(
+                    "unit", when (it.unit) {
+                        HUnit.G_BY_KG -> HUnit.G_BY_KG.ordinal
+                        HUnit.KG_BY_KG -> HUnit.KG_BY_KG.ordinal
+                        HUnit.RELATIVE -> HUnit.RELATIVE.ordinal
+                    }
+                )
         }
-    }
 
     override fun load(
         element: StorageElement

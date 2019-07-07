@@ -34,24 +34,22 @@ object TransactionStorageAdapter : LedgerStorageAdapter<Transaction> {
         toStore: Transaction,
         session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id).apply {
-            setStorageProperty("publicKey", toStore.publicKey.encoded)
-            setLinked(
+        session
+            .newInstance(id)
+            .setStorageProperty(
+                "publicKey", toStore.publicKey.encoded
+            ).setLinked(
                 "chainId", ChainIdStorageAdapter,
                 toStore.chainId, session
-            )
-            setLinked(
+            ).setLinked(
                 "value", PhysicalDataStorageAdapter,
                 toStore.data, session
-            )
-            setStorageBytes(
+            ).setStorageBytes(
                 "signature",
                 session.newInstance(
                     toStore.signature
                 )
-            )
-            setHashProperty("hashId", toStore.hashId)
-        }
+            ).setHashProperty("hashId", toStore.hashId)
 
     override fun load(
         ledgerHash: Hash,
