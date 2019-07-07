@@ -267,7 +267,7 @@ class TestOrientDatabase {
                     1,
                     BlockParams()
                 )
-                assertThat(block.addTransaction(transactions[0]))
+                assertThat(block + transactions[0])
                     .isTrue()
                 assertThat(block.data.first())
                     .isNotNull()
@@ -305,7 +305,7 @@ class TestOrientDatabase {
                     BlockParams()
                 )
                 assertThat(block).isNotNull()
-                assertThat(block.addTransaction(testTraffic))
+                assertThat(block + testTraffic)
                     .isTrue()
                 assertThat(block.data.first())
                     .isNotNull()

@@ -32,7 +32,7 @@ class TestSerialization {
         )
 
         testTransactions.forEach { t ->
-            assertThat(block.addTransaction(t))
+            assertThat(block + t)
                 .isTrue()
             assertThat(block.data.last())
                 .isNotNull()

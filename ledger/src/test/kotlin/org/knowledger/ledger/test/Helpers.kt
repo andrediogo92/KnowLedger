@@ -269,13 +269,15 @@ internal fun generateCoinbase(
         ts[0].hashId
     )
     return Coinbase(
-        sets.toSet() as MutableSet<TransactionOutput>,
+        sets.toMutableSet(),
         Payout(BigDecimal("3")),
         emptyHash,
         hasher,
         formula,
         coinbaseParams
-    )
+    ).also {
+        it.hash = it.digest(hasher)
+    }
 }
 
 internal fun logActualToExpectedLists(
