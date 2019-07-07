@@ -93,6 +93,22 @@ class LedgerHandle internal constructor(
             )
         }
 
+    fun <T : LedgerData> getChainHandleOf(
+        adapter: AbstractStorageAdapter<out T>
+    ): Outcome<ChainHandle, LedgerFailure> =
+        if (dataAdapters.any { it.id == adapter.id }) {
+            pw.getChainHandle(
+                adapter.id
+            )
+        } else {
+            Outcome.Error(
+                LedgerFailure.NoKnownStorageAdapter(
+                    "No known storage adapter for $adapter"
+                )
+            )
+        }
+
+
     fun <T : LedgerData> registerNewChainHandleOf(
         adapter: AbstractStorageAdapter<out T>
     ): Outcome<ChainHandle, LedgerFailure> =

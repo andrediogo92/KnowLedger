@@ -7,6 +7,9 @@ import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.StorageAwareChainId
 import org.knowledger.ledger.config.StorageUnawareChainId
 import org.knowledger.ledger.data.DummyData
+import org.knowledger.ledger.service.pool.StorageAwareTransactionPool
+import org.knowledger.ledger.service.pool.StorageUnawareTransactionPool
+import org.knowledger.ledger.service.pool.TransactionPool
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.StorageAwareBlock
 import org.knowledger.ledger.storage.StorageUnawareBlock
@@ -38,6 +41,11 @@ fun Moshi.Builder.addLedgerAdapters(
                 .of(ChainId::class.java, "type")
                 .withSubtype(StorageAwareChainId::class.java, "storageAware")
                 .withSubtype(StorageUnawareChainId::class.java, "storageUnaware")
+        ).add(
+            PolymorphicJsonAdapterFactory
+                .of(TransactionPool::class.java, "type")
+                .withSubtype(StorageAwareTransactionPool::class.java, "storageAware")
+                .withSubtype(StorageUnawareTransactionPool::class.java, "storageUnaware")
         )
         .add(SortedSetJsonAdapterFactory)
 

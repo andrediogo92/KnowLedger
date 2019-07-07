@@ -35,6 +35,7 @@ import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
 import org.knowledger.ledger.service.adapters.LedgerConfigStorageAdapter
 import org.knowledger.ledger.service.adapters.ServiceLoadable
+import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
@@ -73,6 +74,7 @@ internal data class PersistenceWrapper(
                 //ServiceAdapters
                 ChainHandleStorageAdapter,
                 IdentityStorageAdapter,
+                TransactionPoolStorageAdapter,
                 //StorageAdapters
                 BlockHeaderStorageAdapter,
                 BlockStorageAdapter,

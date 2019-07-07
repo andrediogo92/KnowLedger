@@ -18,13 +18,16 @@ import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.LedgerParams
 import org.knowledger.ledger.config.StorageAwareChainId
-import org.knowledger.ledger.config.StorageUnawareChainId
 import org.knowledger.ledger.data.DummyData
 import org.knowledger.ledger.data.MerkleTree
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.results.intoQuery
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.ServiceClass
+import org.knowledger.ledger.service.pool.StorageAwareTransactionPool
+import org.knowledger.ledger.service.pool.TransactionPool
+import org.knowledger.ledger.service.results.BlockFailure
+import org.knowledger.ledger.service.results.BlockState
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.service.transactions.*
 import org.knowledger.ledger.storage.Block
@@ -44,7 +47,8 @@ import java.time.ZonedDateTime
  * unique chain in the ledger represented by the [ledgerHash].
  */
 data class ChainHandle internal constructor(
-    val id: ChainId
+    val id: ChainId,
+    val transactionPool: TransactionPool = StorageAwareTransactionPool(id)
 ) : ServiceClass {
     val chainHash = id.hashId
     private val hasher: Hasher
@@ -103,18 +107,17 @@ data class ChainHandle internal constructor(
         ledgerHash: Hash,
         hasher: Hasher
     ) : this(
-        StorageAwareChainId(
-            StorageUnawareChainId(tag, ledgerHash, hasher)
-        )
+        StorageAwareChainId(tag, ledgerHash, hasher)
     )
 
 
     internal constructor(
         id: ChainId,
+        transactionPool: TransactionPool,
         difficulty: Difficulty,
         lastRecalc: Long,
         currentBlockheight: Long
-    ) : this(id) {
+    ) : this(id, transactionPool) {
         this.difficultyTarget = difficulty
         this.lastRecalc = lastRecalc
         this.blockheight = currentBlockheight
@@ -506,9 +509,10 @@ data class ChainHandle internal constructor(
 
     /**
      * Add a transaction to the transaction pool.
-     *
      */
-    fun addTransaction(t: Transaction) {
+    fun addTransaction(
+        t: Transaction
+    ): Outcome<BlockState, BlockFailure> {
         TODO()
     }
 
@@ -555,7 +559,7 @@ data class ChainHandle internal constructor(
                         getOriginHeader(chainId),
                         MerkleTree(it.hasher)
                     ).also { bl ->
-                        bl.addTransaction(
+                        bl.plus(
                             Transaction(
                                 chainId,
                                 identity,
