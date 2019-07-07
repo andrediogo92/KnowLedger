@@ -15,6 +15,12 @@ import org.openjdk.jol.info.GraphLayout
 import java.math.BigDecimal
 import java.security.PublicKey
 
+/**
+ * TransactionOutput contains transaction hashes used
+ * for calculating payout and the cumulative payout
+ * for the publickey in the current containing
+ * coinbase.
+ */
 @JsonClass(generateAdapter = true)
 data class TransactionOutput(
     val publicKey: PublicKey,
@@ -65,9 +71,6 @@ data class TransactionOutput(
         hash = digest(hasher)
     }
 
-    /**
-     * {@inheritDoc}
-     */
     override fun digest(c: Hasher): Hash =
         c.applyHash(
             flattenBytes(

@@ -82,7 +82,7 @@ data class StorageUnawareBlock(
      * @param transaction   Transaction to attempt to add to the block.
      * @return Whether the transaction was valid and cprrectly inserted.
      */
-    override fun addTransaction(transaction: Transaction): Boolean {
+    override fun plus(transaction: Transaction): Boolean {
         val transactionSize = transaction.approximateSize
         if (approximateSize +
             transactionSize < header.params.blockMemSize

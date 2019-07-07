@@ -21,7 +21,7 @@ interface Block : Sizeable, LedgerContract {
      * @param transaction   Transaction to attempt to add to the block.
      * @return Whether the transaction was valid and cprrectly inserted.
      */
-    fun addTransaction(transaction: Transaction): Boolean
+    operator fun plus(transaction: Transaction): Boolean
 
     fun verifyTransactions(): Boolean
 

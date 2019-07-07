@@ -5,7 +5,7 @@ import org.knowledger.common.database.StorageID
 
 @JsonClass(generateAdapter = true)
 data class StorageAwareBlock(
-    val block: StorageUnawareBlock
+    internal val block: StorageUnawareBlock
 ) : Block by block, StorageAware<Block> {
     @Transient
     override var id: StorageID? = null
