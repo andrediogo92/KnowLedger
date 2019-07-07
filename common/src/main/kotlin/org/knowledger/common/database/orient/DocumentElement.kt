@@ -16,17 +16,9 @@ import java.math.BigInteger
 data class DocumentElement internal constructor(
     val elem: OElement
 ) : StorageElement, OElement by elem {
-    override fun getStorageIDs(
-        name: String
-    ): List<StorageID> =
-        elem.getProperty<List<ORID>>(name).map {
-            DocumentID(it)
-        }
 
-    override fun discard(): StorageElement =
-        apply {
-            elem.unload<OElement>()
-        }
+    override val identity: StorageID
+        get() = DocumentID(elem.identity)
 
     override val presentProperties: MutableSet<String>
         get() = elem.propertyNames
@@ -36,6 +28,10 @@ data class DocumentElement internal constructor(
             it.name
         }.orElse(null)
 
+    override fun discard(): StorageElement =
+        apply {
+            elem.unload<OElement>()
+        }
 
     override fun getDifficultyProperty(
         name: String
@@ -45,6 +41,28 @@ data class DocumentElement internal constructor(
                 elem.getProperty<OBlob>(name).toStream()
             )
         )
+
+
+    override fun getPayoutProperty(
+        name: String
+    ): Payout =
+        Payout(elem.getProperty(name))
+
+    override fun getStorageIDs(
+        name: String
+    ): List<StorageID> =
+        elem.getProperty<List<ORID>>(name).map {
+            DocumentID(it)
+        }
+
+    override fun getMutableStorageIDs(
+        name: String
+    ): MutableList<StorageID> =
+        elem.getProperty<List<ORID>>(name)
+            .asSequence()
+            .map {
+                DocumentID(it)
+            }.toMutableList()
 
     override fun getHashProperty(
         name: String
@@ -59,7 +77,24 @@ data class DocumentElement internal constructor(
                 Hash(it)
             }
 
+    override fun getMutableHashList(name: String): MutableList<Hash> =
+        elem.getProperty<List<ByteArray>>(name)
+            .asSequence()
+            .map {
+                Hash(it)
+            }.toMutableList()
+
+
     override fun getHashSet(
+        name: String
+    ): Set<Hash> =
+        elem.getProperty<Set<ByteArray>>(name)
+            .asSequence()
+            .map {
+                Hash(it)
+            }.toSet()
+
+    override fun getMutableHashSet(
         name: String
     ): MutableSet<Hash> =
         elem.getProperty<Set<ByteArray>>(name)
@@ -68,14 +103,6 @@ data class DocumentElement internal constructor(
                 Hash(it)
             }.toMutableSet()
 
-
-    override fun getPayoutProperty(
-        name: String
-    ): Payout =
-        Payout(elem.getProperty(name))
-
-    override val identity: StorageID
-        get() = DocumentID(elem.identity)
 
     override fun getStorageBytes(
         name: String
@@ -90,24 +117,51 @@ data class DocumentElement internal constructor(
                 DocumentElement(it)
             }
 
+    override fun getMutableElementList(name: String): MutableList<StorageElement> =
+        elem.getProperty<List<OElement>>(name)
+            .asSequence()
+            .map {
+                DocumentElement(it)
+            }.toMutableList()
+
+
     override fun getElementSet(
         name: String
     ): Set<StorageElement> =
-        mutableSetOf<StorageElement>().apply {
+        mutableSetOf<StorageElement>().let { set ->
             elem.getProperty<Set<OElement>>(name)
-                .forEach {
-                    this.add(DocumentElement(it))
+                .mapTo(set) {
+                    DocumentElement(it)
                 }
         }
+
+    override fun getMutableElementSet(
+        name: String
+    ): MutableSet<StorageElement> =
+        elem.getProperty<Set<OElement>>(name)
+            .asSequence()
+            .map {
+                DocumentElement(it)
+            }.toMutableSet()
+
 
     override fun getElementMap(
         name: String
     ): Map<String, StorageElement> =
-        elem
-            .getProperty<Map<String, OElement>>(name)
+        elem.getProperty<Map<String, OElement>>(name)
             .mapValues {
                 DocumentElement(it.value)
             }
+
+    override fun getMutableElementMap(
+        name: String
+    ): MutableMap<String, StorageElement> =
+        mutableMapOf<String, StorageElement>().let { map ->
+            elem.getProperty<Map<String, OElement>>(name)
+                .mapValuesTo(map) {
+                    DocumentElement(it.value)
+                }
+        }
 
 
     override fun getLinked(

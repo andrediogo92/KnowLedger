@@ -10,23 +10,47 @@ interface StorageElement : Discardable<StorageElement> {
     val schema: String?
     val identity: StorageID
 
-    fun getDifficultyProperty(name: String): Difficulty
+    fun getDifficultyProperty(
+        name: String
+    ): Difficulty
     fun getHashProperty(name: String): Hash
     fun getPayoutProperty(name: String): Payout
     fun getStorageIDs(name: String): List<StorageID>
+    fun getMutableStorageIDs(
+        name: String
+    ): MutableList<StorageID>
     fun <T> getStorageProperty(name: String): T
     fun getStorageBytes(name: String): StorageBytes
     fun getElementList(
         name: String
     ): List<StorageElement>
+
+    fun getMutableElementList(
+        name: String
+    ): MutableList<StorageElement>
     fun getElementSet(
         name: String
     ): Set<StorageElement>
+
+    fun getMutableElementSet(
+        name: String
+    ): MutableSet<StorageElement>
     fun getElementMap(
         name: String
     ): Map<String, StorageElement>
-    fun getHashSet(name: String): MutableSet<Hash>
+
+    fun getMutableElementMap(
+        name: String
+    ): MutableMap<String, StorageElement>
+
+    fun getHashSet(name: String): Set<Hash>
+    fun getMutableHashSet(
+        name: String
+    ): MutableSet<Hash>
     fun getHashList(name: String): List<Hash>
+    fun getMutableHashList(
+        name: String
+    ): MutableList<Hash>
     fun getLinked(name: String): StorageElement
 
 
