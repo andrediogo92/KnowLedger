@@ -12,9 +12,7 @@ class StorageUnawareChainId internal constructor(
     override val hashId: Hash
 ) : ChainId {
     override fun digest(c: Hasher): Hash =
-        c.applyHash(
-            tag.encodeStringToUTF8() + ledgerHash.bytes
-        )
+        generateChainHandleHash(c, tag, ledgerHash)
 
     internal constructor(
         tag: String,
@@ -51,7 +49,8 @@ class StorageUnawareChainId internal constructor(
     }
 
     companion object {
-        private fun generateChainHandleHash(
+        @Suppress("NOTHING_TO_INLINE")
+        private inline fun generateChainHandleHash(
             hasher: Hasher,
             tag: String,
             ledgerHash: Hash
