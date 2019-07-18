@@ -17,9 +17,8 @@ import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.LedgerParams
-import org.knowledger.ledger.config.StorageAwareChainId
+import org.knowledger.ledger.config.chainid.StorageAwareChainId
 import org.knowledger.ledger.data.DummyData
-import org.knowledger.ledger.data.MerkleTree
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.results.intoQuery
 import org.knowledger.ledger.service.Identity
@@ -32,10 +31,12 @@ import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.service.transactions.*
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
-import org.knowledger.ledger.storage.Coinbase
-import org.knowledger.ledger.storage.StorageUnawareBlock
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
+import org.knowledger.ledger.storage.block.StorageUnawareBlock
+import org.knowledger.ledger.storage.blockheader.StorageUnawareBlockHeader
+import org.knowledger.ledger.storage.coinbase.StorageUnawareCoinbase
+import org.knowledger.ledger.storage.merkletree.StorageUnawareMerkleTree
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -368,7 +369,7 @@ data class ChainHandle internal constructor(
     fun addBlock(block: Block): Outcome<Boolean, QueryFailure> =
         lastBlockHeader.flatMapSuccess {
             val recalcTrigger = ledgerParams.recalcTrigger
-            if (validateBlock(it.hash, block)) {
+            if (validateBlock(it.hashId, block)) {
                 if (lastRecalc == recalcTrigger) {
                     recalculateDifficulty(block)
                     lastRecalc = 0
@@ -523,27 +524,19 @@ data class ChainHandle internal constructor(
         fun getOriginHeader(
             chainId: ChainId
         ): BlockHeader =
-            BlockHeader(
+            StorageUnawareBlockHeader(
                 chainId,
                 LedgerHandle.getHasher(chainId.ledgerHash)!!,
                 MAX_DIFFICULTY,
                 0,
                 emptyHash,
-                emptyHash,
-                emptyHash,
                 BlockParams(),
-                ZonedDateTime
-                    .of(
-                        2018,
-                        3,
-                        13,
-                        0,
-                        0,
-                        0,
-                        0,
-                        ZoneOffset.UTC
-                    )
-                    .toInstant(),
+                emptyHash,
+                emptyHash,
+                ZonedDateTime.of(
+                    2018, 3, 13, 0,
+                    0, 0, 0, ZoneOffset.UTC
+                ).toInstant(),
                 0.toLong()
             )
 
@@ -555,9 +548,9 @@ data class ChainHandle internal constructor(
                 .let {
                     StorageUnawareBlock(
                         sortedSetOf(),
-                        Coinbase(it),
+                        StorageUnawareCoinbase(it),
                         getOriginHeader(chainId),
-                        MerkleTree(it.hasher)
+                        StorageUnawareMerkleTree(it.hasher)
                     ).also { bl ->
                         bl.plus(
                             Transaction(
