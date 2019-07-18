@@ -1,4 +1,4 @@
-package org.knowledger.ledger.storage
+package org.knowledger.ledger.storage.block
 
 import com.squareup.moshi.JsonClass
 import org.knowledger.common.Sizeable
@@ -7,8 +7,15 @@ import org.knowledger.common.hash.Hash
 import org.knowledger.common.storage.LedgerContract
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.data.MerkleTree
 import org.knowledger.ledger.service.handles.LedgerHandle
+import org.knowledger.ledger.storage.Block
+import org.knowledger.ledger.storage.BlockHeader
+import org.knowledger.ledger.storage.Coinbase
+import org.knowledger.ledger.storage.MerkleTree
+import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.storage.blockheader.StorageAwareBlockHeader
+import org.knowledger.ledger.storage.coinbase.StorageAwareCoinbase
+import org.knowledger.ledger.storage.merkletree.StorageAwareMerkleTree
 import org.openjdk.jol.info.ClassLayout
 import org.tinylog.kotlin.Logger
 import java.util.*
@@ -20,6 +27,12 @@ data class StorageUnawareBlock(
     override val header: BlockHeader,
     override var merkleTree: MerkleTree
 ) : Block, Sizeable, LedgerContract {
+    override fun clone(): Block =
+        copy(
+            header = header.clone(),
+            coinbase = coinbase.clone(),
+            merkleTree = merkleTree.clone()
+        )
 
     @Transient
     private val classSize: Long =
@@ -50,7 +63,7 @@ data class StorageUnawareBlock(
                 merkleTreeSize
 
 
-    constructor(
+    internal constructor(
         chainId: ChainId,
         previousHash: Hash,
         difficulty: Difficulty,
@@ -58,8 +71,8 @@ data class StorageUnawareBlock(
         params: BlockParams
     ) : this(
         sortedSetOf(),
-        Coinbase(LedgerHandle.getContainer(chainId.ledgerHash)!!),
-        BlockHeader(
+        StorageAwareCoinbase(LedgerHandle.getContainer(chainId.ledgerHash)!!),
+        StorageAwareBlockHeader(
             chainId,
             LedgerHandle.getHasher(chainId.ledgerHash)!!,
             previousHash,
@@ -67,7 +80,7 @@ data class StorageUnawareBlock(
             blockheight,
             params
         ),
-        MerkleTree(LedgerHandle.getHasher(chainId.ledgerHash)!!)
+        StorageAwareMerkleTree(LedgerHandle.getHasher(chainId.ledgerHash)!!)
     ) {
         headerSize = header.approximateSize
     }
@@ -104,6 +117,20 @@ data class StorageUnawareBlock(
         return false
     }
 
+
+    override fun updateHashes() {
+        merkleTree.rebuildMerkleTree(coinbase, data.toTypedArray())
+        header.updateMerkleTree(merkleTree.root)
+    }
+
+
+    override fun verifyTransactions(): Boolean {
+        return merkleTree.verifyBlockTransactions(
+            coinbase,
+            data.toTypedArray()
+        )
+    }
+
     /**
      * Recalculates the entire block size.
      *
@@ -121,13 +148,6 @@ data class StorageUnawareBlock(
             acc + transaction.approximateSize
         }
         merkleTreeSize = merkleTree.approximateSize
-    }
-
-    override fun verifyTransactions(): Boolean {
-        return merkleTree.verifyBlockTransactions(
-            coinbase,
-            data.toTypedArray()
-        )
     }
 
 }

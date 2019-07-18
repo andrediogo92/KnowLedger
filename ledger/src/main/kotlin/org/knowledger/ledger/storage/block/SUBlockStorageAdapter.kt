@@ -1,4 +1,4 @@
-package org.knowledger.ledger.storage.adapters
+package org.knowledger.ledger.storage.block
 
 import org.knowledger.common.database.NewInstanceSession
 import org.knowledger.common.database.StorageElement
@@ -7,10 +7,14 @@ import org.knowledger.common.hash.Hash
 import org.knowledger.common.results.Outcome
 import org.knowledger.common.results.allValues
 import org.knowledger.common.results.zip
-import org.knowledger.ledger.data.adapters.MerkleTreeStorageAdapter
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.StorageUnawareBlock
+import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
+import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
+import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
+import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
+import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
+import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
 
 object SUBlockStorageAdapter : LedgerStorageAdapter<StorageUnawareBlock> {
     override val id: String
@@ -33,7 +37,7 @@ object SUBlockStorageAdapter : LedgerStorageAdapter<StorageUnawareBlock> {
                 }
             )
             setLinked(
-                "coinbase", CoinbaseStorageAdapter,
+                "payout", CoinbaseStorageAdapter,
                 toStore.coinbase, session
             )
             setLinked(
@@ -63,7 +67,7 @@ object SUBlockStorageAdapter : LedgerStorageAdapter<StorageUnawareBlock> {
                 CoinbaseStorageAdapter.load(
                     ledgerHash,
                     element.getLinked(
-                        "coinbase"
+                        "payout"
                     )
                 ),
                 BlockHeaderStorageAdapter.load(
