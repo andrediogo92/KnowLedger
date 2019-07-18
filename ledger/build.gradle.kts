@@ -21,8 +21,6 @@ dependencies {
     //Regular dependencies
     implementation(kotlin("stdlib", Versions.kotlin))
     implementation(kotlin("reflect", Versions.kotlin))
-    implementation(kotlin("test", Versions.kotlin))
-    implementation(kotlin("test-junit", Versions.kotlin))
     //implementation(Libs.arrowK)
     implementation(Libs.bouncyCastle)
     //implementation(Libs.coroutines)
@@ -30,9 +28,6 @@ dependencies {
     Libs.moshi.forEach {
         implementation(it)
     }
-//    Libs.orientDB.forEach {
-//        implementation(it)
-//    }
     //implementation(Libs.serialization)
     Libs.tinylog.forEach {
         implementation(it)

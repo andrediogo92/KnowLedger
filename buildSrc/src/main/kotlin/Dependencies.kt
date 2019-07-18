@@ -11,7 +11,8 @@ object Versions {
     const val jol = "0.9"
     const val jUnit = "5.4.2"
     const val jUnitRunner = "1.4.2"
-    const val kotlin = "1.3.40"
+    const val kotlin = "1.3.41"
+    const val koin = "2.0.1"
     const val ktor = "1.2.2"
     const val moshi = "1.8.0"
     const val kotlinPoet = "1.2.0"
@@ -70,6 +71,8 @@ object Libs {
         "io.ktor:ktor-client-json:${Versions.ktor}",
         "io.ktor:ktor-client-json-jvm:${Versions.ktor}"
     )
+
+    val koin = "org.koin:koin-core:${Versions.koin}"
 
     const val jol =
         "org.openjdk.jol:jol-core:${Versions.jol}"
