@@ -1,49 +1,43 @@
-package org.knowledger.ledger.data.adapters
+package org.knowledger.ledger.storage.merkletree
 
 import org.knowledger.common.database.NewInstanceSession
 import org.knowledger.common.database.StorageElement
 import org.knowledger.common.database.StorageType
 import org.knowledger.common.hash.Hash
 import org.knowledger.common.results.Outcome
-import org.knowledger.ledger.data.MerkleTree
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
+import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 
-object MerkleTreeStorageAdapter : LedgerStorageAdapter<MerkleTree> {
+object SUMerkleTreeStorageAdapter : LedgerStorageAdapter<StorageUnawareMerkleTree> {
     override val id: String
-        get() = "MerkleTree"
-
+        get() = MerkleTreeStorageAdapter.id
     override val properties: Map<String, StorageType>
-        get() = mapOf(
-            "collapsedTree" to StorageType.LISTEMBEDDED,
-            "levelIndex" to StorageType.LISTEMBEDDED
-        )
+        get() = MerkleTreeStorageAdapter.properties
 
     override fun store(
-        toStore: MerkleTree,
-        session: NewInstanceSession
+        toStore: StorageUnawareMerkleTree, session: NewInstanceSession
     ): StorageElement =
         session
-            .newInstance(id)
+            .newInstance(MerkleTreeStorageAdapter.id)
             .setHashList(
-                "collapsedTree", toStore.collapsedTree
+                "nakedTree", toStore.collapsedTree
             ).setStorageProperty(
-                "levelIndex", toStore.levelIndex
+                "levelIndexes", toStore.levelIndex
             )
-
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<MerkleTree, LoadFailure> =
+    ): Outcome<StorageUnawareMerkleTree, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val collapsedTree: List<Hash> =
-                element.getHashList("collapsedTree")
-            val levelIndex: List<Int> =
-                element.getStorageProperty("levelIndex")
+            val collapsedTree: MutableList<Hash> =
+                element.getMutableHashList("nakedTree")
+            val levelIndex: MutableList<Int> =
+                element.getStorageProperty("levelIndexes")
             Outcome.Ok(
-                MerkleTree(
+                StorageUnawareMerkleTree(
                     LedgerHandle.getHasher(ledgerHash)!!,
                     collapsedTree,
                     levelIndex

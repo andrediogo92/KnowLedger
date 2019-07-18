@@ -1,39 +1,38 @@
-package org.knowledger.ledger.data
-
+package org.knowledger.ledger.storage.merkletree
 
 import com.squareup.moshi.JsonClass
-import org.knowledger.common.Sizeable
 import org.knowledger.common.config.LedgerConfiguration
 import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hash.Companion.emptyHash
 import org.knowledger.common.hash.Hashed
 import org.knowledger.common.hash.Hasher
 import org.knowledger.common.misc.mapAndAdd
 import org.knowledger.common.misc.mapToArray
-import org.knowledger.common.storage.LedgerContract
+import org.knowledger.ledger.storage.MerkleTree
 import org.tinylog.kotlin.Logger
 
 @JsonClass(generateAdapter = true)
-data class MerkleTree(
+data class StorageUnawareMerkleTree(
     @Transient
-    val hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
-    internal var collapsedTree: List<Hash> = emptyList(),
-    internal var levelIndex: List<Int> = emptyList()
-) : Sizeable, LedgerContract {
+    override val hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
+    internal val collapsedTree: MutableList<Hash> = mutableListOf(),
+    internal val levelIndex: MutableList<Int> = mutableListOf()
+) : MerkleTree {
+    override fun clone(): MerkleTree =
+        copy()
 
-    val nakedTree: List<Hash>
+    override val nakedTree: List<Hash>
         get() = collapsedTree
-    val levelIndexes: List<Int>
+    override val levelIndexes: List<Int>
         get() = levelIndex
 
     /**
      * The root hashId.
      */
-    val root: Hash
+    override val root: Hash
         get() =
             if (collapsedTree.isNotEmpty())
                 collapsedTree[0] else
-                emptyHash
+                Hash.emptyHash
 
 
     constructor(
@@ -51,7 +50,7 @@ data class MerkleTree(
         rebuildMerkleTree(coinbase, data)
     }
 
-    fun hasTransaction(hash: Hash): Boolean {
+    override fun hasTransaction(hash: Hash): Boolean {
         var res = false
         var i = collapsedTree.size - 1
 
@@ -66,7 +65,7 @@ data class MerkleTree(
         return res
     }
 
-    fun getTransactionId(hash: Hash): Int? {
+    override fun getTransactionId(hash: Hash): Int? {
         var res: Int? = null
         var i = collapsedTree.size - 1
 
@@ -87,7 +86,7 @@ data class MerkleTree(
      * and returns whether the transaction is present and
      * matched all the way up the [MerkleTree].
      */
-    fun verifyTransaction(hash: Hash): Boolean =
+    override fun verifyTransaction(hash: Hash): Boolean =
         getTransactionId(hash)?.let {
             loopUpVerification(
                 it,
@@ -151,7 +150,7 @@ data class MerkleTree(
      * transactions in the block and returns whether the entire
      * [MerkleTree] matches against the transaction [data] + [coinbase].
      */
-    fun verifyBlockTransactions(
+    override fun verifyBlockTransactions(
         coinbase: Hashed,
         data: Array<out Hashed>
     ): Boolean =
@@ -275,7 +274,9 @@ data class MerkleTree(
      * corresponding [MerkleTree] for their hashes, or an empty [MerkleTree]
      * if supplied with empty [data].
      */
-    fun rebuildMerkleTree(data: Array<out Hashed>) {
+    override fun rebuildMerkleTree(data: Array<out Hashed>) {
+        collapsedTree.clear()
+        levelIndex.clear()
         val treeLayer = mutableListOf<Array<Hash>>()
         treeLayer.add(
             data.mapToArray(Hashed::hashId)
@@ -294,7 +295,7 @@ data class MerkleTree(
      * hashes and outputs the full corresponding [Merkle Tree], or an empty [MerkleTree] if
      * supplied with empty [data].
      */
-    fun rebuildMerkleTree(
+    override fun rebuildMerkleTree(
         coinbase: Hashed, data: Array<out Hashed>
     ) {
         val treeLayer: MutableList<Array<Hash>> = mutableListOf()
@@ -329,37 +330,31 @@ data class MerkleTree(
             count = (count / 2) + (count % 2)
             i += 1
         }
-        return when (treeLayer[i].size) {
+        when (treeLayer[i].size) {
             2 -> {
-                val tempTree = mutableListOf<Hash>()
-                val tempIndex = mutableListOf<Int>()
-                tempTree.add(
+                collapsedTree.add(
                     hasher.applyHash(
                         treeLayer[i][0] + treeLayer[i][1]
                     )
                 )
-                tempIndex.add(0)
+                levelIndex.add(0)
                 treeLayer.reverse()
                 count = 1
                 for (s in treeLayer) {
-                    tempIndex.add(count)
-                    tempTree.addAll(s)
+                    levelIndex.add(count)
+                    collapsedTree.addAll(s)
                     count += s.size
                 }
 
-                collapsedTree = tempTree
-                levelIndex = tempIndex
             }
             //If the previous layer was already length 1,
             //that means we started at the root.
             1 -> {
-                collapsedTree = treeLayer[i].toList()
-                levelIndex = listOf(0)
+                collapsedTree.addAll(treeLayer[i].toList())
+                levelIndex.add(0)
             }
             else -> {
                 Logger.warn { "Empty merkle tree" }
-                collapsedTree = emptyList()
-                levelIndex = emptyList()
             }
         }
     }
@@ -379,7 +374,7 @@ data class MerkleTree(
         previousTreeLayer: Array<Hash>,
         count: Int
     ): Array<Hash> {
-        val treeLayer = Array(count) { emptyHash }
+        val treeLayer = Array(count) { Hash.emptyHash }
         var j = 0
         var i = 1
         //While we're inside the bounds of this layer, calculate two by two the hashId.
@@ -402,7 +397,7 @@ data class MerkleTree(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is MerkleTree) return false
+        if (other !is StorageUnawareMerkleTree) return false
         if (collapsedTree
                 .asSequence()
                 .zip(other.collapsedTree.asSequence())
@@ -429,5 +424,3 @@ data class MerkleTree(
     }
 
 }
-
-
