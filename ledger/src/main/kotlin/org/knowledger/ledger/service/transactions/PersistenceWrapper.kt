@@ -10,6 +10,8 @@ import org.knowledger.common.database.query.UnspecificQuery
 import org.knowledger.common.hash.Hash
 import org.knowledger.common.results.Outcome
 import org.knowledger.common.results.allValues
+import org.knowledger.common.results.peekFailure
+import org.knowledger.common.results.peekSuccess
 import org.knowledger.common.storage.LedgerContract
 import org.knowledger.common.storage.adapters.Loadable
 import org.knowledger.common.storage.adapters.SchemaProvider
@@ -21,12 +23,12 @@ import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerParamsStorageAdapter
 import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
-import org.knowledger.ledger.data.adapters.MerkleTreeStorageAdapter
 import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.results.tryOrDataUnknownFailure
 import org.knowledger.ledger.results.tryOrLedgerUnknownFailure
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.results.tryOrQueryUnknownFailure
+import org.knowledger.ledger.results.tryOrUpdateUnknownFailure
 import org.knowledger.ledger.results.use
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.LedgerConfig
@@ -39,13 +41,9 @@ import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
-import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
-import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
-import org.knowledger.ledger.storage.adapters.QueryLoadable
-import org.knowledger.ledger.storage.adapters.StorageLoadable
-import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
+import org.knowledger.ledger.service.results.UpdateFailure
+import org.knowledger.ledger.storage.StorageAware
+import org.knowledger.ledger.storage.adapters.*
 
 
 /**
@@ -444,7 +442,7 @@ internal data class PersistenceWrapper(
                 rollbackTransaction()
                 Outcome.Error<QueryFailure>(
                     QueryFailure.NonExistentData(
-                        "Failed to save element ${elem.print()}"
+                        "Failed to save element ${elem.json}"
                     )
                 )
             }
@@ -465,15 +463,40 @@ internal data class PersistenceWrapper(
     ): Outcome<StorageID, QueryFailure> =
         tryOrQueryUnknownFailure {
             val elem = storable.store(element, session)
+            beginTransaction()
             val r = session.save(elem, cluster)
             if (r != null) {
+                commitTransaction()
                 Outcome.Ok(r.identity)
             } else {
+                rollbackTransaction()
                 Outcome.Error<QueryFailure>(
                     QueryFailure.NonExistentData(
-                        "Failed to save element ${elem.print()}"
+                        "Failed to save element ${elem.json}"
                     )
                 )
+            }
+        }
+
+
+    /**
+     * Updates an [element] in place with its invalidated
+     * fields in a synchronous manner, in a transaction
+     * context.
+     *
+     * Returns an [Outcome] with a possible [UpdateFailure]
+     * over a [StorageID].
+     */
+    @Synchronized
+    internal fun <T> updateEntity(
+        element: StorageAware<T>
+    ): Outcome<StorageID, UpdateFailure> =
+        tryOrUpdateUnknownFailure {
+            beginTransaction()
+            element.update(session).peekSuccess {
+                commitTransaction()
+            }.peekFailure {
+                rollbackTransaction()
             }
         }
 
