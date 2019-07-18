@@ -1,10 +1,10 @@
 package org.knowledger.ledger.storage
 
-import org.knowledger.common.database.NewInstanceSession
-import org.knowledger.common.database.StorageElement
-import org.knowledger.common.database.StorageID
-import org.knowledger.common.results.Outcome
-import org.knowledger.common.storage.adapters.Storable
+import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.StorageElement
+import org.knowledger.ledger.core.database.StorageID
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.storage.adapters.Storable
 import org.knowledger.ledger.service.results.UpdateFailure
 
 internal inline fun <T> StorageAware<T>.commonUpdate(
@@ -18,6 +18,7 @@ internal inline fun <T> StorageAware<T>.commonUpdate(
         runUpdate(id!!.element)
     }
 
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun <T> StorageAware<T>.simpleUpdate(
     invalidatedMap: MutableMap<String, Any>
 ): Outcome<StorageID, UpdateFailure> =
@@ -29,6 +30,7 @@ internal inline fun <T> StorageAware<T>.simpleUpdate(
         Outcome.Ok(id!!)
     }
 
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun <T, U> StorageAware<T>.updateLinked(
     session: NewInstanceSession,
     key: String, toUpdate: U,

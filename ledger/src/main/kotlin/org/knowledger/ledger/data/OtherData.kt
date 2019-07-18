@@ -1,11 +1,11 @@
 package org.knowledger.ledger.data
 
 import com.squareup.moshi.JsonClass
-import org.knowledger.common.config.LedgerConfiguration.OTHER_BASE
-import org.knowledger.common.data.LedgerData
-import org.knowledger.common.data.SelfInterval
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hasher
+import org.knowledger.ledger.core.config.LedgerConfiguration.OTHER_BASE
+import org.knowledger.ledger.core.data.LedgerData
+import org.knowledger.ledger.core.data.SelfInterval
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hasher
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.math.BigDecimal

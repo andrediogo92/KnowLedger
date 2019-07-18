@@ -9,7 +9,7 @@ import org.knowledger.agent.data.convertToJadeBlock
 import org.knowledger.agent.messaging.block.BlockOntology
 import org.knowledger.agent.messaging.block.ontology.actions.DiffuseBlock
 import org.knowledger.agent.messaging.transaction.TransactionOntology
-import org.knowledger.common.data.LedgerData
+import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.Block
@@ -45,7 +45,7 @@ class ReceiveMessages(
         val txce = myAgent.contentManager.extractContent(txmsg)
         //TODO: Must extract a transaction from a content element.
         tx = txce as Transaction
-        sc.lastBlock?.addTransaction(tx)
+        sc.lastBlock?.plus(tx)
         }
         } catch (e: Codec.CodecException) {
         logger.error(e){}
@@ -84,8 +84,7 @@ class ReceiveMessages(
             loop@ while (missingNum > 0) {
                 val codec = SLCodec()
                 val blmsg = ACLMessage(ACLMessage.INFORM)
-                val blk = sc.getBlockByHeight(rHeight)
-                when (blk) {
+                when (val blk = sc.getBlockByHeight(rHeight)) {
                     is LoadFailure.Success -> {
                         myAgent.contentManager
                             .fillContent(

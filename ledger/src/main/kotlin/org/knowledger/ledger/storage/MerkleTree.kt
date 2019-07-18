@@ -1,12 +1,12 @@
 package org.knowledger.ledger.storage
 
 
-import org.knowledger.common.Sizeable
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hash.Companion.emptyHash
-import org.knowledger.common.hash.Hashed
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.storage.LedgerContract
+import org.knowledger.ledger.core.Sizeable
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
+import org.knowledger.ledger.core.hash.Hashed
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.storage.LedgerContract
 
 interface MerkleTree : Sizeable, LedgerContract, Cloneable {
     val hasher: Hasher

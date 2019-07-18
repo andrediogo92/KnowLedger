@@ -1,10 +1,10 @@
 package org.knowledger.ledger.config
 
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hashable
-import org.knowledger.common.hash.Hashed
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.misc.encodeStringToUTF8
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hashable
+import org.knowledger.ledger.core.hash.Hashed
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.encodeStringToUTF8
 import org.knowledger.ledger.service.ServiceClass
 
 interface ChainId : Hashed, Hashable, ServiceClass {

@@ -1,14 +1,14 @@
 package org.knowledger.ledger.storage.blockheader
 
-import org.knowledger.common.database.NewInstanceSession
-import org.knowledger.common.database.StorageElement
-import org.knowledger.common.database.StorageType
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.results.Outcome
-import org.knowledger.common.results.mapFailure
-import org.knowledger.common.results.zip
 import org.knowledger.ledger.config.adapters.BlockParamsStorageAdapter
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
+import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.StorageElement
+import org.knowledger.ledger.core.database.StorageType
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.results.mapFailure
+import org.knowledger.ledger.core.results.zip
 import org.knowledger.ledger.results.intoLoad
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
@@ -102,7 +102,6 @@ object SUBlockHeaderStorageAdapter : LedgerStorageAdapter<StorageUnawareBlockHea
             }.mapFailure {
                 it.intoLoad()
             }
-
 
         }
 }

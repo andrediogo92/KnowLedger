@@ -72,7 +72,7 @@ object Libs {
         "io.ktor:ktor-client-json-jvm:${Versions.ktor}"
     )
 
-    val koin = "org.koin:koin-core:${Versions.koin}"
+    const val koin = "org.koin:koin-core:${Versions.koin}"
 
     const val jol =
         "org.openjdk.jol:jol-core:${Versions.jol}"

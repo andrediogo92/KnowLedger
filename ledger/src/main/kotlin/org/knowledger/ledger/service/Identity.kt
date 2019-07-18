@@ -2,7 +2,7 @@ package org.knowledger.ledger.service
 
 import com.squareup.moshi.JsonClass
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.knowledger.common.storage.LedgerContract
+import org.knowledger.ledger.core.storage.LedgerContract
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.PrivateKey

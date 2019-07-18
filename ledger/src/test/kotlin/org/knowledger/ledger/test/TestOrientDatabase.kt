@@ -7,23 +7,23 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.knowledger.common.data.Difficulty.Companion.MIN_DIFFICULTY
-import org.knowledger.common.database.DatabaseMode
-import org.knowledger.common.database.DatabaseType
-import org.knowledger.common.database.orient.OrientDatabase
-import org.knowledger.common.database.orient.OrientDatabaseInfo
-import org.knowledger.common.database.orient.OrientSession
-import org.knowledger.common.database.query.UnspecificQuery
-import org.knowledger.common.hash.Hash.Companion.emptyHash
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.results.mapSuccess
-import org.knowledger.common.results.unwrap
-import org.knowledger.common.storage.adapters.SchemaProvider
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.adapters.BlockParamsStorageAdapter
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerParamsStorageAdapter
+import org.knowledger.ledger.core.data.Difficulty.Companion.MIN_DIFFICULTY
+import org.knowledger.ledger.core.database.DatabaseMode
+import org.knowledger.ledger.core.database.DatabaseType
+import org.knowledger.ledger.core.database.orient.OrientDatabase
+import org.knowledger.ledger.core.database.orient.OrientDatabaseInfo
+import org.knowledger.ledger.core.database.orient.OrientSession
+import org.knowledger.ledger.core.database.query.UnspecificQuery
+import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.results.mapSuccess
+import org.knowledger.ledger.core.results.unwrap
+import org.knowledger.ledger.core.storage.adapters.SchemaProvider
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.data.TrafficFlowData
 import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
@@ -312,7 +312,7 @@ class TestOrientDatabase {
                     .isNotNull()
                     .isEqualTo(testTraffic)
                 Logger.info {
-                    moshi.adapter<Block>(Block::class.java)
+                    moshi.adapter(Block::class.java)
                         .toJson(block)
                 }
             }

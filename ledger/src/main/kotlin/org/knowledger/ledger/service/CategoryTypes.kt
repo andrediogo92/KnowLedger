@@ -1,6 +1,7 @@
 package org.knowledger.ledger.service
 
-import org.knowledger.common.storage.LedgerContract
+import org.knowledger.ledger.core.storage.LedgerContract
+
 
 data class CategoryTypes(
     internal val categoryTypes: List<String>

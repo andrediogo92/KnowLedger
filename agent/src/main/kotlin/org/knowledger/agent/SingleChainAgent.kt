@@ -10,10 +10,11 @@ import org.knowledger.agent.behaviours.Mining
 import org.knowledger.agent.behaviours.ReceiveMessages
 import org.knowledger.agent.behaviours.SendMessages
 import org.knowledger.agent.data.AgentPeers
-import org.knowledger.common.data.LedgerData
-import org.knowledger.common.results.flatMapFailure
-import org.knowledger.common.results.onFailure
-import org.knowledger.common.storage.adapters.AbstractStorageAdapter
+import org.knowledger.ledger.core.data.LedgerData
+import org.knowledger.ledger.core.results.flatMapFailure
+import org.knowledger.ledger.core.results.onFailure
+import org.knowledger.ledger.core.results.unwrap
+import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.handles.LedgerHandle
@@ -40,7 +41,7 @@ class SingleChainAgent : Agent() {
             Logger.error(fe)
         }
 
-        val ident: Identity = handle.getIdentityByTag("agent0")!!
+        val ident: Identity = handle.getIdentityByTag("agent0").unwrap()
 
         sessionRewards = 0.0
 
@@ -49,7 +50,7 @@ class SingleChainAgent : Agent() {
         handle
             .getChainHandleOf(cl)
             .flatMapFailure {
-                handle.registerNewChainHandleOf(cl, storage)
+                handle.registerNewChainHandleOf(storage)
             }.onFailure {
                 when (it.failure) {
                     is LedgerFailure.UnknownFailure ->

@@ -1,10 +1,10 @@
 package org.knowledger.ledger.service.transactions
 
-import org.knowledger.common.database.StorageElement
-import org.knowledger.common.database.StorageID
-import org.knowledger.common.database.query.UnspecificQuery
-import org.knowledger.common.results.Outcome
-import org.knowledger.common.storage.results.QueryFailure
+import org.knowledger.ledger.core.database.StorageElement
+import org.knowledger.ledger.core.database.StorageID
+import org.knowledger.ledger.core.database.query.UnspecificQuery
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.storage.results.QueryFailure
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.results.LedgerFailure

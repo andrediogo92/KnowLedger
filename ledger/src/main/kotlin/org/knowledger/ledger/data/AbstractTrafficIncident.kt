@@ -1,6 +1,6 @@
 package org.knowledger.ledger.data
 
-import org.knowledger.common.data.LedgerData
+import org.knowledger.ledger.core.data.LedgerData
 
 abstract class AbstractTrafficIncident(
     var cityName: String,

@@ -1,18 +1,18 @@
 package org.knowledger.ledger.config
 
 import com.squareup.moshi.JsonClass
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hashed
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.misc.bytes
-import org.knowledger.common.misc.encodeStringToUTF8
-import org.knowledger.common.misc.flattenBytes
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hashed
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.bytes
+import org.knowledger.ledger.core.misc.encodeStringToUTF8
+import org.knowledger.ledger.core.misc.flattenBytes
 import org.knowledger.ledger.service.ServiceClass
 import java.time.Instant
 import java.util.*
 
 @JsonClass(generateAdapter = true)
-data class LedgerId internal constructor(
+data class LedgerId(
     val tag: String,
     override val hashId: Hash
 ) : Hashed, ServiceClass {

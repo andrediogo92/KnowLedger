@@ -1,6 +1,6 @@
 package org.knowledger.ledger.data
 
-import org.knowledger.common.data.PhysicalUnit
+import org.knowledger.ledger.core.data.PhysicalUnit
 
 /**
  * Noise units considered:

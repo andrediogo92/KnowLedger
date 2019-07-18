@@ -1,13 +1,13 @@
 package org.knowledger.ledger.data.adapters
 
-import org.knowledger.common.database.NewInstanceSession
-import org.knowledger.common.database.StorageElement
-import org.knowledger.common.database.StorageType
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.results.Outcome
-import org.knowledger.common.results.mapFailure
-import org.knowledger.common.results.mapSuccess
-import org.knowledger.common.storage.adapters.StorageAdapterNotRegistered
+import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.StorageElement
+import org.knowledger.ledger.core.database.StorageType
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.results.mapFailure
+import org.knowledger.ledger.core.results.mapSuccess
+import org.knowledger.ledger.core.storage.adapters.StorageAdapterNotRegistered
 import org.knowledger.ledger.data.GeoCoords
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.results.intoLoad

@@ -1,12 +1,12 @@
 package org.knowledger.ledger.service.adapters
 
-import org.knowledger.common.database.NewInstanceSession
-import org.knowledger.common.database.StorageElement
-import org.knowledger.common.database.StorageType
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.misc.byteEncodeToPrivateKey
-import org.knowledger.common.misc.byteEncodeToPublicKey
-import org.knowledger.common.results.Outcome
+import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.StorageElement
+import org.knowledger.ledger.core.database.StorageType
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.misc.byteEncodeToPrivateKey
+import org.knowledger.ledger.core.misc.byteEncodeToPublicKey
+import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.results.LoadFailure

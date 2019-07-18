@@ -1,6 +1,8 @@
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+version = "0.1"
+
 plugins {
     kotlin("jvm")
     kotlin("kapt")
@@ -11,7 +13,7 @@ plugins {
 dependencies {
     //Project dependencies
     compileOnly(project(":annotations"))
-    implementation(project(":common"))
+    implementation(project(":ledger-core"))
 
     //Annotation Processing
     kapt(Libs.moshiCodeGen)
@@ -38,10 +40,10 @@ dependencies {
     testImplementation(Libs.assertK)
     testImplementation(Libs.commonsRNG)
     testImplementation(Libs.jUnitApi)
-    testImplementation(project(":common")) {
+    testImplementation(project(":ledger-core")) {
         capabilities {
             // Indicate we want a variant with a specific capability
-            requireCapability("org.knowledger.common:test")
+            requireCapability("org.knowledger.ledger.core:test")
         }
     }
     Libs.jUnitRuntime.forEach {

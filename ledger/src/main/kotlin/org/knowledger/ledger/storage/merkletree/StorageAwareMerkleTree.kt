@@ -1,10 +1,10 @@
 package org.knowledger.ledger.storage.merkletree
 
-import org.knowledger.common.database.NewInstanceSession
-import org.knowledger.common.database.StorageID
-import org.knowledger.common.hash.Hashed
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.results.Outcome
+import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.StorageID
+import org.knowledger.ledger.core.hash.Hashed
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.StorageAware

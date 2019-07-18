@@ -1,7 +1,7 @@
 package org.knowledger.ledger.data
 
-import org.knowledger.common.data.ConvertableUnit
-import org.knowledger.common.data.PhysicalUnit
+import org.knowledger.ledger.core.data.ConvertableUnit
+import org.knowledger.ledger.core.data.PhysicalUnit
 import java.math.BigDecimal
 
 /**

@@ -1,11 +1,11 @@
 package org.knowledger.ledger.adapters
 
-import org.knowledger.common.database.NewInstanceSession
-import org.knowledger.common.database.StorageElement
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.results.Outcome
-import org.knowledger.common.results.mapSuccess
-import org.knowledger.common.storage.LedgerContract
+import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.StorageElement
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.results.mapSuccess
+import org.knowledger.ledger.core.storage.LedgerContract
 import org.knowledger.ledger.service.ServiceClass
 import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
 import org.knowledger.ledger.service.results.LedgerFailure
@@ -13,6 +13,7 @@ import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun <T, U : LedgerContract> NewInstanceSession.cacheStore(
     storageAdapter: LedgerStorageAdapter<U>,
     toStore: T,
@@ -26,6 +27,7 @@ internal inline fun <T, U : LedgerContract> NewInstanceSession.cacheStore(
                 toStore.id = it.identity
             }
 
+@Suppress("NOTHING_TO_INLINE")
 internal inline fun <T, U : ServiceClass> NewInstanceSession.cacheStore(
     storageAdapter: ServiceStorageAdapter<U>,
     toStore: T,

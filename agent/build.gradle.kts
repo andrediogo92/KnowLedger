@@ -1,7 +1,9 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+version = "0.1"
+
+
 plugins {
-    application
     kotlin("jvm")
     kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.noarg")
@@ -15,7 +17,7 @@ repositories {
 
 dependencies {
     //Project dependencies
-    implementation(project(":common"))
+    implementation(project(":ledger-core"))
     implementation(project(":ledger"))
 
 
@@ -51,9 +53,7 @@ dependencies {
 }
 
 
-configure<ApplicationPluginConvention> {
-    mainClassName = "org.knowledger.agent.Container"
-}
+
 
 tasks {
     withType<JavaExec> {

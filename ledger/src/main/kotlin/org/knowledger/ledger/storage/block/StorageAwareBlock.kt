@@ -1,12 +1,12 @@
 package org.knowledger.ledger.storage.block
 
 import com.squareup.moshi.JsonClass
-import org.knowledger.common.database.NewInstanceSession
-import org.knowledger.common.database.StorageElement
-import org.knowledger.common.database.StorageID
-import org.knowledger.common.results.Outcome
-import org.knowledger.common.results.flatMapSuccess
-import org.knowledger.common.results.peekSuccess
+import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.StorageElement
+import org.knowledger.ledger.core.database.StorageID
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.results.flatMapSuccess
+import org.knowledger.ledger.core.results.peekSuccess
 import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.StorageAware
@@ -71,8 +71,7 @@ internal data class StorageAwareBlock(
                     updateMerkleTree(session)
                 }.peekSuccess {
                     for (entry in invalidatedFields) {
-                        val value = entry.value
-                        when (value) {
+                        when (val value = entry.value) {
                             is StorageElement -> elem.setLinked(entry.key, value)
                             else -> elem.setStorageProperty(entry.key, value)
                         }

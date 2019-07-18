@@ -12,8 +12,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import org.knowledger.agent.data.feed.AdafruitPublish
 import org.knowledger.agent.data.feed.Reduxer
-import org.knowledger.common.results.reduce
-import org.knowledger.common.results.unwrap
+import org.knowledger.ledger.core.results.reduce
+import org.knowledger.ledger.core.results.unwrap
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.handles.LedgerHandle
@@ -52,7 +52,7 @@ class MonitorAgent(
             val i = 0L
             var fail = false
             while (!fail) {
-                fail = tryLoad(cl.clazz, cl, i)
+                fail = tryLoad(cl.id.tag, cl, i)
             }
         }
         mqttClient.disconnect()

@@ -1,16 +1,16 @@
 package org.knowledger.ledger.service.handles.builder
 
-import org.knowledger.common.database.DatabaseMode
-import org.knowledger.common.database.DatabaseType
-import org.knowledger.common.database.ManagedDatabase
-import org.knowledger.common.database.ManagedSession
-import org.knowledger.common.database.orient.OrientDatabase
-import org.knowledger.common.database.orient.OrientDatabaseInfo
-import org.knowledger.common.hash.AvailableHashAlgorithms
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.misc.base64Encode
-import org.knowledger.common.results.Outcome
-import org.knowledger.common.results.mapSuccess
+import org.knowledger.ledger.core.database.DatabaseMode
+import org.knowledger.ledger.core.database.DatabaseType
+import org.knowledger.ledger.core.database.ManagedDatabase
+import org.knowledger.ledger.core.database.ManagedSession
+import org.knowledger.ledger.core.database.orient.OrientDatabase
+import org.knowledger.ledger.core.database.orient.OrientDatabaseInfo
+import org.knowledger.ledger.core.hash.AvailableHashAlgorithms
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.misc.base64Encode
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.results.mapSuccess
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.transactions.PersistenceWrapper
 import java.io.File

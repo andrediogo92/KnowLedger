@@ -1,12 +1,12 @@
 package org.knowledger.ledger.storage.merkletree
 
 import com.squareup.moshi.JsonClass
-import org.knowledger.common.config.LedgerConfiguration
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hashed
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.misc.mapAndAdd
-import org.knowledger.common.misc.mapToArray
+import org.knowledger.ledger.core.config.LedgerConfiguration
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hashed
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.mapAndAdd
+import org.knowledger.ledger.core.misc.mapToArray
 import org.knowledger.ledger.storage.MerkleTree
 import org.tinylog.kotlin.Logger
 

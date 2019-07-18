@@ -2,7 +2,7 @@ package org.knowledger.agent.behaviours
 
 import jade.core.behaviours.Behaviour
 import org.knowledger.agent.data.captureSound
-import org.knowledger.common.hash.AvailableHashAlgorithms
+import org.knowledger.ledger.core.hash.AvailableHashAlgorithms
 import org.knowledger.ledger.data.NUnit
 import org.knowledger.ledger.data.NoiseData
 import org.knowledger.ledger.data.PhysicalData

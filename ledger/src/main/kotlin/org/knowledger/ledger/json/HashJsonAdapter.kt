@@ -2,8 +2,8 @@ package org.knowledger.ledger.json
 
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.ToJson
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.misc.hashFromHexString
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.misc.hashFromHexString
 
 class HashJsonAdapter {
     @ToJson

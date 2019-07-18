@@ -1,8 +1,8 @@
 package org.knowledger.ledger.service.pool
 
 import com.squareup.moshi.JsonClass
-import org.knowledger.common.hash.Hash
 import org.knowledger.ledger.config.ChainId
+import org.knowledger.ledger.core.hash.Hash
 
 @JsonClass(generateAdapter = true)
 data class StorageUnawareTransactionPool internal constructor(

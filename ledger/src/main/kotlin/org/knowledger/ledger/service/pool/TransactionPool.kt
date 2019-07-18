@@ -1,6 +1,6 @@
 package org.knowledger.ledger.service.pool
 
-import org.knowledger.common.hash.Hash
+import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.service.ServiceClass
 
 interface TransactionPool : ServiceClass {

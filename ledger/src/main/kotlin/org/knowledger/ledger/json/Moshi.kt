@@ -2,10 +2,10 @@ package org.knowledger.ledger.json
 
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
-import org.knowledger.common.data.LedgerData
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
 import org.knowledger.ledger.config.chainid.StorageUnawareChainId
+import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.data.DummyData
 import org.knowledger.ledger.service.pool.StorageAwareTransactionPool
 import org.knowledger.ledger.service.pool.StorageUnawareTransactionPool

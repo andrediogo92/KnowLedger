@@ -3,10 +3,10 @@ package org.knowledger.ledger.test
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
-import org.knowledger.common.misc.getStringFromKey
-import org.knowledger.common.misc.hexString
-import org.knowledger.common.misc.stringToPrivateKey
-import org.knowledger.common.misc.stringToPublicKey
+import org.knowledger.ledger.core.misc.getStringFromKey
+import org.knowledger.ledger.core.misc.hexString
+import org.knowledger.ledger.core.misc.stringToPrivateKey
+import org.knowledger.ledger.core.misc.stringToPublicKey
 import org.knowledger.ledger.service.Identity
 import org.tinylog.kotlin.Logger
 import java.security.Key

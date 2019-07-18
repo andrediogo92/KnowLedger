@@ -1,10 +1,9 @@
 package org.knowledger.ledger.service.results
 
-import org.knowledger.common.results.Failable
-import org.knowledger.common.results.HardFailure
-import org.knowledger.common.results.PropagatedFailure
-import org.knowledger.common.storage.LedgerContract
-
+import org.knowledger.ledger.core.results.Failable
+import org.knowledger.ledger.core.results.HardFailure
+import org.knowledger.ledger.core.results.PropagatedFailure
+import org.knowledger.ledger.core.storage.LedgerContract
 
 /**
  * Result class representing loading of [LedgerContract] classes

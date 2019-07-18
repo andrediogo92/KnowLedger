@@ -1,13 +1,13 @@
 package org.knowledger.ledger.storage.coinbase
 
 import com.squareup.moshi.JsonClass
-import org.knowledger.common.config.LedgerConfiguration
-import org.knowledger.common.data.DataFormula
-import org.knowledger.common.data.DefaultDiff
-import org.knowledger.common.data.Payout
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hasher
 import org.knowledger.ledger.config.CoinbaseParams
+import org.knowledger.ledger.core.config.LedgerConfiguration
+import org.knowledger.ledger.core.data.DataFormula
+import org.knowledger.ledger.core.data.DefaultDiff
+import org.knowledger.ledger.core.data.Payout
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.LedgerContainer

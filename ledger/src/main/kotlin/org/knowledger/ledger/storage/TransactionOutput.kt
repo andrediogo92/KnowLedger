@@ -1,16 +1,16 @@
 package org.knowledger.ledger.storage
 
 import com.squareup.moshi.JsonClass
-import org.knowledger.common.Sizeable
-import org.knowledger.common.config.LedgerConfiguration
-import org.knowledger.common.data.Payout
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hash.Companion.emptyHash
-import org.knowledger.common.hash.Hashable
-import org.knowledger.common.hash.Hashed
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.misc.flattenBytes
-import org.knowledger.common.storage.LedgerContract
+import org.knowledger.ledger.core.Sizeable
+import org.knowledger.ledger.core.config.LedgerConfiguration
+import org.knowledger.ledger.core.data.Payout
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
+import org.knowledger.ledger.core.hash.Hashable
+import org.knowledger.ledger.core.hash.Hashed
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.flattenBytes
+import org.knowledger.ledger.core.storage.LedgerContract
 import org.openjdk.jol.info.GraphLayout
 import java.math.BigDecimal
 import java.security.PublicKey

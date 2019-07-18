@@ -1,7 +1,7 @@
 rootProject.name = "Knowledger"
 include(
     "ledger", "agent", "annotations",
-    "generation", "common", "example"
+    "generation", "ledger-core", "example"
 )
 
 

@@ -1,14 +1,14 @@
 package org.knowledger.ledger.data.adapters
 
-import org.knowledger.common.data.LedgerData
-import org.knowledger.common.database.NewInstanceSession
-import org.knowledger.common.database.StorageBytes
-import org.knowledger.common.database.StorageElement
-import org.knowledger.common.database.StorageID
-import org.knowledger.common.database.StorageType
-import org.knowledger.common.results.Outcome
-import org.knowledger.common.storage.adapters.AbstractStorageAdapter
-import org.knowledger.common.storage.results.DataFailure
+import org.knowledger.ledger.core.data.LedgerData
+import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.StorageBytes
+import org.knowledger.ledger.core.database.StorageElement
+import org.knowledger.ledger.core.database.StorageID
+import org.knowledger.ledger.core.database.StorageType
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
+import org.knowledger.ledger.core.storage.results.DataFailure
 import org.knowledger.ledger.data.OtherData
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream

@@ -1,8 +1,8 @@
 package org.knowledger.ledger.service.transactions
 
-import org.knowledger.common.database.query.UnspecificQuery
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.results.Outcome
+import org.knowledger.ledger.core.database.query.UnspecificQuery
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter

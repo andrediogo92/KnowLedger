@@ -1,7 +1,7 @@
 package org.knowledger.ledger.storage
 
-import org.knowledger.common.Sizeable
-import org.knowledger.common.storage.LedgerContract
+import org.knowledger.ledger.core.Sizeable
+import org.knowledger.ledger.core.storage.LedgerContract
 import java.util.*
 
 interface Block : Sizeable, Cloneable, LedgerContract {

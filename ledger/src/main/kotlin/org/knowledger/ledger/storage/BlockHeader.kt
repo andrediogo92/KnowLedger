@@ -1,16 +1,16 @@
 package org.knowledger.ledger.storage
 
-import org.knowledger.common.Sizeable
-import org.knowledger.common.data.Difficulty
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hashable
-import org.knowledger.common.hash.Hashed
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.misc.bytes
-import org.knowledger.common.misc.flattenBytes
-import org.knowledger.common.storage.LedgerContract
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
+import org.knowledger.ledger.core.Sizeable
+import org.knowledger.ledger.core.data.Difficulty
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hashable
+import org.knowledger.ledger.core.hash.Hashed
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.bytes
+import org.knowledger.ledger.core.misc.flattenBytes
+import org.knowledger.ledger.core.storage.LedgerContract
 import java.time.Instant
 
 interface BlockHeader : Sizeable, Hashed, Cloneable,

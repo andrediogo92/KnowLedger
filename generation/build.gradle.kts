@@ -1,3 +1,5 @@
+version = "0.0"
+
 plugins {
     kotlin("jvm")
     kotlin("kapt")
@@ -10,7 +12,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":common"))
+    implementation(project(":ledger-core"))
     implementation(project(":annotations"))
     implementation(kotlin("stdlib-jdk8"))
     //Code generation library for kotlin, highly recommended

@@ -1,12 +1,12 @@
 package org.knowledger.ledger.storage.blockheader
 
 import com.squareup.moshi.JsonClass
-import org.knowledger.common.config.LedgerConfiguration
-import org.knowledger.common.data.Difficulty
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hasher
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
+import org.knowledger.ledger.core.config.LedgerConfiguration
+import org.knowledger.ledger.core.data.Difficulty
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.storage.BlockHeader
 import org.openjdk.jol.info.ClassLayout
 import java.time.Instant

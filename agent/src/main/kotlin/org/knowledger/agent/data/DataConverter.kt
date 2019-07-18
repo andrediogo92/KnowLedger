@@ -9,24 +9,28 @@ import org.knowledger.agent.messaging.block.ontology.concepts.JMerkleTree
 import org.knowledger.agent.messaging.block.ontology.concepts.JTransactionOutput
 import org.knowledger.agent.messaging.transaction.ontology.concepts.JPhysicalData
 import org.knowledger.agent.messaging.transaction.ontology.concepts.JTransaction
-import org.knowledger.common.data.Difficulty
-import org.knowledger.common.data.LedgerData
-import org.knowledger.common.data.Payout
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.misc.base64Decode
-import org.knowledger.common.misc.base64DecodeToHash
-import org.knowledger.common.misc.base64Encode
-import org.knowledger.common.misc.getStringFromKey
-import org.knowledger.common.misc.stringToPublicKey
 import org.knowledger.ledger.config.LedgerId
-import org.knowledger.ledger.data.MerkleTree
+import org.knowledger.ledger.core.data.Difficulty
+import org.knowledger.ledger.core.data.LedgerData
+import org.knowledger.ledger.core.data.Payout
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.base64Decode
+import org.knowledger.ledger.core.misc.base64DecodeToHash
+import org.knowledger.ledger.core.misc.base64Encode
+import org.knowledger.ledger.core.misc.getStringFromKey
+import org.knowledger.ledger.core.misc.stringToPublicKey
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
+import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.storage.block.StorageUnawareBlock
+import org.knowledger.ledger.storage.blockheader.StorageUnawareBlockHeader
+import org.knowledger.ledger.storage.coinbase.StorageUnawareCoinbase
+import org.knowledger.ledger.storage.merkletree.StorageUnawareMerkleTree
 import org.tinylog.Logger
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -36,7 +40,6 @@ import java.io.ObjectOutputStream
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Instant
-import java.util.*
 
 
 fun convertToJadeBlock(
@@ -55,18 +58,18 @@ fun convertToJadeBlock(
 
 fun convertToJadeMerkleTree(merkleTree: MerkleTree): JMerkleTree =
     JMerkleTree(
-        merkleTree.nakedTree.map { base64Encode(it) },
+        merkleTree.nakedTree.map { it.base64Encode() },
         merkleTree.levelIndexes
     )
 
 fun convertToJadeBlockHeader(header: BlockHeader): JBlockHeader =
     JBlockHeader(
-        base64Encode(header.chainId),
+        header.chainId,
         header.difficulty.toString(),
         header.blockheight,
-        base64Encode(header.hashId),
-        base64Encode(header.merkleRoot),
-        base64Encode(header.previousHash),
+        header.hashId.base64Encode(),
+        header.merkleRoot.base64Encode(),
+        header.previousHash.base64Encode(),
         header.params,
         header.timestamp.toString(),
         header.nonce
@@ -75,7 +78,7 @@ fun convertToJadeBlockHeader(header: BlockHeader): JBlockHeader =
 fun convertToJadeBlockChainId(blid: LedgerId): JLedgerId =
     JLedgerId(
         blid.tag,
-        base64Encode(blid.hashId)
+        blid.hashId.base64Encode()
     )
 
 
@@ -85,8 +88,8 @@ fun convertToJadeCoinbase(coinbase: Coinbase): JCoinbase =
         coinbase.payoutTXO
             .map(::convertToJadeTransactionOutput)
             .toSet(),
-        coinbase.coinbase.toString(),
-        base64Encode(coinbase.hashId)
+        coinbase.payout.toString(),
+        coinbase.hashId.base64Encode()
     )
 
 fun convertToJadeCoinbase(
@@ -98,17 +101,17 @@ fun convertToJadeCoinbase(
         coinbase.payoutTXO
             .map(::convertToJadeTransactionOutput)
             .toSet(),
-        coinbase.coinbase.toString(),
-        base64Encode(coinbase.hashId)
+        coinbase.payout.toString(),
+        coinbase.hashId.base64Encode()
     )
 
 private fun convertToJadeTransactionOutput(txo: TransactionOutput): JTransactionOutput =
     JTransactionOutput(
         txo.publicKey.getStringFromKey(),
-        base64Encode(txo.hashId),
-        base64Encode(txo.prevCoinbase),
+        txo.hashId.base64Encode(),
+        txo.prevCoinbase.base64Encode(),
         txo.payout.toString(),
-        txo.tx.map { base64Encode(it) }.toSet()
+        txo.tx.map { it.base64Encode() }.toSet()
     )
 
 
@@ -116,12 +119,12 @@ fun convertToJadeTransaction(
     t: Transaction
 ): JTransaction =
     JTransaction(
-        transactionId = base64Encode(t.hashId),
+        transactionId = t.hashId.base64Encode(),
         publicKey = t.publicKey.getStringFromKey(),
         data = convertToJadePhysicalData(
             t.data
         ),
-        signature = base64Encode(t.signature)
+        signature = t.signature.base64Encode()
     )
 
 
@@ -131,10 +134,10 @@ fun convertToJadeTransaction(
 ): JTransaction =
     JTransaction(
         ledgerId = convertToJadeBlockChainId(blid),
-        transactionId = base64Encode(t.hashId),
+        transactionId = t.hashId.base64Encode(),
         publicKey = t.publicKey.getStringFromKey(),
         data = convertToJadePhysicalData(t.data),
-        signature = base64Encode(t.signature)
+        signature = t.signature.base64Encode()
     )
 
 fun convertToJadeTransaction(
@@ -142,11 +145,11 @@ fun convertToJadeTransaction(
     t: Transaction
 ): JTransaction =
     JTransaction(
-        blockChainHash = base64Encode(blid),
-        transactionId = base64Encode(t.hashId),
+        blockChainHash = blid.base64Encode(),
+        transactionId = t.hashId.base64Encode(),
         publicKey = t.publicKey.getStringFromKey(),
         data = convertToJadePhysicalData(t.data),
-        signature = base64Encode(t.signature)
+        signature = t.signature.base64Encode()
     )
 
 
@@ -156,7 +159,7 @@ fun convertToJadePhysicalData(data: PhysicalData): JPhysicalData {
         it.writeObject(data.data)
     }
     return JPhysicalData(
-        base64Encode(byteStream.toByteArray()),
+        byteStream.toByteArray().base64Encode(),
         data.instant.toString(),
         data.geoCoords?.latitude.toString(),
         data.geoCoords?.longitude.toString()
@@ -172,10 +175,10 @@ fun convertFromJadeBlock(
     clazz: Class<out LedgerData>
 ): Block =
     if (clazz.simpleName == b.clazz) {
-        Block(
+        StorageUnawareBlock(
             b.data.map {
                 convertFromJadeTransaction(hasher, it)
-            }.toMutableList(),
+            }.toSortedSet(),
             convertFromJadeCoinbase(b.coinbase),
             convertFromJadeBlockHeader(hasher, b.header),
             convertFromJadeMerkleTree(hasher, b.merkleTree)
@@ -190,9 +193,9 @@ fun convertFromJadeMerkleTree(
     hasher: Hasher,
     merkleTree: JMerkleTree
 ): MerkleTree =
-    MerkleTree(
+    StorageUnawareMerkleTree(
         hasher,
-        merkleTree.hashes.map { base64DecodeToHash(it) },
+        merkleTree.hashes.map { it.base64DecodeToHash() },
         merkleTree.levelIndex
     )
 
@@ -201,14 +204,14 @@ fun convertFromJadeBlockHeader(
     hasher: Hasher,
     header: JBlockHeader
 ): BlockHeader =
-    BlockHeader(
-        base64DecodeToHash(header.blid),
+    StorageUnawareBlockHeader(
+        header.blid.base64DecodeToHash(),
         hasher,
         Difficulty(BigInteger(header.difficulty)),
         header.blockheight,
-        base64DecodeToHash(header.hash),
-        base64DecodeToHash(header.merkleRoot),
-        base64DecodeToHash(header.previousHash),
+        header.hash.base64DecodeToHash(),
+        header.merkleRoot.base64DecodeToHash(),
+        header.previousHash.base64DecodeToHash(),
         header.params,
         Instant.parse(header.timeStamp),
         header.nonce
@@ -217,34 +220,31 @@ fun convertFromJadeBlockHeader(
 fun convertFromJadeBlockChainId(blid: JLedgerId): LedgerId =
     LedgerId(
         blid.id,
-        UUID.fromString(blid.uuid),
-        Instant.parse(blid.timestamp),
-        blid.params,
-        base64DecodeToHash(blid.hash)
+        blid.hash.base64DecodeToHash()
     )
 
 
 fun convertFromJadeCoinbase(
     coinbase: JCoinbase
 ): Coinbase =
-    Coinbase(
+    StorageUnawareCoinbase(
         coinbase.payoutTXO
             .map(::convertFromJadeTransactionOutput)
             .toMutableSet(),
         Payout(BigDecimal(coinbase.coinbase)),
-        base64DecodeToHash(coinbase.hashId)
+        coinbase.hashId.base64DecodeToHash()
     )
 
 private fun convertFromJadeTransactionOutput(
     txo: JTransactionOutput
 ): TransactionOutput =
     TransactionOutput(
-        stringToPublicKey(txo.pubkey),
-        base64DecodeToHash(txo.prevCoinbase),
-        base64DecodeToHash(txo.hashId),
+        txo.pubkey.stringToPublicKey(),
+        txo.prevCoinbase.base64DecodeToHash(),
+        txo.hashId.base64DecodeToHash(),
         Payout(BigDecimal(txo.payout)),
         txo.tx.map {
-            base64DecodeToHash(it)
+            it.base64DecodeToHash()
         }.toMutableSet()
     )
 
@@ -254,17 +254,17 @@ fun convertFromJadeTransaction(
     t: JTransaction
 ): Transaction =
     Transaction(
-        stringToPublicKey(t.publicKey),
+        t.publicKey.stringToPublicKey(),
         convertFromJadePhysicalData(t.data),
         base64Decode(t.signature),
-        base64DecodeToHash(t.transactionId),
+        t.transactionId.base64DecodeToHash(),
         hasher
     )
 
 fun convertFromJadePhysicalData(
     data: JPhysicalData
 ): PhysicalData {
-    val b = ByteArrayInputStream(base64Decode(data.data))
+    val b = ByteArrayInputStream(data.data.base64Decode())
     val t = ObjectInputStream(b).use {
         it.readObject() as LedgerData
     }

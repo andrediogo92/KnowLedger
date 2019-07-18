@@ -3,7 +3,6 @@ package org.knowledger.agent.net
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.json.JsonFeature
-import io.ktor.client.features.json.serializer.KotlinxSerializer
 import io.ktor.util.KtorExperimentalAPI
 import org.knowledger.agent.data.DataSource
 import org.knowledger.agent.data.apis.ApiAdapter
@@ -16,7 +15,6 @@ class HTTPRunner {
     @KtorExperimentalAPI
     private val client = HttpClient(CIO) {
         install(JsonFeature) {
-            serializer = KotlinxSerializer()
         }
     }
 

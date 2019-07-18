@@ -4,6 +4,7 @@ import jade.core.Profile
 import jade.core.ProfileImpl
 import jade.core.Runtime
 import jade.wrapper.ContainerController
+import org.knowledger.ledger.core.results.unwrap
 import org.knowledger.ledger.service.handles.LedgerHandle
 
 class Container {
@@ -63,7 +64,12 @@ class Container {
         fun main() {
 
             val a = Container()
-            val handle = LedgerHandle.Builder().build().unwrap()
+            val handle =
+                LedgerHandle.Builder()
+                    .withLedgerIdentity("test")
+                    .unwrap()
+                    .build()
+                    .unwrap()
 
             a.initMainContainerInPlatform(
                 "localhost",

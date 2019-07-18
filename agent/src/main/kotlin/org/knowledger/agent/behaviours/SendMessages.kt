@@ -8,7 +8,7 @@ import org.knowledger.agent.data.AgentPeers
 import org.knowledger.agent.data.convertToJadeTransaction
 import org.knowledger.agent.messaging.transaction.TransactionOntology
 import org.knowledger.agent.messaging.transaction.ontology.actions.DiffuseTransaction
-import org.knowledger.common.data.LedgerData
+import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.storage.Transaction
 import org.tinylog.kotlin.Logger
@@ -34,7 +34,7 @@ class SendMessages(
                         msg,
                         DiffuseTransaction(
                             convertToJadeTransaction(
-                                sc.ledgerHash,
+                                sc.chainHash,
                                 t
                             )
                         )

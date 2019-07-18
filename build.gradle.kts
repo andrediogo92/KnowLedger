@@ -25,9 +25,7 @@ plugins {
 }
 
 allprojects {
-
     group = "org.knowledger"
-    version = "0.1"
 
     repositories {
         mavenCentral()

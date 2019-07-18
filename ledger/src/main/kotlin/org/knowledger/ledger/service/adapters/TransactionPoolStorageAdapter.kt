@@ -1,10 +1,10 @@
 package org.knowledger.ledger.service.adapters
 
-import org.knowledger.common.database.NewInstanceSession
-import org.knowledger.common.database.StorageElement
-import org.knowledger.common.database.StorageType
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.results.Outcome
+import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.StorageElement
+import org.knowledger.ledger.core.database.StorageType
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.results.deadCode
 import org.knowledger.ledger.service.pool.SATransactionPoolStorageAdapter
 import org.knowledger.ledger.service.pool.SUTransactionPoolStorageAdapter

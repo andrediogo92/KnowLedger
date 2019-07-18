@@ -1,12 +1,12 @@
 package org.knowledger.ledger.data
 
 import com.squareup.moshi.JsonClass
-import org.knowledger.common.config.LedgerConfiguration
-import org.knowledger.common.data.LedgerData
-import org.knowledger.common.data.SelfInterval
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.misc.bytes
+import org.knowledger.ledger.core.config.LedgerConfiguration
+import org.knowledger.ledger.core.data.LedgerData
+import org.knowledger.ledger.core.data.SelfInterval
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.bytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
 

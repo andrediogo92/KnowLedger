@@ -1,23 +1,23 @@
 package org.knowledger.ledger.service.handles
 
-import org.knowledger.common.config.LedgerConfiguration
-import org.knowledger.common.data.Difficulty
-import org.knowledger.common.data.Difficulty.Companion.INIT_DIFFICULTY
-import org.knowledger.common.data.Difficulty.Companion.MAX_DIFFICULTY
-import org.knowledger.common.data.Difficulty.Companion.MIN_DIFFICULTY
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.hash.Hash.Companion.emptyHash
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.results.Outcome
-import org.knowledger.common.results.flatMapSuccess
-import org.knowledger.common.results.fold
-import org.knowledger.common.results.mapSuccess
-import org.knowledger.common.storage.results.QueryFailure
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.LedgerParams
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
+import org.knowledger.ledger.core.config.LedgerConfiguration
+import org.knowledger.ledger.core.data.Difficulty
+import org.knowledger.ledger.core.data.Difficulty.Companion.INIT_DIFFICULTY
+import org.knowledger.ledger.core.data.Difficulty.Companion.MAX_DIFFICULTY
+import org.knowledger.ledger.core.data.Difficulty.Companion.MIN_DIFFICULTY
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.results.flatMapSuccess
+import org.knowledger.ledger.core.results.fold
+import org.knowledger.ledger.core.results.mapSuccess
+import org.knowledger.ledger.core.storage.results.QueryFailure
 import org.knowledger.ledger.data.DummyData
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.results.intoQuery
@@ -45,7 +45,7 @@ import java.time.ZonedDateTime
 
 /**
  * A facade into useful methods for managing a
- * unique chain in the ledger represented by the [ledgerHash].
+ * unique chain in the ledger represented by the [id].
  */
 data class ChainHandle internal constructor(
     val id: ChainId,
@@ -338,7 +338,7 @@ data class ChainHandle internal constructor(
      * for the specified blockheight [range].
      */
     fun getBlockChunk(range: LongRange) =
-        getBlockChunk(range.first, range.endInclusive)
+        getBlockChunk(range.first, range.last)
 
 
     /**

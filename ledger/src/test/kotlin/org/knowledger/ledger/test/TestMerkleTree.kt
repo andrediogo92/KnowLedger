@@ -7,8 +7,8 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.knowledger.common.config.LedgerConfiguration
-import org.knowledger.common.test.applyHashInPairs
+import org.knowledger.ledger.core.config.LedgerConfiguration
+import org.knowledger.ledger.core.test.applyHashInPairs
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.MerkleTree

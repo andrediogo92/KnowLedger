@@ -1,14 +1,14 @@
 package org.knowledger.ledger.service.handles.builder
 
-import org.knowledger.common.config.LedgerConfiguration
-import org.knowledger.common.data.DefaultDiff
-import org.knowledger.common.database.DatabaseMode
-import org.knowledger.common.database.DatabaseType
-import org.knowledger.common.database.ManagedDatabase
-import org.knowledger.common.database.ManagedSession
-import org.knowledger.common.hash.Hasher
-import org.knowledger.common.misc.base64Encode
-import org.knowledger.common.results.Outcome
+import org.knowledger.ledger.core.config.LedgerConfiguration
+import org.knowledger.ledger.core.data.DefaultDiff
+import org.knowledger.ledger.core.database.DatabaseMode
+import org.knowledger.ledger.core.database.DatabaseType
+import org.knowledger.ledger.core.database.ManagedDatabase
+import org.knowledger.ledger.core.database.ManagedSession
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.base64Encode
+import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.service.LedgerConfig
 import org.knowledger.ledger.service.LedgerContainer
 import org.knowledger.ledger.service.handles.LedgerHandle

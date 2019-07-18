@@ -1,12 +1,12 @@
 package org.knowledger.ledger.storage.block
 
 import com.squareup.moshi.JsonClass
-import org.knowledger.common.Sizeable
-import org.knowledger.common.data.Difficulty
-import org.knowledger.common.hash.Hash
-import org.knowledger.common.storage.LedgerContract
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
+import org.knowledger.ledger.core.Sizeable
+import org.knowledger.ledger.core.data.Difficulty
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.storage.LedgerContract
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader

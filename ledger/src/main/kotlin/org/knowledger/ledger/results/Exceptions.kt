@@ -1,8 +1,8 @@
 package org.knowledger.ledger.results
 
-import org.knowledger.common.results.Outcome
-import org.knowledger.common.storage.results.DataFailure
-import org.knowledger.common.storage.results.QueryFailure
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.storage.results.DataFailure
+import org.knowledger.ledger.core.storage.results.QueryFailure
 import org.knowledger.ledger.service.LedgerConfig
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LedgerFailure
