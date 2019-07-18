@@ -20,9 +20,8 @@ import org.knowledger.common.test.randomDouble
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.config.StorageAwareChainId
-import org.knowledger.ledger.config.StorageUnawareChainId
-import org.knowledger.ledger.data.MerkleTree
+import org.knowledger.ledger.config.chainid.StorageAwareChainId
+import org.knowledger.ledger.config.chainid.StorageUnawareChainId
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.data.TUnit
 import org.knowledger.ledger.data.TemperatureData
@@ -32,11 +31,13 @@ import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.Block
-import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
-import org.knowledger.ledger.storage.StorageUnawareBlock
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.storage.block.StorageUnawareBlock
+import org.knowledger.ledger.storage.blockheader.StorageUnawareBlockHeader
+import org.knowledger.ledger.storage.coinbase.StorageUnawareCoinbase
+import org.knowledger.ledger.storage.merkletree.StorageUnawareMerkleTree
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 
@@ -77,14 +78,14 @@ internal fun generateBlock(
     return StorageUnawareBlock(
         sortedSetOf(),
         coinbase,
-        BlockHeader(
+        StorageUnawareBlockHeader(
             generateChainId(hasher),
             hasher,
             Hash(randomByteArray(32)),
             Difficulty.INIT_DIFFICULTY, 2,
             blockParams
         ),
-        MerkleTree(hasher, coinbase, ts.toTypedArray())
+        StorageUnawareMerkleTree(hasher, coinbase, ts.toTypedArray())
     )
 }
 
@@ -158,14 +159,14 @@ internal fun generateBlockWithChain(
     return StorageUnawareBlock(
         sortedSetOf(),
         coinbase,
-        BlockHeader(
+        StorageUnawareBlockHeader(
             chainId,
             hasher,
             Hash(randomByteArray(32)),
             Difficulty.INIT_DIFFICULTY, 2,
             blockParams
         ),
-        MerkleTree(hasher, coinbase, ts.toTypedArray())
+        StorageUnawareMerkleTree(hasher, coinbase, ts.toTypedArray())
     )
 }
 
@@ -268,7 +269,7 @@ internal fun generateCoinbase(
         ts[4].hashId,
         ts[0].hashId
     )
-    return Coinbase(
+    return StorageUnawareCoinbase(
         sets.toMutableSet(),
         Payout(BigDecimal("3")),
         emptyHash,

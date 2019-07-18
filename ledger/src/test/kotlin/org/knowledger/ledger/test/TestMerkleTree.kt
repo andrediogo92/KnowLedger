@@ -9,10 +9,11 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.knowledger.common.config.LedgerConfiguration
 import org.knowledger.common.test.applyHashInPairs
-import org.knowledger.ledger.data.MerkleTree
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.storage.Coinbase
+import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.storage.merkletree.StorageUnawareMerkleTree
 import org.tinylog.kotlin.Logger
 
 class TestMerkleTree {
@@ -31,13 +32,13 @@ class TestMerkleTree {
         ts: List<Transaction>,
         tree: MerkleTree
     ) {
-        tree.collapsedTree.forEachIndexed { i, it ->
+        tree.nakedTree.forEachIndexed { i, it ->
             Logger.debug {
                 "Naked tree @$i -> ${it.print}"
             }
         }
 
-        tree.levelIndex.forEachIndexed { i, it ->
+        tree.levelIndexes.forEachIndexed { i, it ->
             Logger.debug {
                 "Level @$i -> Starts from $it"
             }
@@ -65,7 +66,7 @@ class TestMerkleTree {
     @Nested
     inner class BalancedMerkleTree {
         private val ts8 = generateXTransactions(id, 8, hasher)
-        private val tree8 = MerkleTree(hasher, ts8.toTypedArray())
+        private val tree8 = StorageUnawareMerkleTree(hasher, ts8.toTypedArray())
 
         @Test
         fun `merkle tree creation`() {
@@ -75,7 +76,7 @@ class TestMerkleTree {
 
             //Root is present
             assertThat(tree8.root).isNotNull()
-            val nakedTree = tree8.collapsedTree
+            val nakedTree = tree8.nakedTree
             //Three levels to the left is first transaction.
             assertThat(nakedTree[7].bytes).containsExactly(*ts8[0].hashId.bytes)
             assertThat(nakedTree[8].bytes).containsExactly(*ts8[1].hashId.bytes)
@@ -178,7 +179,7 @@ class TestMerkleTree {
         @Test
         fun `all transaction verification`() {
             val coinbase7 = generateCoinbase(id, ts7)
-            val tree7WithCoinbase = MerkleTree(hasher, coinbase7, ts7.toTypedArray())
+            val tree7WithCoinbase = StorageUnawareMerkleTree(hasher, coinbase7, ts7.toTypedArray())
 
 
             //Log constructed merkle
@@ -190,7 +191,7 @@ class TestMerkleTree {
             ).isTrue()
 
             Logger.debug {
-                "Balanced 7-transaction tree with coinbase is correct"
+                "Balanced 7-transaction tree with payout is correct"
             }
         }
 
@@ -201,9 +202,9 @@ class TestMerkleTree {
     inner class UnbalancedMerkleTree {
         private val ts5 = generateXTransactions(id, 5)
         private val coinbase5 = generateCoinbase(id, ts5)
-        private val tree5WithCoinbase = MerkleTree(hasher, coinbase5, ts5.toTypedArray())
+        private val tree5WithCoinbase = StorageUnawareMerkleTree(hasher, coinbase5, ts5.toTypedArray())
         private val ts6 = generateXTransactions(id, 6)
-        private val tree6 = MerkleTree(hasher, ts6.toTypedArray())
+        private val tree6 = StorageUnawareMerkleTree(hasher, ts6.toTypedArray())
 
 
         @Test
@@ -214,7 +215,7 @@ class TestMerkleTree {
 
             //Root is present
             assertThat(tree6.root).isNotNull()
-            val nakedTree = tree6.collapsedTree
+            val nakedTree = tree6.nakedTree
             //Three levels to the left is first transaction.
             assertThat(nakedTree[6].bytes).containsExactly(*ts6[0].hashId.bytes)
             assertThat(nakedTree[7].bytes).containsExactly(*ts6[1].hashId.bytes)
@@ -283,7 +284,7 @@ class TestMerkleTree {
 
             //Root is present
             assertThat(tree5WithCoinbase.root).isNotNull()
-            val nakedTree = tree5WithCoinbase.collapsedTree
+            val nakedTree = tree5WithCoinbase.nakedTree
             //Three levels to the left is first transaction.
             //Said transaction is the coinbase
             assertThat(nakedTree[6].bytes).containsExactly(*coinbase5.hashId.bytes)
@@ -370,7 +371,7 @@ class TestMerkleTree {
                 "Unbalanced 5-transaction tree is correct"
             }
 
-            val tree7 = MerkleTree(hasher, ts7.toTypedArray())
+            val tree7 = StorageUnawareMerkleTree(hasher, ts7.toTypedArray())
 
             //Log constructed merkle
             logMerkle(ts7, tree7)
@@ -408,7 +409,7 @@ class TestMerkleTree {
         fun `all transaction verification`() {
 
             val coinbase6 = generateCoinbase(id, ts6)
-            val tree6WithCoinbase = MerkleTree(hasher, coinbase6, ts6.toTypedArray())
+            val tree6WithCoinbase = StorageUnawareMerkleTree(hasher, coinbase6, ts6.toTypedArray())
 
             //Log constructed merkle
             logMerkle(coinbase6, ts6, tree6WithCoinbase)
@@ -419,7 +420,7 @@ class TestMerkleTree {
             ).isTrue()
 
             Logger.debug {
-                "Unbalanced 6-transaction tree with coinbase is correct"
+                "Unbalanced 6-transaction tree with payout is correct"
             }
 
 
@@ -432,7 +433,7 @@ class TestMerkleTree {
             ).isTrue()
 
             Logger.debug {
-                "Unbalanced 5-transaction tree with coinbase is correct"
+                "Unbalanced 5-transaction tree with payout is correct"
             }
 
         }
@@ -443,7 +444,7 @@ class TestMerkleTree {
     @Test
     fun `merkle tree creation with just root`() {
         val ts = generateXTransactions(id, 1, hasher)
-        val tree = MerkleTree(hasher, ts.toTypedArray())
+        val tree = StorageUnawareMerkleTree(hasher, ts.toTypedArray())
 
         //Log constructed merkle
         logMerkle(ts, tree)
@@ -451,6 +452,6 @@ class TestMerkleTree {
         assertThat(tree.root).isNotNull()
         //Root matches the only transaction.
         assertThat(tree.root.bytes).containsExactly(*ts[0].hashId.bytes)
-        assertThat(tree.collapsedTree.size).isEqualTo(1)
+        assertThat(tree.nakedTree.size).isEqualTo(1)
     }
 }

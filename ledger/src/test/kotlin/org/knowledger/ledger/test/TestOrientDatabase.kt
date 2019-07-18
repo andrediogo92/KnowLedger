@@ -27,7 +27,6 @@ import org.knowledger.ledger.config.adapters.LedgerParamsStorageAdapter
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.data.TrafficFlowData
 import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
-import org.knowledger.ledger.data.adapters.MerkleTreeStorageAdapter
 import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.data.adapters.TemperatureDataStorageAdapter
 import org.knowledger.ledger.data.adapters.TrafficFlowDataStorageAdapter
@@ -42,13 +41,14 @@ import org.knowledger.ledger.service.transactions.getTransactionsByClass
 import org.knowledger.ledger.service.transactions.getTransactionsFromAgent
 import org.knowledger.ledger.service.transactions.getTransactionsOrderedByTimestamp
 import org.knowledger.ledger.storage.Block
-import org.knowledger.ledger.storage.StorageUnawareBlock
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
+import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
+import org.knowledger.ledger.storage.block.StorageUnawareBlock
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 
@@ -92,33 +92,34 @@ class TestOrientDatabase {
 
     @Nested
     inner class Session {
-        val adapters: List<SchemaProvider<out Any>> = listOf(
-            //Configuration Adapters
-            BlockParamsStorageAdapter,
-            ChainIdStorageAdapter,
-            CoinbaseStorageAdapter,
-            LedgerConfigStorageAdapter,
-            LedgerIdStorageAdapter,
-            LedgerParamsStorageAdapter,
-            //ServiceAdapters
-            ChainHandleStorageAdapter,
-            IdentityStorageAdapter,
-            //StorageAdapters
-            BlockHeaderStorageAdapter,
-            BlockStorageAdapter,
-            CoinbaseStorageAdapter,
-            MerkleTreeStorageAdapter,
-            PhysicalDataStorageAdapter,
-            TransactionOutputStorageAdapter,
-            TransactionStorageAdapter,
-            //DataAdapters
-            DummyDataStorageAdapter
-        )
         val tid = TransactionStorageAdapter.id
 
 
         @Nested
         inner class Clusters {
+            val adapters: List<SchemaProvider<out Any>> = listOf(
+                //Configuration Adapters
+                BlockParamsStorageAdapter,
+                ChainIdStorageAdapter,
+                CoinbaseStorageAdapter,
+                LedgerConfigStorageAdapter,
+                LedgerIdStorageAdapter,
+                LedgerParamsStorageAdapter,
+                //ServiceAdapters
+                ChainHandleStorageAdapter,
+                IdentityStorageAdapter,
+                //StorageAdapters
+                BlockHeaderStorageAdapter,
+                BlockStorageAdapter,
+                CoinbaseStorageAdapter,
+                MerkleTreeStorageAdapter,
+                PhysicalDataStorageAdapter,
+                TransactionOutputStorageAdapter,
+                TransactionStorageAdapter,
+                //DataAdapters
+                DummyDataStorageAdapter
+            )
+
             @Test
             fun `created clusters`() {
                 val plug = session as OrientSession
@@ -152,7 +153,7 @@ class TestOrientDatabase {
                     val l = set.asSequence().toList()
                     l.forEach { res ->
                         Logger.info {
-                            res.element.print()
+                            res.element.json
                         }
                     }
                     //Ensure there is a subset of the generated transactions
@@ -231,7 +232,7 @@ class TestOrientDatabase {
                     SELECT
                     FROM $tid
                     WHERE hashId = :hash
-                """.trimIndent(),
+                    """.trimIndent(),
                     mapOf(
                         "hash" to transactions[0].hashId.bytes
                     )
