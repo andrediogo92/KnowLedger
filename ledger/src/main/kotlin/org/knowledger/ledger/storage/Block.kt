@@ -2,10 +2,9 @@ package org.knowledger.ledger.storage
 
 import org.knowledger.common.Sizeable
 import org.knowledger.common.storage.LedgerContract
-import org.knowledger.ledger.data.MerkleTree
 import java.util.*
 
-interface Block : Sizeable, LedgerContract {
+interface Block : Sizeable, Cloneable, LedgerContract {
     val data: SortedSet<Transaction>
     val coinbase: Coinbase
     val header: BlockHeader
@@ -23,6 +22,9 @@ interface Block : Sizeable, LedgerContract {
      */
     operator fun plus(transaction: Transaction): Boolean
 
+    fun updateHashes()
+
     fun verifyTransactions(): Boolean
 
+    public override fun clone(): Block
 }

@@ -12,7 +12,6 @@ import org.knowledger.common.misc.generateSignature
 import org.knowledger.common.misc.verifyECDSASig
 import org.knowledger.common.storage.LedgerContract
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.data.MerkleTree
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.service.Identity
 import org.openjdk.jol.info.ClassLayout
