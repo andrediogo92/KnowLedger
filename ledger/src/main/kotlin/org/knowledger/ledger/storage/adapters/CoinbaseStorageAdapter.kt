@@ -5,12 +5,13 @@ import org.knowledger.common.database.StorageElement
 import org.knowledger.common.database.StorageType
 import org.knowledger.common.hash.Hash
 import org.knowledger.common.results.Outcome
-import org.knowledger.common.results.allValues
-import org.knowledger.common.results.mapSuccess
-import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.service.handles.LedgerHandle
+import org.knowledger.ledger.results.deadCode
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.Coinbase
+import org.knowledger.ledger.storage.coinbase.SACoinbaseStorageAdapter
+import org.knowledger.ledger.storage.coinbase.SUCoinbaseStorageAdapter
+import org.knowledger.ledger.storage.coinbase.StorageAwareCoinbase
+import org.knowledger.ledger.storage.coinbase.StorageUnawareCoinbase
 
 object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
     override val id: String
@@ -19,7 +20,7 @@ object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "payoutTXOs" to StorageType.SET,
-            "coinbase" to StorageType.PAYOUT,
+            "payout" to StorageType.PAYOUT,
             "hashId" to StorageType.HASH
         )
 
@@ -27,41 +28,17 @@ object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
         toStore: Coinbase,
         session: NewInstanceSession
     ): StorageElement =
-        session.newInstance(id)
-            .setElementSet(
-                "payoutTXOs",
-                toStore
-                    .payoutTXO
-                    .asSequence()
-                    .map {
-                        TransactionOutputStorageAdapter.store(
-                            it, session
-                        )
-                    }.toSet()
-            ).setPayoutProperty("coinbase", toStore.coinbase)
-            .setHashProperty("hashId", toStore.hashId)
+        when (toStore) {
+            is StorageAwareCoinbase ->
+                SACoinbaseStorageAdapter.store(toStore, session)
+            is StorageUnawareCoinbase ->
+                SUCoinbaseStorageAdapter.store(toStore, session)
+            else -> deadCode()
+        }
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<Coinbase, LoadFailure> =
-        tryOrLoadUnknownFailure {
-            element
-                .getElementSet("payoutTXOs")
-                .asSequence()
-                .map {
-                    TransactionOutputStorageAdapter.load(ledgerHash, it)
-                }.allValues()
-                .mapSuccess { txos ->
-                    LedgerHandle.getContainer(ledgerHash)!!.let {
-                        Coinbase(
-                            txos.toMutableSet(),
-                            element.getPayoutProperty("coinbase"),
-                            element.getHashProperty("hashId"),
-                            it.hasher,
-                            it.formula,
-                            it.coinbaseParams
-                        )
-                    }
-                }
-        }
+        SACoinbaseStorageAdapter.load(ledgerHash, element)
+
 }
