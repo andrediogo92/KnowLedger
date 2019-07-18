@@ -9,6 +9,7 @@ interface StorageElement : Discardable<StorageElement> {
     val presentProperties: Set<String>
     val schema: String?
     val identity: StorageID
+    val json: String
 
     fun getDifficultyProperty(
         name: String
@@ -105,5 +106,4 @@ interface StorageElement : Discardable<StorageElement> {
         property: Map<String, StorageElement>
     ): StorageElement
 
-    fun print(): String
 }

@@ -7,6 +7,7 @@ import org.knowledger.common.database.ManagedSchemas
 import org.knowledger.common.database.ManagedSession
 import org.knowledger.common.database.StorageBytes
 import org.knowledger.common.database.StorageElement
+import org.knowledger.common.database.StorageID
 import org.knowledger.common.database.StorageResults
 import org.knowledger.common.database.query.GenericQuery
 
@@ -15,6 +16,14 @@ data class OrientSession(
     val dbName: String,
     val dbInfo: OrientDatabaseInfo
 ) : ManagedSession {
+    override fun remove(id: StorageID): StorageID? =
+        if (id is DocumentID) {
+            session.delete(id.id)
+            id
+        } else {
+            null
+        }
+
     override val isClosed: Boolean
         get() = session.isClosed
 

@@ -20,6 +20,9 @@ data class DocumentElement internal constructor(
     override val identity: StorageID
         get() = DocumentID(elem.identity)
 
+    override val json: String =
+        elem.toJSON()
+
     override val presentProperties: MutableSet<String>
         get() = elem.propertyNames
 
@@ -292,12 +295,12 @@ data class DocumentElement internal constructor(
             elem.setProperty(name, property)
         }
 
-    override fun setStorageBytes(name: String, property: StorageBytes): StorageElement =
+    override fun setStorageBytes(
+        name: String, property: StorageBytes
+    ): StorageElement =
         apply {
             val blob = property as DocumentBytes
             elem.setProperty(name, blob.blob)
         }
 
-    override fun print(): String =
-        elem.toJSON()
 }

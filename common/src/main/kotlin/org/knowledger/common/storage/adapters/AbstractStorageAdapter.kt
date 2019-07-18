@@ -39,7 +39,7 @@ abstract class AbstractStorageAdapter<T : LedgerData>(
             } else {
                 Outcome.Error(
                     DataFailure.NonRegisteredSchema(
-                        "Schema not existent for: ${document.print()}"
+                        "Schema not existent for: ${document.json}"
                     )
                 )
             }
