@@ -6,6 +6,8 @@ import org.knowledger.common.database.StorageType
 import org.knowledger.common.hash.Hash
 import org.knowledger.common.results.Outcome
 import org.knowledger.ledger.results.deadCode
+import org.knowledger.ledger.service.pool.SATransactionPoolStorageAdapter
+import org.knowledger.ledger.service.pool.SUTransactionPoolStorageAdapter
 import org.knowledger.ledger.service.pool.StorageAwareTransactionPool
 import org.knowledger.ledger.service.pool.StorageUnawareTransactionPool
 import org.knowledger.ledger.service.pool.TransactionPool

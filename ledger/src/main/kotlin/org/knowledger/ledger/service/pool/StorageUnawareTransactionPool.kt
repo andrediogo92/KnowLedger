@@ -26,7 +26,6 @@ data class StorageUnawareTransactionPool internal constructor(
             !confirm[index]
         }.first()
 
-
     operator fun plus(transaction: Hash): Boolean {
         val first = txs.add(transaction)
         return if (first) {
