@@ -7,6 +7,7 @@ import org.knowledger.ledger.service.LedgerConfig
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
+import org.knowledger.ledger.service.results.UpdateFailure
 
 //-----------------------------------------
 // Exception Handlers
@@ -64,6 +65,20 @@ inline fun <T> tryOrDataUnknownFailure(
             )
         )
     }
+
+inline fun <T> tryOrUpdateUnknownFailure(
+    run: () -> Outcome<T, UpdateFailure>
+): Outcome<T, UpdateFailure> =
+    try {
+        run()
+    } catch (e: Exception) {
+        Outcome.Error(
+            UpdateFailure.UnknownFailure(
+                e.message ?: "", e
+            )
+        )
+    }
+
 
 inline fun <T> tryOrQueryUnknownFailure(
     run: () -> Outcome<T, QueryFailure>
