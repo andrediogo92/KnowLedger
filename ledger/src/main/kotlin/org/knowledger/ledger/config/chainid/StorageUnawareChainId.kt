@@ -1,9 +1,11 @@
-package org.knowledger.ledger.config
+package org.knowledger.ledger.config.chainid
 
 import com.squareup.moshi.JsonClass
 import org.knowledger.common.hash.Hash
 import org.knowledger.common.hash.Hasher
 import org.knowledger.common.misc.encodeStringToUTF8
+import org.knowledger.ledger.config.ChainId
+import org.knowledger.ledger.config.LedgerId
 
 @JsonClass(generateAdapter = true)
 class StorageUnawareChainId internal constructor(
@@ -20,7 +22,11 @@ class StorageUnawareChainId internal constructor(
         hasher: Hasher
     ) : this(
         tag, ledgerHash,
-        generateChainHandleHash(hasher, tag, ledgerHash)
+        generateChainHandleHash(
+            hasher,
+            tag,
+            ledgerHash
+        )
     )
 
 

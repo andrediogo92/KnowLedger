@@ -6,8 +6,10 @@ import org.knowledger.common.database.StorageType
 import org.knowledger.common.hash.Hash
 import org.knowledger.common.results.Outcome
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.config.StorageAwareChainId
-import org.knowledger.ledger.config.StorageUnawareChainId
+import org.knowledger.ledger.config.chainid.SAChainIdStorageAdapter
+import org.knowledger.ledger.config.chainid.SUChainIdStorageAdapter
+import org.knowledger.ledger.config.chainid.StorageAwareChainId
+import org.knowledger.ledger.config.chainid.StorageUnawareChainId
 import org.knowledger.ledger.results.deadCode
 import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
 import org.knowledger.ledger.service.results.LedgerFailure
