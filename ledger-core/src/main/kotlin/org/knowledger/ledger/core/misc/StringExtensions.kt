@@ -1,6 +1,6 @@
 package org.knowledger.ledger.core.misc
 
-import org.knowledger.ledger.core.config.LedgerConfiguration
+import org.knowledger.ledger.core.hash.AvailableHashAlgorithms
 
 @Suppress("NOTHING_TO_INLINE")
 @UseExperimental(ExperimentalStdlibApi::class)
@@ -12,7 +12,7 @@ inline fun String.encodeStringToUTF8(): ByteArray =
 inline fun ByteArray.decodeUTF8ToString(): String =
     this.decodeToString()
 
-fun <T> Class<T>.extractIdFromClass(): String =
-    LedgerConfiguration.DEFAULT_CRYPTER.applyHash(
+val <T> Class<T>.classDigest: String
+    get() = AvailableHashAlgorithms.SHA3256Hasher.applyHash(
         toGenericString()
     ).base64Encode()

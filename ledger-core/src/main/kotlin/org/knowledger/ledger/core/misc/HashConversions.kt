@@ -1,5 +1,6 @@
 package org.knowledger.ledger.core.misc
 
+import org.knowledger.ledger.core.hash.AvailableHashAlgorithms
 import org.knowledger.ledger.core.hash.Hash
 
 private val hexCode = "0123456789ABCDEF".toCharArray()
@@ -51,4 +52,9 @@ val ByteArray.hexString: String
                 it[j * 2 + 1] = hexCode[v and 0x0F]
             }
         }
+    )
+
+val <T : Any> T.classDigest: Hash
+    get() = AvailableHashAlgorithms.SHA3256Hasher.applyHash(
+        this::class.java.toGenericString()
     )
