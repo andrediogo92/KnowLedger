@@ -2,7 +2,7 @@ package org.knowledger.ledger.core.storage.adapters
 
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.misc.extractIdFromClass
+import org.knowledger.ledger.core.misc.classDigest
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.storage.results.DataFailure
 
@@ -16,7 +16,7 @@ abstract class AbstractStorageAdapter<T : LedgerData>(
     val clazz: Class<out T>
 ) : StorageAdapter<T> {
     override val id: String by lazy {
-        clazz.extractIdFromClass()
+        clazz.classDigest
     }
 
     protected inline fun <T : LedgerData> commonLoad(
