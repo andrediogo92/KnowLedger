@@ -14,6 +14,9 @@ inline fun <T, U : Failable> resultFrom(
         Outcome.Error(error(x))
     }
 
+fun <T> T.toResult(): Outcome.Ok<T> =
+    Outcome.Ok(this)
+
 
 inline fun <T, M, U : Failable, S : Failable> Outcome<T, U>.fold(
     apply: (Outcome<T, U>) -> Outcome<M, S>
