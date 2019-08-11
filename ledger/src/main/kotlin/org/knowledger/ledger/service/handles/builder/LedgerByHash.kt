@@ -4,15 +4,12 @@ import org.knowledger.ledger.core.database.DatabaseMode
 import org.knowledger.ledger.core.database.DatabaseType
 import org.knowledger.ledger.core.database.ManagedDatabase
 import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.orient.OrientDatabase
-import org.knowledger.ledger.core.database.orient.OrientDatabaseInfo
 import org.knowledger.ledger.core.hash.AvailableHashAlgorithms
 import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.misc.base64Encode
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.mapSuccess
+import org.knowledger.ledger.service.LedgerConfig
 import org.knowledger.ledger.service.handles.LedgerHandle
-import org.knowledger.ledger.service.transactions.PersistenceWrapper
 import java.io.File
 
 data class LedgerByHash(
@@ -54,22 +51,7 @@ data class LedgerByHash(
         }
 
 
-    private fun generateDB() {
-        if (db == null) {
-            db = OrientDatabase(
-                OrientDatabaseInfo(
-                    dbMode, dbType, path,
-                    user = dbUser, password = dbPassword
-                )
-            )
-        }
-        if (session == null) {
-            session = db?.newManagedSession(hash.base64Encode())
-        }
-        persistenceWrapper = PersistenceWrapper(hash, session!!)
-    }
-
-    private fun attemptToResolveId() =
+    private fun attemptToResolveId(): Outcome<LedgerConfig, LedgerHandle.Failure> =
         //Get ledger params
         persistenceWrapper.getLedgerHandleByHash(hash).mapSuccess {
             hasher = AvailableHashAlgorithms.getHasher(it.ledgerParams.crypter)
@@ -77,7 +59,7 @@ data class LedgerByHash(
         }
 
     override fun build(): Outcome<LedgerHandle, LedgerHandle.Failure> {
-        generateDB()
+        buildDB(hash)
         return attemptToResolveId().mapSuccess {
             ledgerConfig = it
             addToContainers()

@@ -6,6 +6,9 @@ import org.knowledger.ledger.core.database.DatabaseMode
 import org.knowledger.ledger.core.database.DatabaseType
 import org.knowledger.ledger.core.database.ManagedDatabase
 import org.knowledger.ledger.core.database.ManagedSession
+import org.knowledger.ledger.core.database.orient.OrientDatabase
+import org.knowledger.ledger.core.database.orient.OrientDatabaseInfo
+import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.misc.base64Encode
 import org.knowledger.ledger.core.results.Outcome
@@ -57,6 +60,23 @@ abstract class AbstractLedgerBuilder {
         dbPassword?.let {
             this.dbPassword = it
         }
+    }
+
+    internal fun buildDB(hash: Hash) {
+        if (db == null) {
+            db = OrientDatabase(
+                OrientDatabaseInfo(
+                    dbMode, dbType, path,
+                    user = dbUser, password = dbPassword
+                )
+            )
+        }
+        if (session == null) {
+            session = db?.newManagedSession(hash.base64Encode())
+        }
+        persistenceWrapper = PersistenceWrapper(hash, session!!)
+        persistenceWrapper.registerDefaultSchemas()
+
     }
 
     internal fun setCustomDB(
