@@ -28,7 +28,7 @@ fun Moshi.Builder.addLedgerAdapters(
     ledgerDataTypes: Map<Class<out LedgerData>, String>
 ): Moshi.Builder {
     var ledgerAdapter = PolymorphicJsonAdapterFactory
-        .of(LedgerData::class.java, "type")
+        .of(LedgerData::class.java, "data_type")
         .withSubtype(DummyData::class.java, "Dummy")
     ledgerDataTypes.forEach { entry ->
         ledgerAdapter = ledgerAdapter.withSubtype(entry.key, entry.value)
@@ -41,36 +41,36 @@ fun Moshi.Builder.addLedgerAdapters(
         .add(BigIntegerJsonAdapter())
         .add(
             PolymorphicJsonAdapterFactory
-                .of(Block::class.java, "type")
+                .of(Block::class.java, "block")
                 .withSubtype(StorageAwareBlock::class.java, "StorageAware")
                 .withSubtype(StorageUnawareBlock::class.java, "StorageUnaware")
         )
         .add(
             PolymorphicJsonAdapterFactory
-                .of(BlockHeader::class.java, "type")
+                .of(BlockHeader::class.java, "block_header")
                 .withSubtype(StorageAwareBlockHeader::class.java, "StorageAware")
                 .withSubtype(StorageUnawareBlockHeader::class.java, "StorageUnaware")
         )
         .add(
             PolymorphicJsonAdapterFactory
-                .of(Coinbase::class.java, "type")
+                .of(Coinbase::class.java, "coinbase")
                 .withSubtype(StorageAwareCoinbase::class.java, "StorageAware")
                 .withSubtype(StorageUnawareCoinbase::class.java, "StorageUnaware")
         )
         .add(
             PolymorphicJsonAdapterFactory
-                .of(MerkleTree::class.java, "type")
+                .of(MerkleTree::class.java, "merkle_tree")
                 .withSubtype(StorageAwareMerkleTree::class.java, "StorageAware")
                 .withSubtype(StorageUnawareMerkleTree::class.java, "StorageUnaware")
         )
         .add(
             PolymorphicJsonAdapterFactory
-                .of(ChainId::class.java, "type")
+                .of(ChainId::class.java, "chain_id")
                 .withSubtype(StorageAwareChainId::class.java, "StorageAware")
                 .withSubtype(StorageUnawareChainId::class.java, "StorageUnaware")
         ).add(
             PolymorphicJsonAdapterFactory
-                .of(TransactionPool::class.java, "type")
+                .of(TransactionPool::class.java, "transaction_pool")
                 .withSubtype(StorageAwareTransactionPool::class.java, "StorageAware")
                 .withSubtype(StorageUnawareTransactionPool::class.java, "StorageUnaware")
         )
