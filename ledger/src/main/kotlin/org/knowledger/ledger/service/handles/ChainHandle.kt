@@ -257,7 +257,7 @@ data class ChainHandle internal constructor(
                 return false
             }
 
-            val hashTarget = curHeader.difficulty
+            val hashTarget = currentBlock.coinbase.difficulty
             val curDiff = curHeader.hashId.difficulty
             if (curDiff > hashTarget) {
                 Logger.debug {
@@ -417,7 +417,7 @@ data class ChainHandle internal constructor(
                 .contentEquals(hash)
         ) {
             if (block.header.hashId.difficulty <=
-                block.header.difficulty
+                block.coinbase.difficulty
             ) {
                 return block.verifyTransactions()
             }
@@ -440,14 +440,14 @@ data class ChainHandle internal constructor(
     private fun recalculateDifficulty(
         triggerBlock: Block
     ): Difficulty {
-        val cmp = triggerBlock.header.blockheight
-        val cstamp = triggerBlock.header.timestamp.epochSecond
+        val cmp = triggerBlock.coinbase.blockheight
+        val cstamp = triggerBlock.header.seconds
         val fromHeight = cmp - ledgerParams.recalcTrigger
         val recalcBlock =
             pw.getBlockByBlockHeight(chainHash, fromHeight)
         return when (recalcBlock) {
             is Outcome.Ok<Block> -> {
-                val pstamp = recalcBlock.value.header.timestamp.epochSecond
+                val pstamp = recalcBlock.value.header.seconds
                 val deltaStamp = cstamp - pstamp
                 recalc(triggerBlock, recalcBlock.value, deltaStamp)
             }
@@ -527,8 +527,6 @@ data class ChainHandle internal constructor(
             StorageUnawareBlockHeader(
                 chainId,
                 LedgerHandle.getHasher(chainId.ledgerHash)!!,
-                MAX_DIFFICULTY,
-                0,
                 emptyHash,
                 BlockParams(),
                 emptyHash,
@@ -536,8 +534,8 @@ data class ChainHandle internal constructor(
                 ZonedDateTime.of(
                     2018, 3, 13, 0,
                     0, 0, 0, ZoneOffset.UTC
-                ).toInstant(),
-                0.toLong()
+                ).toEpochSecond(),
+                0L
             )
 
         fun getOriginBlock(
@@ -548,7 +546,11 @@ data class ChainHandle internal constructor(
                 .let {
                     StorageUnawareBlock(
                         sortedSetOf(),
-                        StorageUnawareCoinbase(it),
+                        StorageUnawareCoinbase(
+                            INIT_DIFFICULTY,
+                            0,
+                            it
+                        ),
                         getOriginHeader(chainId),
                         StorageUnawareMerkleTree(it.hasher)
                     ).also { bl ->
