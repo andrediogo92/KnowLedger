@@ -14,7 +14,7 @@ import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 
-object SUCoinbaseStorageAdapter : LedgerStorageAdapter<StorageUnawareCoinbase> {
+internal object SUCoinbaseStorageAdapter : LedgerStorageAdapter<StorageUnawareCoinbase> {
     override val id: String
         get() = CoinbaseStorageAdapter.id
     override val properties: Map<String, StorageType>
@@ -35,13 +35,22 @@ object SUCoinbaseStorageAdapter : LedgerStorageAdapter<StorageUnawareCoinbase> {
                             it, session
                         )
                     }.toSet()
-            ).setPayoutProperty("payout", toStore.payout)
+            ).setDifficultyProperty(
+                "difficulty", toStore.difficulty, session
+            ).setStorageProperty("blockheight", toStore.blockheight)
+            .setPayoutProperty("payout", toStore.payout)
             .setHashProperty("hashId", toStore.hashId)
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<StorageUnawareCoinbase, LoadFailure> =
         tryOrLoadUnknownFailure {
+            val difficulty =
+                element.getDifficultyProperty("difficulty")
+
+            val blockheight: Long =
+                element.getStorageProperty("blockheight")
+
             element
                 .getElementSet("payoutTXOs")
                 .asSequence()
@@ -54,6 +63,8 @@ object SUCoinbaseStorageAdapter : LedgerStorageAdapter<StorageUnawareCoinbase> {
                             txos.toMutableSet(),
                             element.getPayoutProperty("payout"),
                             element.getHashProperty("hashId"),
+                            difficulty,
+                            blockheight,
                             it.hasher,
                             it.formula,
                             it.coinbaseParams

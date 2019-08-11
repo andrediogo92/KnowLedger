@@ -11,7 +11,7 @@ import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 
-object SUMerkleTreeStorageAdapter : LedgerStorageAdapter<StorageUnawareMerkleTree> {
+internal object SUMerkleTreeStorageAdapter : LedgerStorageAdapter<StorageUnawareMerkleTree> {
     override val id: String
         get() = MerkleTreeStorageAdapter.id
     override val properties: Map<String, StorageType>

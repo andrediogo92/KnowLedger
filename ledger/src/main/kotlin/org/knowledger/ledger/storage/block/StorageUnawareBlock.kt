@@ -21,7 +21,7 @@ import org.tinylog.kotlin.Logger
 import java.util.*
 
 @JsonClass(generateAdapter = true)
-data class StorageUnawareBlock(
+internal data class StorageUnawareBlock(
     override val data: SortedSet<Transaction>,
     override val coinbase: Coinbase,
     override val header: BlockHeader,
@@ -71,13 +71,14 @@ data class StorageUnawareBlock(
         params: BlockParams
     ) : this(
         sortedSetOf(),
-        StorageAwareCoinbase(LedgerHandle.getContainer(chainId.ledgerHash)!!),
+        StorageAwareCoinbase(
+            difficulty, blockheight,
+            LedgerHandle.getContainer(chainId.ledgerHash)!!
+        ),
         StorageAwareBlockHeader(
             chainId,
             LedgerHandle.getHasher(chainId.ledgerHash)!!,
             previousHash,
-            difficulty,
-            blockheight,
             params
         ),
         StorageAwareMerkleTree(LedgerHandle.getHasher(chainId.ledgerHash)!!)

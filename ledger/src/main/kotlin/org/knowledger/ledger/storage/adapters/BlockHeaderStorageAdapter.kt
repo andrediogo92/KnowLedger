@@ -20,14 +20,11 @@ object BlockHeaderStorageAdapter : LedgerStorageAdapter<BlockHeader> {
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "chainId" to StorageType.LINK,
-            "difficulty" to StorageType.DIFFICULTY,
-            "blockheight" to StorageType.LONG,
             "hashId" to StorageType.HASH,
             "merkleRoot" to StorageType.HASH,
             "previousHash" to StorageType.HASH,
             "ledgerParams" to StorageType.LINK,
             "seconds" to StorageType.LONG,
-            "nanos" to StorageType.INTEGER,
             "nonce" to StorageType.LONG
         )
 

@@ -5,6 +5,7 @@ import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.config.LedgerConfiguration
 import org.knowledger.ledger.core.data.DataFormula
 import org.knowledger.ledger.core.data.DefaultDiff
+import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
@@ -21,10 +22,13 @@ import java.time.temporal.ChronoField
 
 
 @JsonClass(generateAdapter = true)
-data class StorageUnawareCoinbase(
+internal data class StorageUnawareCoinbase(
     override val payoutTXO: MutableSet<TransactionOutput>,
     override var payout: Payout,
     internal var hash: Hash,
+    // Difficulty is fixed at block generation time.
+    override val difficulty: Difficulty,
+    override var blockheight: Long,
     @Transient
     override val hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
     @Transient
@@ -52,11 +56,15 @@ data class StorageUnawareCoinbase(
         }
 
     internal constructor(
+        difficulty: Difficulty,
+        blockheight: Long,
         container: LedgerContainer
     ) : this(
         mutableSetOf(),
         Payout(BigDecimal.ZERO),
         Hash.emptyHash,
+        difficulty,
+        blockheight,
         container.hasher,
         container.formula,
         container.coinbaseParams
@@ -203,6 +211,10 @@ data class StorageUnawareCoinbase(
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is StorageUnawareCoinbase) return false
+        if (difficulty != other.difficulty)
+            return false
+        if (blockheight != other.blockheight)
+            return false
 
         if (payoutTXO.size != other.payoutTXO.size) return false
         if (payoutTXO
@@ -220,6 +232,8 @@ data class StorageUnawareCoinbase(
 
     override fun hashCode(): Int {
         var result = payoutTXO.hashCode()
+        result = 31 * result + difficulty.hashCode()
+        result = 31 * result + blockheight.hashCode()
         result = 31 * result + payout.hashCode()
         result = 31 * result + hashId.contentHashCode()
         return result

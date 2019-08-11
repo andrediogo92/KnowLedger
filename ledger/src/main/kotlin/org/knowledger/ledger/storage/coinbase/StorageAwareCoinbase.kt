@@ -1,6 +1,7 @@
 package org.knowledger.ledger.storage.coinbase
 
 import com.squareup.moshi.JsonClass
+import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.database.NewInstanceSession
 import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.results.Outcome
@@ -30,6 +31,8 @@ internal data class StorageAwareCoinbase(
         mutableMapOf<String, Any>()
 
     internal constructor(
+        difficulty: Difficulty,
+        blockheight: Long,
         container: LedgerContainer
-    ) : this(StorageUnawareCoinbase(container))
+    ) : this(StorageUnawareCoinbase(difficulty, blockheight, container))
 }

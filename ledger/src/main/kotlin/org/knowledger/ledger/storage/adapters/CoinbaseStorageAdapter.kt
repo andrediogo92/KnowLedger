@@ -21,7 +21,9 @@ object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
         get() = mapOf(
             "payoutTXOs" to StorageType.SET,
             "payout" to StorageType.PAYOUT,
-            "hashId" to StorageType.HASH
+            "hashId" to StorageType.HASH,
+            "difficulty" to StorageType.DIFFICULTY,
+            "blockheight" to StorageType.LONG
         )
 
     override fun store(

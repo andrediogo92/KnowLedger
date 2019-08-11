@@ -3,11 +3,13 @@ package org.knowledger.ledger.storage
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.Sizeable
 import org.knowledger.ledger.core.data.DataFormula
+import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hashable
 import org.knowledger.ledger.core.hash.Hashed
 import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.bytes
 import org.knowledger.ledger.core.misc.flattenBytes
 import org.knowledger.ledger.core.storage.LedgerContract
 import org.knowledger.ledger.service.Identity
@@ -25,6 +27,9 @@ interface Coinbase : Sizeable, Cloneable,
 
     val payoutTXO: MutableSet<TransactionOutput>
     var payout: Payout
+    // Difficulty is fixed at block generation time.
+    val difficulty: Difficulty
+    var blockheight: Long
     val hasher: Hasher
     val formula: DataFormula
     val coinbaseParams: CoinbaseParams
@@ -61,7 +66,9 @@ interface Coinbase : Sizeable, Cloneable,
                 payoutTXO.asSequence().map {
                     it.hashId.bytes
                 },
-                payout.bytes
+                payout.bytes,
+                difficulty.difficulty.toByteArray(),
+                blockheight.bytes()
             )
         )
 

@@ -11,7 +11,7 @@ import org.knowledger.ledger.storage.MerkleTree
 import org.tinylog.kotlin.Logger
 
 @JsonClass(generateAdapter = true)
-data class StorageUnawareMerkleTree(
+internal data class StorageUnawareMerkleTree(
     @Transient
     override val hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
     internal val collapsedTree: MutableList<Hash> = mutableListOf(),

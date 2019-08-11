@@ -16,7 +16,7 @@ import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
 
-object SUBlockStorageAdapter : LedgerStorageAdapter<StorageUnawareBlock> {
+internal object SUBlockStorageAdapter : LedgerStorageAdapter<StorageUnawareBlock> {
     override val id: String
         get() = BlockStorageAdapter.id
 

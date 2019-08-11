@@ -17,7 +17,7 @@ import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import java.time.Instant
 
-object SUBlockHeaderStorageAdapter : LedgerStorageAdapter<StorageUnawareBlockHeader> {
+internal object SUBlockHeaderStorageAdapter : LedgerStorageAdapter<StorageUnawareBlockHeader> {
     override val id: String
         get() = BlockHeaderStorageAdapter.id
     override val properties: Map<String, StorageType>
@@ -31,30 +31,20 @@ object SUBlockHeaderStorageAdapter : LedgerStorageAdapter<StorageUnawareBlockHea
             .setLinked(
                 "chainId", ChainIdStorageAdapter,
                 toStore.chainId, session
-            ).setDifficultyProperty(
-                "difficulty", toStore.difficulty, session
-            ).setStorageProperty("blockheight", toStore.blockheight)
-            .setHashProperty("hashId", toStore.hashId)
+            ).setHashProperty("hashId", toStore.hashId)
             .setHashProperty("merkleRoot", toStore.merkleRoot)
             .setHashProperty("previousHash", toStore.previousHash)
             .setLinked(
                 "ledgerParams", BlockParamsStorageAdapter,
                 toStore.params, session
             ).setStorageProperty(
-                "seconds", toStore.timestamp.epochSecond
-            ).setStorageProperty("nanos", toStore.timestamp.nano)
-            .setStorageProperty("nonce", toStore.nonce)
+                "seconds", toStore.seconds
+            ).setStorageProperty("nonce", toStore.nonce)
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<StorageUnawareBlockHeader, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val difficulty =
-                element.getDifficultyProperty("difficulty")
-
-            val blockheight: Long =
-                element.getStorageProperty("blockheight")
-
             val hash =
                 element.getHashProperty("hashId")
 
@@ -77,26 +67,20 @@ object SUBlockHeaderStorageAdapter : LedgerStorageAdapter<StorageUnawareBlockHea
                 val seconds: Long =
                     element.getStorageProperty("seconds")
 
-                val nanos: Int =
-                    element.getStorageProperty("nanos")
-
                 val nonce: Long =
                     element.getStorageProperty("nonce")
 
                 val instant = Instant.ofEpochSecond(
-                    seconds,
-                    nanos.toLong()
+                    seconds
                 )
                 StorageUnawareBlockHeader(
                     chainId,
                     LedgerHandle.getHasher(chainId.ledgerHash)!!,
-                    difficulty,
-                    blockheight,
                     hash,
                     blockParams,
                     previousHash,
                     merkleRoot,
-                    instant,
+                    seconds,
                     nonce
                 )
             }.mapFailure {

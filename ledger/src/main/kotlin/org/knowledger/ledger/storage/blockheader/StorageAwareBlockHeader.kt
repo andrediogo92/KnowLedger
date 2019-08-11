@@ -2,7 +2,6 @@ package org.knowledger.ledger.storage.blockheader
 
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.database.NewInstanceSession
 import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.hash.Hash
@@ -27,8 +26,7 @@ internal data class StorageAwareBlockHeader(
         if (id != null) {
             invalidatedFields["merkleRoot"] = newRoot.bytes
             invalidatedFields["hash"] = hashId
-            invalidatedFields["seconds"] = timestamp.epochSecond
-            invalidatedFields["nanos"] = timestamp.nano
+            invalidatedFields["seconds"] = seconds
         }
     }
 
@@ -44,12 +42,11 @@ internal data class StorageAwareBlockHeader(
 
     internal constructor(
         chainId: ChainId, hasher: Hasher,
-        previousHash: Hash, difficulty: Difficulty,
-        blockheight: Long, blockParams: BlockParams
+        previousHash: Hash, blockParams: BlockParams
     ) : this(
         StorageUnawareBlockHeader(
-            chainId, hasher, previousHash,
-            difficulty, blockheight, blockParams
+            chainId, hasher,
+            previousHash, blockParams
         )
     )
 }
