@@ -1,10 +1,12 @@
 package org.knowledger.ledger.config
 
 import com.squareup.moshi.JsonClass
+import org.knowledger.ledger.core.data.DefaultDiff
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hashable
 import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.misc.bytes
+import org.knowledger.ledger.core.misc.classDigest
 import org.knowledger.ledger.core.misc.flattenBytes
 import org.knowledger.ledger.service.ServiceClass
 
@@ -13,7 +15,8 @@ data class CoinbaseParams(
     val timeIncentive: Long = 5,
     val valueIncentive: Long = 2,
     val baseIncentive: Long = 3,
-    val dividingThreshold: Long = 100000
+    val dividingThreshold: Long = 100000,
+    val formula: Hash = DefaultDiff.classDigest
 ) : Hashable, ServiceClass {
     override fun digest(c: Hasher): Hash =
         c.applyHash(
