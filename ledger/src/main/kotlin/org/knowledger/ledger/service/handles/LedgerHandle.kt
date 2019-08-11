@@ -1,14 +1,17 @@
 package org.knowledger.ledger.service.handles
 
 import org.knowledger.ledger.core.data.DataFormula
+import org.knowledger.ledger.core.data.DefaultDiff
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.misc.base64Encode
-import org.knowledger.ledger.core.misc.extractIdFromClass
+import org.knowledger.ledger.core.misc.classDigest
 import org.knowledger.ledger.core.results.Failable
+import org.knowledger.ledger.core.results.HardFailure
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.results.PropagatedFailure
 import org.knowledger.ledger.core.results.fold
 import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.storage.results.QueryFailure
@@ -82,9 +85,7 @@ class LedgerHandle internal constructor(
         clazz: Class<in T>
     ): Outcome<ChainHandle, LedgerFailure> =
         if (dataAdapters.any { it.clazz == clazz }) {
-            pw.getChainHandle(
-                clazz.extractIdFromClass()
-            )
+            pw.getChainHandle(clazz.classDigest)
         } else {
             Outcome.Error(
                 LedgerFailure.NoKnownStorageAdapter(
@@ -164,30 +165,26 @@ class LedgerHandle internal constructor(
                 get() = "No ledger matching hash in DB"
         }
 
-        /**
-         * Reserved for direct irrecoverable errors.
-         * Query failures will wrap exceptions if thrown.
-         */
-        data class UnknownFailure(
-            override val cause: String,
-            val exception: Exception? = null
+        data class NotRegisteredDataFormula(
+            override val cause: String
         ) : Failure()
 
-        /**
-         * Reserved for indirect irrecoverable errors propagated
-         * by some internal result.
-         */
+        data class UnknownFailure(
+            override val cause: String,
+            override val exception: Exception? = null
+        ) : Failure(), HardFailure
+
         data class Propagated(
-            val pointOfFailure: String,
-            val failable: Failable
-        ) : Failure() {
-            override val cause: String
-                get() = "$pointOfFailure: ${failable.cause}"
-        }
+            override val pointOfFailure: String,
+            override val failable: Failable
+        ) : Failure(), PropagatedFailure
     }
 
 
     companion object {
+        private val knownFormulas =
+            mutableSetOf<DataFormula>(DefaultDiff)
+
         private val dataAdapters =
             mutableSetOf<AbstractStorageAdapter<out LedgerData>>(
                 DummyDataStorageAdapter
@@ -219,5 +216,14 @@ class LedgerHandle internal constructor(
 
         internal fun getFormula(ledgerHash: Hash): DataFormula? =
             containers[ledgerHash.base64Encode()]?.formula
+
+        fun registerFormula(formula: DataFormula) {
+            knownFormulas += formula
+        }
+
+        internal fun findFormula(formula: Hash): DataFormula? =
+            knownFormulas.find {
+                it.classDigest.contentEquals(formula)
+            }
     }
 }
