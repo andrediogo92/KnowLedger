@@ -1,4 +1,4 @@
-package org.knowledger.agent.messaging.block.ontology.concepts
+package org.knowledger.agent.messaging.ledger.ontology.concepts
 
 import jade.content.Concept
 
