@@ -6,6 +6,7 @@ import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
+import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 
 
 // ------------------------------
@@ -41,23 +42,21 @@ internal fun PersistenceWrapper.getBlockHeaderByBlockHeight(
     chainHash: Hash,
     height: Long
 ): Outcome<BlockHeader, LoadFailure> =
-    BlockHeaderStorageAdapter.let {
-        queryUniqueResult(
-            UnspecificQuery(
-                """
-                    SELECT 
-                    FROM ${it.id} 
-                    WHERE blockheight = :blockheight 
-                        AND chainId.hashId = :chainHash
-                """.trimIndent(),
-                mapOf(
-                    "blockheight" to height,
-                    "chainHash" to chainHash.bytes
-                )
-            ),
-            it
-        )
-    }
+    queryUniqueResult(
+        UnspecificQuery(
+            """
+                SELECT header
+                FROM ${BlockStorageAdapter.id} 
+                WHERE coinbase.blockheight = :blockheight 
+                    AND chainId.hashId = :chainHash
+            """.trimIndent(),
+            mapOf(
+                "blockheight" to height,
+                "chainHash" to chainHash.bytes
+            )
+        ),
+        BlockHeaderStorageAdapter
+    )
 
 
 internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
@@ -86,19 +85,17 @@ internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
 internal fun PersistenceWrapper.getLatestBlockHeader(
     chainHash: Hash
 ): Outcome<BlockHeader, LoadFailure> =
-    BlockHeaderStorageAdapter.let {
-        queryUniqueResult(
-            UnspecificQuery(
-                """
-                    SELECT 
-                    FROM ${it.id} 
-                    WHERE blockheight = max(blockheight) 
-                        AND chainId.hashId = :chainHash
-                """.trimIndent(),
-                mapOf(
-                    "chainHash" to chainHash.bytes
-                )
-            ),
-            it
-        )
-    }
+    queryUniqueResult(
+        UnspecificQuery(
+            """
+                SELECT 
+                FROM ${BlockStorageAdapter.id} 
+                WHERE coinbase.blockheight = max(coinbase.blockheight) 
+                    AND chainId.hashId = :chainHash
+            """.trimIndent(),
+            mapOf(
+                "chainHash" to chainHash.bytes
+            )
+        ),
+        BlockHeaderStorageAdapter
+    )

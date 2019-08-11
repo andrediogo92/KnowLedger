@@ -23,7 +23,7 @@ internal fun PersistenceWrapper.getBlockByBlockHeight(
                 """
                     SELECT 
                     FROM ${it.id} 
-                    WHERE header.blockheight = :height 
+                    WHERE coinbase.blockheight = :height 
                         AND chainId.hashId = :chainHash
                 """.trimIndent(),
                 mapOf(
@@ -95,7 +95,7 @@ internal fun PersistenceWrapper.getLatestBlock(
                     SELECT 
                     FROM ${it.id}
                     WHERE header.chainId.hashId = :chainHash
-                        AND header.blockheight = max(header.blockheight)
+                        AND coinbase.blockheight = max(coinbase.blockheight)
                 """.trimIndent(),
                 mapOf(
                     "chainHash" to chainHash.bytes
@@ -117,7 +117,7 @@ internal fun PersistenceWrapper.getBlockListByBlockHeightInterval(
                     SELECT 
                     FROM ${it.id} 
                     WHERE header.chainId.hashId = :chainHash 
-                        AND header.blockheight BETWEEN :start AND :end
+                        AND coinbase.blockheight BETWEEN :start AND :end
                 """.trimIndent(),
                 mapOf(
                     "start" to startInclusive,
