@@ -32,8 +32,8 @@ data class PhysicalData(
     Hashable,
     LedgerContract,
     DataCategory by data,
-    SelfInterval by data {
-
+    SelfInterval by data,
+    Comparable<PhysicalData> {
     override val approximateSize: Long
         get() = ClassLayout
             .parseClass(this::class.java)
@@ -60,6 +60,19 @@ data class PhysicalData(
         instant: Instant, lat: BigDecimal,
         lng: BigDecimal, data: LedgerData
     ) : this(instant, GeoCoords(lat, lng), data)
+
+    constructor(
+        instant: Instant, lat: BigDecimal,
+        lng: BigDecimal, alt: BigDecimal,
+        data: LedgerData
+    ) : this(instant, GeoCoords(lat, lng, alt), data)
+
+    override fun compareTo(other: PhysicalData): Int =
+        when {
+            instant > other.instant -> -1
+            instant < other.instant -> 1
+            else -> 0
+        }
 
     override fun digest(c: Hasher): Hash =
         c.applyHash(

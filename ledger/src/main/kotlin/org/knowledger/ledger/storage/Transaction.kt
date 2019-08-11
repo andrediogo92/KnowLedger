@@ -35,9 +35,7 @@ data class Transaction(
     LedgerContract,
     Comparable<Transaction> {
     override fun compareTo(other: Transaction): Int =
-        compareByDescending<Transaction> {
-            it.data.instant
-        }.compare(this, other)
+        data.compareTo(other.data)
 
 
     val signature: ByteArray
