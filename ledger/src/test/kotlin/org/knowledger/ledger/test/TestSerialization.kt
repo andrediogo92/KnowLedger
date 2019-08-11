@@ -20,15 +20,12 @@ class TestSerialization {
     val chainId = generateChainId()
 
     val testTransactions =
-        generateXTransactionsWithChain(chainId, id, 10)
-            .sortedByDescending {
-                it.data.instant
-            }
+        generateXTransactionsWithChain(chainId, id, 10).toSortedSet()
 
     @Test
     fun `serialization and deserialization of blocks`() {
         val block = generateBlockWithChain(
-            chainId, id, testTransactions
+            chainId, id
         )
 
         testTransactions.forEach { t ->

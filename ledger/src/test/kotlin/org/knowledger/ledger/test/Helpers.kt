@@ -15,7 +15,7 @@ import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
 import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.decodeUTF8ToString
+import org.knowledger.ledger.core.misc.base64Encode
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.peekFailure
 import org.knowledger.ledger.core.storage.results.DataFailure
@@ -58,7 +58,7 @@ internal fun generateChainId(
 ): ChainId =
     StorageAwareChainId(
         StorageUnawareChainId(
-            randomByteArray(32).decodeUTF8ToString(),
+            randomByteArray(32).base64Encode(),
             Hash(randomByteArray(32)), hasher
         )
     )
@@ -76,13 +76,12 @@ internal fun generateBlock(
         id, ts, hasher, formula, coinbaseParams
     )
     return StorageUnawareBlock(
-        sortedSetOf(),
+        ts.toSortedSet(),
         coinbase,
         StorageUnawareBlockHeader(
             generateChainId(hasher),
             hasher,
             Hash(randomByteArray(32)),
-            Difficulty.INIT_DIFFICULTY, 2,
             blockParams
         ),
         StorageUnawareMerkleTree(hasher, coinbase, ts.toTypedArray())
@@ -157,18 +156,42 @@ internal fun generateBlockWithChain(
         id, ts, hasher, formula, coinbaseParams
     )
     return StorageUnawareBlock(
+        ts.toSortedSet(),
+        coinbase,
+        StorageUnawareBlockHeader(
+            chainId,
+            hasher,
+            Hash(randomByteArray(32)),
+            blockParams
+        ),
+        StorageUnawareMerkleTree(hasher, coinbase, ts.toTypedArray())
+    )
+}
+
+internal fun generateBlockWithChain(
+    chainId: ChainId,
+    id: Array<Identity>,
+    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
+    formula: DataFormula = DefaultDiff,
+    coinbaseParams: CoinbaseParams = CoinbaseParams(),
+    blockParams: BlockParams = BlockParams()
+): Block {
+    val coinbase = generateCoinbase(
+        id, hasher, formula, coinbaseParams
+    )
+    return StorageUnawareBlock(
         sortedSetOf(),
         coinbase,
         StorageUnawareBlockHeader(
             chainId,
             hasher,
             Hash(randomByteArray(32)),
-            Difficulty.INIT_DIFFICULTY, 2,
             blockParams
         ),
-        StorageUnawareMerkleTree(hasher, coinbase, ts.toTypedArray())
+        StorageUnawareMerkleTree(hasher, coinbase, emptyArray())
     )
 }
+
 
 internal fun generateXTransactionsWithChain(
     chainId: ChainId,
@@ -273,6 +296,8 @@ internal fun generateCoinbase(
         sets.toMutableSet(),
         Payout(BigDecimal("3")),
         emptyHash,
+        Difficulty.INIT_DIFFICULTY,
+        2,
         hasher,
         formula,
         coinbaseParams
@@ -280,6 +305,25 @@ internal fun generateCoinbase(
         it.hash = it.digest(hasher)
     }
 }
+
+internal fun generateCoinbase(
+    id: Array<Identity>,
+    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
+    formula: DataFormula = DefaultDiff,
+    coinbaseParams: CoinbaseParams = CoinbaseParams()
+): Coinbase =
+    StorageUnawareCoinbase(
+        mutableSetOf(),
+        Payout(BigDecimal("3")),
+        emptyHash,
+        Difficulty.INIT_DIFFICULTY,
+        2,
+        hasher,
+        formula,
+        coinbaseParams
+    ).also {
+        it.hash = it.digest(hasher)
+    }
 
 internal fun logActualToExpectedLists(
     explanationActual: String,

@@ -80,7 +80,7 @@ class TestOrientDatabase {
     val chainId = temperatureChain.id
     val chainHash = temperatureChain.id.hashId
     internal val pw = LedgerHandle.getContainer(hash)!!.persistenceWrapper
-    val transactions = generateXTransactionsWithChain(chainId, id, 20)
+    val transactions = generateXTransactionsWithChain(chainId, id, 20).toSortedSet()
 
 
     @BeforeAll
@@ -220,7 +220,7 @@ class TestOrientDatabase {
             assertThat(t.hasNext()).isTrue()
             val binary = t.next().element.getHashProperty("hashId")
             assertThat(binary.bytes).containsExactly(
-                *transactions[0].hashId.bytes
+                *transactions.first().hashId.bytes
             )
         }
 
@@ -234,14 +234,14 @@ class TestOrientDatabase {
                     WHERE hashId = :hash
                     """.trimIndent(),
                     mapOf(
-                        "hash" to transactions[0].hashId.bytes
+                        "hash" to transactions.first().hashId.bytes
                     )
                 )
             )
             assertThat(t.hasNext()).isTrue()
             val binary = t.next().element.getHashProperty("hashId")
             assertThat(binary.bytes).containsExactly(
-                *transactions[0].hashId.bytes
+                *transactions.first().hashId.bytes
             )
 
         }
@@ -268,11 +268,11 @@ class TestOrientDatabase {
                     1,
                     BlockParams()
                 )
-                assertThat(block + transactions[0])
+                assertThat(block + transactions.first())
                     .isTrue()
                 assertThat(block.data.first())
                     .isNotNull()
-                    .isEqualTo(transactions[0])
+                    .isEqualTo(transactions.first())
             }
 
 
@@ -352,18 +352,17 @@ class TestOrientDatabase {
                 chainHash
             ).mapSuccess { seq ->
                 seq.toList().apply {
-                    val reversed = transactions.asReversed()
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
                         map { it.hashId.print },
                         "Transactions' hashes from test:",
-                        reversed.map { it.hashId.print }
+                        transactions.map { it.hashId.print }
                     )
                     assertThat(size).isEqualTo(
                         transactions.size
                     )
                     assertThat(this).containsExactly(
-                        *transactions.asReversed().toTypedArray()
+                        *transactions.toTypedArray()
                     )
 
                 }
@@ -397,11 +396,11 @@ class TestOrientDatabase {
         fun `loading transaction by hash`() {
             pw.getTransactionByHash(
                 chainHash,
-                transactions[2].hashId
+                transactions.elementAt(2).hashId
             ).mapSuccess {
                 assertThat(it)
                     .isNotNull()
-                    .isEqualTo(transactions[2])
+                    .isEqualTo(transactions.elementAt(2))
             }.failOnLoadError()
         }
     }
