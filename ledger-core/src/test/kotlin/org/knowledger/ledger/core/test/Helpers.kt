@@ -7,7 +7,7 @@ import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
 import java.security.Security
 
-val r: RestorableUniformRandomProvider =
+private val r: RestorableUniformRandomProvider =
     RandomSource.create(RandomSource.SPLIT_MIX_64)
 
 fun randomDouble(): Double =
