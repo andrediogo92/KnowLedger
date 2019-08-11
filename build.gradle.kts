@@ -7,6 +7,7 @@ buildscript {
     dependencies {
         classpath(kotlin("gradle-plugin", Versions.kotlin))
         classpath(kotlin("noarg", Versions.kotlin))
+        classpath(Libs.dokkaPlugin)
     }
 
 }
@@ -22,6 +23,9 @@ plugins {
     id("kotlinx-serialization") version
             Versions.kotlin apply
             false
+    id("org.jetbrains.dokka") version
+            Versions.dokka apply
+            true
 }
 
 allprojects {
@@ -32,4 +36,5 @@ allprojects {
         jcenter()
         maven("https://kotlin.bintray.com/kotlinx")
     }
+
 }

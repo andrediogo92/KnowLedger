@@ -5,6 +5,7 @@ object Versions {
     const val bouncyCastle = "1.61"
     const val commons = "1.2"
     const val coroutines = "1.3.0-M1"
+    const val dokka = "0.9.18"
     const val eclipsePaho = "1.2.0"
     const val jade = "4.5.0"
     const val jadeMisc = "2.8.0"
@@ -47,6 +48,9 @@ object Libs {
     const val coroutines =
         "org.jetbrains.kotlinx:kotlinx-coroutines-core:${Versions.coroutines}"
 
+    const val dokkaPlugin =
+        "org.jetbrains.dokka:dokka-gradle-plugin:${Versions.dokka}"
+
     const val eclipsePaho =
         "org.eclipse.paho:org.eclipse.paho.client.mqttv3:${Versions.eclipsePaho}"
 
@@ -73,6 +77,7 @@ object Libs {
     )
 
     const val koin = "org.koin:koin-core:${Versions.koin}"
+
 
     const val jol =
         "org.openjdk.jol:jol-core:${Versions.jol}"

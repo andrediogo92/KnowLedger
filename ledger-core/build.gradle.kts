@@ -6,6 +6,7 @@ version = "0.1"
 plugins {
     kotlin("jvm")
     id("org.jetbrains.kotlin.plugin.noarg")
+    id("org.jetbrains.dokka")
 }
 
 
@@ -34,6 +35,32 @@ dependencies {
 }
 
 tasks {
+    dokka {
+        moduleName = "ledger-core"
+        outputFormat = "html"
+        outputDirectory = "$buildDir/javadoc"
+
+        jdkVersion = 8
+
+        // Specifies the location of the project source code on the Web.
+        // If provided, Dokka generates "source" links for each declaration.
+        // Repeat for multiple mappings
+        linkMapping {
+            // Unix based directory relative path to the root of the project
+            // (where you execute gradle respectively).
+            dir = "src/main/kotlin"
+
+            // URL showing where the source code can be accessed through the
+            // web browser.
+            url = "https://github.com/Seriyin/KnowLedger/blob/master/ledger-core/src/main/kotlin"
+
+            // Suffix which is used to append the line number to the URL.
+            // Use #L for GitHub.
+            suffix = "#L"
+        }
+
+    }
+
     withType<Test> {
         useJUnitPlatform {
             includeEngines("junit-jupiter")
@@ -53,8 +80,6 @@ tasks {
  * other modules. This allows ledger or agent tests
  * to depend on common utility functions.
  */
-
-
 val testJar by tasks.registering(Jar::class) {
     archiveClassifier.set("tests")
     from(project.the<SourceSetContainer>()["test"].output)
