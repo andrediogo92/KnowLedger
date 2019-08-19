@@ -13,10 +13,11 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":ledger-core"))
+    implementation(kotlin("stdlib"))
+
     implementation(project(":annotations"))
-    implementation(kotlin("stdlib-jdk8"))
-    //Code generation library for kotlin, highly recommended
+    implementation(project(":ledger-core"))
+
     implementation(Libs.kotlinPoet)
     implementation(Libs.autoService)
     kapt(Libs.autoService)

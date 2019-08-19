@@ -18,7 +18,6 @@ dependencies {
 
     //Annotation Processing
     kapt(Libs.moshiCodeGen)
-    kapt(project(":generation"))
 
 
     //Regular dependencies
