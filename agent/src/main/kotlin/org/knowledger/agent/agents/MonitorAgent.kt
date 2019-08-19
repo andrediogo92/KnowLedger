@@ -1,7 +1,6 @@
-package org.knowledger.agent
+package org.knowledger.agent.agents
 
 import com.squareup.moshi.Moshi
-import io.ktor.util.Hash
 import jade.core.Agent
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttToken
@@ -12,6 +11,8 @@ import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
 import org.knowledger.agent.data.feed.AdafruitPublish
 import org.knowledger.agent.data.feed.Reduxer
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.misc.base64Encode
 import org.knowledger.ledger.core.results.reduce
 import org.knowledger.ledger.core.results.unwrap
 import org.knowledger.ledger.data.PhysicalData
@@ -24,14 +25,13 @@ import org.tinylog.kotlin.Logger
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
-class MonitorAgent(
-    id: Hash,
+data class MonitorAgent(
+    val id: Hash,
     private val reduxers: Map<String, Reduxer>,
     private val ledgerHandle: LedgerHandle
 ) : Agent() {
     private var json: AdafruitPublish = AdafruitPublish()
     private var moshi = Moshi.Builder().build()
-    private val broker = "tcp://io.adafruit.com:1883"
     private val mqttClient: MqttAsyncClient = MqttAsyncClient(
         broker,
         "MASBlockchain",
@@ -52,7 +52,7 @@ class MonitorAgent(
             val i = 0L
             var fail = false
             while (!fail) {
-                fail = tryLoad(cl.id.tag, cl, i)
+                fail = tryLoad(cl.id.tag.base64Encode(), cl, i)
             }
         }
         mqttClient.disconnect()
@@ -153,6 +153,10 @@ class MonitorAgent(
             Logger.error(exception) { "Message ${token.messageId} excepted." }
             this@MonitorAgent.doWake()
         }
+    }
+
+    companion object {
+        const val broker = "tcp://io.adafruit.com:1883"
     }
 }
 
