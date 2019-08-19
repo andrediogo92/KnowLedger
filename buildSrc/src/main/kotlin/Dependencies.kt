@@ -17,7 +17,9 @@ object Versions {
     const val ktor = "1.2.2"
     const val moshi = "1.8.0"
     const val kotlinPoet = "1.2.0"
+    const val okHTTP = "4.1.0"
     const val orientDB = "3.0.14"
+    const val retrofit = "2.6.1"
     const val serial = "0.11.1"
     const val tinylog = "2.0.0-M4.3"
 
@@ -59,6 +61,10 @@ object Libs {
         "com.tilab.jade:jade-misc:${Versions.jadeMisc}"
     )
 
+    const val jol =
+        "org.openjdk.jol:jol-core:${Versions.jol}"
+
+
     const val jUnitApi =
         "org.junit.jupiter:junit-jupiter-api:${Versions.jUnit}"
 
@@ -78,9 +84,9 @@ object Libs {
 
     const val koin = "org.koin:koin-core:${Versions.koin}"
 
+    const val kotlinPoet =
+        "com.squareup:kotlinpoet:${Versions.kotlinPoet}"
 
-    const val jol =
-        "org.openjdk.jol:jol-core:${Versions.jol}"
 
     val moshi = listOf(
         "com.squareup.moshi:moshi:${Versions.moshi}",
@@ -91,13 +97,18 @@ object Libs {
     const val moshiCodeGen =
         "com.squareup.moshi:moshi-kotlin-codegen:${Versions.moshi}"
 
+    const val okHTTP =
+        "com.squareup.okhttp3:okhttp:${Versions.okHTTP}"
+
     val orientDB = listOf(
         "com.orientechnologies:orientdb-client:${Versions.orientDB}",
         "com.orientechnologies:orientdb-server:${Versions.orientDB}"
     )
 
-    const val kotlinPoet =
-        "com.squareup:kotlinpoet:${Versions.kotlinPoet}"
+    val retrofit = listOf(
+        "com.squareup.retrofit2:retrofit:${Versions.retrofit}",
+        "com.squareup.retrofit2:converter-moshi:${Versions.retrofit}"
+    )
 
     const val serialization =
         "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serial}"
@@ -108,8 +119,8 @@ object Libs {
     )
 
     /*
-    * Deprecate old logging methods,
-    * for tinylog.
+    * Deprecate old logging methods
+    * for new tinylog.
     *
     const val klog = "io.github.microutils:kotlin-logging:${Versions.klog}"
     val slf4j = listOf(

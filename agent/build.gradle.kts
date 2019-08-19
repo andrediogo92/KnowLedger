@@ -29,17 +29,21 @@ dependencies {
     //Regular dependencies
     implementation(kotlin("stdlib", Versions.kotlin))
     //implementation(Libs.arrowK)
-    implementation(Libs.coroutines)
+    //implementation(Libs.coroutines)
     implementation(Libs.eclipsePaho)
     Libs.jade.forEach {
         implementation(it)
     }
-    Libs.ktor.forEach {
-        implementation(it)
-    }
+    //Libs.ktor.forEach {
+    //    implementation(it)
+    //
     Libs.moshi.forEach {
         implementation(it)
     }
+    implementation(Libs.okHTTP)
+    //Libs.retrofit.forEach {
+    //    implementation(it)
+    //}
     //implementation(Libs.serialization)
     Libs.tinylog.forEach {
         implementation(it)
