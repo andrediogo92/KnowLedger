@@ -1,5 +1,6 @@
 package org.knowledger.ledger.core.misc
 
+import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.hash.AvailableHashAlgorithms
 
 @Suppress("NOTHING_TO_INLINE")
@@ -12,7 +13,7 @@ inline fun String.encodeStringToUTF8(): ByteArray =
 inline fun ByteArray.decodeUTF8ToString(): String =
     this.decodeToString()
 
-val <T> Class<T>.classDigest: String
+val <T> Class<T>.classDigest: Tag
     get() = AvailableHashAlgorithms.SHA3256Hasher.applyHash(
         toGenericString()
-    ).base64Encode()
+    )
