@@ -15,13 +15,13 @@ import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
 import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.base64Encode
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.peekFailure
 import org.knowledger.ledger.core.storage.results.DataFailure
 import org.knowledger.ledger.core.storage.results.QueryFailure
 import org.knowledger.ledger.core.test.randomByteArray
 import org.knowledger.ledger.core.test.randomDouble
+import org.knowledger.ledger.data.GeoCoords
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.data.TUnit
 import org.knowledger.ledger.data.TemperatureData
@@ -58,7 +58,7 @@ internal fun generateChainId(
 ): ChainId =
     StorageAwareChainId(
         StorageUnawareChainId(
-            randomByteArray(32).base64Encode(),
+            Hash(randomByteArray(32)),
             Hash(randomByteArray(32)), hasher
         )
     )
@@ -102,6 +102,10 @@ internal fun generateXTransactions(
                 id[index].privateKey,
                 id[index].publicKey,
                 PhysicalData(
+                    GeoCoords(
+                        BigDecimal.ZERO, BigDecimal.ZERO,
+                        BigDecimal.ZERO
+                    ),
                     TemperatureData(
                         BigDecimal(
                             randomDouble() * 100
@@ -129,6 +133,10 @@ internal fun generateXTransactions(
                 id.privateKey,
                 id.publicKey,
                 PhysicalData(
+                    GeoCoords(
+                        BigDecimal.ZERO, BigDecimal.ZERO,
+                        BigDecimal.ZERO
+                    ),
                     TemperatureData(
                         BigDecimal(
                             randomDouble() * 100
@@ -208,6 +216,10 @@ internal fun generateXTransactionsWithChain(
                 id[index].privateKey,
                 id[index].publicKey,
                 PhysicalData(
+                    GeoCoords(
+                        BigDecimal.ZERO, BigDecimal.ZERO,
+                        BigDecimal.ZERO
+                    ),
                     TemperatureData(
                         BigDecimal(
                             randomDouble() * 100
@@ -236,6 +248,10 @@ internal fun generateXTransactionsWithChain(
                 id.privateKey,
                 id.publicKey,
                 PhysicalData(
+                    GeoCoords(
+                        BigDecimal.ZERO, BigDecimal.ZERO,
+                        BigDecimal.ZERO
+                    ),
                     TemperatureData(
                         BigDecimal(
                             randomDouble() * 100
