@@ -63,7 +63,7 @@ internal data class StorageUnawareBlock(
                 merkleTreeSize
 
 
-    internal constructor(
+    constructor(
         chainId: ChainId,
         previousHash: Hash,
         difficulty: Difficulty,

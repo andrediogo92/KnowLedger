@@ -21,12 +21,12 @@ import java.time.Instant
  * Physical value is the main class in which to store ledger value.
  *
  * It requires an [instant] in which the value was recorded and
- * optionally geo coordinates for where it was recorded.
+ * geo coordinates for where it was recorded.
  */
 @JsonClass(generateAdapter = true)
 data class PhysicalData(
     val instant: Instant,
-    val geoCoords: GeoCoords?,
+    val geoCoords: GeoCoords,
     val data: LedgerData
 ) : Sizeable,
     Hashable,
@@ -38,14 +38,6 @@ data class PhysicalData(
         get() = ClassLayout
             .parseClass(this::class.java)
             .instanceSize() + data.approximateSize
-
-    constructor(
-        data: LedgerData
-    ) : this(Instant.now(), null, data)
-
-    constructor(
-        instant: Instant, data: LedgerData
-    ) : this(instant, null, data)
 
     constructor(
         geoCoords: GeoCoords, data: LedgerData
@@ -76,20 +68,13 @@ data class PhysicalData(
 
     override fun digest(c: Hasher): Hash =
         c.applyHash(
-            if (geoCoords != null) {
-                flattenBytes(
-                    instant.bytes(),
-                    geoCoords.latitude.bytes(),
-                    geoCoords.longitude.bytes(),
-                    geoCoords.altitude.bytes(),
-                    data.digest(c).bytes
-                )
-            } else {
-                flattenBytes(
-                    instant.bytes(),
-                    data.digest(c).bytes
-                )
-            }
+            flattenBytes(
+                instant.bytes(),
+                geoCoords.latitude.bytes(),
+                geoCoords.longitude.bytes(),
+                geoCoords.altitude.bytes(),
+                data.digest(c).bytes
+            )
         )
 
     companion object {

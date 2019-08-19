@@ -25,7 +25,10 @@ object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
         get() = mapOf(
             "seconds" to StorageType.LONG,
             "nanos" to StorageType.INTEGER,
-            "value" to StorageType.LINK
+            "value" to StorageType.LINK,
+            "latitude" to StorageType.DECIMAL,
+            "longitude" to StorageType.DECIMAL,
+            "altitude" to StorageType.DECIMAL
         )
 
     override fun store(
@@ -71,22 +74,15 @@ object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
                             element.getStorageProperty("seconds"),
                             element.getStorageProperty("nanos")
                         )
-                        if (element.presentProperties.contains("latitude")) {
-                            PhysicalData(
-                                instant,
-                                GeoCoords(
-                                    element.getStorageProperty("latitude"),
-                                    element.getStorageProperty("longitude"),
-                                    element.getStorageProperty("altitude")
-                                ),
-                                it
-                            )
-                        } else {
-                            PhysicalData(
-                                instant,
-                                it
-                            )
-                        }
+                        PhysicalData(
+                            instant,
+                            GeoCoords(
+                                element.getStorageProperty("latitude"),
+                                element.getStorageProperty("longitude"),
+                                element.getStorageProperty("altitude")
+                            ),
+                            it
+                        )
                     }
             } else {
                 Outcome.Error<LoadFailure>(
