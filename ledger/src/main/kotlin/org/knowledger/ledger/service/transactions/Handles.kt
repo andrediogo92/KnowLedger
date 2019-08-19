@@ -1,8 +1,10 @@
 package org.knowledger.ledger.service.transactions
 
+import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.database.query.UnspecificQuery
+import org.knowledger.ledger.core.misc.base64Encode
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.storage.results.QueryFailure
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
@@ -13,6 +15,11 @@ import org.knowledger.ledger.storage.adapters.QueryLoadable
 //-------------------------
 // LedgerHandle Transactions
 //-------------------------
+internal fun PersistenceWrapper.getChainHandle(
+    id: Tag
+): Outcome<ChainHandle, LedgerFailure> =
+    getChainHandle(id.base64Encode())
+
 internal fun PersistenceWrapper.getChainHandle(
     id: String
 ): Outcome<ChainHandle, LedgerFailure> =
@@ -29,6 +36,7 @@ internal fun PersistenceWrapper.getChainHandle(
             it
         )
     }
+
 
 internal fun PersistenceWrapper.tryAddChainHandle(
     chainHandle: ChainHandle

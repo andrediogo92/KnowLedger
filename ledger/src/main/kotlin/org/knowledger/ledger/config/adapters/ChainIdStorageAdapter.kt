@@ -20,7 +20,7 @@ object ChainIdStorageAdapter : ServiceStorageAdapter<ChainId> {
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "tag" to StorageType.STRING,
+            "tag" to StorageType.HASH,
             "ledgerHash" to StorageType.HASH,
             "hashId" to StorageType.HASH
         )

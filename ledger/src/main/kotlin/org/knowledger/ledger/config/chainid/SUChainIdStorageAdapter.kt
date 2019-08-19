@@ -22,7 +22,7 @@ object SUChainIdStorageAdapter : ServiceStorageAdapter<StorageUnawareChainId> {
     ): StorageElement =
         session
             .newInstance(id)
-            .setStorageProperty("tag", toStore.tag)
+            .setHashProperty("tag", toStore.tag)
             .setHashProperty("ledgerHash", toStore.ledgerHash)
             .setHashProperty("hashId", toStore.hashId)
 
@@ -32,17 +32,21 @@ object SUChainIdStorageAdapter : ServiceStorageAdapter<StorageUnawareChainId> {
         element: StorageElement
     ): Outcome<StorageUnawareChainId, LedgerFailure> =
         tryOrLedgerUnknownFailure {
-            val hash =
+            val hash: Hash =
                 element.getHashProperty("hashId")
 
-            val ledger =
+            val ledger: Hash =
                 element.getHashProperty("ledgerHash")
+
+            val tag: Hash =
+                element.getHashProperty("tag")
+
 
             assert(ledger.contentEquals(ledgerHash))
 
             Outcome.Ok(
                 StorageUnawareChainId(
-                    element.getStorageProperty("tag"),
+                    tag,
                     ledger,
                     hash
                 )

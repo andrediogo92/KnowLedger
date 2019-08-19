@@ -3,9 +3,11 @@ package org.knowledger.ledger.service.handles
 import org.knowledger.ledger.core.data.DataFormula
 import org.knowledger.ledger.core.data.DefaultDiff
 import org.knowledger.ledger.core.data.LedgerData
+import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.base64DecodeToHash
 import org.knowledger.ledger.core.misc.base64Encode
 import org.knowledger.ledger.core.misc.classDigest
 import org.knowledger.ledger.core.results.Failable
@@ -114,7 +116,8 @@ class LedgerHandle internal constructor(
         adapter: AbstractStorageAdapter<out T>
     ): Outcome<ChainHandle, LedgerFailure> =
         ChainHandle(
-            adapter.id, ledgerConfig.ledgerId.hashId, hasher
+            adapter.id.base64DecodeToHash(),
+            ledgerConfig.ledgerId.hashId, hasher
         ).let { ch ->
             addStorageAdapter(adapter)
             pw.tryAddChainHandle(ch).fold(
@@ -192,6 +195,13 @@ class LedgerHandle internal constructor(
 
         internal val containers =
             mutableMapOf<String, LedgerContainer>()
+
+        fun getStorageAdapter(
+            dataName: Tag
+        ): AbstractStorageAdapter<out LedgerData>? =
+            dataAdapters.find {
+                it.id == dataName.base64Encode()
+            }
 
         fun getStorageAdapter(
             dataName: String

@@ -10,6 +10,7 @@ import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.data.Difficulty.Companion.INIT_DIFFICULTY
 import org.knowledger.ledger.core.data.Difficulty.Companion.MAX_DIFFICULTY
 import org.knowledger.ledger.core.data.Difficulty.Companion.MIN_DIFFICULTY
+import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
 import org.knowledger.ledger.core.hash.Hasher
@@ -104,7 +105,7 @@ data class ChainHandle internal constructor(
 
 
     internal constructor(
-        tag: String,
+        tag: Tag,
         ledgerHash: Hash,
         hasher: Hasher
     ) : this(
@@ -558,7 +559,10 @@ data class ChainHandle internal constructor(
                             Transaction(
                                 chainId,
                                 identity,
-                                PhysicalData(DummyData.DUMMY),
+                                PhysicalData(
+                                    BigDecimal.ZERO, BigDecimal.ZERO,
+                                    DummyData.DUMMY
+                                ),
                                 it.hasher
                             )
                         )
