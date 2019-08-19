@@ -1,4 +1,4 @@
-package org.knowledger.agent
+package org.knowledger.agent.agents
 
 import jade.core.Profile
 import jade.core.ProfileImpl
@@ -17,8 +17,6 @@ class AgentContainer(
     isMainContainer: Boolean,
     hasGUI: Boolean
 ) {
-    // Get the JADE runtime interface (singleton)
-    private val rt: Runtime = Runtime.instance()
     // Create a Profile, where the launch arguments are stored
     private val profile: Profile = ProfileImpl(
         host, port,
@@ -53,11 +51,10 @@ class AgentContainer(
 
     fun runLedgerAgent(
         name: String,
-        classpath: String,
         handle: LedgerHandle,
         arguments: Array<Any>
     ) {
-        runAgent(name, classpath, arrayOf(handle, *arguments))
+        runAgent(name, ledgerAgent, arrayOf(handle, *arguments))
     }
 
     fun killAgent(agent: String) {
@@ -69,5 +66,11 @@ class AgentContainer(
         synchronized(iAgents) {
             iAgents.removeAt(index)
         }
+    }
+
+    companion object {
+        // Get the JADE runtime interface (singleton)
+        private val rt: Runtime = Runtime.instance()
+        const val ledgerAgent = "org.knowleder.agent.agents.ChainAgent"
     }
 }
