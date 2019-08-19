@@ -57,28 +57,6 @@ data class Transaction(
 
     constructor(
         chainId: ChainId,
-        identity: Identity,
-        data: PhysicalData,
-        hasher: Hasher
-    ) : this(
-        chainId,
-        identity.publicKey,
-        data,
-        ByteArray(0),
-        Hash.emptyHash,
-        hasher
-    ) {
-        signatureInternal = generateSignature(
-            identity.privateKey,
-            identity.publicKey,
-            data,
-            hasher
-        )
-        updateHash(hasher)
-    }
-
-    constructor(
-        chainId: ChainId,
         privateKey: PrivateKey,
         publicKey: PublicKey,
         data: PhysicalData,
@@ -99,6 +77,20 @@ data class Transaction(
         )
         updateHash(hasher)
     }
+
+
+    constructor(
+        chainId: ChainId,
+        identity: Identity,
+        data: PhysicalData,
+        hasher: Hasher
+    ) : this(
+        chainId,
+        identity.privateKey,
+        identity.publicKey,
+        data,
+        hasher
+    )
 
     /**
      * Hash is a cryptographic digest calculated from previous hashId,
