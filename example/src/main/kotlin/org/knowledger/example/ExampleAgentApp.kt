@@ -1,6 +1,6 @@
 package org.knowledger.example
 
-import org.knowledger.agent.AgentContainer
+import org.knowledger.agent.agents.AgentContainer
 import org.knowledger.ledger.core.results.unwrap
 import org.knowledger.ledger.service.handles.LedgerHandle
 
@@ -24,7 +24,6 @@ class ExampleAgentApp {
 
             container.runLedgerAgent(
                 "MinerAgent",
-                "pt.um.lei.masb.agent.SingleChainAgent",
                 handle,
                 emptyArray()
             )
