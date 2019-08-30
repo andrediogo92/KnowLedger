@@ -2,7 +2,8 @@ package org.knowledger.ledger.core.storage.adapters
 
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.misc.base64Encode
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.base64Encoded
 import org.knowledger.ledger.core.misc.classDigest
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.storage.results.DataFailure
@@ -14,10 +15,11 @@ import org.knowledger.ledger.core.storage.results.DataFailure
  * The hashed id is based on the class name extracted via reflection.
  */
 abstract class AbstractStorageAdapter<T : LedgerData>(
-    val clazz: Class<out T>
+    val clazz: Class<out T>,
+    hasher: Hasher
 ) : StorageAdapter<T> {
     override val id: String by lazy {
-        clazz.classDigest.base64Encode()
+        clazz.classDigest(hasher).base64Encoded()
     }
 
     protected inline fun <T : LedgerData> commonLoad(
