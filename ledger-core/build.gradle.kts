@@ -5,7 +5,7 @@ version = "0.1"
 
 plugins {
     kotlin("jvm")
-    id("org.jetbrains.kotlin.plugin.noarg")
+    id("org.jetbrains.kotlin.plugin.serialization")
     id("org.jetbrains.dokka")
 }
 
@@ -17,18 +17,14 @@ repositories {
 
 dependencies {
     implementation(kotlin("stdlib", Versions.kotlin))
-    Libs.orientDB.forEach {
-        implementation(it)
-    }
-    implementation(Libs.bouncyCastle)
-    implementation(Libs.jol)
-    Libs.tinylog.forEach {
-        implementation(it)
-    }
+    implementation(Libs.serialization)
 
     testImplementation(Libs.assertK)
     testImplementation(Libs.commonsRNG)
     testImplementation(Libs.jUnitApi)
+    Libs.tinylog.forEach {
+        testImplementation(it)
+    }
     Libs.jUnitRuntime.forEach {
         testRuntimeOnly(it)
     }
@@ -68,7 +64,6 @@ tasks {
     }
 
     withType<KotlinCompile> {
-        kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
         kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
         kotlinOptions.jvmTarget = "1.8"
     }
