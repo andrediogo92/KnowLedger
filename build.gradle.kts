@@ -7,6 +7,7 @@ buildscript {
     dependencies {
         classpath(kotlin("gradle-plugin", Versions.kotlin))
         classpath(kotlin("noarg", Versions.kotlin))
+        classpath(kotlin("serialization", Versions.kotlin))
         classpath(Libs.dokkaPlugin)
     }
 
@@ -20,7 +21,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.noarg") version
             Versions.kotlin apply
             false
-    id("kotlinx-serialization") version
+    id("org.jetbrains.kotlin.plugin.serialization") version
             Versions.kotlin apply
             false
     id("org.jetbrains.dokka") version
