@@ -5,14 +5,12 @@ version = "0.1"
 
 plugins {
     kotlin("jvm")
-    kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.noarg")
     id("org.jetbrains.dokka")
-//    id("kotlinx-serialization")
+    id("kotlinx-serialization")
 }
 
 repositories {
-    maven("https://kotlin.bintray.com/ktor")
     maven("https://jade.tilab.com/maven")
 }
 
@@ -20,31 +18,17 @@ dependencies {
     //Project dependencies
     implementation(project(":ledger"))
     implementation(project(":ledger-core"))
-
-
-    //Annotation Processing
-    kapt(Libs.moshiCodeGen)
+    implementation(project(":agent-core"))
 
 
     //Regular dependencies
     implementation(kotlin("stdlib", Versions.kotlin))
-    //implementation(Libs.arrowK)
-    //implementation(Libs.coroutines)
     implementation(Libs.eclipsePaho)
     Libs.jade.forEach {
         implementation(it)
     }
-    //Libs.ktor.forEach {
-    //    implementation(it)
-    //
-    Libs.moshi.forEach {
-        implementation(it)
-    }
     implementation(Libs.okHTTP)
-    //Libs.retrofit.forEach {
-    //    implementation(it)
-    //}
-    //implementation(Libs.serialization)
+    implementation(Libs.serialization)
     Libs.tinylog.forEach {
         implementation(it)
     }
@@ -87,10 +71,6 @@ tasks {
     }
 
 
-    withType<JavaExec> {
-        jvmArgs("-Djdk.attach.allowAttachSelf=true")
-    }
-
     withType<Test> {
         useJUnitPlatform {
             includeEngines("junit-jupiter")
@@ -98,7 +78,6 @@ tasks {
     }
 
     withType<KotlinCompile> {
-        kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
         kotlinOptions.jvmTarget = "1.8"
     }
 
