@@ -1,10 +1,10 @@
-package org.knowledger.ledger.core.test
+package org.knowledger.ledger.crypto
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.hash.AvailableHashAlgorithms
+import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms
 
 class TestHashers {
     val test = "testByteArray".toByteArray()

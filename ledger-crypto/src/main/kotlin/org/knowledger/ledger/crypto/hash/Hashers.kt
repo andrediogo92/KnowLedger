@@ -1,7 +1,9 @@
-package org.knowledger.ledger.core.hash
+package org.knowledger.ledger.crypto.hash
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.knowledger.ledger.core.misc.bytes
+import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.misc.asBytes
 import org.knowledger.ledger.core.misc.flattenBytes
 import java.security.MessageDigest
 import java.security.Security
@@ -28,10 +30,10 @@ sealed class AvailableHashAlgorithms(algorithmTag: String) : Hasher {
         Hash(
             digester.digest(
                 flattenBytes(
-                    digester.digestLength.bytes(),
+                    digester.digestLength.asBytes,
                     digester.algorithm.toByteArray(),
                     provider.name.toByteArray(),
-                    provider.version.bytes()
+                    provider.version.asBytes
                 )
             )
         )
@@ -48,6 +50,8 @@ sealed class AvailableHashAlgorithms(algorithmTag: String) : Hasher {
     object Keccak512Hasher : AvailableHashAlgorithms("KECCAK-512")
 
     companion object {
+        val DEFAULT_HASHER = Blake2b256Hasher
+
         class NoSuchHasherRegistered : Exception()
 
         init {

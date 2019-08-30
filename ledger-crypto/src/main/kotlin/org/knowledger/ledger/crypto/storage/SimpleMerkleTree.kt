@@ -1,22 +1,26 @@
-package org.knowledger.ledger.storage.merkletree
+package org.knowledger.ledger.crypto.storage
 
-import com.squareup.moshi.JsonClass
-import org.knowledger.ledger.core.config.LedgerConfiguration
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
+import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hashed
 import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.misc.mapAndAdd
 import org.knowledger.ledger.core.misc.mapToArray
-import org.knowledger.ledger.storage.MerkleTree
-import org.tinylog.kotlin.Logger
+import org.knowledger.ledger.core.storage.MerkleTree
+import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms.Companion.DEFAULT_HASHER
 
-@JsonClass(generateAdapter = true)
-internal data class StorageUnawareMerkleTree(
+@Serializable
+data class SimpleMerkleTree(
     @Transient
-    override val hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
+    override val hasher: Hasher = DEFAULT_HASHER,
     internal val collapsedTree: MutableList<Hash> = mutableListOf(),
     internal val levelIndex: MutableList<Int> = mutableListOf()
 ) : MerkleTree {
+    override fun serialize(cbor: Cbor): ByteArray =
+        cbor.dump(serializer(), this)
+
     override fun clone(): MerkleTree =
         copy()
 
@@ -56,7 +60,7 @@ internal data class StorageUnawareMerkleTree(
 
         //levelIndex[index] points to leftmost node at level index of the tree
         while (i >= levelIndex[(levelIndex.size - 1)]) {
-            if (collapsedTree[i].contentEquals(hash)) {
+            if (collapsedTree[i] == hash) {
                 res = true
                 break
             }
@@ -71,7 +75,7 @@ internal data class StorageUnawareMerkleTree(
 
         //levelIndex[index] points to leftmost node at level index of the tree.
         while (i >= levelIndex[levelIndex.size - 1]) {
-            if (collapsedTree[i].contentEquals(hash)) {
+            if (collapsedTree[i] == hash) {
                 res = i
                 break
             }
@@ -102,7 +106,7 @@ internal data class StorageUnawareMerkleTree(
         hash: Hash,
         level: Int
     ): Boolean {
-        var res: Boolean = hash.contentEquals((collapsedTree[index]))
+        var res: Boolean = hash == collapsedTree[index]
         var index = index
         var level = level
         var hash: Hash
@@ -138,7 +142,7 @@ internal data class StorageUnawareMerkleTree(
             //Index of parent is at the start of the last level
             // + the distance from start of this level / 2
             index = levelIndex[level] + (delta / 2)
-            res = hash.contentEquals((collapsedTree[index]))
+            res = hash == collapsedTree[index]
         }
         return res
     }
@@ -200,10 +204,9 @@ internal data class StorageUnawareMerkleTree(
                 if ((level + 2 != levelIndex.size && delta + 1 == levelIndex[level + 2])
                     || delta + 1 == collapsedTree.size
                 ) {
-                    if (!collapsedTree[i].contentEquals(
-                            (hasher.applyHash(
-                                collapsedTree[delta] + collapsedTree[delta]
-                            ))
+                    if (collapsedTree[i] !=
+                        hasher.applyHash(
+                            collapsedTree[delta] + collapsedTree[delta]
                         )
                     ) {
                         res = false
@@ -213,10 +216,9 @@ internal data class StorageUnawareMerkleTree(
 
                 //Then it's a regular left leaf.
                 else {
-                    if (!collapsedTree[i].contentEquals(
-                            (hasher.applyHash(
-                                collapsedTree[delta] + collapsedTree[delta + 1]
-                            ))
+                    if (collapsedTree[i] !=
+                        hasher.applyHash(
+                            collapsedTree[delta] + collapsedTree[delta + 1]
                         )
                     ) {
                         res = false
@@ -237,13 +239,13 @@ internal data class StorageUnawareMerkleTree(
         var i = levelIndex[levelIndex.size - 1] + 1
         var res = true
         val arr = data.map(Hashed::hashId)
-        if (collapsedTree[i - 1].contentEquals(coinbase.hashId)) {
+        if (collapsedTree[i - 1] == coinbase.hashId) {
             for (it in arr) {
 
                 //There are at least as many transactions.
                 //They match the ones in the merkle tree.
                 if (i < collapsedTree.size &&
-                    it.contentEquals(collapsedTree[i])
+                    it == collapsedTree[i]
                 ) {
                     i++
                 } else {
@@ -354,9 +356,14 @@ internal data class StorageUnawareMerkleTree(
                 levelIndex.add(0)
             }
             else -> {
-                Logger.warn { "Empty merkle tree" }
+                throw InvalidMerkleException(treeLayer[i].size)
             }
         }
+    }
+
+    class InvalidMerkleException(val size: Int) : Throwable() {
+        override val message: String?
+            get() = "${super.message}: next to last was $size in size."
     }
 
     /**
@@ -395,14 +402,27 @@ internal data class StorageUnawareMerkleTree(
         return treeLayer
     }
 
+    override fun buildFromCoinbase(coinbase: Hashed) {
+        var accumulate = coinbase.hashId
+        collapsedTree[levelIndexes.size - 1] = accumulate
+        var i = levelIndexes.size - 1
+        var j = levelIndexes[i]
+        while (i > 0) {
+            accumulate = hasher.applyHash(accumulate + collapsedTree[j + 1])
+            i -= 1
+            j = levelIndexes[i]
+            collapsedTree[j] = accumulate
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is StorageUnawareMerkleTree) return false
+        if (other !is SimpleMerkleTree) return false
         if (collapsedTree
                 .asSequence()
                 .zip(other.collapsedTree.asSequence())
                 .any { (h1, h2) ->
-                    !h1.contentEquals(h2)
+                    h1 != h2
                 }
         ) return false
         if (levelIndex
@@ -422,5 +442,4 @@ internal data class StorageUnawareMerkleTree(
         result = 31 * result + levelIndex.hashCode()
         return result
     }
-
 }

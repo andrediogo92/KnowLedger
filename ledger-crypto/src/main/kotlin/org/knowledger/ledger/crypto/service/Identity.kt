@@ -1,7 +1,12 @@
-package org.knowledger.ledger.service
+@file:UseSerializers(PrivateKeySerializer::class, PublicKeySerializer::class)
 
-import com.squareup.moshi.JsonClass
+package org.knowledger.ledger.crypto.service
+
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.knowledger.ledger.core.serial.PrivateKeySerializer
+import org.knowledger.ledger.core.serial.PublicKeySerializer
 import org.knowledger.ledger.core.storage.LedgerContract
 import java.security.KeyPair
 import java.security.KeyPairGenerator
@@ -11,21 +16,17 @@ import java.security.SecureRandom
 import java.security.Security
 import java.security.spec.ECGenParameterSpec
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Identity(
     val id: String,
-    val pair: KeyPair
-) : LedgerContract {
-
-
-    val privateKey: PrivateKey
-        get() = pair.private
+    val privateKey: PrivateKey,
     val publicKey: PublicKey
-        get() = pair.public
-
-
+) : LedgerContract {
     constructor(id: String) : this(id, generateNewKeyPair())
 
+    constructor(
+        id: String, keyPair: KeyPair
+    ) : this(id, keyPair.private, keyPair.public)
 
     companion object {
         init {
@@ -36,6 +37,7 @@ data class Identity(
                 )
             }
         }
+
 
         private val keygen by lazy {
             KeyPairGenerator.getInstance(
