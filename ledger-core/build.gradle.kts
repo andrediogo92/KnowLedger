@@ -9,12 +9,6 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
-
-repositories {
-    mavenCentral()
-    jcenter()
-}
-
 dependencies {
     implementation(kotlin("stdlib", Versions.kotlin))
     implementation(Libs.serialization)
