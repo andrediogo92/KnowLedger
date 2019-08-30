@@ -5,10 +5,6 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(kotlin("stdlib", Versions.kotlin))
 }

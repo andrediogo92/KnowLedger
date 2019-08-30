@@ -1,22 +1,6 @@
 rootProject.name = "Knowledger"
 include(
-    "ledger", "agent", "annotations",
-    "generation", "ledger-core", "example"
+    "agent", "agent-core", "annotations", "example",
+    "ledger", "ledger-core", "ledger-crypto", "ledger-orient",
+    "generation"
 )
-
-
-pluginManagement {
-    resolutionStrategy {
-        eachPlugin {
-            if (requested.id.id ==
-                "kotlinx-serialization"
-            ) {
-                useModule(
-                    "org.jetbrains.kotlin:kotlin-serialization:${
-                    requested.version
-                    }"
-                )
-            }
-        }
-    }
-}

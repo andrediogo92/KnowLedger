@@ -7,14 +7,8 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
-
-repositories {
-    mavenCentral()
-}
-
 dependencies {
     implementation(kotlin("stdlib"))
-
     implementation(project(":annotations"))
     implementation(project(":ledger-core"))
 
