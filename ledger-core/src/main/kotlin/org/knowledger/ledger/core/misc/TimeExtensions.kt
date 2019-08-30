@@ -8,5 +8,4 @@ inline fun Instant.secondsFrom(instant: Instant): Long =
     until(instant, ChronoUnit.SECONDS)
 
 @Suppress("NOTHING_TO_INLINE")
-inline fun Instant.secondsFromNow(): Long =
-    secondsFrom(Instant.now())
+inline fun Instant.secondsFromNow(): Long = secondsFrom(Instant.now())

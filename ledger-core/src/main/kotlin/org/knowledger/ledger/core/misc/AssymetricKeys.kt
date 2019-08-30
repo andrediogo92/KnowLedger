@@ -1,5 +1,6 @@
 package org.knowledger.ledger.core.misc
 
+import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.hash.Hashable
 import org.knowledger.ledger.core.hash.Hasher
 import java.security.Key
@@ -10,6 +11,12 @@ import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 
+private val keyFactory: KeyFactory =
+    KeyFactory.getInstance(
+        "ECDSA",
+        "BC"
+    )
+
 /**
  * Signs the [data]'s digest appended to the [publicKey]
  * using the [privateKey].
@@ -19,11 +26,12 @@ fun generateSignature(
     privateKey: PrivateKey,
     publicKey: PublicKey,
     data: Hashable,
-    hasher: Hasher
+    hasher: Hasher,
+    cbor: Cbor
 ): ByteArray =
     applyECDSASig(
         privateKey,
-        publicKey.encoded + data.digest(hasher).bytes
+        publicKey.encoded + data.digest(hasher, cbor).bytes
     )
 
 
@@ -88,28 +96,22 @@ fun verifyECDSASig(
 }
 
 /**
- * Accepts a [bytes] [ByteArray] encoded [PublicKey]
+ * Accepts a [toBytes] [ByteArray] encoded [PublicKey]
  * and returns the resulting ECDSA [PublicKey] via
  * an [X509EncodedKeySpec].
  */
-fun ByteArray.byteEncodeToPublicKey(): PublicKey =
-    KeyFactory.getInstance(
-        "ECDSA",
-        "BC"
-    ).generatePublic(
+fun ByteArray.toPublicKey(): PublicKey =
+    keyFactory.generatePublic(
         X509EncodedKeySpec(this)
     )
 
 
 /**
- * Accepts a [bytes] [ByteArray] encoded [PublicKey]
+ * Accepts a [toBytes] [ByteArray] encoded [PublicKey]
  * and returns the resulting ECDSA [PrivateKey] via an [X509EncodedKeySpec].
  */
-fun ByteArray.byteEncodeToPrivateKey(): PrivateKey =
-    KeyFactory.getInstance(
-        "ECDSA",
-        "BC"
-    ).generatePrivate(
+fun ByteArray.toPrivateKey(): PrivateKey =
+    keyFactory.generatePrivate(
         PKCS8EncodedKeySpec(this)
     )
 
@@ -118,16 +120,15 @@ fun ByteArray.byteEncodeToPrivateKey(): PrivateKey =
  * Accepts a base64 encoded string and returns
  * a ECDSA [PublicKey] via an [X509EncodedKeySpec].
  */
-fun String.stringToPublicKey(): PublicKey =
-    base64Decode().byteEncodeToPublicKey()
+fun String.toPublicKey(): PublicKey = base64Decoded().toPublicKey()
 
 
 /**
  * Accepts a base64 encoded string and returns
  * a ECDSA [PrivateKey] via an [X509EncodedKeySpec].
  */
-fun String.stringToPrivateKey(): PrivateKey =
-    base64Decode().byteEncodeToPrivateKey()
+fun String.toPrivateKey(): PrivateKey = base64Decoded().toPrivateKey()
 
-fun Key.getStringFromKey(): String =
-    encoded.base64Encode()
+fun Key.base64Encoded(): String = encoded.base64Encoded()
+
+fun Key.toHexString(): String = encoded.toHexString()

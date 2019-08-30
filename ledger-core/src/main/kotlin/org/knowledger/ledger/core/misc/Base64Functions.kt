@@ -6,21 +6,20 @@ import java.util.*
 private val b64Encoder = Base64.getUrlEncoder()
 private val b64Decoder = Base64.getUrlDecoder()
 
-fun Hash.base64Encode(): String =
-    bytes.base64Encode()
+fun Hash.base64Encoded(): String =
+    bytes.base64Encoded()
 
+fun String.base64Encoded(): String =
+    encodedStringInUTF8().base64Encoded()
 
-fun String.base64Encode(): String =
-    encodeStringToUTF8().base64Encode()
-
-fun ByteArray.base64Encode(): String =
+fun ByteArray.base64Encoded(): String =
     b64Encoder.encodeToString(this)
 
-fun String.base64Decode(): ByteArray =
+fun String.base64Decoded(): ByteArray =
     b64Decoder.decode(this)
 
-fun String.base64DecodeToHash(): Hash =
-    Hash(base64Decode())
+fun String.base64DecodedToHash(): Hash =
+    Hash(base64Decoded())
 
-fun String.base64DecodeToString(): String =
-    base64Decode().decodeUTF8ToString()
+fun String.base64DecodedToUTF8(): String =
+    base64Decoded().decodedUTF8String()

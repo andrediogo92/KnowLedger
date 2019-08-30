@@ -69,6 +69,7 @@ fun <T, U : Failable> Sequence<Outcome<T, U>>.anyValues(): Sequence<T> =
 /**
  * Extracts all successful [Outcome]s, and all failed [Outcome]s into a pair.
  */
+@Suppress("DuplicatedCode")
 fun <T, U : Failable> Iterable<Outcome<T, U>>.partition(): Pair<List<T>, List<U>> {
     val oks = mutableListOf<T>()
     val errs = mutableListOf<U>()
@@ -81,25 +82,11 @@ fun <T, U : Failable> Iterable<Outcome<T, U>>.partition(): Pair<List<T>, List<U>
     return Pair(oks, errs)
 }
 
-/**
- * Extracts all successful [Outcome]s, and all failed [Outcome]s into a pair.
- */
-fun <T, U : Failable> List<Outcome<T, U>>.partition(): Pair<List<T>, List<U>> {
-    val oks = mutableListOf<T>()
-    val errs = mutableListOf<U>()
-    forEach {
-        when (it) {
-            is Outcome.Ok<T> -> oks.add(it.value)
-            is Outcome.Error<U> -> errs.add(it.failure)
-        }
-    }
-    return Pair(oks, errs)
-}
-
 
 /**
  * Extracts all successful [Outcome]s, and all failed [Outcome]s into a pair.
  */
+@Suppress("DuplicatedCode")
 fun <T, U : Failable> Sequence<Outcome<T, U>>.partition(): Pair<List<T>, List<U>> {
     val oks = mutableListOf<T>()
     val errs = mutableListOf<U>()

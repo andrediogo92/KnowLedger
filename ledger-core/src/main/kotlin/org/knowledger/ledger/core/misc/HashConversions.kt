@@ -1,21 +1,19 @@
 package org.knowledger.ledger.core.misc
 
-import org.knowledger.ledger.core.hash.AvailableHashAlgorithms
+import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.hash.Hasher
 
 private val hexCode = "0123456789ABCDEF".toCharArray()
 
-val String.hashFromHexString: Hash
-    get() = Hash(parseHexBinary())
+fun String.hashFromHexString(): Hash =
+    Hash(bytesFromHexString())
 
-
-private fun String.parseHexBinary(): ByteArray {
+fun String.bytesFromHexString(): ByteArray {
     val len = length
 
     // "111" is not a valid hex encoding.
-    if (len % 2 != 0) throw IllegalArgumentException(
-        "hexBinary needs to be even-length: $this"
-    )
+    require(len % 2 == 0) { "hexBinary needs to be even-length: $this" }
 
     val out = ByteArray(len / 2)
 
@@ -23,9 +21,7 @@ private fun String.parseHexBinary(): ByteArray {
     while (i < len) {
         val h = this[i].hexToBin()
         val l = this[i + 1].hexToBin()
-        if (h == -1 || l == -1) throw IllegalArgumentException(
-            "contains illegal character for hexBinary: $this"
-        )
+        require(!(h == -1 || l == -1)) { "contains illegal character for hexBinary: $this" }
 
         out[i / 2] = (h * 16 + l).toByte()
         i += 2
@@ -34,7 +30,7 @@ private fun String.parseHexBinary(): ByteArray {
     return out
 }
 
-private fun Char.hexToBin(): Int =
+fun Char.hexToBin(): Int =
     when (this) {
         in '0'..'9' -> this - '0'
         in 'A'..'F' -> this - 'A' + 10
@@ -43,8 +39,8 @@ private fun Char.hexToBin(): Int =
     }
 
 // Only convert on print.
-val ByteArray.hexString: String
-    get() = String(
+fun ByteArray.toHexString(): String =
+    String(
         CharArray(size * 2).also {
             for (j in 0 until size) {
                 val v = this[j].toInt() and 0xFF
@@ -54,7 +50,12 @@ val ByteArray.hexString: String
         }
     )
 
-val <T : Any> T.classDigest: Hash
-    get() = AvailableHashAlgorithms.SHA3256Hasher.applyHash(
+fun <T : Any> T.classDigest(hasher: Hasher): Tag =
+    hasher.applyHash(
         this::class.java.toGenericString()
+    )
+
+fun <T> Class<T>.classDigest(hasher: Hasher): Tag =
+    hasher.applyHash(
+        toGenericString()
     )

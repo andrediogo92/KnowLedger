@@ -1,65 +1,81 @@
 package org.knowledger.ledger.core.misc
 
+import org.knowledger.ledger.core.data.Difficulty
+import org.knowledger.ledger.core.data.Payout
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*
 import kotlin.experimental.and
 
-fun Long.bytes(): ByteArray {
-    val magic = Long.SIZE_BYTES / Byte.SIZE_BYTES
-    val bits = Byte.SIZE_BITS
-    val result = ByteArray(magic)
-    var l = this
-    for (i in magic - 1 downTo 0) {
+@Suppress("DuplicatedCode", "SameParameterValue")
+private fun loopShifts(
+    sizeInBytes: Int, sizeOfByte: Int,
+    accum: Int
+): ByteArray {
+    val result = ByteArray(sizeInBytes)
+    var l = accum
+    for (i in sizeInBytes - 1 downTo 0) {
         result[i] = (l.toByte() and 0xFF.toByte())
-        l = l shr bits
+        l = l shr sizeOfByte
     }
     return result
 }
 
-fun Int.bytes(): ByteArray {
-    val magic = Int.SIZE_BYTES / Byte.SIZE_BYTES
-    val bits = Byte.SIZE_BITS
-    val result = ByteArray(magic)
-    var l = this
-    for (i in magic - 1 downTo 0) {
+@Suppress("DuplicatedCode", "SameParameterValue")
+private fun loopShifts(
+    sizeInBytes: Int, sizeOfByte: Int,
+    accum: Long
+): ByteArray {
+    val result = ByteArray(sizeInBytes)
+    var l = accum
+    for (i in sizeInBytes - 1 downTo 0) {
         result[i] = (l.toByte() and 0xFF.toByte())
-        l = l shr bits
+        l = l shr sizeOfByte
     }
     return result
 }
 
-fun Double.bytes(): ByteArray {
-    val magic = Long.SIZE_BYTES / Byte.SIZE_BYTES
-    val bits = Byte.SIZE_BITS
-    val result = ByteArray(magic)
-    var l = this.toRawBits()
-    for (i in magic - 1 downTo 0) {
-        result[i] = (l.toByte() and 0xFF.toByte())
-        l = l shr bits
-    }
-    return result
-}
+
+fun Long.toBytes(): ByteArray = loopShifts(
+    Long.SIZE_BYTES / Byte.SIZE_BYTES,
+    Byte.SIZE_BITS, this
+)
+
+fun Int.toBytes(): ByteArray = loopShifts(
+    Int.SIZE_BYTES / Byte.SIZE_BYTES,
+    Byte.SIZE_BITS, this
+)
+
+fun Double.toBytes(): ByteArray = loopShifts(
+    Long.SIZE_BYTES / Byte.SIZE_BYTES,
+    Byte.SIZE_BITS, toRawBits()
+)
 
 /**
  * Byte concatenation of epoch seconds and leftover nanos.
  */
-fun Instant.bytes(): ByteArray =
-    epochSecond.bytes() + nano.bytes()
+fun Instant.toBytes(): ByteArray =
+    epochSecond.toBytes() + nano.toBytes()
 
 /**
  * Byte concatenation of [UUID] via [UUID.getMostSignificantBits] +
  * [UUID.getLeastSignificantBits] (big-endian order).
  */
-fun UUID.bytes(): ByteArray =
-    mostSignificantBits.bytes() + leastSignificantBits.bytes()
+fun UUID.toBytes(): ByteArray =
+    mostSignificantBits.toBytes() + leastSignificantBits.toBytes()
 
 /**
  * Extracts bytes from [BigDecimal.unscaledValue] directly
  * converted to [ByteArray].
  */
-fun BigDecimal.bytes(): ByteArray =
+fun BigDecimal.toBytes(): ByteArray =
     unscaledValue().toByteArray()
+
+fun Payout.toBytes(): ByteArray =
+    payout.unscaledValue().toByteArray()
+
+fun Difficulty.toBytes(): ByteArray =
+    difficulty.toByteArray()
 
 
 fun flattenBytes(
@@ -80,51 +96,58 @@ fun flattenBytes(
 
 fun flattenBytes(
     vararg byteArrays: ByteArray
+): ByteArray =
+    flattenCollectionsAndVarargs(
+        ByteArray(byteArrays.sumBy { it.size }),
+        null, byteArrays
+    )
+
+fun flattenBytes(
+    collection: Collection<ByteArray>,
+    vararg byteArrays: ByteArray
+): ByteArray =
+    flattenCollectionsAndVarargs(
+        ByteArray(
+            collection.sumBy { it.size } + byteArrays.sumBy { it.size }
+        ), collection.iterator(), byteArrays
+    )
+
+fun flattenBytes(
+    collection: Iterable<ByteArray>,
+    vararg byteArrays: ByteArray
+): ByteArray =
+    flattenCollectionsAndVarargs(
+        ByteArray(
+            collection.sumBy { it.size } + byteArrays.sumBy { it.size }
+        ), collection.iterator(), byteArrays
+    )
+
+
+fun flattenBytes(
+    collectionSize: Int,
+    collection: Sequence<ByteArray>,
+    vararg byteArrays: ByteArray
+): ByteArray =
+    flattenCollectionsAndVarargs(
+        ByteArray(
+            collectionSize + byteArrays.sumBy { it.size }
+        ), collection.iterator(), byteArrays
+    )
+
+private fun flattenCollectionsAndVarargs(
+    final: ByteArray,
+    collection: Iterator<ByteArray>?,
+    byteArrays: Array<out ByteArray>
 ): ByteArray {
-    val final = ByteArray(byteArrays.sumBy { it.size })
     var into = 0
+    collection?.forEach {
+        it.copyInto(final, into)
+        into += it.size
+    }
     byteArrays.forEach {
         it.copyInto(final, into)
         into += it.size
     }
     return final
-}
 
-fun flattenBytes(
-    collection: Collection<ByteArray>,
-    vararg bytesArrays: ByteArray
-): ByteArray {
-    val final = ByteArray(
-        collection.sumBy { it.size } + bytesArrays.sumBy { it.size }
-    )
-    var into = 0
-    collection.forEach {
-        it.copyInto(final, into)
-        into += it.size
-    }
-    bytesArrays.forEach {
-        it.copyInto(final, into)
-        into += it.size
-    }
-    return final
-}
-
-fun flattenBytes(
-    collectionSize: Int,
-    collection: Sequence<ByteArray>,
-    vararg bytesArrays: ByteArray
-): ByteArray {
-    val final = ByteArray(
-        collectionSize + bytesArrays.sumBy { it.size }
-    )
-    var into = 0
-    collection.forEach {
-        it.copyInto(final, into)
-        into += it.size
-    }
-    bytesArrays.forEach {
-        it.copyInto(final, into)
-        into += it.size
-    }
-    return final
 }
