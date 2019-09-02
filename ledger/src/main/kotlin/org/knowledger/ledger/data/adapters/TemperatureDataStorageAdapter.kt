@@ -7,12 +7,14 @@ import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.storage.results.DataFailure
-import org.knowledger.ledger.data.TUnit
+import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms
 import org.knowledger.ledger.data.TemperatureData
+import org.knowledger.ledger.data.TemperatureUnit
 import org.knowledger.ledger.results.tryOrDataUnknownFailure
 
 object TemperatureDataStorageAdapter : AbstractStorageAdapter<TemperatureData>(
-    TemperatureData::class.java
+    TemperatureData::class.java,
+    AvailableHashAlgorithms.SHA3512Hasher
 ) {
     override val properties: Map<String, StorageType>
         get() = mapOf(
@@ -32,10 +34,10 @@ object TemperatureDataStorageAdapter : AbstractStorageAdapter<TemperatureData>(
                 ).setStorageProperty(
                     "unit",
                     when (it.unit) {
-                        TUnit.CELSIUS -> TUnit.CELSIUS.ordinal
-                        TUnit.FAHRENHEIT -> TUnit.FAHRENHEIT.ordinal
-                        TUnit.KELVIN -> TUnit.KELVIN.ordinal
-                        TUnit.RANKINE -> TUnit.RANKINE.ordinal
+                        TemperatureUnit.Celsius -> TemperatureUnit.Celsius.ordinal
+                        TemperatureUnit.Fahrenheit -> TemperatureUnit.Fahrenheit.ordinal
+                        TemperatureUnit.Kelvin -> TemperatureUnit.Kelvin.ordinal
+                        TemperatureUnit.Rankine -> TemperatureUnit.Rankine.ordinal
                     }
                 )
         }
@@ -47,10 +49,10 @@ object TemperatureDataStorageAdapter : AbstractStorageAdapter<TemperatureData>(
         tryOrDataUnknownFailure {
             val prop = element.getStorageProperty<Int>("unit")
             val unit = when (prop) {
-                TUnit.CELSIUS.ordinal -> TUnit.CELSIUS
-                TUnit.FAHRENHEIT.ordinal -> TUnit.FAHRENHEIT
-                TUnit.KELVIN.ordinal -> TUnit.KELVIN
-                TUnit.RANKINE.ordinal -> TUnit.RANKINE
+                TemperatureUnit.Celsius.ordinal -> TemperatureUnit.Celsius
+                TemperatureUnit.Fahrenheit.ordinal -> TemperatureUnit.Fahrenheit
+                TemperatureUnit.Kelvin.ordinal -> TemperatureUnit.Kelvin
+                TemperatureUnit.Rankine.ordinal -> TemperatureUnit.Rankine
                 else -> null
             }
             if (unit == null) {

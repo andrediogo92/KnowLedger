@@ -1,12 +1,14 @@
+@file:UseSerializers(BigDecimalSerializer::class)
 package org.knowledger.ledger.data
 
-import com.squareup.moshi.JsonClass
-import org.knowledger.ledger.core.config.LedgerConfiguration
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
+import kotlinx.serialization.cbor.Cbor
+import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.bytes
+import org.knowledger.ledger.core.serial.BigDecimalSerializer
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -14,19 +16,17 @@ import java.math.BigDecimal
 /**
  * Humidity value can be expressed in Absolute/Volumetric
  * or Relative humidity. As such possible measurements
- * can be in g/Kg ([HUnit.G_BY_KG]), Kg/Kg ([HUnit.KG_BY_KG])
- * or percentage ([HUnit.RELATIVE]) expressed by the [unit].
+ * can be in g/Kg ([HumidityUnit.G_By_KG]), Kg/Kg ([HumidityUnit.KG_By_KG])
+ * or percentage ([HumidityUnit.Relative]) expressed by the [unit].
  */
-@JsonClass(generateAdapter = true)
+@Serializable
+@SerialName("HumidityData")
 data class HumidityData(
-    val hum: BigDecimal,
-    val unit: HUnit
+    val humidity: BigDecimal,
+    val unit: HumidityUnit
 ) : LedgerData {
-    override fun digest(c: Hasher): Hash =
-        c.applyHash(
-            hum.bytes() + unit.ordinal.bytes()
-        )
-
+    override fun serialize(cbor: Cbor): ByteArray =
+        cbor.dump(serializer(), this)
 
     override fun calculateDiff(previous: SelfInterval): BigDecimal =
         when (previous) {
@@ -42,19 +42,19 @@ data class HumidityData(
     private fun calculateDiffHum(previous: HumidityData): BigDecimal {
         val newH: BigDecimal
         val oldH: BigDecimal
-        if (unit == HUnit.RELATIVE) {
-            newH = hum
-            oldH = previous.hum
+        if (unit == HumidityUnit.Relative) {
+            newH = humidity
+            oldH = previous.humidity
         } else {
-            newH = unit.convertTo(hum, HUnit.KG_BY_KG)
-            oldH = previous.unit.convertTo(hum, HUnit.KG_BY_KG)
+            newH = unit.convertTo(humidity, HumidityUnit.KG_By_KG)
+            oldH = previous.unit.convertTo(humidity, HumidityUnit.KG_By_KG)
         }
         return newH.subtract(oldH)
-            .divide(oldH, LedgerConfiguration.GLOBALCONTEXT)
+            .divide(oldH, GLOBALCONTEXT)
     }
 
     override fun toString(): String {
-        return "HumidityData(hum=$hum, unit=$unit)"
+        return "HumidityData(hum=$humidity, unit=$unit)"
     }
 
 }

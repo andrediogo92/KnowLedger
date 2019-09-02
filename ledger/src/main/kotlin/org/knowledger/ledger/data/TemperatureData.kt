@@ -1,30 +1,31 @@
+@file:UseSerializers(BigDecimalSerializer::class)
 package org.knowledger.ledger.data
 
-import com.squareup.moshi.JsonClass
-import org.knowledger.ledger.core.config.LedgerConfiguration
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
+import kotlinx.serialization.cbor.Cbor
+import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.bytes
+import org.knowledger.ledger.core.serial.BigDecimalSerializer
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
 /**
  * Temperature value specifies a decimal temperature value
- * and a Temperature unit ([TUnit.CELSIUS],
- * [TUnit.FAHRENHEIT], [TUnit.RANKINE] and [TUnit.KELVIN])
+ * and a Temperature unit ([TemperatureUnit.Celsius],
+ * [TemperatureUnit.Fahrenheit], [TemperatureUnit.Rankine] and [TemperatureUnit.Kelvin])
  * with idempotent methods to convert between them as needed.
  */
-@JsonClass(generateAdapter = true)
+@Serializable
+@SerialName("TemperatureData")
 data class TemperatureData(
     val temperature: BigDecimal,
-    val unit: TUnit
+    val unit: TemperatureUnit
 ) : LedgerData {
-    override fun digest(c: Hasher): Hash =
-        c.applyHash(
-            temperature.bytes() + unit.ordinal.bytes()
-        )
+    override fun serialize(cbor: Cbor): ByteArray =
+        cbor.dump(serializer(), this)
 
     override fun calculateDiff(
         previous: SelfInterval
@@ -45,11 +46,11 @@ data class TemperatureData(
     ): BigDecimal {
         val oldT = previous.unit.convertTo(
             previous.temperature,
-            TUnit.CELSIUS
+            TemperatureUnit.Celsius
         )
-        return unit.convertTo(temperature, TUnit.CELSIUS)
+        return unit.convertTo(temperature, TemperatureUnit.Celsius)
             .subtract(oldT)
-            .divide(oldT, LedgerConfiguration.GLOBALCONTEXT)
+            .divide(oldT, GLOBALCONTEXT)
     }
 
 }

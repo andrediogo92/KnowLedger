@@ -1,5 +1,7 @@
 package org.knowledger.ledger.data.adapters
 
+import org.knowledger.ledger.core.data.GeoCoords
+import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.database.NewInstanceSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
@@ -8,8 +10,6 @@ import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.mapFailure
 import org.knowledger.ledger.core.results.mapSuccess
 import org.knowledger.ledger.core.storage.adapters.StorageAdapterNotRegistered
-import org.knowledger.ledger.data.GeoCoords
-import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.results.intoLoad
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
@@ -45,13 +45,9 @@ object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
                 ).setLinked(
                     "value", it,
                     toStore.data, session
-                ).also { elem ->
-                    toStore.geoCoords?.let { geo ->
-                        elem.setStorageProperty("latitude", geo.latitude)
-                            .setStorageProperty("longitude", geo.longitude)
-                            .setStorageProperty("altitude", geo.altitude)
-                    }
-                }
+                ).setStorageProperty("latitude", toStore.coords.latitude)
+                .setStorageProperty("longitude", toStore.coords.longitude)
+                .setStorageProperty("altitude", toStore.coords.altitude)
         } ?: throw StorageAdapterNotRegistered()
 
 

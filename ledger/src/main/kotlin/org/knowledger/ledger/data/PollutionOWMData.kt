@@ -1,49 +1,49 @@
 package org.knowledger.ledger.data
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.cbor.Cbor
+import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.bytes
-import org.knowledger.ledger.core.misc.encodeStringToUTF8
-import org.knowledger.ledger.core.misc.flattenBytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
 
-@JsonClass(generateAdapter = true)
-class PollutionOWMData(
-    unit: String,
+@Serializable
+@SerialName("PollutionOWMData")
+data class PollutionOWMData(
+    val unit: String,
     var parameter: PollutionType,
     val value: Double,
     var data: List<List<Double>>,
-    city: String = "",
-    citySeqNum: Int = 1
-) : AbstractPollution(
-    unit,
-    city,
-    citySeqNum
-) {
+    val city: String = "",
+    val citySeqNum: Int = 1
+) : LedgerData {
+    val parameterDescription: String =
+        parameter.description
+
     //mean of Value/Precision
     //Value
     //Precision
-    val meanValuePrecision: DoubleArray
-        get() {
-            val mean = doubleArrayOf(0.0, 0.0)
-            var validElements = 0
-            if (value == -99.0) {
-                for (values in data) {
-                    if (!values[0].isNaN() && !values[1].isNaN()) {
-                        mean[0] += values[0]
-                        mean[1] += values[1]
-                        validElements++
-                    }
+    val meanValuePrecision: Pair<Double, Double>
+
+    init {
+        var first = 0.0
+        var second = 0.0
+        var validElements = 0
+        if (value == -99.0) {
+            for (values in data) {
+                if (!values[0].isNaN() && !values[1].isNaN()) {
+                    first += values[0]
+                    second += values[1]
+                    validElements++
                 }
-                mean[0] = mean[0] / validElements
-                mean[1] = mean[1] / validElements
             }
-            return mean
+            first /= validElements
+            second /= validElements
         }
+        meanValuePrecision = first to second
+    }
 
 
     constructor(
@@ -77,6 +77,9 @@ class PollutionOWMData(
         citySeqNum
     )
 
+    override fun serialize(cbor: Cbor): ByteArray =
+        cbor.dump(serializer(), this)
+
     override fun calculateDiff(previous: SelfInterval): BigDecimal {
         return if (previous is PollutionOWMData) {
             calculateDiffPollution(previous)
@@ -96,41 +99,4 @@ class PollutionOWMData(
         TODO()
     }
 
-    override fun digest(c: Hasher): Hash =
-        c.applyHash(
-            flattenBytes(
-                data.asIterable().flatMap { fl ->
-                    fl.asIterable().map {
-                        it.bytes()
-                    }
-                },
-                unit.encodeStringToUTF8(),
-                value.bytes(),
-                city.encodeStringToUTF8(),
-                citySeqNum.bytes(),
-                parameter.ordinal.bytes()
-            )
-        )
-
-
-    override fun toString(): String {
-        return "PollutionOWMData(parameter=$parameter, value=$value, value=$data)"
-    }
-
-
-    companion object {
-        private fun clone(data: List<List<Double>>): List<List<Double>> {
-            val cloned = mutableListOf<List<Double>>()
-
-            for (d in data) {
-                val inner = mutableListOf<Double>()
-                for (i in d.indices)
-                    inner.add(d[i])
-                cloned.add(inner)
-            }
-
-            return cloned
-        }
-
-    }
 }

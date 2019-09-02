@@ -7,15 +7,17 @@ import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.storage.results.DataFailure
-import org.knowledger.ledger.data.HUnit
+import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms
 import org.knowledger.ledger.data.HumidityData
+import org.knowledger.ledger.data.HumidityUnit
 
 object HumidityDataStorageAdapter : AbstractStorageAdapter<HumidityData>(
-    HumidityData::class.java
+    HumidityData::class.java,
+    AvailableHashAlgorithms.SHA3512Hasher
 ) {
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "hum" to StorageType.DECIMAL,
+            "humidity" to StorageType.DECIMAL,
             "unit" to StorageType.INTEGER
         )
 
@@ -25,12 +27,12 @@ object HumidityDataStorageAdapter : AbstractStorageAdapter<HumidityData>(
         (toStore as HumidityData).let {
             session
                 .newInstance(id)
-                .setStorageProperty("hum", it.hum)
+                .setStorageProperty("humidity", it.humidity)
                 .setStorageProperty(
                     "unit", when (it.unit) {
-                        HUnit.G_BY_KG -> HUnit.G_BY_KG.ordinal
-                        HUnit.KG_BY_KG -> HUnit.KG_BY_KG.ordinal
-                        HUnit.RELATIVE -> HUnit.RELATIVE.ordinal
+                        HumidityUnit.G_By_KG -> HumidityUnit.G_By_KG.ordinal
+                        HumidityUnit.KG_By_KG -> HumidityUnit.KG_By_KG.ordinal
+                        HumidityUnit.Relative -> HumidityUnit.Relative.ordinal
                     }
                 )
         }
@@ -41,9 +43,9 @@ object HumidityDataStorageAdapter : AbstractStorageAdapter<HumidityData>(
         commonLoad(element, id) {
             val prop = getStorageProperty<Int>("unit")
             val unit = when (prop) {
-                HUnit.G_BY_KG.ordinal -> HUnit.G_BY_KG
-                HUnit.KG_BY_KG.ordinal -> HUnit.KG_BY_KG
-                HUnit.RELATIVE.ordinal -> HUnit.RELATIVE
+                HumidityUnit.G_By_KG.ordinal -> HumidityUnit.G_By_KG
+                HumidityUnit.KG_By_KG.ordinal -> HumidityUnit.KG_By_KG
+                HumidityUnit.Relative.ordinal -> HumidityUnit.Relative
                 else -> null
             }
             if (unit == null) {
@@ -55,7 +57,7 @@ object HumidityDataStorageAdapter : AbstractStorageAdapter<HumidityData>(
             } else {
                 Outcome.Ok(
                     HumidityData(
-                        getStorageProperty("hum"),
+                        getStorageProperty("humidity"),
                         unit
                     )
                 )

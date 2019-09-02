@@ -1,12 +1,10 @@
 package org.knowledger.ledger.data
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.cbor.Cbor
+import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.bytes
-import org.knowledger.ledger.core.misc.encodeStringToUTF8
-import org.knowledger.ledger.core.misc.flattenBytes
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -17,42 +15,93 @@ import java.math.BigDecimal
  *
  *
  **/
-@JsonClass(generateAdapter = true)
-class TrafficIncidentData(
+@Serializable
+@SerialName("TrafficIncidentData")
+data class TrafficIncidentData(
     //Current traffic model.
-    var trafficModelId: String,
+    val trafficModelId: String,
     //ID of the traffic incident.
-    var id: String,
+    val id: String,
     //The point where an icon of the cluster or raw incident should be drawn.
-    var iconLat: Double,
+    val iconLat: Double,
     //The point where an icon of the cluster or raw incident should be drawn.
-    var iconLon: Double,
+    val iconLon: Double,
     //The category associated with this incident. Values are numbers in the range 0-13.
-    var incidentCategory: Int,
+    val incidentCategory: Int,
     //The magnitude of delay associated with the incident.
-    var magnitudeOfDelay: Int,
+    val magnitudeOfDelay: Int,
     //The number of incidents in the cluster.
-    var clusterSize: Int,
+    val clusterSize: Int,
     //Description of the incident in the requested language.
-    var description: String,
+    val description: String,
     //Cause of the incident, where available, in the requested language.
-    var causeOfAccident: String,
+    val causeOfAccident: String,
     //The name of the intersection or location where the traffic due to the incident starts.
-    var from: String,
+    val from: String,
     //The name of the intersection or location where the traffic due to the incident ends.
-    var to: String,
+    val to: String,
     //Length of the incident in meters.
-    var length: Int,
+    val length: Int,
     //Delay caused by the incident in seconds (except in road closures).
-    var delayInSeconds: Int,
+    val delayInSeconds: Int,
     //The road number/s affected by the incident. Multiple road numbers will delimited by slashes.
-    var affectedRoads: String,
-    city: String = "TBD",
-    citySeqNum: Int = 1
-) : AbstractTrafficIncident(
-    city,
-    citySeqNum
-) {
+    val affectedRoads: String,
+    val city: String = "TBD",
+    val citySeqNum: Int = 1
+) : LedgerData {
+    //The category description associated with this incident.
+    val incidentCategoryDesc: String =
+        when (incidentCategory) {
+            IncidentCategory.Cluster.ordinal ->
+                IncidentCategory.Cluster.name
+            IncidentCategory.Detour.ordinal ->
+                IncidentCategory.Detour.name
+            IncidentCategory.Flooding.ordinal ->
+                IncidentCategory.Flooding.name
+            IncidentCategory.Wind.ordinal ->
+                IncidentCategory.Wind.name
+            IncidentCategory.RoadWorks.ordinal ->
+                IncidentCategory.RoadWorks.name
+            IncidentCategory.RoadClosed.ordinal ->
+                IncidentCategory.RoadClosed.name
+            IncidentCategory.LaneClosed.ordinal ->
+                IncidentCategory.LaneClosed.name
+            IncidentCategory.Jam.ordinal ->
+                IncidentCategory.Jam.name
+            IncidentCategory.Ice.ordinal ->
+                IncidentCategory.Ice.name
+            IncidentCategory.Rain.ordinal ->
+                IncidentCategory.Rain.name
+            IncidentCategory.DangerousConditions.ordinal ->
+                IncidentCategory.DangerousConditions.name
+            IncidentCategory.Fog.ordinal ->
+                IncidentCategory.Fog.name
+            IncidentCategory.Accident.ordinal ->
+                IncidentCategory.Accident.name
+            else ->
+                IncidentCategory.Unknown.name
+        }
+
+    //The magnitude of delay description associated with the incident.
+    val magnitudeOfDelayDescription: String =
+        when (magnitudeOfDelay) {
+            MagnitudeDelay.Undefined.ordinal ->
+                MagnitudeDelay.Undefined.name
+            MagnitudeDelay.Major.ordinal ->
+                MagnitudeDelay.Major.name
+            MagnitudeDelay.Moderate.ordinal ->
+                MagnitudeDelay.Moderate.name
+            MagnitudeDelay.Minor.ordinal ->
+                MagnitudeDelay.Minor.name
+            else -> {
+                MagnitudeDelay.UnknownDelay.name
+            }
+        }
+
+    override fun serialize(cbor: Cbor): ByteArray =
+        cbor.dump(serializer(), this)
+
+
     override fun calculateDiff(previous: SelfInterval): BigDecimal {
         return if (previous is TrafficIncidentData) {
             calculateDiffTraffic(previous)
@@ -70,125 +119,5 @@ class TrafficIncidentData(
         previous: TrafficIncidentData
     ): BigDecimal {
         TODO()
-    }
-
-    override fun digest(c: Hasher): Hash =
-        c.applyHash(
-            flattenBytes(
-                trafficModelId.encodeStringToUTF8(),
-                id.encodeStringToUTF8(),
-                iconLat.bytes(),
-                iconLon.bytes(),
-                incidentCategory.bytes(),
-                magnitudeOfDelay.bytes(),
-                clusterSize.bytes(),
-                description.encodeStringToUTF8(),
-                causeOfAccident.encodeStringToUTF8(),
-                from.encodeStringToUTF8(),
-                to.encodeStringToUTF8(),
-                length.bytes(),
-                delayInSeconds.bytes(),
-                affectedRoads.encodeStringToUTF8(),
-                cityName.encodeStringToUTF8(),
-                citySeqNum.bytes()
-            )
-        )
-
-    //The category description associated with this incident.
-    var incidentCategoryDesc: String =
-        when (incidentCategory) {
-            IncidentCategory.Cluster.ordinal ->
-                IncidentCategory.Cluster.toString()
-            IncidentCategory.Detour.ordinal ->
-                IncidentCategory.Detour.toString()
-            IncidentCategory.Flooding.ordinal ->
-                IncidentCategory.Flooding.toString()
-            IncidentCategory.Wind.ordinal ->
-                IncidentCategory.Wind.toString()
-            IncidentCategory.RoadWorks.ordinal ->
-                IncidentCategory.RoadWorks.toString()
-            IncidentCategory.RoadClosed.ordinal ->
-                IncidentCategory.RoadClosed.toString()
-            IncidentCategory.LaneClosed.ordinal ->
-                IncidentCategory.LaneClosed.toString()
-            IncidentCategory.Jam.ordinal ->
-                IncidentCategory.Jam.toString()
-            IncidentCategory.Ice.ordinal ->
-                IncidentCategory.Ice.toString()
-            IncidentCategory.Rain.ordinal ->
-                IncidentCategory.Rain.toString()
-            IncidentCategory.DangerousConditions.ordinal ->
-                IncidentCategory.DangerousConditions.toString()
-            IncidentCategory.Fog.ordinal ->
-                IncidentCategory.Fog.toString()
-            IncidentCategory.Accident.ordinal ->
-                IncidentCategory.Accident.toString()
-            else ->
-                IncidentCategory.Unknown.toString()
-        }
-
-    //The magnitude of delay description associated with the incident.
-    var magnitudeOfDelayDesc: String =
-        when (magnitudeOfDelay) {
-            MagnitudeDelay.Undefined.ordinal ->
-                MagnitudeDelay.Undefined.toString()
-            MagnitudeDelay.Major.ordinal ->
-                MagnitudeDelay.Major.toString()
-            MagnitudeDelay.Moderate.ordinal ->
-                MagnitudeDelay.Moderate.toString()
-            MagnitudeDelay.Minor.ordinal ->
-                MagnitudeDelay.Minor.toString()
-            else -> {
-                MagnitudeDelay.UnknownDelay.toString()
-            }
-        }
-
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is TrafficIncidentData) return false
-
-        if (trafficModelId != other.trafficModelId) return false
-        if (id != other.id) return false
-        if (iconLat != other.iconLat) return false
-        if (iconLon != other.iconLon) return false
-        if (incidentCategory != other.incidentCategory) return false
-        if (magnitudeOfDelay != other.magnitudeOfDelay) return false
-        if (clusterSize != other.clusterSize) return false
-        if (description != other.description) return false
-        if (causeOfAccident != other.causeOfAccident) return false
-        if (from != other.from) return false
-        if (to != other.to) return false
-        if (length != other.length) return false
-        if (delayInSeconds != other.delayInSeconds) return false
-        if (affectedRoads != other.affectedRoads) return false
-        if (incidentCategoryDesc != other.incidentCategoryDesc) return false
-        if (magnitudeOfDelayDesc != other.magnitudeOfDelayDesc) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = trafficModelId.hashCode()
-        result = 31 * result + id.hashCode()
-        result = 31 * result + iconLat.hashCode()
-        result = 31 * result + iconLon.hashCode()
-        result = 31 * result + incidentCategory
-        result = 31 * result + magnitudeOfDelay
-        result = 31 * result + clusterSize
-        result = 31 * result + description.hashCode()
-        result = 31 * result + causeOfAccident.hashCode()
-        result = 31 * result + from.hashCode()
-        result = 31 * result + to.hashCode()
-        result = 31 * result + length
-        result = 31 * result + delayInSeconds
-        result = 31 * result + affectedRoads.hashCode()
-        result = 31 * result + incidentCategoryDesc.hashCode()
-        result = 31 * result + magnitudeOfDelayDesc.hashCode()
-        return result
-    }
-
-    override fun toString(): String {
-        return "TrafficIncidentData(trafficModelId='$trafficModelId', id='$id', iconLat=$iconLat, iconLon=$iconLon, incidentCategory=$incidentCategory, magnitudeOfDelay=$magnitudeOfDelay, clusterSize=$clusterSize, description='$description', causeOfAccident='$causeOfAccident', from='$from', to='$to', length=$length, delayInSeconds=$delayInSeconds, affectedRoads='$affectedRoads', incidentCategoryDesc='$incidentCategoryDesc', magnitudeOfDelayDesc='$magnitudeOfDelayDesc')"
     }
 }

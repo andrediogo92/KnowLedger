@@ -7,10 +7,12 @@ import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.storage.results.DataFailure
+import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms
 import org.knowledger.ledger.data.TrafficFlowData
 
 object TrafficFlowDataStorageAdapter : AbstractStorageAdapter<TrafficFlowData>(
-    TrafficFlowData::class.java
+    TrafficFlowData::class.java,
+    AvailableHashAlgorithms.SHA3512Hasher
 ) {
     override val properties: Map<String, StorageType>
         get() = mapOf(
@@ -53,7 +55,7 @@ object TrafficFlowDataStorageAdapter : AbstractStorageAdapter<TrafficFlowData>(
                     "realtimeRatio",
                     it.realtimeRatio
                 ).setStorageProperty(
-                    "cityName", it.cityName
+                    "city", it.city
                 ).setStorageProperty(
                     "citySeqNum", it.citySeqNum
                 )
@@ -73,7 +75,7 @@ object TrafficFlowDataStorageAdapter : AbstractStorageAdapter<TrafficFlowData>(
                     getStorageProperty("freeFlowTravelTime"),
                     getStorageProperty("confidence"),
                     getStorageProperty("realtimeRatio"),
-                    getStorageProperty("cityName"),
+                    getStorageProperty("city"),
                     getStorageProperty("citySeqNum")
                 )
             )

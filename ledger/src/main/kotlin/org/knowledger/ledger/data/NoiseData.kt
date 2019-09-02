@@ -1,13 +1,14 @@
+@file:UseSerializers(BigDecimalSerializer::class)
 package org.knowledger.ledger.data
 
-import com.squareup.moshi.JsonClass
-import org.knowledger.ledger.core.config.LedgerConfiguration
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
+import kotlinx.serialization.cbor.Cbor
+import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.bytes
-import org.knowledger.ledger.core.misc.flattenBytes
+import org.knowledger.ledger.core.serial.BigDecimalSerializer
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -23,22 +24,17 @@ import java.math.BigDecimal
  * or the standard dB base (2*10^5 Pa for dB SPL)
  *
  * Thus care should be taken to understand which unit to use,
- * as specified in [NUnit]
+ * as specified in [NoiseUnit]
  **/
-@JsonClass(generateAdapter = true)
+@Serializable
+@SerialName("NoiseData")
 data class NoiseData(
     val noiseLevel: BigDecimal,
     val peakOrBase: BigDecimal,
-    val unit: NUnit
+    val unit: NoiseUnit
 ) : LedgerData {
-    override fun digest(c: Hasher): Hash =
-        c.applyHash(
-            flattenBytes(
-                noiseLevel.bytes(),
-                peakOrBase.bytes(),
-                unit.ordinal.bytes()
-            )
-        )
+    override fun serialize(cbor: Cbor): ByteArray =
+        cbor.dump(serializer(), this)
 
     override fun calculateDiff(
         previous: SelfInterval
@@ -70,7 +66,7 @@ data class NoiseData(
             .subtract(oldN)
             .divide(
                 oldN,
-                LedgerConfiguration.GLOBALCONTEXT
+                GLOBALCONTEXT
             )
     }
 

@@ -1,31 +1,31 @@
+@file:UseSerializers(BigDecimalSerializer::class)
 package org.knowledger.ledger.data
 
-import com.squareup.moshi.JsonClass
-import org.knowledger.ledger.core.config.LedgerConfiguration
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
+import kotlinx.serialization.cbor.Cbor
+import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.bytes
+import org.knowledger.ledger.core.serial.BigDecimalSerializer
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
 /**
  * Luminosity value might be output by an ambient light
- * sensor, using lux units ([LUnit.LUX]) or a lighting unit,
- * outputting a specific amount of lumens ([LUnit.LUMENS]),
+ * sensor, using lux units ([LuminosityUnit.LUX]) or a lighting unit,
+ * outputting a specific amount of lumens ([LuminosityUnit.LUMENS]),
  * according to [unit].
  */
-@JsonClass(generateAdapter = true)
+@Serializable
+@SerialName("LuminosityData")
 data class LuminosityData(
-    val lum: BigDecimal,
-    val unit: LUnit
+    val luminosity: BigDecimal,
+    val unit: LuminosityUnit
 ) : LedgerData {
-    override fun digest(c: Hasher): Hash =
-        c.applyHash(
-            lum.bytes() + unit.ordinal.bytes()
-        )
-
+    override fun serialize(cbor: Cbor): ByteArray =
+        cbor.dump(serializer(), this)
 
     override fun calculateDiff(
         previous: SelfInterval
@@ -43,14 +43,14 @@ data class LuminosityData(
     private fun calculateDiffLum(
         previous: LuminosityData
     ): BigDecimal =
-        lum.subtract(previous.lum)
+        luminosity.subtract(previous.luminosity)
             .divide(
-                previous.lum,
-                LedgerConfiguration.GLOBALCONTEXT
+                previous.luminosity,
+                GLOBALCONTEXT
             )
 
 
     override fun toString(): String {
-        return "LuminosityData(lum = $lum, unit = $unit)"
+        return "LuminosityData(lum = $luminosity, unit = $unit)"
     }
 }

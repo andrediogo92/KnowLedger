@@ -7,15 +7,17 @@ import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.storage.results.DataFailure
-import org.knowledger.ledger.data.LUnit
+import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms
 import org.knowledger.ledger.data.LuminosityData
+import org.knowledger.ledger.data.LuminosityUnit
 
 object LuminosityDataAdapter : AbstractStorageAdapter<LuminosityData>(
-    LuminosityData::class.java
+    LuminosityData::class.java,
+    AvailableHashAlgorithms.SHA3512Hasher
 ) {
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "lum" to StorageType.DECIMAL,
+            "luminosity" to StorageType.DECIMAL,
             "unit" to StorageType.INTEGER
         )
 
@@ -25,11 +27,11 @@ object LuminosityDataAdapter : AbstractStorageAdapter<LuminosityData>(
         (toStore as LuminosityData).let {
             session
                 .newInstance(id)
-                .setStorageProperty("lum", it.lum)
+                .setStorageProperty("luminosity", it.luminosity)
                 .setStorageProperty(
                     "unit", when (it.unit) {
-                        LUnit.LUMENS -> LUnit.LUMENS.ordinal
-                        LUnit.LUX -> LUnit.LUX.ordinal
+                        LuminosityUnit.Lumens -> LuminosityUnit.Lumens.ordinal
+                        LuminosityUnit.Lux -> LuminosityUnit.Lux.ordinal
                     }
                 )
         }
@@ -40,8 +42,8 @@ object LuminosityDataAdapter : AbstractStorageAdapter<LuminosityData>(
         commonLoad(element, id) {
             val prop = getStorageProperty<Int>("unit")
             val unit = when (prop) {
-                LUnit.LUMENS.ordinal -> LUnit.LUMENS
-                LUnit.LUX.ordinal -> LUnit.LUX
+                LuminosityUnit.Lumens.ordinal -> LuminosityUnit.Lumens
+                LuminosityUnit.Lux.ordinal -> LuminosityUnit.Lux
                 else -> null
             }
             if (unit == null) {
@@ -53,7 +55,7 @@ object LuminosityDataAdapter : AbstractStorageAdapter<LuminosityData>(
             } else {
                 Outcome.Ok(
                     LuminosityData(
-                        getStorageProperty("lum"),
+                        getStorageProperty("luminosity"),
                         unit
                     )
                 )

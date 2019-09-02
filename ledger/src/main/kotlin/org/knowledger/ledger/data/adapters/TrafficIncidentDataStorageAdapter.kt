@@ -7,10 +7,12 @@ import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.storage.results.DataFailure
+import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms
 import org.knowledger.ledger.data.TrafficIncidentData
 
 object TrafficIncidentDataStorageAdapter : AbstractStorageAdapter<TrafficIncidentData>(
-    TrafficIncidentData::class.java
+    TrafficIncidentData::class.java,
+    AvailableHashAlgorithms.SHA3512Hasher
 ) {
     override val properties: Map<String, StorageType>
         get() = mapOf(
@@ -67,7 +69,7 @@ object TrafficIncidentDataStorageAdapter : AbstractStorageAdapter<TrafficInciden
                 ).setStorageProperty(
                     "affectedRoads", it.affectedRoads
                 ).setStorageProperty(
-                    "cityName", it.cityName
+                    "city", it.city
                 ).setStorageProperty(
                     "citySeqNum", it.citySeqNum
                 )
@@ -95,7 +97,7 @@ object TrafficIncidentDataStorageAdapter : AbstractStorageAdapter<TrafficInciden
                     getStorageProperty("length"),
                     getStorageProperty("delayInSeconds"),
                     getStorageProperty("affectedRoads"),
-                    getStorageProperty("cityName"),
+                    getStorageProperty("city"),
                     getStorageProperty("citySeqNum")
                 )
             )

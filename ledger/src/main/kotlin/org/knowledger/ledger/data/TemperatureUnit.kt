@@ -1,5 +1,6 @@
 package org.knowledger.ledger.data
 
+import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.data.ConvertableUnit
 import org.knowledger.ledger.core.data.PhysicalUnit
 import java.math.BigDecimal
@@ -9,102 +10,102 @@ import java.math.BigDecimal
  * Temperature Units and conversions between them
  * (Kelvin, Celsius, Fahrenheit and Rankine).
  */
-enum class TUnit : PhysicalUnit,
-                   ConvertableUnit<BigDecimal, TUnit> {
-    KELVIN {
+enum class TemperatureUnit : PhysicalUnit,
+                             ConvertableUnit<BigDecimal, TemperatureUnit> {
+    Kelvin {
         override fun convertTo(
-            value: BigDecimal, to: TUnit
+            value: BigDecimal, to: TemperatureUnit
         ): BigDecimal =
             when (to) {
-                KELVIN -> value
+                Kelvin -> value
 
-                CELSIUS -> value.subtract(BigDecimal("273.16"))
+                Celsius -> value.subtract(BigDecimal("273.16"))
 
-                RANKINE -> BigDecimal("9")
+                Rankine -> BigDecimal("9")
                     .multiply(value.subtract(BigDecimal("273.15")))
                     .divide(BigDecimal("5"))
                     .add(BigDecimal("491.69"))
 
-                FAHRENHEIT -> BigDecimal("9")
+                Fahrenheit -> BigDecimal("9")
                     .multiply(value.subtract(BigDecimal("273.15")))
                     .divide(
                         BigDecimal("5.0"),
-                        PhysicalData.MATH_CONTEXT
+                        GLOBALCONTEXT
                     )
                     .add(BigDecimal("32"))
             }
     },
-    CELSIUS {
+    Celsius {
         override fun convertTo(
-            value: BigDecimal, to: TUnit
+            value: BigDecimal, to: TemperatureUnit
         ): BigDecimal =
             when (to) {
-                KELVIN -> value.add(BigDecimal("273.15"))
+                Kelvin -> value.add(BigDecimal("273.15"))
 
-                CELSIUS -> value
+                Celsius -> value
 
-                RANKINE -> BigDecimal("9")
+                Rankine -> BigDecimal("9")
                     .multiply(
                         value.divide(
                             BigDecimal("5"),
-                            PhysicalData.MATH_CONTEXT
+                            GLOBALCONTEXT
                         )
                     )
                     .add(BigDecimal("491.69"))
 
-                FAHRENHEIT -> BigDecimal("9")
+                Fahrenheit -> BigDecimal("9")
                     .multiply(value.divide(BigDecimal("5")))
                     .add(BigDecimal("32"))
             }
     },
-    RANKINE {
+    Rankine {
         override fun convertTo(
-            value: BigDecimal, to: TUnit
+            value: BigDecimal, to: TemperatureUnit
         ): BigDecimal =
             when (to) {
-                KELVIN -> BigDecimal("5")
+                Kelvin -> BigDecimal("5")
                     .multiply(value.subtract(BigDecimal("491.69")))
                     .divide(
                         BigDecimal("9"),
-                        PhysicalData.MATH_CONTEXT
+                        GLOBALCONTEXT
                     )
                     .add(BigDecimal("273.15"))
 
-                CELSIUS -> BigDecimal("5")
+                Celsius -> BigDecimal("5")
                     .multiply(value.subtract(BigDecimal("491.69")))
                     .divide(
                         BigDecimal("9"),
-                        PhysicalData.MATH_CONTEXT
+                        GLOBALCONTEXT
                     )
 
-                RANKINE -> value
+                Rankine -> value
 
-                FAHRENHEIT -> value.subtract(BigDecimal("459.69"))
+                Fahrenheit -> value.subtract(BigDecimal("459.69"))
             }
     },
-    FAHRENHEIT {
+    Fahrenheit {
         override fun convertTo(
-            value: BigDecimal, to: TUnit
+            value: BigDecimal, to: TemperatureUnit
         ): BigDecimal =
             when (to) {
-                KELVIN -> BigDecimal("5")
+                Kelvin -> BigDecimal("5")
                     .multiply(value.subtract(BigDecimal("32")))
                     .divide(
                         BigDecimal("9"),
-                        PhysicalData.MATH_CONTEXT
+                        GLOBALCONTEXT
                     )
                     .add(BigDecimal("273.15"))
 
-                CELSIUS -> BigDecimal("5")
+                Celsius -> BigDecimal("5")
                     .multiply(value.subtract(BigDecimal("32")))
                     .divide(
                         BigDecimal("9"),
-                        PhysicalData.MATH_CONTEXT
+                        GLOBALCONTEXT
                     )
 
-                RANKINE -> value.add(BigDecimal("459.69"))
+                Rankine -> value.add(BigDecimal("459.69"))
 
-                FAHRENHEIT -> value
+                Fahrenheit -> value
             }
     };
 

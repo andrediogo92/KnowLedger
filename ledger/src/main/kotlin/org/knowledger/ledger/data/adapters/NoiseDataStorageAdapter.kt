@@ -7,11 +7,13 @@ import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.storage.results.DataFailure
-import org.knowledger.ledger.data.NUnit
+import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms
 import org.knowledger.ledger.data.NoiseData
+import org.knowledger.ledger.data.NoiseUnit
 
 object NoiseDataStorageAdapter : AbstractStorageAdapter<NoiseData>(
-    NoiseData::class.java
+    NoiseData::class.java,
+    AvailableHashAlgorithms.SHA3512Hasher
 ) {
     override val properties: Map<String, StorageType>
         get() = mapOf(
@@ -30,8 +32,8 @@ object NoiseDataStorageAdapter : AbstractStorageAdapter<NoiseData>(
                 .setStorageProperty("peakOrBase", it.peakOrBase)
                 .setStorageProperty(
                     "unit", when (it.unit) {
-                        NUnit.DBSPL -> NUnit.DBSPL.ordinal.toByte()
-                        NUnit.RMS -> NUnit.RMS.ordinal.toByte()
+                        NoiseUnit.dBSPL -> NoiseUnit.dBSPL.ordinal.toByte()
+                        NoiseUnit.Rms -> NoiseUnit.Rms.ordinal.toByte()
                     }
                 )
         }
@@ -43,8 +45,8 @@ object NoiseDataStorageAdapter : AbstractStorageAdapter<NoiseData>(
         commonLoad(element, id) {
             val prop = getStorageProperty<Int>("unit")
             val unit = when (prop) {
-                NUnit.DBSPL.ordinal -> NUnit.DBSPL
-                NUnit.RMS.ordinal -> NUnit.RMS
+                NoiseUnit.dBSPL.ordinal -> NoiseUnit.dBSPL
+                NoiseUnit.Rms.ordinal -> NoiseUnit.Rms
                 else -> null
             }
             if (unit == null) {

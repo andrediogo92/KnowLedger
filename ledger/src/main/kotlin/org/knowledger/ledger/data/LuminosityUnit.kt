@@ -9,7 +9,7 @@ import org.knowledger.ledger.core.data.PhysicalUnit
  *
  * Lux represent the average light per area unit.
  */
-enum class LUnit : PhysicalUnit {
-    LUMENS,
-    LUX
+enum class LuminosityUnit : PhysicalUnit {
+    Lumens,
+    Lux
 }
