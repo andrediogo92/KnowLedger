@@ -1,8 +1,9 @@
 package org.knowledger.ledger.core.data
 
-import org.knowledger.ledger.core.config.LedgerConfiguration
+import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.DATA_BASE
+
 
 interface DataCategory {
     val dataConstant: Long
-        get() = LedgerConfiguration.DATA_BASE
+        get() = DATA_BASE
 }

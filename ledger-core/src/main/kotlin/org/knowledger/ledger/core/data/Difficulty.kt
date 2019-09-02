@@ -1,5 +1,10 @@
+@file:UseSerializers(BigIntegerSerializer::class)
 package org.knowledger.ledger.core.data
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
+import org.knowledger.ledger.core.serial.BigIntegerSerializer
 import java.math.BigInteger
 
 /**
@@ -7,12 +12,13 @@ import java.math.BigInteger
  * A block is mined against a difficulty, which directly
  * correlates with the speed to mining completion.
  */
-inline class Difficulty(val difficulty: BigInteger) {
+@Serializable
+@SerialName("Difficulty")
+data class Difficulty(
+    val difficulty: BigInteger
+) {
     operator fun compareTo(hashTarget: Difficulty): Int =
         difficulty.compareTo(hashTarget.difficulty)
-
-    val bytes: ByteArray
-        get() = difficulty.toByteArray()
 
     val print: String
         get() = difficulty.toString(HEXR)

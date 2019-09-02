@@ -1,10 +1,7 @@
 package org.knowledger.ledger.core.data
 
-import org.knowledger.ledger.core.hash.Hashable
-import java.io.Serializable
+import org.knowledger.ledger.core.serial.HashSerializable
 
 interface LedgerData : SelfInterval,
                        DataCategory,
-                       org.knowledger.ledger.core.Sizeable,
-                       Hashable,
-                       Serializable
+                       HashSerializable
