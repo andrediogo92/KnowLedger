@@ -17,7 +17,7 @@ object LedgerIdStorageAdapter : ServiceStorageAdapter<LedgerId> {
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "tag" to StorageType.STRING,
-            "hashId" to StorageType.HASH
+            "hash" to StorageType.HASH
         )
 
     override fun store(
@@ -26,7 +26,7 @@ object LedgerIdStorageAdapter : ServiceStorageAdapter<LedgerId> {
         session
             .newInstance(id)
             .setStorageProperty("tag", toStore.tag)
-            .setHashProperty("hashId", toStore.hashId)
+            .setHashProperty("hash", toStore.hash)
 
 
     override fun load(
@@ -35,9 +35,9 @@ object LedgerIdStorageAdapter : ServiceStorageAdapter<LedgerId> {
     ): Outcome<LedgerId, LedgerFailure> =
         tryOrLedgerUnknownFailure {
             val hash =
-                element.getHashProperty("hashId")
+                element.getHashProperty("hash")
 
-            assert(hash.contentEquals(ledgerHash))
+            assert(hash == ledgerHash)
 
             Outcome.Ok(
                 LedgerId(

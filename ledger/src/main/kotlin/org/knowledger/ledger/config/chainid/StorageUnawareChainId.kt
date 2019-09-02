@@ -1,70 +1,54 @@
 package org.knowledger.ledger.config.chainid
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.base64Encode
+import org.knowledger.ledger.core.serial.HashSerializable
 
-@JsonClass(generateAdapter = true)
-class StorageUnawareChainId internal constructor(
+@Serializable
+@SerialName("ChainId")
+data class StorageUnawareChainId internal constructor(
     override val tag: Tag,
     override val ledgerHash: Hash,
-    override val hashId: Hash
+    override val hash: Hash
 ) : ChainId {
-    override fun digest(c: Hasher): Hash =
-        generateChainHandleHash(c, tag, ledgerHash)
-
     internal constructor(
+        hasher: Hasher,
+        cbor: Cbor,
         tag: Tag,
-        ledgerHash: Hash,
-        hasher: Hasher
+        ledgerHash: Hash
     ) : this(
         tag, ledgerHash,
         generateChainHandleHash(
             hasher,
+            cbor,
             tag,
             ledgerHash
         )
     )
 
-
-    override fun toString(): String = """
-        |       ChainId {
-        |           Tag: ${tag.base64Encode()}
-        |           Ledger: ${ledgerHash.print}
-        |           Hash: ${hashId.print}
-        |       }
-    """.trimMargin()
-
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is StorageUnawareChainId) return false
-
-        if (tag.contentEquals(other.tag)) return false
-        if (ledgerHash.contentEquals(other.ledgerHash)) return false
-        if (hashId.contentEquals(other.hashId)) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = tag.hashCode()
-        result = 31 * result + hashId.hashCode()
-        return result
+    @Serializable
+    private data class ChainIdBuilder(
+        val tag: Tag, val ledgerHash: Hash
+    ) : HashSerializable {
+        override fun serialize(cbor: Cbor): ByteArray =
+            cbor.dump(serializer(), this)
     }
 
 
     companion object {
         private fun generateChainHandleHash(
             hasher: Hasher,
+            cbor: Cbor,
             tag: Tag,
             ledgerHash: Hash
         ): Hash =
-            hasher.applyHash(
-                tag.bytes + ledgerHash.bytes
+            ChainIdBuilder(tag, ledgerHash).digest(
+                hasher, cbor
             )
     }
 

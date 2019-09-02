@@ -24,7 +24,7 @@ object SUChainIdStorageAdapter : ServiceStorageAdapter<StorageUnawareChainId> {
             .newInstance(id)
             .setHashProperty("tag", toStore.tag)
             .setHashProperty("ledgerHash", toStore.ledgerHash)
-            .setHashProperty("hashId", toStore.hashId)
+            .setHashProperty("hash", toStore.hash)
 
 
     override fun load(
@@ -33,7 +33,7 @@ object SUChainIdStorageAdapter : ServiceStorageAdapter<StorageUnawareChainId> {
     ): Outcome<StorageUnawareChainId, LedgerFailure> =
         tryOrLedgerUnknownFailure {
             val hash: Hash =
-                element.getHashProperty("hashId")
+                element.getHashProperty("hash")
 
             val ledger: Hash =
                 element.getHashProperty("ledgerHash")
@@ -42,7 +42,7 @@ object SUChainIdStorageAdapter : ServiceStorageAdapter<StorageUnawareChainId> {
                 element.getHashProperty("tag")
 
 
-            assert(ledger.contentEquals(ledgerHash))
+            assert(ledger == ledgerHash)
 
             Outcome.Ok(
                 StorageUnawareChainId(

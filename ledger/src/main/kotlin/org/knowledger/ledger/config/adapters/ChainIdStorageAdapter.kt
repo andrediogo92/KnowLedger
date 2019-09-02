@@ -22,7 +22,7 @@ object ChainIdStorageAdapter : ServiceStorageAdapter<ChainId> {
         get() = mapOf(
             "tag" to StorageType.HASH,
             "ledgerHash" to StorageType.HASH,
-            "hashId" to StorageType.HASH
+            "hash" to StorageType.HASH
         )
 
     override fun store(
