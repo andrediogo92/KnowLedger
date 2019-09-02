@@ -1,22 +1,26 @@
 package org.knowledger.ledger.crypto.storage
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hashed
 import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.misc.mapAndAdd
 import org.knowledger.ledger.core.misc.mapToArray
 import org.knowledger.ledger.core.storage.MerkleTree
 import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms.Companion.DEFAULT_HASHER
 
 @Serializable
-data class SimpleMerkleTree(
+@SerialName("MerkleTree")
+data class MerkleTreeImpl(
+    @SerialName("collapsedTree")
+    internal val _collapsedTree: MutableList<Hash> = mutableListOf(),
+    @SerialName("levelIndex")
+    internal val _levelIndex: MutableList<Int> = mutableListOf(),
     @Transient
-    override val hasher: Hasher = DEFAULT_HASHER,
-    internal val collapsedTree: MutableList<Hash> = mutableListOf(),
-    internal val levelIndex: MutableList<Int> = mutableListOf()
+    val hasher: Hasher = DEFAULT_HASHER
 ) : MerkleTree {
     override fun serialize(cbor: Cbor): ByteArray =
         cbor.dump(serializer(), this)
@@ -24,43 +28,43 @@ data class SimpleMerkleTree(
     override fun clone(): MerkleTree =
         copy()
 
-    override val nakedTree: List<Hash>
-        get() = collapsedTree
-    override val levelIndexes: List<Int>
-        get() = levelIndex
+    override val collapsedTree: List<Hash>
+        get() = _collapsedTree
+    override val levelIndex: List<Int>
+        get() = _levelIndex
 
     /**
      * The root hashId.
      */
     override val root: Hash
         get() =
-            if (collapsedTree.isNotEmpty())
-                collapsedTree[0] else
+            if (_collapsedTree.isNotEmpty())
+                _collapsedTree[0] else
                 Hash.emptyHash
 
 
     constructor(
         hasher: Hasher,
-        data: Array<out Hashed>
-    ) : this(hasher) {
+        data: Array<out Hashing>
+    ) : this(hasher = hasher) {
         rebuildMerkleTree(data)
     }
 
     constructor(
         hasher: Hasher,
-        coinbase: Hashed,
-        data: Array<out Hashed>
-    ) : this(hasher) {
+        coinbase: Hashing,
+        data: Array<out Hashing>
+    ) : this(hasher = hasher) {
         rebuildMerkleTree(coinbase, data)
     }
 
     override fun hasTransaction(hash: Hash): Boolean {
         var res = false
-        var i = collapsedTree.size - 1
+        var i = _collapsedTree.size - 1
 
         //levelIndex[index] points to leftmost node at level index of the tree
-        while (i >= levelIndex[(levelIndex.size - 1)]) {
-            if (collapsedTree[i] == hash) {
+        while (i >= _levelIndex[(_levelIndex.size - 1)]) {
+            if (_collapsedTree[i] == hash) {
                 res = true
                 break
             }
@@ -71,11 +75,11 @@ data class SimpleMerkleTree(
 
     override fun getTransactionId(hash: Hash): Int? {
         var res: Int? = null
-        var i = collapsedTree.size - 1
+        var i = _collapsedTree.size - 1
 
         //levelIndex[index] points to leftmost node at level index of the tree.
-        while (i >= levelIndex[levelIndex.size - 1]) {
-            if (collapsedTree[i] == hash) {
+        while (i >= _levelIndex[_levelIndex.size - 1]) {
+            if (_collapsedTree[i] == hash) {
                 res = i
                 break
             }
@@ -95,7 +99,7 @@ data class SimpleMerkleTree(
             loopUpVerification(
                 it,
                 hash,
-                levelIndex.size - 1
+                _levelIndex.size - 1
             )
         } ?: false
 
@@ -106,27 +110,27 @@ data class SimpleMerkleTree(
         hash: Hash,
         level: Int
     ): Boolean {
-        var res: Boolean = hash == collapsedTree[index]
+        var res: Boolean = hash == _collapsedTree[index]
         var index = index
         var level = level
         var hash: Hash
         while (res && index != 0) {
-            val delta = index - levelIndex[level]
+            val delta = index - _levelIndex[level]
 
             //Is a left leaf
             hash = if (delta % 2 == 0) {
 
                 //Is an edge case left leaf
-                if (index + 1 == collapsedTree.size ||
-                    (level + 1 != levelIndex.size &&
-                            index + 1 == levelIndex[level + 1])
+                if (index + 1 == _collapsedTree.size ||
+                    (level + 1 != _levelIndex.size &&
+                            index + 1 == _levelIndex[level + 1])
                 ) {
                     hasher.applyHash(
-                        collapsedTree[index] + collapsedTree[index]
+                        _collapsedTree[index] + _collapsedTree[index]
                     )
                 } else {
                     hasher.applyHash(
-                        collapsedTree[index] + collapsedTree[index + 1]
+                        _collapsedTree[index] + _collapsedTree[index + 1]
                     )
                 }
             }
@@ -134,15 +138,15 @@ data class SimpleMerkleTree(
             //Is a right leaf
             else {
                 hasher.applyHash(
-                    collapsedTree[index - 1] + collapsedTree[index]
+                    _collapsedTree[index - 1] + _collapsedTree[index]
                 )
             }
             level--
 
             //Index of parent is at the start of the last level
             // + the distance from start of this level / 2
-            index = levelIndex[level] + (delta / 2)
-            res = hash == collapsedTree[index]
+            index = _levelIndex[level] + (delta / 2)
+            res = hash == _collapsedTree[index]
         }
         return res
     }
@@ -155,16 +159,16 @@ data class SimpleMerkleTree(
      * [MerkleTree] matches against the transaction [data] + [coinbase].
      */
     override fun verifyBlockTransactions(
-        coinbase: Hashed,
-        data: Array<out Hashed>
+        coinbase: Hashing,
+        data: Array<out Hashing>
     ): Boolean =
         //Check if collapsedTree is empty.
-        if (collapsedTree.isNotEmpty() &&
-            collapsedTree.size - levelIndex[levelIndex.size - 1] == data.size + 1
+        if (_collapsedTree.isNotEmpty() &&
+            _collapsedTree.size - _levelIndex[_levelIndex.size - 1] == data.size + 1
         ) {
             if (checkAllTransactionsPresent(coinbase, data)) {
-                if (collapsedTree.size > 1) {
-                    loopUpAllVerification(levelIndex.size - 2)
+                if (_collapsedTree.size > 1) {
+                    loopUpAllVerification(_levelIndex.size - 2)
                 } else {
                     true
                 }
@@ -186,27 +190,27 @@ data class SimpleMerkleTree(
         //against the value provided.
         var level = level
         while (level >= 0) {
-            var i = levelIndex[level]
-            while (i < levelIndex[level + 1]) {
+            var i = _levelIndex[level]
+            while (i < _levelIndex[level + 1]) {
 
                 //Delta is level index difference + current index + difference
                 //to current level index.
                 //It checks out to exactly the left child leaf of any node.
 
-                val delta = levelIndex[level + 1] -
-                        levelIndex[level] +
+                val delta = _levelIndex[level + 1] -
+                        _levelIndex[level] +
                         i +
-                        (i - levelIndex[level])
+                        (i - _levelIndex[level])
 
                 //Either the child is the last leaf in the next level, or is the last leaf.
                 //Since we know delta points to left leafs both these conditions mean
                 //edge case leafs.
-                if ((level + 2 != levelIndex.size && delta + 1 == levelIndex[level + 2])
-                    || delta + 1 == collapsedTree.size
+                if ((level + 2 != _levelIndex.size && delta + 1 == _levelIndex[level + 2])
+                    || delta + 1 == _collapsedTree.size
                 ) {
-                    if (collapsedTree[i] !=
+                    if (_collapsedTree[i] !=
                         hasher.applyHash(
-                            collapsedTree[delta] + collapsedTree[delta]
+                            _collapsedTree[delta] + _collapsedTree[delta]
                         )
                     ) {
                         res = false
@@ -216,9 +220,9 @@ data class SimpleMerkleTree(
 
                 //Then it's a regular left leaf.
                 else {
-                    if (collapsedTree[i] !=
+                    if (_collapsedTree[i] !=
                         hasher.applyHash(
-                            collapsedTree[delta] + collapsedTree[delta + 1]
+                            _collapsedTree[delta] + _collapsedTree[delta + 1]
                         )
                     ) {
                         res = false
@@ -233,19 +237,19 @@ data class SimpleMerkleTree(
     }
 
     private fun checkAllTransactionsPresent(
-        coinbase: Hashed,
-        data: Array<out Hashed>
+        coinbase: Hashing,
+        data: Array<out Hashing>
     ): Boolean {
-        var i = levelIndex[levelIndex.size - 1] + 1
+        var i = _levelIndex[_levelIndex.size - 1] + 1
         var res = true
-        val arr = data.map(Hashed::hashId)
-        if (collapsedTree[i - 1] == coinbase.hashId) {
+        val arr = data.map(Hashing::hash)
+        if (_collapsedTree[i - 1] == coinbase.hash) {
             for (it in arr) {
 
                 //There are at least as many transactions.
                 //They match the ones in the merkle tree.
-                if (i < collapsedTree.size &&
-                    it == collapsedTree[i]
+                if (i < _collapsedTree.size &&
+                    it == _collapsedTree[i]
                 ) {
                     i++
                 } else {
@@ -255,7 +259,7 @@ data class SimpleMerkleTree(
             }
 
             //There are less transactions in the provided block
-            if (i != collapsedTree.size) {
+            if (i != _collapsedTree.size) {
                 res = false
             }
         } else {
@@ -276,12 +280,12 @@ data class SimpleMerkleTree(
      * corresponding [MerkleTree] for their hashes, or an empty [MerkleTree]
      * if supplied with empty [data].
      */
-    override fun rebuildMerkleTree(data: Array<out Hashed>) {
-        collapsedTree.clear()
-        levelIndex.clear()
+    override fun rebuildMerkleTree(data: Array<out Hashing>) {
+        _collapsedTree.clear()
+        _levelIndex.clear()
         val treeLayer = mutableListOf<Array<Hash>>()
         treeLayer.add(
-            data.mapToArray(Hashed::hashId)
+            data.mapToArray(Hashing::hash)
         )
         buildLoop(treeLayer)
     }
@@ -298,11 +302,11 @@ data class SimpleMerkleTree(
      * supplied with empty [data].
      */
     override fun rebuildMerkleTree(
-        coinbase: Hashed, data: Array<out Hashed>
+        coinbase: Hashing, data: Array<out Hashing>
     ) {
         val treeLayer: MutableList<Array<Hash>> = mutableListOf()
         treeLayer.add(
-            data.mapAndAdd(Hashed::hashId, coinbase)
+            data.mapAndAdd(Hashing::hash, coinbase)
         )
         buildLoop(treeLayer)
     }
@@ -334,17 +338,17 @@ data class SimpleMerkleTree(
         }
         when (treeLayer[i].size) {
             2 -> {
-                collapsedTree.add(
+                _collapsedTree.add(
                     hasher.applyHash(
                         treeLayer[i][0] + treeLayer[i][1]
                     )
                 )
-                levelIndex.add(0)
+                _levelIndex.add(0)
                 treeLayer.reverse()
                 count = 1
                 for (s in treeLayer) {
-                    levelIndex.add(count)
-                    collapsedTree.addAll(s)
+                    _levelIndex.add(count)
+                    _collapsedTree.addAll(s)
                     count += s.size
                 }
 
@@ -352,8 +356,8 @@ data class SimpleMerkleTree(
             //If the previous layer was already length 1,
             //that means we started at the root.
             1 -> {
-                collapsedTree.addAll(treeLayer[i].toList())
-                levelIndex.add(0)
+                _collapsedTree.addAll(treeLayer[i].toList())
+                _levelIndex.add(0)
             }
             else -> {
                 throw InvalidMerkleException(treeLayer[i].size)
@@ -402,36 +406,24 @@ data class SimpleMerkleTree(
         return treeLayer
     }
 
-    override fun buildFromCoinbase(coinbase: Hashed) {
-        var accumulate = coinbase.hashId
-        collapsedTree[levelIndexes.size - 1] = accumulate
-        var i = levelIndexes.size - 1
-        var j = levelIndexes[i]
+    override fun buildFromCoinbase(coinbase: Hashing) {
+        var accumulate = coinbase.hash
+        _collapsedTree[levelIndex.size - 1] = accumulate
+        var i = levelIndex.size - 1
+        var j = levelIndex[i]
         while (i > 0) {
-            accumulate = hasher.applyHash(accumulate + collapsedTree[j + 1])
+            accumulate = hasher.applyHash(accumulate + _collapsedTree[j + 1])
             i -= 1
-            j = levelIndexes[i]
-            collapsedTree[j] = accumulate
+            j = levelIndex[i]
+            _collapsedTree[j] = accumulate
         }
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is SimpleMerkleTree) return false
-        if (collapsedTree
-                .asSequence()
-                .zip(other.collapsedTree.asSequence())
-                .any { (h1, h2) ->
-                    h1 != h2
-                }
-        ) return false
-        if (levelIndex
-                .asSequence()
-                .zip(other.levelIndex.asSequence())
-                .any { (i1, i2) ->
-                    i1 != i2
-                }
-        ) return false
+        if (other !is MerkleTreeImpl) return false
+        if (collapsedTree != other.collapsedTree) return false
+        if (levelIndex != other.levelIndex) return false
 
         return true
     }
