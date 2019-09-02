@@ -1,15 +1,13 @@
 package org.knowledger.ledger.core.config
 
-import org.knowledger.ledger.core.hash.AvailableHashAlgorithms
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 
-object LedgerConfiguration {
-    val DEFAULT_CRYPTER = AvailableHashAlgorithms.Blake2b256Hasher
+object GlobalLedgerConfiguration {
     val GLOBALCONTEXT =
-        MathContext(12, RoundingMode.HALF_EVEN)
+        MathContext(15, RoundingMode.HALF_EVEN)
     const val CACHE_SIZE = 40L
     val RECALC_DIV =
         BigInteger("10000000000000")
