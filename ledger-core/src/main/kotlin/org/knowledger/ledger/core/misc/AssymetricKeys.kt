@@ -1,8 +1,7 @@
 package org.knowledger.ledger.core.misc
 
 import kotlinx.serialization.cbor.Cbor
-import org.knowledger.ledger.core.hash.Hashable
-import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.serial.HashSerializable
 import java.security.Key
 import java.security.KeyFactory
 import java.security.PrivateKey
@@ -17,6 +16,12 @@ private val keyFactory: KeyFactory =
         "BC"
     )
 
+private val dsa: Signature =
+    Signature.getInstance(
+        "ECDSA",
+        "BC"
+    )
+
 /**
  * Signs the [data]'s digest appended to the [publicKey]
  * using the [privateKey].
@@ -24,14 +29,12 @@ private val keyFactory: KeyFactory =
  */
 fun generateSignature(
     privateKey: PrivateKey,
-    publicKey: PublicKey,
-    data: Hashable,
-    hasher: Hasher,
+    data: HashSerializable,
     cbor: Cbor
 ): ByteArray =
     applyECDSASig(
         privateKey,
-        publicKey.encoded + data.digest(hasher, cbor).bytes
+        data.serialize(cbor)
     )
 
 
@@ -39,7 +42,8 @@ fun generateSignature(
  * Applies ECDSA Signature and returns the result (as [ByteArray]).
  */
 fun applyECDSASig(
-    privateKey: PrivateKey, input: String
+    privateKey: PrivateKey,
+    input: String
 ): ByteArray =
     applyECDSASig(
         privateKey,
@@ -53,15 +57,12 @@ fun applyECDSASig(
 fun applyECDSASig(
     privateKey: PrivateKey,
     input: ByteArray
-): ByteArray {
-    val dsa = Signature.getInstance(
-        "ECDSA",
-        "BC"
-    )
-    dsa.initSign(privateKey)
-    dsa.update(input)
-    return dsa.sign()
-}
+): ByteArray =
+    with(dsa) {
+        initSign(privateKey)
+        update(input)
+        sign()
+    }
 
 /**
  * Verifies a [String] signature.
@@ -85,15 +86,12 @@ fun verifyECDSASig(
     publicKey: PublicKey,
     data: ByteArray,
     signature: ByteArray
-): Boolean {
-    val ecdsaVerify = Signature.getInstance(
-        "ECDSA",
-        "BC"
-    )
-    ecdsaVerify.initVerify(publicKey)
-    ecdsaVerify.update(data)
-    return ecdsaVerify.verify(signature)
-}
+): Boolean =
+    with(dsa) {
+        initVerify(publicKey)
+        update(data)
+        verify(signature)
+    }
 
 /**
  * Accepts a [toBytes] [ByteArray] encoded [PublicKey]
