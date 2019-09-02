@@ -1,29 +1,22 @@
 package org.knowledger.ledger.config
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hashable
-import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.bytes
-import org.knowledger.ledger.core.misc.flattenBytes
+import org.knowledger.ledger.core.serial.HashSerializable
 import org.knowledger.ledger.service.ServiceClass
 
-@JsonClass(generateAdapter = true)
+@Serializable
+@SerialName("LedgerParams")
 data class LedgerParams(
     val crypter: Hash,
+    @SerialName("recalculationTime")
     val recalcTime: Long = 1228800000,
+    @SerialName("recalculationTrigger")
     val recalcTrigger: Long = 2048,
     val blockParams: BlockParams = BlockParams()
-) : Hashable, ServiceClass {
-
-    override fun digest(c: Hasher): Hash =
-        c.applyHash(
-            flattenBytes(
-                crypter.bytes,
-                recalcTime.bytes(),
-                recalcTrigger.bytes(),
-                blockParams.blockMemSize.bytes(),
-                blockParams.blockLength.bytes()
-            )
-        )
+) : HashSerializable, ServiceClass {
+    override fun serialize(cbor: Cbor): ByteArray =
+        cbor.dump(serializer(), this)
 }
