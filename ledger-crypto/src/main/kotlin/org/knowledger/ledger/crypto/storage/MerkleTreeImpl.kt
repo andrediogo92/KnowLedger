@@ -9,7 +9,6 @@ import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.misc.mapAndAdd
 import org.knowledger.ledger.core.misc.mapToArray
-import org.knowledger.ledger.core.storage.MerkleTree
 import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms.Companion.DEFAULT_HASHER
 
 @Serializable
@@ -32,15 +31,6 @@ data class MerkleTreeImpl(
         get() = _collapsedTree
     override val levelIndex: List<Int>
         get() = _levelIndex
-
-    /**
-     * The root hashId.
-     */
-    override val root: Hash
-        get() =
-            if (_collapsedTree.isNotEmpty())
-                _collapsedTree[0] else
-                Hash.emptyHash
 
 
     constructor(

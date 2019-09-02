@@ -1,25 +1,26 @@
-package org.knowledger.ledger.storage
+package org.knowledger.ledger.crypto.storage
 
 
-import org.knowledger.ledger.core.Sizeable
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
-import org.knowledger.ledger.core.hash.Hashed
-import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.hash.Hashing
+import org.knowledger.ledger.core.serial.HashSerializable
 import org.knowledger.ledger.core.storage.LedgerContract
 
-interface MerkleTree : Sizeable, LedgerContract, Cloneable {
-    val hasher: Hasher
-    val nakedTree: List<Hash>
-    val levelIndexes: List<Int>
+interface MerkleTree : HashSerializable,
+                       Hashing,
+                       LedgerContract,
+                       Cloneable {
+    val collapsedTree: List<Hash>
+    val levelIndex: List<Int>
 
     /**
-     * The root hashId.
+     * The root hash.
      */
-    val root: Hash
+    override val hash: Hash
         get() =
-            if (nakedTree.isNotEmpty())
-                nakedTree[0] else
+            if (collapsedTree.isNotEmpty())
+                collapsedTree[0] else
                 emptyHash
 
     public override fun clone(): MerkleTree
@@ -43,8 +44,8 @@ interface MerkleTree : Sizeable, LedgerContract, Cloneable {
      * [MerkleTree] matches against the transaction [data] + [coinbase].
      */
     fun verifyBlockTransactions(
-        coinbase: Hashed,
-        data: Array<out Hashed>
+        coinbase: Hashing,
+        data: Array<out Hashing>
     ): Boolean
 
 
@@ -59,7 +60,7 @@ interface MerkleTree : Sizeable, LedgerContract, Cloneable {
      * corresponding [MerkleTree] for their hashes, or an empty [MerkleTree]
      * if supplied with empty [data].
      */
-    fun rebuildMerkleTree(data: Array<out Hashed>)
+    fun rebuildMerkleTree(data: Array<out Hashing>)
 
     /**
      * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
@@ -73,9 +74,10 @@ interface MerkleTree : Sizeable, LedgerContract, Cloneable {
      * supplied with empty [data].
      */
     fun rebuildMerkleTree(
-        coinbase: Hashed, data: Array<out Hashed>
+        coinbase: Hashing, data: Array<out Hashing>
     )
 
+    fun buildFromCoinbase(coinbase: Hashing)
 }
 
 
