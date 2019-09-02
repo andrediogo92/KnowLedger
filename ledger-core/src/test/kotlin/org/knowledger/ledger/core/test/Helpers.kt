@@ -2,10 +2,8 @@ package org.knowledger.ledger.core.test
 
 import org.apache.commons.rng.RestorableUniformRandomProvider
 import org.apache.commons.rng.simple.RandomSource
-import org.knowledger.ledger.core.config.LedgerConfiguration
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
-import java.security.Security
 
 private val r: RestorableUniformRandomProvider =
     RandomSource.create(RandomSource.SPLIT_MIX_64)
@@ -26,16 +24,6 @@ fun randomBytesIntoArray(byteArray: ByteArray) {
 fun randomByteArray(size: Int): ByteArray =
     ByteArray(size).also {
         randomBytesIntoArray(it)
-    }
-
-internal val crypter: Hasher =
-    if (Security.getProvider("BC") == null) {
-        Security.addProvider(
-            org.bouncycastle.jce.provider.BouncyCastleProvider()
-        )
-        LedgerConfiguration.DEFAULT_CRYPTER
-    } else {
-        LedgerConfiguration.DEFAULT_CRYPTER
     }
 
 
