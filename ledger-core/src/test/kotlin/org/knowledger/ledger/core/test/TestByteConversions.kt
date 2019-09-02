@@ -5,7 +5,7 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
-import org.knowledger.ledger.core.misc.bytes
+import org.knowledger.ledger.core.misc.toBytes
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 import java.time.Instant
@@ -70,10 +70,10 @@ class TestByteConversions {
             }
         }
         assertAll {
-            assertThat(test0.bytes()).containsExactly(*bytes0)
-            assertThat(test33.bytes()).containsExactly(*bytes33)
-            assertThat(test512.bytes()).containsExactly(*bytes512)
-            assertThat(test33564286.bytes()).containsExactly(*bytes33564286)
+            assertThat(test0.toBytes()).containsExactly(*bytes0)
+            assertThat(test33.toBytes()).containsExactly(*bytes33)
+            assertThat(test512.toBytes()).containsExactly(*bytes512)
+            assertThat(test33564286.toBytes()).containsExactly(*bytes33564286)
         }
     }
 
@@ -127,10 +127,10 @@ class TestByteConversions {
             }
         }
         assertAll {
-            assertThat(test0.bytes()).containsExactly(*bytes0)
-            assertThat(test33.bytes()).containsExactly(*bytes33)
-            assertThat(test512.bytes()).containsExactly(*bytes512)
-            assertThat(test64321.bytes()).containsExactly(*bytes64321)
+            assertThat(test0.toBytes()).containsExactly(*bytes0)
+            assertThat(test33.toBytes()).containsExactly(*bytes33)
+            assertThat(test512.toBytes()).containsExactly(*bytes512)
+            assertThat(test64321.toBytes()).containsExactly(*bytes64321)
         }
     }
 
@@ -160,10 +160,10 @@ class TestByteConversions {
             0x77, 0x8C.toByte(), 0xC4.toByte(), 0x37
         )
         assertAll {
-            assertThat(test0.bytes()).containsExactly(*bytes0)
-            assertThat(test33.bytes()).containsExactly(*bytes33Dot5)
-            assertThat(test3Dot1415.bytes()).containsExactly(*bytes3Dot1415)
-            assertThat(test1Dot56ToN11.bytes()).containsExactly(*bytes1Dot56ToN11)
+            assertThat(test0.toBytes()).containsExactly(*bytes0)
+            assertThat(test33.toBytes()).containsExactly(*bytes33Dot5)
+            assertThat(test3Dot1415.toBytes()).containsExactly(*bytes3Dot1415)
+            assertThat(test1Dot56ToN11.toBytes()).containsExactly(*bytes1Dot56ToN11)
         }
     }
 
@@ -172,16 +172,16 @@ class TestByteConversions {
         val testSeconds = 85321234L
         val testNanos = 423
         val testInstant = Instant.ofEpochSecond(testSeconds, testNanos.toLong())
-        val bytesSeconds = testSeconds.bytes()
-        val bytesNanos = testNanos.bytes()
+        val bytesSeconds = testSeconds.toBytes()
+        val bytesNanos = testNanos.toBytes()
 
-        assertThat(testInstant.bytes()).containsExactly(*(bytesSeconds + bytesNanos))
+        assertThat(testInstant.toBytes()).containsExactly(*(bytesSeconds + bytesNanos))
     }
 
     @Test
     fun `big decimal to bytes conversions`() {
         val testDecimal = BigDecimal("3.1415")
-        val bytesDecimal = testDecimal.bytes()
+        val bytesDecimal = testDecimal.toBytes()
 
         assertThat(bytesDecimal).containsExactly(*testDecimal.unscaledValue().toByteArray())
     }

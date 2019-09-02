@@ -34,7 +34,7 @@ class TestStringOperations {
             assertThat(testHash.print)
                 .isEqualTo(expectedString)
 
-            assertThat(testHash.print.hashFromHexString.bytes)
+            assertThat(testHash.print.hashFromHexString().bytes)
                 .isEqualTo(canonicParse(expectedString))
         }
     }

@@ -3,17 +3,18 @@ package org.knowledger.ledger.core.test
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.misc.base64Decode
-import org.knowledger.ledger.core.misc.base64DecodeToString
-import org.knowledger.ledger.core.misc.base64Encode
+import org.knowledger.ledger.core.misc.base64Decoded
+import org.knowledger.ledger.core.misc.base64DecodedToUTF8
+import org.knowledger.ledger.core.misc.base64Encoded
+import org.knowledger.ledger.core.misc.decodedUTF8String
 import org.tinylog.kotlin.Logger
 
 class TestBase64Operations {
     @Test
     fun `base64 encoding decoding from string`() {
         val check = "thisissampletext"
-        val base64 = check.base64Encode()
-        val decoded = base64.base64DecodeToString()
+        val base64 = check.base64Encoded()
+        val decoded = base64.base64DecodedToUTF8()
         assertThat(
             base64
         ).isEqualTo(
@@ -45,8 +46,8 @@ class TestBase64Operations {
             0x6d.toByte(), 0x70, 0x6c.toByte(), 0x65,
             0x74, 0x65, 0x78, 0x74
         )
-        val base64 = check.base64Encode()
-        val decoded = base64.base64Decode()
+        val base64 = check.base64Encoded()
+        val decoded = base64.base64Decoded()
         assertThat(
             base64
         ).isEqualTo(
@@ -61,9 +62,9 @@ class TestBase64Operations {
         Logger.debug {
             """
                 | 
-                | Input: ${check.decodeToString()}
+                | Input: ${check.decodedUTF8String()}
                 | Base64: $base64
-                | Decoded: ${decoded.decodeToString()}
+                | Decoded: ${decoded.decodedUTF8String()}
             """.trimMargin()
         }
     }
