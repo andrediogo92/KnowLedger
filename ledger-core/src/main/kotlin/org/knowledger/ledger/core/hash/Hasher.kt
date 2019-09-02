@@ -35,6 +35,6 @@ interface Hasher {
      * [Hasher]'s own [Hasher.id]
      */
     fun checkForCrypter(id: Hash): Boolean =
-        id.contentEquals(this.id)
+        id == this.id
 
 }
