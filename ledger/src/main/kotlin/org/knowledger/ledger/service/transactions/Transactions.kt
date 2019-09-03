@@ -2,10 +2,11 @@ package org.knowledger.ledger.service.transactions
 
 import org.knowledger.ledger.core.database.query.UnspecificQuery
 import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.misc.base64Encoded
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
+import org.knowledger.ledger.storage.transaction.HashedTransaction
 import java.security.PublicKey
 
 
@@ -16,20 +17,20 @@ import java.security.PublicKey
 // Execution must be runtime determined.
 // ------------------------------
 internal fun PersistenceWrapper.getTransactionsFromAgent(
-    chainHash: Hash,
+    tag: String,
     publicKey: PublicKey
-): Outcome<Sequence<Transaction>, LoadFailure> =
+): Outcome<Sequence<HashedTransaction>, LoadFailure> =
     TransactionStorageAdapter.let {
         queryResults(
             UnspecificQuery(
                 """
                     SELECT 
                     FROM ${it.id}
-                    WHERE chainId.hashId = :chainHash
+                    WHERE value.value.@class = :tag
                         AND publicKey = :publicKey
                 """.trimIndent(),
                 mapOf(
-                    "chainHash" to chainHash.bytes,
+                    "tag" to tag,
                     "publicKey" to publicKey.encoded
                 )
             ),
@@ -37,22 +38,59 @@ internal fun PersistenceWrapper.getTransactionsFromAgent(
         )
     }
 
+internal fun PersistenceWrapper.getTransactionsFromAgent(
+    tag: Hash,
+    publicKey: PublicKey
+): Outcome<Sequence<HashedTransaction>, LoadFailure> =
+    getTransactionsFromAgent(
+        tag.base64Encoded(), publicKey
+    )
+
+
 internal fun PersistenceWrapper.getTransactionByHash(
-    chainHash: Hash,
+    tag: String,
     hash: Hash
-): Outcome<Transaction, LoadFailure> =
+): Outcome<HashedTransaction, LoadFailure> =
     TransactionStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
                 """
                     SELECT 
                     FROM ${it.id}
-                    WHERE chainId.hashId = :chainHash
-                        AND hashId = :hash
+                    WHERE value.value.@class = :tag
+                        AND hash = :hash
                 """.trimIndent(),
                 mapOf(
-                    "chainHash" to chainHash.bytes,
+                    "tag" to tag,
                     "hash" to hash.bytes
+                )
+            ),
+            it
+        )
+    }
+
+internal fun PersistenceWrapper.getTransactionByHash(
+    tag: Hash,
+    hash: Hash
+): Outcome<HashedTransaction, LoadFailure> =
+    getTransactionByHash(tag.base64Encoded(), hash)
+
+
+//Execution must be runtime determined.
+internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
+    tag: String
+): Outcome<Sequence<HashedTransaction>, LoadFailure> =
+    TransactionStorageAdapter.let {
+        queryResults(
+            UnspecificQuery(
+                """
+                    SELECT 
+                    FROM ${it.id}
+                    WHERE value.value.@class = :tag
+                    ORDER BY value.seconds DESC, value.nanos DESC
+                """.trimIndent(),
+                mapOf(
+                    "tag" to tag
                 )
             ),
             it
@@ -60,22 +98,26 @@ internal fun PersistenceWrapper.getTransactionByHash(
 
     }
 
-
 //Execution must be runtime determined.
 internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
-    chainHash: Hash
-): Outcome<Sequence<Transaction>, LoadFailure> =
+    tag: Hash
+): Outcome<Sequence<HashedTransaction>, LoadFailure> =
+    getTransactionsOrderedByTimestamp(tag.base64Encoded())
+
+
+internal fun PersistenceWrapper.getTransactionsByClass(
+    tag: String
+): Outcome<Sequence<HashedTransaction>, LoadFailure> =
     TransactionStorageAdapter.let {
         queryResults(
             UnspecificQuery(
                 """
                     SELECT 
                     FROM ${it.id}
-                    WHERE chainId.hashId = :chainHash
-                    ORDER BY value.seconds DESC, value.nanos DESC
+                    WHERE value.value.@class = :tag
                 """.trimIndent(),
                 mapOf(
-                    "chainHash" to chainHash.bytes
+                    "tag" to tag
                 )
             ),
             it
@@ -84,24 +126,6 @@ internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
     }
 
 internal fun PersistenceWrapper.getTransactionsByClass(
-    chainHash: Hash,
-    typeName: String
-): Outcome<Sequence<Transaction>, LoadFailure> =
-    TransactionStorageAdapter.let {
-        queryResults(
-            UnspecificQuery(
-                """
-                    SELECT 
-                    FROM ${it.id}
-                    WHERE chainId.hashId = :chainHash
-                        AND value.value.@class = :typeName
-                """.trimIndent(),
-                mapOf(
-                    "chainHash" to chainHash.bytes,
-                    "typeName" to typeName
-                )
-            ),
-            it
-        )
-
-    }
+    tag: Hash
+): Outcome<Sequence<HashedTransaction>, LoadFailure> =
+    getTransactionsByClass(tag.base64Encoded())
