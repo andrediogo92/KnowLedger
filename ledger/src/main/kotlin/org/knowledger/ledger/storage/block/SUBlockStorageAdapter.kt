@@ -16,7 +16,7 @@ import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
 
-internal object SUBlockStorageAdapter : LedgerStorageAdapter<StorageUnawareBlock> {
+internal object SUBlockStorageAdapter : LedgerStorageAdapter<BlockImpl> {
     override val id: String
         get() = BlockStorageAdapter.id
 
@@ -24,7 +24,7 @@ internal object SUBlockStorageAdapter : LedgerStorageAdapter<StorageUnawareBlock
         get() = BlockStorageAdapter.properties
 
     override fun store(
-        toStore: StorageUnawareBlock,
+        toStore: BlockImpl,
         session: NewInstanceSession
     ): StorageElement =
         session.newInstance(id).apply {
@@ -53,7 +53,7 @@ internal object SUBlockStorageAdapter : LedgerStorageAdapter<StorageUnawareBlock
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<StorageUnawareBlock, LoadFailure> =
+    ): Outcome<BlockImpl, LoadFailure> =
         tryOrLoadUnknownFailure {
             zip(
                 element
@@ -84,11 +84,9 @@ internal object SUBlockStorageAdapter : LedgerStorageAdapter<StorageUnawareBlock
                 )
             )
             { data, coinbase, header, merkleTree ->
-                StorageUnawareBlock(
-                    data.toSortedSet(),
-                    coinbase,
-                    header,
-                    merkleTree
+                BlockImpl(
+                    data.toSortedSet(), coinbase,
+                    header, merkleTree
                 )
             }
         }

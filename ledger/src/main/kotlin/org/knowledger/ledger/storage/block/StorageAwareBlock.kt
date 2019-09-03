@@ -1,6 +1,8 @@
 package org.knowledger.ledger.storage.block
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.knowledger.ledger.core.database.NewInstanceSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageID
@@ -8,18 +10,18 @@ import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.flatMapSuccess
 import org.knowledger.ledger.core.results.peekSuccess
 import org.knowledger.ledger.service.results.UpdateFailure
-import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.StorageAware
-import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
 import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 import org.knowledger.ledger.storage.commonUpdate
+import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.knowledger.ledger.storage.updateLinked
 
-@JsonClass(generateAdapter = true)
+@Serializable
+@SerialName("StorageBlockWrapper")
 internal data class StorageAwareBlock(
-    internal val block: StorageUnawareBlock
+    internal val block: BlockImpl
 ) : Block by block,
     StorageAware<Block> {
     override val invalidated: Map<String, Any>
@@ -80,7 +82,7 @@ internal data class StorageAwareBlock(
                 }
         }
 
-    override fun plus(transaction: Transaction): Boolean {
+    override fun plus(transaction: HashedTransaction): Boolean {
         val result = block + transaction
         if (result && id != null) {
             invalidatedFields.putIfAbsent("data", data)
@@ -97,7 +99,7 @@ internal data class StorageAwareBlock(
     }
 
     override fun clone(): Block {
-        return StorageUnawareBlock(
+        return BlockImpl(
             data.asSequence()
                 .toSortedSet(),
             coinbase.clone(),
