@@ -4,14 +4,16 @@ import org.knowledger.ledger.core.database.NewInstanceSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.misc.byteEncodeToPublicKey
+import org.knowledger.ledger.core.misc.toPublicKey
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
+import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
+import java.security.PublicKey
 
-object TransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutput> {
+object TransactionOutputStorageAdapter : LedgerStorageAdapter<HashedTransactionOutput> {
     override val id: String
         get() = "TransactionOutput"
 
@@ -19,13 +21,13 @@ object TransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutput>
         get() = mapOf(
             "publicKey" to StorageType.BYTES,
             "prevCoinbase" to StorageType.HASH,
-            "hashId" to StorageType.HASH,
+            "hash" to StorageType.HASH,
             "payout" to StorageType.PAYOUT,
             "txSet" to StorageType.SET
         )
 
     override fun store(
-        toStore: TransactionOutput,
+        toStore: HashedTransactionOutput,
         session: NewInstanceSession
     ): StorageElement =
         session
@@ -33,34 +35,39 @@ object TransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutput>
             .setStorageProperty(
                 "publicKey", toStore.publicKey.encoded
             ).setHashProperty(
-                "prevCoinbase", toStore.prevCoinbase
-            ).setHashProperty("hashId", toStore.hashId)
+                "prevCoinbase", toStore.previousCoinbase
+            ).setHashProperty("hash", toStore.hash)
             .setPayoutProperty("payout", toStore.payout)
-            .setHashSet("txSet", toStore.tx)
+            .setHashSet("txSet", toStore.transactionHashes)
 
     override fun load(
         ledgerHash: Hash,
         element: StorageElement
-    ): Outcome<TransactionOutput, LoadFailure> =
+    ): Outcome<HashedTransactionOutput, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val publicKeyString: ByteArray =
-                element.getStorageProperty("publicKey")
+            val publicKey: PublicKey =
+                element
+                    .getStorageProperty<String>("publicKey")
+                    .toPublicKey()
             val prevCoinbase =
                 element.getHashProperty("prevCoinbase")
-            val hashId =
-                element.getHashProperty("hashId")
+            val hash =
+                element.getHashProperty("hash")
             val payout =
                 element.getPayoutProperty("payout")
             val txSet = element.getMutableHashSet("txSet")
+            val container = LedgerHandle.getContainer(ledgerHash)!!
+
 
             Outcome.Ok(
-                TransactionOutput(
-                    publicKeyString.byteEncodeToPublicKey(),
+                HashedTransactionOutputImpl(
+                    publicKey,
                     prevCoinbase,
-                    hashId,
                     payout,
                     txSet,
-                    LedgerHandle.getHasher(ledgerHash)!!
+                    hash,
+                    container.hasher,
+                    container.cbor
                 )
             )
         }
