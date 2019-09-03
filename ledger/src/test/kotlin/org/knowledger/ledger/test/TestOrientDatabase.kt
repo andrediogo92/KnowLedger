@@ -7,30 +7,28 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.adapters.BlockParamsStorageAdapter
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerParamsStorageAdapter
-import org.knowledger.ledger.core.data.Difficulty.Companion.MIN_DIFFICULTY
+import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.database.DatabaseMode
 import org.knowledger.ledger.core.database.DatabaseType
 import org.knowledger.ledger.core.database.orient.OrientDatabase
 import org.knowledger.ledger.core.database.orient.OrientDatabaseInfo
 import org.knowledger.ledger.core.database.orient.OrientSession
 import org.knowledger.ledger.core.database.query.UnspecificQuery
-import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
-import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.results.mapSuccess
 import org.knowledger.ledger.core.results.unwrap
 import org.knowledger.ledger.core.storage.adapters.SchemaProvider
-import org.knowledger.ledger.data.PhysicalData
+import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.ledger.crypto.service.Identity
+import org.knowledger.ledger.data.TemperatureData
 import org.knowledger.ledger.data.TrafficFlowData
 import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
 import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.data.adapters.TemperatureDataStorageAdapter
 import org.knowledger.ledger.data.adapters.TrafficFlowDataStorageAdapter
-import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
 import org.knowledger.ledger.service.adapters.LedgerConfigStorageAdapter
@@ -40,15 +38,13 @@ import org.knowledger.ledger.service.transactions.getTransactionByHash
 import org.knowledger.ledger.service.transactions.getTransactionsByClass
 import org.knowledger.ledger.service.transactions.getTransactionsFromAgent
 import org.knowledger.ledger.service.transactions.getTransactionsOrderedByTimestamp
-import org.knowledger.ledger.storage.Block
-import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
 import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
-import org.knowledger.ledger.storage.block.StorageUnawareBlock
+import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 
@@ -68,19 +64,23 @@ class TestOrientDatabase {
         .withLedgerIdentity("test")
         .unwrap()
         .withCustomDB(db, session)
+        .withLedgerSerializationModule {
+            TemperatureData::class with TemperatureData.serializer()
+            TrafficFlowData::class with TrafficFlowData.serializer()
+        }
         .build()
         .unwrap()
 
-    val hash = ledger.ledgerConfig.ledgerId.hashId
+    val hash = ledger.ledgerConfig.ledgerId.hash
 
     val temperatureChain: ChainHandle = ledger.registerNewChainHandleOf(
         TemperatureDataStorageAdapter
     ).unwrap()
 
     val chainId = temperatureChain.id
-    val chainHash = temperatureChain.id.hashId
+    val chainHash = temperatureChain.id.hash
     internal val pw = LedgerHandle.getContainer(hash)!!.persistenceWrapper
-    val transactions = generateXTransactionsWithChain(chainId, id, 20).toSortedSet()
+    val transactions = generateXTransactions(id, 20).toSortedSet()
 
 
     @BeforeAll
@@ -161,10 +161,10 @@ class TestOrientDatabase {
                     assertAll {
                         assertThat(l.size).isLessThanOrEqualTo(transactions.size)
                         l.map {
-                            it.element.getHashProperty("hashId")
+                            it.element.getHashProperty("hash")
                         }.forEach { hash ->
                             assertThat(transactions.map {
-                                it.hashId
+                                it.hash
                             }).contains(
                                 hash
                             )
@@ -202,10 +202,10 @@ class TestOrientDatabase {
             logActualToExpectedLists(
                 "Transactions' hashes from DB:",
                 present.map {
-                    it.getHashProperty("hashId").print
+                    it.getHashProperty("hash").print
                 },
                 "Transactions' hashes from test:",
-                transactions.map { it.hashId.print }
+                transactions.map { it.hash.print }
             )
         }
 
@@ -218,9 +218,9 @@ class TestOrientDatabase {
             """.trimIndent()
             )
             assertThat(t.hasNext()).isTrue()
-            val binary = t.next().element.getHashProperty("hashId")
+            val binary = t.next().element.getHashProperty("hash")
             assertThat(binary.bytes).containsExactly(
-                *transactions.first().hashId.bytes
+                *transactions.first().hash.bytes
             )
         }
 
@@ -231,17 +231,17 @@ class TestOrientDatabase {
                     """
                     SELECT
                     FROM $tid
-                    WHERE hashId = :hash
+                    WHERE hash = :hash
                     """.trimIndent(),
                     mapOf(
-                        "hash" to transactions.first().hashId.bytes
+                        "hash" to transactions.first().hash.bytes
                     )
                 )
             )
             assertThat(t.hasNext()).isTrue()
-            val binary = t.next().element.getHashProperty("hashId")
+            val binary = t.next().element.getHashProperty("hash")
             assertThat(binary.bytes).containsExactly(
-                *transactions.first().hashId.bytes
+                *transactions.first().hash.bytes
             )
 
         }
@@ -249,7 +249,7 @@ class TestOrientDatabase {
 
     @Nested
     inner class Handles {
-        val hasher: Hasher = LedgerHandle.getHasher(hash)!!
+        val hasher: Hashers = LedgerHandle.getHasher(hash)!!
 
         val trafficChain: ChainHandle = ledger.registerNewChainHandleOf(
             TrafficFlowDataStorageAdapter
@@ -261,12 +261,8 @@ class TestOrientDatabase {
             @Test
             fun `Test simple insertion`() {
 
-                val block = StorageUnawareBlock(
-                    temperatureChain.id,
-                    emptyHash,
-                    MIN_DIFFICULTY,
-                    1,
-                    BlockParams()
+                val block = generateBlockWithChain(
+                    temperatureChain.id
                 )
                 assertThat(block + transactions.first())
                     .isTrue()
@@ -278,8 +274,7 @@ class TestOrientDatabase {
 
             @Test
             fun `Test traffic insertion`() {
-                val testTraffic = Transaction(
-                    trafficChain.id,
+                val testTraffic = HashedTransactionImpl(
                     id.privateKey,
                     id.publicKey,
                     PhysicalData(
@@ -295,15 +290,11 @@ class TestOrientDatabase {
                             12.6
                         )
                     ),
-                    hasher
+                    hasher, cbor
                 )
 
-                val block = StorageUnawareBlock(
-                    trafficChain.id,
-                    emptyHash,
-                    MIN_DIFFICULTY,
-                    1,
-                    BlockParams()
+                val block = generateBlockWithChain(
+                    trafficChain.id
                 )
                 assertThat(block).isNotNull()
                 assertThat(block + testTraffic)
@@ -311,10 +302,6 @@ class TestOrientDatabase {
                 assertThat(block.data.first())
                     .isNotNull()
                     .isEqualTo(testTraffic)
-                Logger.info {
-                    moshi.adapter(Block::class.java)
-                        .toJson(block)
-                }
             }
 
         }
@@ -326,15 +313,14 @@ class TestOrientDatabase {
         @Test
         fun `loading transactions`() {
             pw.getTransactionsByClass(
-                chainHash,
-                TemperatureDataStorageAdapter.id
+                chainId.tag
             ).mapSuccess { seq ->
                 seq.toList().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
-                        map { it.hashId.print },
+                        map { it.hash.print },
                         "Transactions' hashes from test:",
-                        transactions.map { it.hashId.print }
+                        transactions.map { it.hash.print }
                     )
                     assertThat(size).isEqualTo(
                         transactions.size
@@ -349,14 +335,14 @@ class TestOrientDatabase {
         @Test
         fun `loading transactions by timestamp`() {
             pw.getTransactionsOrderedByTimestamp(
-                chainHash
+                chainId.tag
             ).mapSuccess { seq ->
                 seq.toList().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
-                        map { it.hashId.print },
+                        map { it.hash.print },
                         "Transactions' hashes from test:",
-                        transactions.map { it.hashId.print }
+                        transactions.map { it.hash.print }
                     )
                     assertThat(size).isEqualTo(
                         transactions.size
@@ -373,14 +359,14 @@ class TestOrientDatabase {
         @Test
         fun `loading transactions by Public Key`() {
             pw.getTransactionsFromAgent(
-                chainHash, id.publicKey
+                chainId.tag, id.publicKey
             ).mapSuccess { seq ->
                 seq.toList().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
-                        map { it.hashId.print },
+                        map { it.hash.print },
                         "Transactions' hashes from test:",
-                        transactions.map { it.hashId.print }
+                        transactions.map { it.hash.print }
                     )
                     assertThat(size).isEqualTo(
                         transactions.size
@@ -395,8 +381,8 @@ class TestOrientDatabase {
         @Test
         fun `loading transaction by hash`() {
             pw.getTransactionByHash(
-                chainHash,
-                transactions.elementAt(2).hashId
+                chainId.tag,
+                transactions.elementAt(2).hash
             ).mapSuccess {
                 assertThat(it)
                     .isNotNull()
