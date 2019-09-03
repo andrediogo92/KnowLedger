@@ -6,11 +6,11 @@ import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.results.deadCode
-import org.knowledger.ledger.service.pool.SATransactionPoolStorageAdapter
-import org.knowledger.ledger.service.pool.SUTransactionPoolStorageAdapter
-import org.knowledger.ledger.service.pool.StorageAwareTransactionPool
-import org.knowledger.ledger.service.pool.StorageUnawareTransactionPool
-import org.knowledger.ledger.service.pool.TransactionPool
+import org.knowledger.ledger.service.pools.transaction.SATransactionPoolStorageAdapter
+import org.knowledger.ledger.service.pools.transaction.SUTransactionPoolStorageAdapter
+import org.knowledger.ledger.service.pools.transaction.StorageAwareTransactionPool
+import org.knowledger.ledger.service.pools.transaction.TransactionPool
+import org.knowledger.ledger.service.pools.transaction.TransactionPoolImpl
 import org.knowledger.ledger.service.results.LedgerFailure
 
 object TransactionPoolStorageAdapter : ServiceStorageAdapter<TransactionPool> {
@@ -31,7 +31,7 @@ object TransactionPoolStorageAdapter : ServiceStorageAdapter<TransactionPool> {
         when (toStore) {
             is StorageAwareTransactionPool ->
                 SATransactionPoolStorageAdapter.store(toStore, session)
-            is StorageUnawareTransactionPool ->
+            is TransactionPoolImpl ->
                 SUTransactionPoolStorageAdapter.store(toStore, session)
             else -> deadCode()
         }

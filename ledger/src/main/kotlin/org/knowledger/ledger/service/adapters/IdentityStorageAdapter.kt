@@ -4,11 +4,11 @@ import org.knowledger.ledger.core.database.NewInstanceSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.misc.byteEncodeToPrivateKey
-import org.knowledger.ledger.core.misc.byteEncodeToPublicKey
+import org.knowledger.ledger.core.misc.toPrivateKey
+import org.knowledger.ledger.core.misc.toPublicKey
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import java.security.KeyPair
@@ -47,8 +47,8 @@ object IdentityStorageAdapter : LedgerStorageAdapter<Identity> {
                 element.getStorageProperty("privateKey")
 
             val keyPair = KeyPair(
-                publicKeyString.byteEncodeToPublicKey(),
-                privateKeyString.byteEncodeToPrivateKey()
+                publicKeyString.toPublicKey(),
+                privateKeyString.toPrivateKey()
             )
             Outcome.Ok(
                 Identity(id, keyPair)

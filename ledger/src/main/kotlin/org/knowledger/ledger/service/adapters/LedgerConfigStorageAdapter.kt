@@ -44,6 +44,7 @@ object LedgerConfigStorageAdapter : HandleStorageAdapter {
             )
 
 
+    @Suppress("NAME_SHADOWING")
     override fun load(
         ledgerHash: Hash,
         element: StorageElement
