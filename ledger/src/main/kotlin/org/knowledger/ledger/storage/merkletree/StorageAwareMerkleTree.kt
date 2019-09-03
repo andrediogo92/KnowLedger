@@ -1,17 +1,23 @@
 package org.knowledger.ledger.storage.merkletree
 
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import org.knowledger.ledger.core.database.NewInstanceSession
 import org.knowledger.ledger.core.database.StorageID
-import org.knowledger.ledger.core.hash.Hashed
-import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.ledger.crypto.storage.MerkleTree
+import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.service.results.UpdateFailure
-import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.simpleUpdate
 
+@Serializable
+@SerialName("StorageMerkleTreeWrapper")
 internal data class StorageAwareMerkleTree(
-    internal val merkleTree: StorageUnawareMerkleTree
+    internal val merkleTree: MerkleTreeImpl
 ) : MerkleTree by merkleTree, StorageAware<MerkleTree> {
     override fun update(session: NewInstanceSession): Outcome<StorageID, UpdateFailure> =
         simpleUpdate(invalidatedFields)
@@ -28,22 +34,22 @@ internal data class StorageAwareMerkleTree(
 
 
     internal constructor(
-        hasher: Hasher
-    ) : this(StorageUnawareMerkleTree(hasher))
+        hasher: Hashers
+    ) : this(MerkleTreeImpl(hasher = hasher))
 
     internal constructor(
-        hasher: Hasher,
-        coinbase: Hashed,
-        data: Array<out Hashed>
+        hasher: Hashers,
+        coinbase: Hashing,
+        data: Array<out Hashing>
     ) : this(hasher) {
         rebuildMerkleTree(coinbase, data)
     }
 
-    override fun rebuildMerkleTree(data: Array<out Hashed>) {
+    override fun rebuildMerkleTree(data: Array<out Hashing>) {
         merkleTree.rebuildMerkleTree(data)
         if (id != null) {
-            invalidatedFields["nakedTree"] = merkleTree.nakedTree
-            invalidatedFields["levelIndexes"] = merkleTree.levelIndexes
+            invalidatedFields["nakedTree"] = merkleTree.collapsedTree
+            invalidatedFields["levelIndexes"] = merkleTree.levelIndex
         }
     }
 }

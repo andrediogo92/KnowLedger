@@ -5,20 +5,21 @@ import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 
-internal object SUMerkleTreeStorageAdapter : LedgerStorageAdapter<StorageUnawareMerkleTree> {
+internal object SUMerkleTreeStorageAdapter : LedgerStorageAdapter<MerkleTreeImpl> {
     override val id: String
         get() = MerkleTreeStorageAdapter.id
     override val properties: Map<String, StorageType>
         get() = MerkleTreeStorageAdapter.properties
 
     override fun store(
-        toStore: StorageUnawareMerkleTree, session: NewInstanceSession
+        toStore: MerkleTreeImpl, session: NewInstanceSession
     ): StorageElement =
         session
             .newInstance(MerkleTreeStorageAdapter.id)
@@ -30,17 +31,17 @@ internal object SUMerkleTreeStorageAdapter : LedgerStorageAdapter<StorageUnaware
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<StorageUnawareMerkleTree, LoadFailure> =
+    ): Outcome<MerkleTreeImpl, LoadFailure> =
         tryOrLoadUnknownFailure {
             val collapsedTree: MutableList<Hash> =
                 element.getMutableHashList("nakedTree")
             val levelIndex: MutableList<Int> =
                 element.getStorageProperty("levelIndexes")
             Outcome.Ok(
-                StorageUnawareMerkleTree(
-                    LedgerHandle.getHasher(ledgerHash)!!,
+                MerkleTreeImpl(
                     collapsedTree,
-                    levelIndex
+                    levelIndex,
+                    LedgerHandle.getHasher(ledgerHash)!!
                 )
             )
         }
