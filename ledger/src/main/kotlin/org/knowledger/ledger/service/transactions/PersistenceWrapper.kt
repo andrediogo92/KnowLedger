@@ -22,6 +22,7 @@ import org.knowledger.ledger.core.storage.adapters.SchemaProvider
 import org.knowledger.ledger.core.storage.adapters.Storable
 import org.knowledger.ledger.core.storage.results.DataFailure
 import org.knowledger.ledger.core.storage.results.QueryFailure
+import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
 import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.results.tryOrDataUnknownFailure
@@ -30,7 +31,6 @@ import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.results.tryOrQueryUnknownFailure
 import org.knowledger.ledger.results.tryOrUpdateUnknownFailure
 import org.knowledger.ledger.results.use
-import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.LedgerConfig
 import org.knowledger.ledger.service.ServiceClass
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
@@ -196,8 +196,8 @@ internal data class PersistenceWrapper(
     ): Outcome<T, DataFailure> =
         tryOrDataUnknownFailure {
             session.query(query).use {
-                if (this.hasNext()) {
-                    loader.load(this.next().element)
+                if (hasNext()) {
+                    loader.load(next().element)
                 } else {
                     Outcome.Error<DataFailure>(
                         DataFailure.NonExistentData(
@@ -224,10 +224,10 @@ internal data class PersistenceWrapper(
     ): Outcome<T, LoadFailure> =
         tryOrLoadUnknownFailure {
             session.query(query).use {
-                if (this.hasNext()) {
+                if (hasNext()) {
                     loader.load(
                         ledgerHash,
-                        this.next().element
+                        next().element
                     )
                 } else {
                     Outcome.Error<LoadFailure>(
@@ -261,9 +261,9 @@ internal data class PersistenceWrapper(
     ): Outcome<T, LedgerFailure> =
         tryOrLedgerUnknownFailure {
             session.query(query).use {
-                if (this.hasNext()) {
+                if (hasNext()) {
                     loader.load(
-                        ledgerHash, this.next().element
+                        ledgerHash, next().element
                     )
                 } else {
                     Outcome.Error<LedgerFailure>(
@@ -294,8 +294,8 @@ internal data class PersistenceWrapper(
     ): Outcome<T, QueryFailure> =
         tryOrQueryUnknownFailure {
             session.query(query).use {
-                if (this.hasNext()) {
-                    loader.load(this.next().element)
+                if (hasNext()) {
+                    loader.load(next().element)
                 } else {
                     Outcome.Error<QueryFailure>(
                         QueryFailure.NonExistentData(

@@ -4,9 +4,9 @@ import org.knowledger.ledger.core.database.query.UnspecificQuery
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
+import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
 
 
 // ------------------------------
@@ -18,18 +18,18 @@ import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 internal fun PersistenceWrapper.getBlockHeaderByHash(
     chainHash: Hash,
     hash: Hash
-): Outcome<BlockHeader, LoadFailure> =
+): Outcome<HashedBlockHeader, LoadFailure> =
     BlockHeaderStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
                 """
                     SELECT 
                     FROM ${it.id} 
-                    WHERE hashId = :hashId 
-                        AND chainId.hashId = :chainHash
+                    WHERE hash = :hash 
+                        AND chainId.hash = :chainHash
                     """.trimIndent(),
                 mapOf(
-                    "hashId" to hash.bytes,
+                    "hash" to hash.bytes,
                     "chainHash" to chainHash.bytes
                 )
             ),
@@ -41,14 +41,14 @@ internal fun PersistenceWrapper.getBlockHeaderByHash(
 internal fun PersistenceWrapper.getBlockHeaderByBlockHeight(
     chainHash: Hash,
     height: Long
-): Outcome<BlockHeader, LoadFailure> =
+): Outcome<HashedBlockHeader, LoadFailure> =
     queryUniqueResult(
         UnspecificQuery(
             """
                 SELECT header
                 FROM ${BlockStorageAdapter.id} 
                 WHERE coinbase.blockheight = :blockheight 
-                    AND chainId.hashId = :chainHash
+                    AND chainId.hash = :chainHash
             """.trimIndent(),
             mapOf(
                 "blockheight" to height,
@@ -62,7 +62,7 @@ internal fun PersistenceWrapper.getBlockHeaderByBlockHeight(
 internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
     chainHash: Hash,
     hash: Hash
-): Outcome<BlockHeader, LoadFailure> =
+): Outcome<HashedBlockHeader, LoadFailure> =
     BlockHeaderStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
@@ -70,7 +70,7 @@ internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
                     SELECT 
                     FROM ${it.id} 
                     WHERE previousHash = :previousHash 
-                        AND chainId.hashId = :chainHash
+                        AND chainId.hash = :chainHash
                 """.trimIndent(),
                 mapOf(
                     "previousHash" to hash.bytes,
@@ -84,14 +84,14 @@ internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
 
 internal fun PersistenceWrapper.getLatestBlockHeader(
     chainHash: Hash
-): Outcome<BlockHeader, LoadFailure> =
+): Outcome<HashedBlockHeader, LoadFailure> =
     queryUniqueResult(
         UnspecificQuery(
             """
                 SELECT 
                 FROM ${BlockStorageAdapter.id} 
                 WHERE coinbase.blockheight = max(coinbase.blockheight) 
-                    AND chainId.hashId = :chainHash
+                    AND chainId.hash = :chainHash
             """.trimIndent(),
             mapOf(
                 "chainHash" to chainHash.bytes

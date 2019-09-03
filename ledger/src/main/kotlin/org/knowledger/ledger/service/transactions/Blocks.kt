@@ -4,8 +4,8 @@ import org.knowledger.ledger.core.database.query.UnspecificQuery
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
+import org.knowledger.ledger.storage.block.Block
 
 // ------------------------------
 // Block transactions.
@@ -24,7 +24,7 @@ internal fun PersistenceWrapper.getBlockByBlockHeight(
                     SELECT 
                     FROM ${it.id} 
                     WHERE coinbase.blockheight = :height 
-                        AND chainId.hashId = :chainHash
+                        AND header.chainId.hash = :chainHash
                 """.trimIndent(),
                 mapOf(
                     "height" to height,
@@ -47,11 +47,11 @@ internal fun PersistenceWrapper.getBlockByHeaderHash(
                 """
                     SELECT 
                     FROM ${it.id} 
-                    WHERE header.chainId.hashId = :chainHash 
-                        AND header.hashId = :hashId
+                    WHERE header.chainId.hash = :chainHash 
+                        AND header.hash = :hash
                 """.trimIndent(),
                 mapOf(
-                    "hashId" to hash.bytes,
+                    "hash" to hash.bytes,
                     "chainHash" to chainHash.bytes
                 )
             ),
@@ -71,11 +71,11 @@ internal fun PersistenceWrapper.getBlockByPrevHeaderHash(
                 """
                     SELECT 
                     FROM ${it.id} 
-                    WHERE header.chainId.hashId = :chainHash 
-                        AND header.previousHash = :hashId
+                    WHERE header.chainId.hash = :chainHash 
+                        AND header.previousHash = :hash
                 """.trimIndent(),
                 mapOf(
-                    "hashId" to hash.bytes,
+                    "hash" to hash.bytes,
                     "chainHash" to chainHash.bytes
                 )
             ),
@@ -94,7 +94,7 @@ internal fun PersistenceWrapper.getLatestBlock(
                 """
                     SELECT 
                     FROM ${it.id}
-                    WHERE header.chainId.hashId = :chainHash
+                    WHERE header.chainId.hash = :chainHash
                         AND coinbase.blockheight = max(coinbase.blockheight)
                 """.trimIndent(),
                 mapOf(
@@ -116,12 +116,39 @@ internal fun PersistenceWrapper.getBlockListByBlockHeightInterval(
                 """
                     SELECT 
                     FROM ${it.id} 
-                    WHERE header.chainId.hashId = :chainHash 
+                    WHERE header.chainId.hash = :chainHash 
                         AND coinbase.blockheight BETWEEN :start AND :end
                 """.trimIndent(),
                 mapOf(
                     "start" to startInclusive,
                     "end" to endInclusive,
+                    "chainHash" to chainHash.bytes
+                )
+            ),
+            it
+        )
+    }
+
+internal fun PersistenceWrapper.getBlockListByHash(
+    chainHash: Hash, start: Hash,
+    chunkSize: Long
+): Outcome<Sequence<Block>, LoadFailure> =
+    BlockStorageAdapter.let {
+        queryResults(
+            UnspecificQuery(
+                """
+                    SELECT FROM ${it.id} 
+                        LET ${'$'}temp = (SELECT coinbase.blockheight as blockheight
+                                        FROM ${it.id} 
+                                        WHERE header.hash = :start)
+                    WHERE header.chainId.hash = :chainHash
+                        AND coinbase.blockheight 
+                        BETWEEN ${'$'}temp.blockheight 
+                            AND ${'$'}temp.blockheight + :chunkSize
+                """.trimIndent(),
+                mapOf(
+                    "start" to start,
+                    "chunkSize" to chunkSize,
                     "chainHash" to chainHash.bytes
                 )
             ),
