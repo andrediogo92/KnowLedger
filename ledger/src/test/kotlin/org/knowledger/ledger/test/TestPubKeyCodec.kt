@@ -3,11 +3,11 @@ package org.knowledger.ledger.test
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.misc.getStringFromKey
-import org.knowledger.ledger.core.misc.hexString
-import org.knowledger.ledger.core.misc.stringToPrivateKey
-import org.knowledger.ledger.core.misc.stringToPublicKey
-import org.knowledger.ledger.service.Identity
+import org.knowledger.ledger.core.misc.base64Encoded
+import org.knowledger.ledger.core.misc.toHexString
+import org.knowledger.ledger.core.misc.toPrivateKey
+import org.knowledger.ledger.core.misc.toPublicKey
+import org.knowledger.ledger.crypto.service.Identity
 import org.tinylog.kotlin.Logger
 import java.security.Key
 
@@ -15,41 +15,42 @@ import java.security.Key
 /**
  * Tests for encoding/decoding [Key]s.
  */
-class TestPubKeyCodec {
+class
+TestPubKeyCodec {
     val pair = Identity("test")
     val pr = pair.privateKey
     val pub = pair.publicKey
 
     @Test
     fun `Test encode and decode of private and public keys`() {
-        val encpr = pr.getStringFromKey()
-        val encpub = pub.getStringFromKey()
-        val decpr = encpr.stringToPrivateKey()
-        val decpub = encpub.stringToPublicKey()
+        val encpr = pr.base64Encoded()
+        val encpub = pub.base64Encoded()
+        val decpr = encpr.toPrivateKey()
+        val decpub = encpub.toPublicKey()
         //Decode of encode matches decode
         assertThat(
-            encpub.stringToPublicKey()
+            encpub.toPublicKey()
         ).isEqualTo(decpub)
         assertThat(
-            encpr.stringToPrivateKey()
+            encpr.toPrivateKey()
         ).isEqualTo(decpr)
         //Re-encode matches original encode.
         assertThat(
-            decpub.getStringFromKey()
+            decpub.base64Encoded()
         ).isEqualTo(encpub)
         assertThat(
-            decpr.getStringFromKey()
+            decpr.base64Encoded()
         ).isEqualTo(encpr)
         //Encode matches Re-encode
         assertThat(
-            decpub.getStringFromKey()
+            decpub.base64Encoded()
         ).isEqualTo(
-            pub.getStringFromKey()
+            pub.base64Encoded()
         )
         assertThat(
-            decpr.getStringFromKey()
+            decpr.base64Encoded()
         ).isEqualTo(
-            pr.getStringFromKey()
+            pr.base64Encoded()
         )
         //Keys match.
         assertThat(decpub).isEqualTo(pub)
@@ -61,14 +62,14 @@ class TestPubKeyCodec {
                 |  private: $pr
                 |  public: $pub
                 |Hex:
-                |  private: ${pr.encoded.hexString}
-                |  public: ${pub.encoded.hexString}
+                |  private: ${pr.encoded.toHexString()}
+                |  public: ${pub.encoded.toHexString()}
                 |Base64:
                 |  private: $encpr
                 |  public: $encpub
                 |Hex to Base64 to Hex:
-                |  private: ${decpr.encoded.hexString}
-                |  public: ${decpub.encoded.hexString}
+                |  private: ${decpr.encoded.toHexString()}
+                |  public: ${decpub.encoded.toHexString()}
                 |Hex to Base64 to Key:
                 |  private: $decpr
                 |  public: $decpub
