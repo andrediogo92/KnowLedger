@@ -8,7 +8,7 @@ import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.service.handles.LedgerHandle
 import java.io.File
 
-interface LedgerBuilder<T> : Builder<LedgerHandle, LedgerHandle.Failure> {
+internal interface LedgerBuilder<T> : Builder<LedgerHandle, LedgerHandle.Failure> {
     fun withDBPath(path: File): Outcome<T, LedgerHandle.Failure>
     fun withDBPath(path: String): T
     fun withCustomSession(
