@@ -2,14 +2,12 @@ package org.knowledger.ledger.crypto.storage
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.misc.mapAndAdd
 import org.knowledger.ledger.core.misc.mapToArray
-import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms.Companion.DEFAULT_HASHER
 
 @Serializable
 @SerialName("MerkleTree")
@@ -18,8 +16,7 @@ data class MerkleTreeImpl(
     internal val _collapsedTree: MutableList<Hash> = mutableListOf(),
     @SerialName("levelIndex")
     internal val _levelIndex: MutableList<Int> = mutableListOf(),
-    @Transient
-    val hasher: Hasher = DEFAULT_HASHER
+    private var hasher: Hasher
 ) : MerkleTree {
     override fun serialize(cbor: Cbor): ByteArray =
         cbor.dump(serializer(), this)
@@ -258,18 +255,14 @@ data class MerkleTreeImpl(
         return res
     }
 
+    override fun changeHasher(hasher: Hasher) {
+        TODO("not implemented")
+    }
 
-    /**
-     * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
-     *
-     * Initializes the first tree layer, which is the transaction layer,
-     * sets a correspondence from each hashId to its index and starts a build loop,
-     * building all subsequent layers.
-     *
-     * Takes [data] as the transactions in the block and outputs the full
-     * corresponding [MerkleTree] for their hashes, or an empty [MerkleTree]
-     * if supplied with empty [data].
-     */
+    override fun buildDiff(diff: Array<out Hashing>, diffIndexes: Array<Int>) {
+        TODO("not implemented")
+    }
+
     override fun rebuildMerkleTree(data: Array<out Hashing>) {
         _collapsedTree.clear()
         _levelIndex.clear()
@@ -280,17 +273,6 @@ data class MerkleTreeImpl(
         buildLoop(treeLayer)
     }
 
-    /**
-     * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
-     *
-     * Initializes the first tree layer, which is the transaction layer,
-     * sets a correspondence from each hashId to its index and starts a build loop,
-     * building all subsequent layers.
-     *
-     * Takes [data] as the transactions in the block + the special [coinbase] transaction's
-     * hashes and outputs the full corresponding [Merkle Tree], or an empty [MerkleTree] if
-     * supplied with empty [data].
-     */
     override fun rebuildMerkleTree(
         coinbase: Hashing, data: Array<out Hashing>
     ) {
@@ -301,18 +283,6 @@ data class MerkleTreeImpl(
         buildLoop(treeLayer)
     }
 
-    /**
-     * Build loop that builds a [MerkleTree] collapsed in a heap.
-     *
-     * Start at leaves and iteratively builds the next layer at
-     * depth-1 until it arrives at root.
-     *
-     * Uses [treeLayer] as a container for the successive layers,
-     * where index = max_depth - depth.
-     *
-     * Starts with [treeLayer] supplied with the last layer containing all leaves,
-     * which are the hashes of each of the block's transactions.
-     */
     private fun buildLoop(
         treeLayer: MutableList<Array<Hash>>
     ) {
@@ -360,17 +330,6 @@ data class MerkleTreeImpl(
             get() = "${super.message}: next to last was $size in size."
     }
 
-    /**
-     * Build the next tree layer in ascending order. Sets proper indexes.
-     *
-     * Checks for oddness, in which case creates a single left child for remainder
-     * hashed with itself.
-     *
-     * Receives the [previousTreeLayer] in ascending order, that is, depth+1 and
-     * the node [count] of nodes in the new layer.
-     *
-     * Returns the new Layer of hashes of their children set.
-     */
     private fun buildNewLayer(
         previousTreeLayer: Array<Hash>,
         count: Int

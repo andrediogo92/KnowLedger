@@ -3,6 +3,7 @@ package org.knowledger.ledger.crypto.storage
 
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
+import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.serial.HashSerializable
 import org.knowledger.ledger.core.storage.LedgerContract
@@ -47,6 +48,18 @@ interface MerkleTree : HashSerializable,
         coinbase: Hashing,
         data: Array<out Hashing>
     ): Boolean
+
+    /**
+     * Uses the provided [hasher] to rebuild the [MerkleTree] in-place with the new [hasher].
+     * If the [hasher] provided is already the one used it's a no-op.
+     */
+    fun changeHasher(hasher: Hasher)
+
+    /**
+     * Uses the provided [diff] array of changed elements and their indexes in [diffIndexes]
+     * to regenerate only the changed parts of the MerkleTree.
+     */
+    fun buildDiff(diff: Array<out Hashing>, diffIndexes: Array<Int>)
 
 
     /**
