@@ -1,17 +1,23 @@
 package org.knowledger.ledger.test
 
 import assertk.fail
-import com.squareup.moshi.Moshi
+import kotlinx.serialization.UnstableDefault
+import kotlinx.serialization.UpdateMode
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.modules.SerialModule
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
 import org.knowledger.ledger.config.chainid.StorageUnawareChainId
-import org.knowledger.ledger.core.config.LedgerConfiguration
 import org.knowledger.ledger.core.data.DataFormula
 import org.knowledger.ledger.core.data.DefaultDiff
 import org.knowledger.ledger.core.data.Difficulty
+import org.knowledger.ledger.core.data.GeoCoords
 import org.knowledger.ledger.core.data.Payout
+import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
 import org.knowledger.ledger.core.hash.Hasher
@@ -21,84 +27,102 @@ import org.knowledger.ledger.core.storage.results.DataFailure
 import org.knowledger.ledger.core.storage.results.QueryFailure
 import org.knowledger.ledger.core.test.randomByteArray
 import org.knowledger.ledger.core.test.randomDouble
-import org.knowledger.ledger.data.GeoCoords
-import org.knowledger.ledger.data.PhysicalData
-import org.knowledger.ledger.data.TUnit
+import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
+import org.knowledger.ledger.crypto.service.Identity
+import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.data.TemperatureData
+import org.knowledger.ledger.data.TemperatureUnit
 import org.knowledger.ledger.data.TrafficFlowData
-import org.knowledger.ledger.json.addLedgerAdapters
-import org.knowledger.ledger.service.Identity
+import org.knowledger.ledger.serial.baseModule
+import org.knowledger.ledger.serial.withDataFormulas
+import org.knowledger.ledger.serial.withLedger
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.Block
-import org.knowledger.ledger.storage.Coinbase
-import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.storage.TransactionOutput
-import org.knowledger.ledger.storage.block.StorageUnawareBlock
-import org.knowledger.ledger.storage.blockheader.StorageUnawareBlockHeader
-import org.knowledger.ledger.storage.coinbase.StorageUnawareCoinbase
-import org.knowledger.ledger.storage.merkletree.StorageUnawareMerkleTree
+import org.knowledger.ledger.storage.block.Block
+import org.knowledger.ledger.storage.block.BlockImpl
+import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
+import org.knowledger.ledger.storage.coinbase.HashedCoinbase
+import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
+import org.knowledger.ledger.storage.transaction.HashedTransaction
+import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
+import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 
-internal val moshi by lazy {
-    Moshi
-        .Builder()
-        .addLedgerAdapters(
-            mapOf(
-                TemperatureData::class.java to "TemperatureData",
-                TrafficFlowData::class.java to "TrafficFlowData"
-            )
-        )
-        .build()
+internal val testHasher: Hashers = DEFAULT_HASHER
+
+
+internal val serialModule: SerialModule by lazy {
+    baseModule.withLedger {
+        TemperatureData::class with TemperatureData.serializer()
+        TrafficFlowData::class with TrafficFlowData.serializer()
+    }.withDataFormulas {}
 }
 
+internal val cbor: Cbor by lazy {
+    Cbor(
+        UpdateMode.OVERWRITE, true,
+        serialModule
+    )
+}
+
+@UnstableDefault
+internal val json: Json = Json(
+    configuration = JsonConfiguration.Default.copy(prettyPrint = true),
+    context = serialModule
+)
+
+
 internal fun generateChainId(
-    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
+    hasher: Hasher = DEFAULT_HASHER
 ): ChainId =
     StorageAwareChainId(
         StorageUnawareChainId(
+            hasher, cbor,
             Hash(randomByteArray(32)),
-            Hash(randomByteArray(32)), hasher
+            Hash(randomByteArray(32))
         )
     )
 
 
 internal fun generateBlock(
     id: Array<Identity>,
-    ts: List<Transaction>,
-    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
+    ts: List<HashedTransaction>,
+    hasher: Hashers = testHasher,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams(),
     blockParams: BlockParams = BlockParams()
 ): Block {
     val coinbase = generateCoinbase(
-        id, ts, hasher, formula, coinbaseParams
+        id, ts, hasher,
+        formula, coinbaseParams
     )
-    return StorageUnawareBlock(
-        ts.toSortedSet(),
-        coinbase,
-        StorageUnawareBlockHeader(
+    return BlockImpl(
+        ts.toSortedSet(), coinbase,
+        HashedBlockHeaderImpl(
             generateChainId(hasher),
-            hasher,
+            hasher, cbor,
             Hash(randomByteArray(32)),
             blockParams
         ),
-        StorageUnawareMerkleTree(hasher, coinbase, ts.toTypedArray())
+        MerkleTreeImpl(
+            hasher, coinbase,
+            ts.toTypedArray()
+        ), cbor, hasher
     )
 }
 
 internal fun generateXTransactions(
     id: Array<Identity>,
     size: Int,
-    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
-): List<Transaction> {
-    val ts: MutableList<Transaction> = mutableListOf()
+    hasher: Hashers = testHasher
+): List<HashedTransaction> {
+    val ts: MutableList<HashedTransaction> = mutableListOf()
     for (i in 0 until size) {
         val index = i % id.size
         ts.add(
-            Transaction(
-                generateChainId(hasher),
+            HashedTransactionImpl(
                 id[index].privateKey,
                 id[index].publicKey,
                 PhysicalData(
@@ -109,11 +133,9 @@ internal fun generateXTransactions(
                     TemperatureData(
                         BigDecimal(
                             randomDouble() * 100
-                        ),
-                        TUnit.CELSIUS
+                        ), TemperatureUnit.Celsius
                     )
-                ),
-                hasher
+                ), hasher, cbor
             )
         )
     }
@@ -123,15 +145,13 @@ internal fun generateXTransactions(
 internal fun generateXTransactions(
     id: Identity,
     size: Int,
-    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
-): List<Transaction> {
-    val ts: MutableList<Transaction> = mutableListOf()
+    hasher: Hashers = testHasher
+): List<HashedTransaction> {
+    val ts: MutableList<HashedTransaction> = mutableListOf()
     for (i in 0 until size) {
         ts.add(
-            Transaction(
-                generateChainId(hasher),
-                id.privateKey,
-                id.publicKey,
+            HashedTransactionImpl(
+                id.privateKey, id.publicKey,
                 PhysicalData(
                     GeoCoords(
                         BigDecimal.ZERO, BigDecimal.ZERO,
@@ -140,11 +160,9 @@ internal fun generateXTransactions(
                     TemperatureData(
                         BigDecimal(
                             randomDouble() * 100
-                        ),
-                        TUnit.CELSIUS
+                        ), TemperatureUnit.Celsius
                     )
-                ),
-                hasher
+                ), hasher, cbor
             )
         )
     }
@@ -154,142 +172,68 @@ internal fun generateXTransactions(
 internal fun generateBlockWithChain(
     chainId: ChainId,
     id: Array<Identity>,
-    ts: List<Transaction>,
-    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
+    ts: List<HashedTransaction>,
+    hasher: Hashers = testHasher,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams(),
     blockParams: BlockParams = BlockParams()
 ): Block {
     val coinbase = generateCoinbase(
-        id, ts, hasher, formula, coinbaseParams
+        id, ts, hasher,
+        formula, coinbaseParams
     )
-    return StorageUnawareBlock(
-        ts.toSortedSet(),
-        coinbase,
-        StorageUnawareBlockHeader(
-            chainId,
-            hasher,
+    return BlockImpl(
+        ts.toSortedSet(), coinbase,
+        HashedBlockHeaderImpl(
+            chainId, hasher, cbor,
             Hash(randomByteArray(32)),
             blockParams
         ),
-        StorageUnawareMerkleTree(hasher, coinbase, ts.toTypedArray())
+        MerkleTreeImpl(hasher, coinbase, ts.toTypedArray()),
+        cbor, hasher
     )
 }
 
 internal fun generateBlockWithChain(
     chainId: ChainId,
-    id: Array<Identity>,
-    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
+    hasher: Hashers = testHasher,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams(),
     blockParams: BlockParams = BlockParams()
 ): Block {
     val coinbase = generateCoinbase(
-        id, hasher, formula, coinbaseParams
+        hasher, formula, coinbaseParams
     )
-    return StorageUnawareBlock(
-        sortedSetOf(),
-        coinbase,
-        StorageUnawareBlockHeader(
-            chainId,
-            hasher,
+    return BlockImpl(
+        sortedSetOf(), coinbase,
+        HashedBlockHeaderImpl(
+            chainId, hasher, cbor,
             Hash(randomByteArray(32)),
             blockParams
-        ),
-        StorageUnawareMerkleTree(hasher, coinbase, emptyArray())
+        ), MerkleTreeImpl(hasher, coinbase, emptyArray()),
+        cbor, hasher
     )
 }
-
-
-internal fun generateXTransactionsWithChain(
-    chainId: ChainId,
-    id: Array<Identity>,
-    size: Int,
-    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
-): List<Transaction> {
-    val ts: MutableList<Transaction> = mutableListOf()
-    for (i in 0 until size) {
-        val index = i % id.size
-        ts.add(
-            Transaction(
-                chainId,
-                id[index].privateKey,
-                id[index].publicKey,
-                PhysicalData(
-                    GeoCoords(
-                        BigDecimal.ZERO, BigDecimal.ZERO,
-                        BigDecimal.ZERO
-                    ),
-                    TemperatureData(
-                        BigDecimal(
-                            randomDouble() * 100
-                        ),
-                        TUnit.CELSIUS
-                    )
-                ),
-                hasher
-            )
-        )
-    }
-    return ts
-}
-
-internal fun generateXTransactionsWithChain(
-    chainId: ChainId,
-    id: Identity,
-    size: Int,
-    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER
-): List<Transaction> {
-    val ts: MutableList<Transaction> = mutableListOf()
-    for (i in 0 until size) {
-        ts.add(
-            Transaction(
-                chainId,
-                id.privateKey,
-                id.publicKey,
-                PhysicalData(
-                    GeoCoords(
-                        BigDecimal.ZERO, BigDecimal.ZERO,
-                        BigDecimal.ZERO
-                    ),
-                    TemperatureData(
-                        BigDecimal(
-                            randomDouble() * 100
-                        ),
-                        TUnit.CELSIUS
-                    )
-                ),
-                hasher
-            )
-        )
-    }
-    return ts
-}
-
 
 internal fun generateCoinbase(
     id: Array<Identity>,
-    ts: List<Transaction>,
-    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
+    ts: List<HashedTransaction>,
+    hasher: Hashers = testHasher,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams()
-): Coinbase {
+): HashedCoinbase {
     val sets = listOf(
-        TransactionOutput(
-            id[0].publicKey,
-            emptyHash,
+        HashedTransactionOutputImpl(
+            id[0].publicKey, emptyHash,
             Payout(BigDecimal.ONE),
-            ts[0].hashId,
-            emptyHash,
-            hasher
+            ts[0].hash, emptyHash,
+            hasher, cbor
         ),
-        TransactionOutput(
-            id[1].publicKey,
-            emptyHash,
+        HashedTransactionOutputImpl(
+            id[1].publicKey, emptyHash,
             Payout(BigDecimal.ONE),
-            ts[1].hashId,
-            emptyHash,
-            hasher
+            ts[1].hash, emptyHash,
+            hasher, cbor
         )
     )
     //First transaction output has
@@ -300,46 +244,29 @@ internal fun generateCoinbase(
     //referencing transaction 0.
     sets[0].addToPayout(
         Payout(BigDecimal.ONE),
-        ts[2].hashId,
-        ts[0].hashId
+        ts[2].hash, ts[0].hash
     )
     sets[0].addToPayout(
         Payout(BigDecimal.ONE),
-        ts[4].hashId,
-        ts[0].hashId
+        ts[4].hash, ts[0].hash
     )
-    return StorageUnawareCoinbase(
-        sets.toMutableSet(),
-        Payout(BigDecimal("3")),
-        emptyHash,
-        Difficulty.INIT_DIFFICULTY,
-        2,
-        hasher,
-        formula,
-        coinbaseParams
-    ).also {
-        it.hash = it.digest(hasher)
-    }
+    return HashedCoinbaseImpl(
+        sets.toMutableSet(), Payout(BigDecimal("3")),
+        Difficulty.INIT_DIFFICULTY, 2,
+        coinbaseParams, hasher, cbor, formula
+    )
 }
 
 internal fun generateCoinbase(
-    id: Array<Identity>,
-    hasher: Hasher = LedgerConfiguration.DEFAULT_CRYPTER,
+    hasher: Hashers = testHasher,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams()
-): Coinbase =
-    StorageUnawareCoinbase(
-        mutableSetOf(),
-        Payout(BigDecimal("3")),
-        emptyHash,
-        Difficulty.INIT_DIFFICULTY,
-        2,
-        hasher,
-        formula,
-        coinbaseParams
-    ).also {
-        it.hash = it.digest(hasher)
-    }
+): HashedCoinbase =
+    HashedCoinbaseImpl(
+        mutableSetOf(), Payout(BigDecimal("3")),
+        Difficulty.INIT_DIFFICULTY, 2,
+        coinbaseParams, hasher, cbor, formula
+    )
 
 internal fun logActualToExpectedLists(
     explanationActual: String,
