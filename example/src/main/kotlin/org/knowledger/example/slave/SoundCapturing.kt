@@ -1,5 +1,8 @@
-package org.knowledger.agent.data
+package org.knowledger.example.slave
 
+import org.knowledger.ledger.core.data.PhysicalData
+import org.knowledger.ledger.data.NoiseData
+import org.knowledger.ledger.data.NoiseUnit
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 import javax.sound.sampled.AudioFormat
@@ -10,7 +13,7 @@ import kotlin.experimental.and
 import kotlin.math.abs
 import kotlin.math.sqrt
 
-fun captureSound(): Pair<BigDecimal, BigDecimal>? {
+fun captureSound(): PhysicalData? {
     var max: Short = -1
     var bytesRead: Int
     val line: TargetDataLine
@@ -69,6 +72,13 @@ fun captureSound(): Pair<BigDecimal, BigDecimal>? {
             rms += sample * sample
         }
 
-        Pair(BigDecimal(sqrt(rms / samples.size)), BigDecimal(peak))
+        PhysicalData(
+            BigDecimal.ZERO,
+            BigDecimal.ZERO,
+            NoiseData(
+                BigDecimal(sqrt(rms / samples.size)),
+                BigDecimal(peak), NoiseUnit.Rms
+            )
+        )
     }
 }
