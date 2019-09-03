@@ -10,7 +10,7 @@ import java.security.MessageDigest
 import java.security.Security
 
 @Serializable(with = HashAlgorithmSerializer::class)
-sealed class AvailableHashAlgorithms(algorithmTag: String) : Hasher {
+sealed class Hashers(algorithmTag: String) : Hasher {
     val digester: MessageDigest by lazy {
         MessageDigest.getInstance(
             algorithmTag
@@ -39,15 +39,15 @@ sealed class AvailableHashAlgorithms(algorithmTag: String) : Hasher {
             providerVersion == digester.provider.version
 
 
-    object SHA3256Hasher : AvailableHashAlgorithms("SHA3-256")
-    object SHA3512Hasher : AvailableHashAlgorithms("SHA3-512")
-    object Blake2b256Hasher : AvailableHashAlgorithms("BLAKE2B-256")
-    object Blake2b512Hasher : AvailableHashAlgorithms("BLAKE2B-512")
-    object Blake2s256Hasher : AvailableHashAlgorithms("BLAKE2S-256")
-    object SHA256Hasher : AvailableHashAlgorithms("SHA-256")
-    object SHA512Hasher : AvailableHashAlgorithms("SHA-512")
-    object Keccak256Hasher : AvailableHashAlgorithms("KECCAK-256")
-    object Keccak512Hasher : AvailableHashAlgorithms("KECCAK-512")
+    object SHA3256Hasher : Hashers("SHA3-256")
+    object SHA3512Hasher : Hashers("SHA3-512")
+    object Blake2b256Hasher : Hashers("BLAKE2B-256")
+    object Blake2b512Hasher : Hashers("BLAKE2B-512")
+    object Blake2s256Hasher : Hashers("BLAKE2S-256")
+    object SHA256Hasher : Hashers("SHA-256")
+    object SHA512Hasher : Hashers("SHA-512")
+    object Keccak256Hasher : Hashers("KECCAK-256")
+    object Keccak512Hasher : Hashers("KECCAK-512")
 
     companion object {
         val DEFAULT_HASHER = Blake2b256Hasher
@@ -61,7 +61,7 @@ sealed class AvailableHashAlgorithms(algorithmTag: String) : Hasher {
             }
         }
 
-        fun getHasher(hash: Hash): Hasher =
+        fun getHasher(hash: Hash): Hashers =
             when {
                 SHA3256Hasher.checkForCrypter(hash) -> SHA3256Hasher
                 SHA3512Hasher.checkForCrypter(hash) -> SHA3512Hasher
@@ -78,7 +78,7 @@ sealed class AvailableHashAlgorithms(algorithmTag: String) : Hasher {
         fun checkAlgorithms(
             digestLength: Int, algorithm: String,
             providerName: String, providerVersion: Double
-        ): AvailableHashAlgorithms? =
+        ): Hashers? =
             arrayOf(
                 SHA256Hasher, SHA512Hasher,
                 SHA3256Hasher, SHA3512Hasher,

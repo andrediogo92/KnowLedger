@@ -7,12 +7,12 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.SerialClassDescImpl
-import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.NoSuchHasherRegistered
 import kotlin.properties.Delegates
 
-@Serializer(forClass = AvailableHashAlgorithms::class)
-object HashAlgorithmSerializer : KSerializer<AvailableHashAlgorithms> {
+@Serializer(forClass = Hashers::class)
+object HashAlgorithmSerializer : KSerializer<Hashers> {
     override val descriptor: SerialDescriptor =
         object : SerialClassDescImpl("HashAlgorithm") {
             init {
@@ -23,7 +23,7 @@ object HashAlgorithmSerializer : KSerializer<AvailableHashAlgorithms> {
             }
         }
 
-    override fun deserialize(decoder: Decoder): AvailableHashAlgorithms {
+    override fun deserialize(decoder: Decoder): Hashers {
         val dec = decoder.beginStructure(descriptor)
         var digestLength by Delegates.notNull<Int>()
         lateinit var algorithm: String
@@ -38,7 +38,7 @@ object HashAlgorithmSerializer : KSerializer<AvailableHashAlgorithms> {
                 3 -> providerVersion = dec.decodeDoubleElement(descriptor, i)
             }
         }
-        return AvailableHashAlgorithms.checkAlgorithms(
+        return Hashers.checkAlgorithms(
             digestLength, algorithm,
             providerName, providerVersion
         ) ?: throw NoSuchHasherRegistered(
@@ -47,7 +47,7 @@ object HashAlgorithmSerializer : KSerializer<AvailableHashAlgorithms> {
         )
     }
 
-    override fun serialize(encoder: Encoder, obj: AvailableHashAlgorithms) {
+    override fun serialize(encoder: Encoder, obj: Hashers) {
         val enc = encoder.beginStructure(descriptor)
         enc.encodeIntElement(descriptor, 0, obj.digester.digestLength)
         enc.encodeStringElement(descriptor, 1, obj.digester.algorithm)

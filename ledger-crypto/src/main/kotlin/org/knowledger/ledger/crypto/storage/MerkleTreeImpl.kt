@@ -8,7 +8,7 @@ import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.misc.mapAndAdd
 import org.knowledger.ledger.core.misc.mapToArray
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.serial.HasherSerializer
+import org.knowledger.ledger.crypto.serial.HashAlgorithmSerializer
 
 @Serializable
 @SerialName("MerkleTree")
@@ -17,7 +17,7 @@ data class MerkleTreeImpl(
     internal val _collapsedTree: MutableList<Hash> = mutableListOf(),
     @SerialName("levelIndex")
     internal val _levelIndex: MutableList<Int> = mutableListOf(),
-    @Serializable(with = HasherSerializer::class)
+    @Serializable(with = HashAlgorithmSerializer::class)
     private var hasher: Hashers
 ) : MerkleTree {
     override fun serialize(cbor: Cbor): ByteArray =
