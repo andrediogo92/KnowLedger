@@ -14,21 +14,21 @@ import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 
-internal object SUCoinbaseStorageAdapter : LedgerStorageAdapter<StorageUnawareCoinbase> {
+internal object SUHCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseImpl> {
     override val id: String
         get() = CoinbaseStorageAdapter.id
     override val properties: Map<String, StorageType>
         get() = CoinbaseStorageAdapter.properties
 
     override fun store(
-        toStore: StorageUnawareCoinbase, session: NewInstanceSession
+        toStore: HashedCoinbaseImpl, session: NewInstanceSession
     ): StorageElement =
         session
             .newInstance(CoinbaseStorageAdapter.id)
             .setElementSet(
                 "payoutTXOs",
                 toStore
-                    .payoutTXO
+                    .transactionOutputs
                     .asSequence()
                     .map {
                         TransactionOutputStorageAdapter.store(
@@ -37,13 +37,13 @@ internal object SUCoinbaseStorageAdapter : LedgerStorageAdapter<StorageUnawareCo
                     }.toSet()
             ).setDifficultyProperty(
                 "difficulty", toStore.difficulty, session
-            ).setStorageProperty("blockheight", toStore.blockheight)
+            ).setStorageProperty("blockheight", toStore.blockHeight)
             .setPayoutProperty("payout", toStore.payout)
-            .setHashProperty("hashId", toStore.hashId)
+            .setHashProperty("hash", toStore.hash)
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<StorageUnawareCoinbase, LoadFailure> =
+    ): Outcome<HashedCoinbaseImpl, LoadFailure> =
         tryOrLoadUnknownFailure {
             val difficulty =
                 element.getDifficultyProperty("difficulty")
@@ -59,15 +59,16 @@ internal object SUCoinbaseStorageAdapter : LedgerStorageAdapter<StorageUnawareCo
                 }.allValues()
                 .mapSuccess { txos ->
                     LedgerHandle.getContainer(ledgerHash)!!.let {
-                        StorageUnawareCoinbase(
+                        HashedCoinbaseImpl(
                             txos.toMutableSet(),
                             element.getPayoutProperty("payout"),
-                            element.getHashProperty("hashId"),
                             difficulty,
                             blockheight,
-                            it.hasher,
                             it.formula,
-                            it.coinbaseParams
+                            it.coinbaseParams,
+                            it.cbor,
+                            it.hasher,
+                            element.getHashProperty("hash")
                         )
                     }
                 }

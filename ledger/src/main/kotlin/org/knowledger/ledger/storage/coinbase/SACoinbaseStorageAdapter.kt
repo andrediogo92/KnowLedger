@@ -21,14 +21,14 @@ internal object SACoinbaseStorageAdapter : LedgerStorageAdapter<StorageAwareCoin
         toStore: StorageAwareCoinbase, session: NewInstanceSession
     ): StorageElement =
         session.cacheStore(
-            SUCoinbaseStorageAdapter,
+            SUHCoinbaseStorageAdapter,
             toStore, toStore.coinbase
         )
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<StorageAwareCoinbase, LoadFailure> =
-        element.cachedLoad(ledgerHash, SUCoinbaseStorageAdapter) {
+        element.cachedLoad(ledgerHash, SUHCoinbaseStorageAdapter) {
             StorageAwareCoinbase(it)
         }
 }
