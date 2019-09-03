@@ -2,15 +2,17 @@ package org.knowledger.ledger.builders
 
 import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.data.Payout
+import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.data.PhysicalData
-import org.knowledger.ledger.storage.Block
-import org.knowledger.ledger.storage.BlockHeader
-import org.knowledger.ledger.storage.Coinbase
-import org.knowledger.ledger.storage.MerkleTree
-import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.crypto.storage.MerkleTree
+import org.knowledger.ledger.storage.block.Block
+import org.knowledger.ledger.storage.blockheader.BlockHeader
+import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
+import org.knowledger.ledger.storage.coinbase.Coinbase
+import org.knowledger.ledger.storage.coinbase.HashedCoinbase
+import org.knowledger.ledger.storage.transaction.HashedTransaction
+import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
 import java.security.PublicKey
 import java.util.*
 
@@ -19,9 +21,9 @@ interface ChainBuilder {
     val tag: Tag
 
     fun block(
-        transactions: SortedSet<Transaction>,
-        coinbase: Coinbase,
-        blockHeader: BlockHeader,
+        transactions: SortedSet<HashedTransaction>,
+        coinbase: HashedCoinbase,
+        blockHeader: HashedBlockHeader,
         merkleTree: MerkleTree
     ): Block
 
@@ -34,7 +36,7 @@ interface ChainBuilder {
     ): BlockHeader
 
     fun coinbase(
-        payoutTXO: MutableSet<TransactionOutput>,
+        payoutTXO: MutableSet<HashedTransactionOutput>,
         payout: Payout,
         hash: Hash,
         difficulty: Difficulty,
@@ -49,9 +51,9 @@ interface ChainBuilder {
     fun transaction(
         publicKey: PublicKey, physicalData: PhysicalData,
         signature: ByteArray, transactionId: Hash
-    ): Transaction
+    ): HashedTransaction
 
     fun transaction(
         data: PhysicalData
-    ): Transaction
+    ): HashedTransaction
 }

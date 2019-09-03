@@ -3,21 +3,23 @@ package org.knowledger.ledger.builders
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.data.Payout
+import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.data.PhysicalData
-import org.knowledger.ledger.service.Identity
+import org.knowledger.ledger.crypto.service.Identity
+import org.knowledger.ledger.crypto.storage.MerkleTree
+import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.service.LedgerContainer
-import org.knowledger.ledger.storage.Block
-import org.knowledger.ledger.storage.BlockHeader
-import org.knowledger.ledger.storage.Coinbase
-import org.knowledger.ledger.storage.MerkleTree
-import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.storage.TransactionOutput
-import org.knowledger.ledger.storage.block.StorageUnawareBlock
-import org.knowledger.ledger.storage.blockheader.StorageUnawareBlockHeader
-import org.knowledger.ledger.storage.coinbase.StorageUnawareCoinbase
-import org.knowledger.ledger.storage.merkletree.StorageUnawareMerkleTree
+import org.knowledger.ledger.storage.block.Block
+import org.knowledger.ledger.storage.block.BlockImpl
+import org.knowledger.ledger.storage.blockheader.BlockHeader
+import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
+import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
+import org.knowledger.ledger.storage.coinbase.HashedCoinbase
+import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
+import org.knowledger.ledger.storage.transaction.HashedTransaction
+import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
+import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
 import java.security.PublicKey
 import java.util.*
 
@@ -27,17 +29,17 @@ internal data class WorkingChainBuilder(
     internal val identity: Identity
 ) : ChainBuilder {
     override val chainHash: Hash
-        get() = chainId.hashId
+        get() = chainId.hash
     override val tag: Tag
         get() = chainId.tag
 
     override fun block(
-        transactions: SortedSet<Transaction>,
-        coinbase: Coinbase,
-        blockHeader: BlockHeader,
+        transactions: SortedSet<HashedTransaction>,
+        coinbase: HashedCoinbase,
+        blockHeader: HashedBlockHeader,
         merkleTree: MerkleTree
     ): Block =
-        StorageUnawareBlock(
+        BlockImpl(
             transactions, coinbase,
             blockHeader, merkleTree
         )
@@ -49,61 +51,64 @@ internal data class WorkingChainBuilder(
         seconds: Long,
         nonce: Long
     ): BlockHeader =
-        StorageUnawareBlockHeader(
+        HashedBlockHeaderImpl(
             chainId = chainId,
-            hasher = ledgerContainer.hasher,
             previousHash = previousHash,
-            params = ledgerContainer.ledgerParams.blockParams,
+            blockParams = ledgerContainer.ledgerParams.blockParams,
             merkleRoot = merkleRoot,
             hash = hash,
             seconds = seconds,
-            nonce = nonce
+            nonce = nonce,
+            cbor = ledgerContainer.cbor,
+            hasher = ledgerContainer.hasher
         )
 
     override fun coinbase(
-        payoutTXO: MutableSet<TransactionOutput>,
+        payoutTXO: MutableSet<HashedTransactionOutput>,
         payout: Payout,
         hash: Hash,
         difficulty: Difficulty,
         blockheight: Long
-    ): Coinbase =
-        StorageUnawareCoinbase(
+    ): HashedCoinbase =
+        HashedCoinbaseImpl(
             payoutTXO = payoutTXO,
             payout = payout,
-            hash = hash,
             difficulty = difficulty,
             blockheight = blockheight,
+            coinbaseParams = ledgerContainer.coinbaseParams,
             hasher = ledgerContainer.hasher,
-            formula = ledgerContainer.formula,
-            coinbaseParams = ledgerContainer.coinbaseParams
+            cbor = ledgerContainer.cbor,
+            formula = ledgerContainer.formula
         )
 
     override fun merkletree(
         collapsedTree: MutableList<Hash>,
         levelIndex: MutableList<Int>
     ): MerkleTree =
-        StorageUnawareMerkleTree(
+        MerkleTreeImpl(
             hasher = ledgerContainer.hasher,
-            collapsedTree = collapsedTree,
-            levelIndex = levelIndex
+            _collapsedTree = collapsedTree,
+            _levelIndex = levelIndex
         )
 
     override fun transaction(
         publicKey: PublicKey, physicalData: PhysicalData,
-        signature: ByteArray, transactionId: Hash
-    ): Transaction =
-        Transaction(
-            chainId = chainId, publicKey = publicKey,
-            data = physicalData, signatureInternal = signature,
-            hash = transactionId, hasher = ledgerContainer.hasher
+        signature: ByteArray, hash: Hash
+    ): HashedTransaction =
+        HashedTransactionImpl(
+            publicKey = publicKey, hash = hash,
+            data = physicalData, signature = signature,
+            hasher = ledgerContainer.hasher,
+            cbor = ledgerContainer.cbor
         )
 
     override fun transaction(
         data: PhysicalData
-    ): Transaction =
-        Transaction(
-            chainId = chainId, identity = identity,
-            data = data, hasher = ledgerContainer.hasher
+    ): HashedTransaction =
+        HashedTransactionImpl(
+            identity = identity, data = data,
+            hasher = ledgerContainer.hasher,
+            cbor = ledgerContainer.cbor
         )
 
 }
