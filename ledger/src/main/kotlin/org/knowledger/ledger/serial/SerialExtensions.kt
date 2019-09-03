@@ -7,14 +7,17 @@ import kotlinx.serialization.modules.overwriteWith
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
 import org.knowledger.ledger.config.chainid.StorageUnawareChainId
+import org.knowledger.ledger.core.data.DataFormula
+import org.knowledger.ledger.core.data.DefaultDiff
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.misc.mapToArray
+import org.knowledger.ledger.crypto.serial.DefaultDataFormulaSerializer
 import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.data.DummyData
-import org.knowledger.ledger.service.pools.TransactionPool
 import org.knowledger.ledger.service.pools.transaction.StorageAwareTransactionPool
-import org.knowledger.ledger.service.pools.transaction.StorageUnawareTransactionPool
+import org.knowledger.ledger.service.pools.transaction.TransactionPool
+import org.knowledger.ledger.service.pools.transaction.TransactionPoolImpl
 import org.knowledger.ledger.storage.block.Block
 import org.knowledger.ledger.storage.block.BlockImpl
 import org.knowledger.ledger.storage.block.StorageAwareBlock
@@ -59,7 +62,7 @@ val baseModule: SerialModule = SerializersModule {
     }
     polymorphic(TransactionPool::class) {
         StorageAwareTransactionPool::class with StorageAwareTransactionPool.serializer()
-        StorageUnawareTransactionPool::class with StorageUnawareTransactionPool.serializer()
+        TransactionPoolImpl::class with TransactionPoolImpl.serializer()
     }
     /*
     polymorphic(BlockPool::class) {
@@ -76,5 +79,15 @@ inline fun SerialModule.withLedger(
         polymorphic(LedgerData::class) {
             with()
             DummyData::class with DummyDataSerializer
+        }
+    })
+
+inline fun SerialModule.withDataFormulas(
+    crossinline with: PolymorphicModuleBuilder<Any>.() -> Unit
+): SerialModule =
+    overwriteWith(SerializersModule {
+        polymorphic(DataFormula::class) {
+            with()
+            DefaultDiff::class with DefaultDataFormulaSerializer
         }
     })
