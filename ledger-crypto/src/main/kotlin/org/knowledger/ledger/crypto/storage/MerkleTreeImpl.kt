@@ -4,10 +4,11 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.misc.mapAndAdd
 import org.knowledger.ledger.core.misc.mapToArray
+import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.ledger.crypto.serial.HasherSerializer
 
 @Serializable
 @SerialName("MerkleTree")
@@ -16,7 +17,8 @@ data class MerkleTreeImpl(
     internal val _collapsedTree: MutableList<Hash> = mutableListOf(),
     @SerialName("levelIndex")
     internal val _levelIndex: MutableList<Int> = mutableListOf(),
-    private var hasher: Hasher
+    @Serializable(with = HasherSerializer::class)
+    private var hasher: Hashers
 ) : MerkleTree {
     override fun serialize(cbor: Cbor): ByteArray =
         cbor.dump(serializer(), this)
@@ -31,14 +33,14 @@ data class MerkleTreeImpl(
 
 
     constructor(
-        hasher: Hasher,
+        hasher: Hashers,
         data: Array<out Hashing>
     ) : this(hasher = hasher) {
         rebuildMerkleTree(data)
     }
 
     constructor(
-        hasher: Hasher,
+        hasher: Hashers,
         coinbase: Hashing,
         data: Array<out Hashing>
     ) : this(hasher = hasher) {
@@ -255,7 +257,7 @@ data class MerkleTreeImpl(
         return res
     }
 
-    override fun changeHasher(hasher: Hasher) {
+    override fun changeHasher(hasher: Hashers) {
         TODO("not implemented")
     }
 

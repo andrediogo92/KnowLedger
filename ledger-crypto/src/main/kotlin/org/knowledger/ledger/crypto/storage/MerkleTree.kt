@@ -3,10 +3,10 @@ package org.knowledger.ledger.crypto.storage
 
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
-import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.serial.HashSerializable
 import org.knowledger.ledger.core.storage.LedgerContract
+import org.knowledger.ledger.crypto.hash.Hashers
 
 interface MerkleTree : HashSerializable,
                        Hashing,
@@ -53,7 +53,7 @@ interface MerkleTree : HashSerializable,
      * Uses the provided [hasher] to rebuild the [MerkleTree] in-place with the new [hasher].
      * If the [hasher] provided is already the one used it's a no-op.
      */
-    fun changeHasher(hasher: Hasher)
+    fun changeHasher(hasher: Hashers)
 
     /**
      * Uses the provided [diff] array of changed elements and their indexes in [diffIndexes]
