@@ -17,21 +17,21 @@ import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import java.time.Instant
 
-internal object SUBlockHeaderStorageAdapter : LedgerStorageAdapter<StorageUnawareBlockHeader> {
+internal object SUHBlockHeaderStorageAdapter : LedgerStorageAdapter<HashedBlockHeaderImpl> {
     override val id: String
         get() = BlockHeaderStorageAdapter.id
     override val properties: Map<String, StorageType>
         get() = BlockHeaderStorageAdapter.properties
 
     override fun store(
-        toStore: StorageUnawareBlockHeader, session: NewInstanceSession
+        toStore: HashedBlockHeaderImpl, session: NewInstanceSession
     ): StorageElement =
         session
             .newInstance(BlockHeaderStorageAdapter.id)
             .setLinked(
                 "chainId", ChainIdStorageAdapter,
                 toStore.chainId, session
-            ).setHashProperty("hashId", toStore.hashId)
+            ).setHashProperty("hash", toStore.hash)
             .setHashProperty("merkleRoot", toStore.merkleRoot)
             .setHashProperty("previousHash", toStore.previousHash)
             .setLinked(
@@ -43,10 +43,10 @@ internal object SUBlockHeaderStorageAdapter : LedgerStorageAdapter<StorageUnawar
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<StorageUnawareBlockHeader, LoadFailure> =
+    ): Outcome<HashedBlockHeaderImpl, LoadFailure> =
         tryOrLoadUnknownFailure {
             val hash =
-                element.getHashProperty("hashId")
+                element.getHashProperty("hash")
 
             val merkleRoot =
                 element.getHashProperty("merkleRoot")
@@ -73,16 +73,19 @@ internal object SUBlockHeaderStorageAdapter : LedgerStorageAdapter<StorageUnawar
                 val instant = Instant.ofEpochSecond(
                     seconds
                 )
-                StorageUnawareBlockHeader(
-                    chainId,
-                    LedgerHandle.getHasher(chainId.ledgerHash)!!,
-                    hash,
-                    blockParams,
-                    previousHash,
-                    merkleRoot,
-                    seconds,
-                    nonce
-                )
+                LedgerHandle.getContainer(chainId.ledgerHash)!!.let {
+                    HashedBlockHeaderImpl(
+                        chainId,
+                        it.hasher,
+                        it.cbor,
+                        hash,
+                        blockParams,
+                        previousHash,
+                        merkleRoot,
+                        seconds,
+                        nonce
+                    )
+                }
             }.mapFailure {
                 it.intoLoad()
             }

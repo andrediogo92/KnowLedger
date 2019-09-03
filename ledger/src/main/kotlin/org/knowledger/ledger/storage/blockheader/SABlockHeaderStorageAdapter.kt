@@ -21,7 +21,7 @@ internal object SABlockHeaderStorageAdapter : LedgerStorageAdapter<StorageAwareB
         toStore: StorageAwareBlockHeader, session: NewInstanceSession
     ): StorageElement =
         session.cacheStore(
-            SUBlockHeaderStorageAdapter,
+            SUHBlockHeaderStorageAdapter,
             toStore, toStore.blockHeader
         )
 
@@ -29,7 +29,7 @@ internal object SABlockHeaderStorageAdapter : LedgerStorageAdapter<StorageAwareB
         ledgerHash: Hash, element: StorageElement
     ): Outcome<StorageAwareBlockHeader, LoadFailure> =
         element.cachedLoad(
-            ledgerHash, SUBlockHeaderStorageAdapter
+            ledgerHash, SUHBlockHeaderStorageAdapter
         ) {
             StorageAwareBlockHeader(it)
         }
