@@ -1,14 +1,14 @@
 package org.knowledger.ledger.service.handles
 
+import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.data.DataFormula
 import org.knowledger.ledger.core.data.DefaultDiff
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.base64DecodeToHash
-import org.knowledger.ledger.core.misc.base64Encode
+import org.knowledger.ledger.core.misc.base64DecodedToHash
+import org.knowledger.ledger.core.misc.base64Encoded
 import org.knowledger.ledger.core.misc.classDigest
 import org.knowledger.ledger.core.results.Failable
 import org.knowledger.ledger.core.results.HardFailure
@@ -17,9 +17,10 @@ import org.knowledger.ledger.core.results.PropagatedFailure
 import org.knowledger.ledger.core.results.fold
 import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.storage.results.QueryFailure
+import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
 import org.knowledger.ledger.results.intoLedger
-import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.LedgerConfig
 import org.knowledger.ledger.service.LedgerContainer
 import org.knowledger.ledger.service.ServiceClass
@@ -44,14 +45,15 @@ class LedgerHandle internal constructor(
 ) : ServiceClass {
     private val pw: PersistenceWrapper = builder.persistenceWrapper
     val ledgerConfig: LedgerConfig = builder.ledgerConfig
-    val ledgerHash = ledgerConfig.ledgerId.hashId
-    val hasher: Hasher = builder.hasher
+    val ledgerHash = ledgerConfig.ledgerId.hash
+    val hasher: Hashers = builder.hasher
+    val cbor: Cbor = builder.cbor
     val isClosed: Boolean
         get() = pw.isClosed
 
     fun close() {
         pw.closeCurrentSession()
-        containers.remove(ledgerHash.base64Encode())
+        containers.remove(ledgerHash)
     }
 
     val knownChainTypes: Outcome<Sequence<String>, QueryFailure>
@@ -76,8 +78,8 @@ class LedgerHandle internal constructor(
     fun addStorageAdapter(
         adapter: AbstractStorageAdapter<out LedgerData>
     ): Boolean =
-        dataAdapters.add(adapter).apply {
-            if (this) {
+        dataAdapters.add(adapter).also {
+            if (it) {
                 pw.registerSchema(adapter)
             }
         }
@@ -87,7 +89,7 @@ class LedgerHandle internal constructor(
         clazz: Class<in T>
     ): Outcome<ChainHandle, LedgerFailure> =
         if (dataAdapters.any { it.clazz == clazz }) {
-            pw.getChainHandle(clazz.classDigest)
+            pw.getChainHandle(clazz.classDigest(hasher))
         } else {
             Outcome.Error(
                 LedgerFailure.NoKnownStorageAdapter(
@@ -116,8 +118,9 @@ class LedgerHandle internal constructor(
         adapter: AbstractStorageAdapter<out T>
     ): Outcome<ChainHandle, LedgerFailure> =
         ChainHandle(
-            adapter.id.base64DecodeToHash(),
-            ledgerConfig.ledgerId.hashId, hasher
+            adapter.id.base64DecodedToHash(),
+            ledgerConfig.ledgerId.hash,
+            hasher, cbor
         ).let { ch ->
             addStorageAdapter(adapter)
             pw.tryAddChainHandle(ch).fold(
@@ -134,7 +137,9 @@ class LedgerHandle internal constructor(
 
 
     class Builder {
-        fun withLedgerIdentity(identity: String): Outcome<LedgerByTag, Failure> =
+        fun withLedgerIdentity(
+            identity: String
+        ): Outcome<LedgerByTag, Failure> =
             if (identity == "") {
                 Outcome.Error(
                     Failure.NoIdentitySupplied
@@ -143,7 +148,9 @@ class LedgerHandle internal constructor(
                 Outcome.Ok(LedgerByTag(identity))
             }
 
-        fun byHashRetrieval(hash: Hash): Outcome<LedgerByHash, Failure> =
+        fun byHashRetrieval(
+            hash: Hash
+        ): Outcome<LedgerByHash, Failure> =
             if (hash == Hash.emptyHash) {
                 Outcome.Error(
                     Failure.NoIdentitySupplied
@@ -194,13 +201,13 @@ class LedgerHandle internal constructor(
             )
 
         internal val containers =
-            mutableMapOf<String, LedgerContainer>()
+            mutableMapOf<Hash, LedgerContainer>()
 
         fun getStorageAdapter(
             dataName: Tag
         ): AbstractStorageAdapter<out LedgerData>? =
             dataAdapters.find {
-                it.id == dataName.base64Encode()
+                it.id == dataName.base64Encoded()
             }
 
         fun getStorageAdapter(
@@ -217,23 +224,33 @@ class LedgerHandle internal constructor(
                 it.clazz == clazz
             }
 
-        internal fun getContainer(ledgerHash: Hash): LedgerContainer? =
-            containers[ledgerHash.base64Encode()]
+        internal fun getContainer(
+            ledgerHash: Hash
+        ): LedgerContainer? =
+            containers[ledgerHash]
 
 
-        internal fun getHasher(ledgerHash: Hash): Hasher? =
-            containers[ledgerHash.base64Encode()]?.hasher
+        internal fun getHasher(
+            ledgerHash: Hash
+        ): Hashers? =
+            containers[ledgerHash]?.hasher
 
-        internal fun getFormula(ledgerHash: Hash): DataFormula? =
-            containers[ledgerHash.base64Encode()]?.formula
+        internal fun getFormula(
+            ledgerHash: Hash
+        ): DataFormula? =
+            containers[ledgerHash]?.formula
 
-        fun registerFormula(formula: DataFormula) {
+        fun registerFormula(
+            formula: DataFormula
+        ) {
             knownFormulas += formula
         }
 
-        internal fun findFormula(formula: Hash): DataFormula? =
+        internal fun findFormula(
+            formula: Hash, hasher: Hashers
+        ): DataFormula? =
             knownFormulas.find {
-                it.classDigest.contentEquals(formula)
+                it.classDigest(hasher) == (formula)
             }
     }
 }
