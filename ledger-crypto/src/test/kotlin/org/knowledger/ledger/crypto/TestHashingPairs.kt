@@ -7,7 +7,7 @@ import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.test.applyHashInPairs
 import org.knowledger.ledger.core.test.randomByteArray
 import org.knowledger.ledger.core.test.randomInt
-import org.knowledger.ledger.crypto.hash.AvailableHashAlgorithms.Companion.DEFAULT_HASHER
+import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.tinylog.kotlin.Logger
 
 
