@@ -1,4 +1,4 @@
-package org.knowledger.ledger.service.pool
+package org.knowledger.ledger.service.pools.transaction
 
 import org.knowledger.ledger.adapters.cacheStore
 import org.knowledger.ledger.adapters.cachedLoad

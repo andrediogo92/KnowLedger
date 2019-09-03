@@ -1,11 +1,13 @@
-package org.knowledger.ledger.service.pool
+package org.knowledger.ledger.service.pools.transaction
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.hash.Hash
 
-@JsonClass(generateAdapter = true)
-data class StorageUnawareTransactionPool internal constructor(
+@Serializable
+@SerialName("TransactionPool")
+data class TransactionPoolImpl internal constructor(
     internal val chainId: ChainId,
     internal val txs: MutableList<Hash> = mutableListOf(),
     internal val confirm: MutableList<Boolean> = mutableListOf()
@@ -16,15 +18,6 @@ data class StorageUnawareTransactionPool internal constructor(
     override val confirmations: List<Boolean>
         get() = confirm
 
-    override val unconfirmed: List<Hash>
-        get() = transactions.filterIndexed { index, _ ->
-            !confirm[index]
-        }
-
-    override val firstUnconfirmed: Hash?
-        get() = transactions.asSequence().filterIndexed { index, _ ->
-            !confirm[index]
-        }.first()
 
     operator fun plus(transaction: Hash): Boolean {
         val first = txs.add(transaction)

@@ -1,4 +1,4 @@
-package org.knowledger.ledger.service.pool
+package org.knowledger.ledger.service.pools.transaction
 
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.core.database.NewInstanceSession
@@ -13,7 +13,7 @@ import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
 import org.knowledger.ledger.service.results.LedgerFailure
 
 object SUTransactionPoolStorageAdapter :
-    ServiceStorageAdapter<StorageUnawareTransactionPool> {
+    ServiceStorageAdapter<TransactionPoolImpl> {
     override val id: String
         get() = TransactionPoolStorageAdapter.id
 
@@ -21,7 +21,7 @@ object SUTransactionPoolStorageAdapter :
         get() = TransactionPoolStorageAdapter.properties
 
     override fun store(
-        toStore: StorageUnawareTransactionPool,
+        toStore: TransactionPoolImpl,
         session: NewInstanceSession
     ): StorageElement =
         session
@@ -32,12 +32,12 @@ object SUTransactionPoolStorageAdapter :
     override fun load(
         ledgerHash: Hash,
         element: StorageElement
-    ): Outcome<StorageUnawareTransactionPool, LedgerFailure> =
+    ): Outcome<TransactionPoolImpl, LedgerFailure> =
         tryOrLedgerUnknownFailure {
             ChainIdStorageAdapter.load(
                 ledgerHash, element.getLinked("chainId")
             ).mapSuccess {
-                StorageUnawareTransactionPool(
+                TransactionPoolImpl(
                     it,
                     element.getMutableHashList("transactions"),
                     element.getStorageProperty("confirmations")
