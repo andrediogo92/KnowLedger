@@ -18,6 +18,7 @@ dependencies {
     //Project dependencies
     implementation(project(":ledger"))
     implementation(project(":ledger-core"))
+    implementation(project(":ledger-crypto"))
     implementation(project(":agent-core"))
 
 
