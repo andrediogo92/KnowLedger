@@ -12,7 +12,6 @@ import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.service.LedgerContainer
 import org.knowledger.ledger.storage.block.Block
 import org.knowledger.ledger.storage.block.BlockImpl
-import org.knowledger.ledger.storage.blockheader.BlockHeader
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbase
@@ -20,6 +19,7 @@ import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
 import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
+import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
 import java.security.PublicKey
 import java.util.*
 
@@ -40,8 +40,10 @@ internal data class WorkingChainBuilder(
         merkleTree: MerkleTree
     ): Block =
         BlockImpl(
-            transactions, coinbase,
-            blockHeader, merkleTree
+            data = transactions,
+            coinbase = coinbase,
+            header = blockHeader,
+            merkleTree = merkleTree
         )
 
     override fun blockheader(
@@ -50,7 +52,7 @@ internal data class WorkingChainBuilder(
         hash: Hash,
         seconds: Long,
         nonce: Long
-    ): BlockHeader =
+    ): HashedBlockHeader =
         HashedBlockHeaderImpl(
             chainId = chainId,
             previousHash = previousHash,
@@ -64,31 +66,42 @@ internal data class WorkingChainBuilder(
         )
 
     override fun coinbase(
-        payoutTXO: MutableSet<HashedTransactionOutput>,
-        payout: Payout,
-        hash: Hash,
-        difficulty: Difficulty,
-        blockheight: Long
+        transactionOutputs: Set<HashedTransactionOutput>,
+        payout: Payout, difficulty: Difficulty,
+        blockheight: Long, hash: Hash
     ): HashedCoinbase =
         HashedCoinbaseImpl(
-            payoutTXO = payoutTXO,
-            payout = payout,
-            difficulty = difficulty,
+            transactionOutputs = transactionOutputs,
+            payout = payout, difficulty = difficulty,
             blockheight = blockheight,
             coinbaseParams = ledgerContainer.coinbaseParams,
+            formula = ledgerContainer.formula, hash = hash,
             hasher = ledgerContainer.hasher,
-            cbor = ledgerContainer.cbor,
-            formula = ledgerContainer.formula
+            cbor = ledgerContainer.cbor
         )
 
     override fun merkletree(
-        collapsedTree: MutableList<Hash>,
-        levelIndex: MutableList<Int>
+        collapsedTree: List<Hash>,
+        levelIndex: List<Int>
     ): MerkleTree =
         MerkleTreeImpl(
             hasher = ledgerContainer.hasher,
-            _collapsedTree = collapsedTree,
-            _levelIndex = levelIndex
+            collapsedTree = collapsedTree,
+            levelIndex = levelIndex
+        )
+
+    override fun transactionOutput(
+        transactionSet: Set<Hash>,
+        prevCoinbase: Hash,
+        publicKey: PublicKey, hash: Hash,
+        payout: Payout
+    ): HashedTransactionOutput =
+        HashedTransactionOutputImpl(
+            previousCoinbase = prevCoinbase,
+            publicKey = publicKey, hash = hash,
+            payout = payout, transactionSet = transactionSet,
+            hasher = ledgerContainer.hasher,
+            cbor = ledgerContainer.cbor
         )
 
     override fun transaction(

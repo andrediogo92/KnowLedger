@@ -7,9 +7,7 @@ import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.storage.block.Block
-import org.knowledger.ledger.storage.blockheader.BlockHeader
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
-import org.knowledger.ledger.storage.coinbase.Coinbase
 import org.knowledger.ledger.storage.coinbase.HashedCoinbase
 import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
@@ -33,20 +31,25 @@ interface ChainBuilder {
         hash: Hash,
         seconds: Long,
         nonce: Long
-    ): BlockHeader
+    ): HashedBlockHeader
 
     fun coinbase(
-        payoutTXO: MutableSet<HashedTransactionOutput>,
-        payout: Payout,
-        hash: Hash,
-        difficulty: Difficulty,
-        blockheight: Long
-    ): Coinbase
+        transactionOutputs: Set<HashedTransactionOutput>,
+        payout: Payout, difficulty: Difficulty,
+        blockheight: Long, hash: Hash
+    ): HashedCoinbase
 
     fun merkletree(
-        collapsedTree: MutableList<Hash>,
-        levelIndex: MutableList<Int>
+        collapsedTree: List<Hash>,
+        levelIndex: List<Int>
     ): MerkleTree
+
+    fun transactionOutput(
+        transactionSet: Set<Hash>,
+        prevCoinbase: Hash,
+        publicKey: PublicKey, hash: Hash,
+        payout: Payout
+    ): HashedTransactionOutput
 
     fun transaction(
         publicKey: PublicKey, physicalData: PhysicalData,
