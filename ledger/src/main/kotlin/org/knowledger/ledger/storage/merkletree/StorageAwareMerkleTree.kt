@@ -19,7 +19,9 @@ import org.knowledger.ledger.storage.simpleUpdate
 internal data class StorageAwareMerkleTree(
     internal val merkleTree: MerkleTreeImpl
 ) : MerkleTree by merkleTree, StorageAware<MerkleTree> {
-    override fun update(session: NewInstanceSession): Outcome<StorageID, UpdateFailure> =
+    override fun update(
+        session: NewInstanceSession
+    ): Outcome<StorageID, UpdateFailure> =
         simpleUpdate(invalidatedFields)
 
     override val invalidated: Map<String, Any>
@@ -35,14 +37,18 @@ internal data class StorageAwareMerkleTree(
 
     internal constructor(
         hasher: Hashers
-    ) : this(MerkleTreeImpl(hasher = hasher))
+    ) : this(
+        merkleTree = MerkleTreeImpl(hasher = hasher)
+    )
 
     internal constructor(
         hasher: Hashers,
         coinbase: Hashing,
         data: Array<out Hashing>
-    ) : this(hasher) {
-        rebuildMerkleTree(coinbase, data)
+    ) : this(hasher = hasher) {
+        rebuildMerkleTree(
+            coinbase = coinbase, data = data
+        )
     }
 
     override fun rebuildMerkleTree(data: Array<out Hashing>) {

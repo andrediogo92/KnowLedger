@@ -36,20 +36,17 @@ internal data class HashedTransactionOutputImpl(
 
 
     constructor(
-        transactionOutput: PublicKey,
-        previousUTXO: Hash,
-        payout: Payout,
-        newTransaction: Hash,
-        previousTransaction: Hash,
-        hasher: Hashers,
+        publicKey: PublicKey, previousCoinbase: Hash,
+        payout: Payout, newTransaction: Hash,
+        previousTransaction: Hash, hasher: Hashers,
         cbor: Cbor
     ) : this(
         transactionOutput = TransactionOutputImpl(
-            transactionOutput,
-            previousUTXO,
-            payout,
-            newTransaction,
-            previousTransaction
+            publicKey = publicKey,
+            previousCoinbase = previousCoinbase,
+            payout = payout,
+            newTransaction = newTransaction,
+            previousTransaction = previousTransaction
         ),
         hasher = hasher,
         cbor = cbor
@@ -59,15 +56,16 @@ internal data class HashedTransactionOutputImpl(
 
     constructor(
         publicKey: PublicKey, previousCoinbase: Hash,
-        payout: Payout, transactionSet: MutableSet<Hash>,
+        payout: Payout, transactionSet: Set<Hash>,
         hash: Hash, hasher: Hashers, cbor: Cbor
     ) : this(
-        TransactionOutputImpl(
-            publicKey, previousCoinbase, payout,
-            transactionSet
-        ), hash, hasher, cbor
+        transactionOutput = TransactionOutputImpl(
+            publicKey = publicKey,
+            previousCoinbase = previousCoinbase,
+            _payout = payout,
+            _transactionHashes = transactionSet.toMutableSet()
+        ), _hash = hash, hasher = hasher, cbor = cbor
     )
-
 
     override fun updateHash(
         hasher: Hasher, cbor: Cbor
@@ -78,7 +76,9 @@ internal data class HashedTransactionOutputImpl(
                 _hash!!.bytes.size.toLong()
     }
 
-    override fun recalculateSize(hasher: Hasher, cbor: Cbor): Long {
+    override fun recalculateSize(
+        hasher: Hasher, cbor: Cbor
+    ): Long {
         updateHash(hasher, cbor)
         return cachedSize as Long
     }
@@ -90,20 +90,26 @@ internal data class HashedTransactionOutputImpl(
         return _hash as Hash
     }
 
-    override fun addToPayout(payout: Payout, tx: Hash, prev: Hash) {
-        transactionOutput.addToPayout(payout, tx, prev)
+    override fun addToPayout(
+        payout: Payout, newTransaction: Hash, previousTransaction: Hash
+    ) {
+        transactionOutput.addToPayout(payout, newTransaction, previousTransaction)
         if (cachedSize != null) {
             cachedSize = (cachedSize as Long) +
-                    tx.bytes.size.toLong() +
-                    prev.bytes.size.toLong()
+                    newTransaction.bytes.size.toLong() +
+                    previousTransaction.bytes.size.toLong()
         }
         updateHash(hasher, cbor)
     }
 
-    override fun serialize(cbor: Cbor): ByteArray =
+    override fun serialize(
+        cbor: Cbor
+    ): ByteArray =
         cbor.dump(serializer(), this)
 
-    override fun equals(other: Any?): Boolean {
+    override fun equals(
+        other: Any?
+    ): Boolean {
         if (this === other) return true
         if (other !is HashedTransactionOutputImpl) return false
 

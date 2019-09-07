@@ -40,8 +40,9 @@ internal data class HashedBlockHeaderImpl(
         previousHash: Hash, blockParams: BlockParams
     ) : this(
         blockHeader = BlockHeaderImpl(
-            chainId, previousHash,
-            blockParams
+            chainId = chainId,
+            previousHash = previousHash,
+            params = blockParams
         ),
         hasher = hasher,
         cbor = cbor
@@ -53,11 +54,12 @@ internal data class HashedBlockHeaderImpl(
         blockParams: BlockParams, previousHash: Hash,
         merkleRoot: Hash, seconds: Long, nonce: Long
     ) : this(
-        BlockHeaderImpl(
-            chainId, previousHash,
-            blockParams, merkleRoot,
-            seconds, nonce
-        ), hash, hasher, cbor
+        blockHeader = BlockHeaderImpl(
+            chainId = chainId,
+            previousHash = previousHash,
+            params = blockParams, _merkleRoot = merkleRoot,
+            seconds = seconds, _nonce = nonce
+        ), _hash = hash, hasher = hasher, cbor = cbor
     )
 
     override fun serialize(cbor: Cbor): ByteArray =

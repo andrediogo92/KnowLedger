@@ -19,7 +19,7 @@ import org.knowledger.ledger.storage.simpleUpdate
 @SerialName("StorageBlockHeaderWrapper")
 internal data class StorageAwareBlockHeader(
     internal val blockHeader: HashedBlockHeaderImpl
-) : HashedBlockHeader,
+) : HashedBlockHeader by blockHeader,
     StorageAware<HashedBlockHeader> {
     override fun newHash() {
         blockHeader.newHash()
@@ -28,23 +28,6 @@ internal data class StorageAwareBlockHeader(
     override fun clone(): HashedBlockHeader =
         blockHeader.clone()
 
-    override val chainId: ChainId
-        get() = blockHeader.chainId
-
-    override val merkleRoot: Hash
-        get() = blockHeader.merkleRoot
-
-    override val previousHash: Hash
-        get() = blockHeader.previousHash
-
-    override val params: BlockParams
-        get() = blockHeader.params
-
-    override val seconds: Long
-        get() = blockHeader.seconds
-
-    override val nonce: Long
-        get() = blockHeader.nonce
 
     override fun serialize(cbor: Cbor): ByteArray =
         blockHeader.serialize(cbor)
@@ -80,9 +63,10 @@ internal data class StorageAwareBlockHeader(
         chainId: ChainId, hasher: Hashers, cbor: Cbor,
         previousHash: Hash, blockParams: BlockParams
     ) : this(
-        HashedBlockHeaderImpl(
-            chainId, hasher, cbor,
-            previousHash, blockParams
+        blockHeader = HashedBlockHeaderImpl(
+            chainId = chainId, hasher = hasher,
+            cbor = cbor, previousHash = previousHash,
+            blockParams = blockParams
         )
     )
 }

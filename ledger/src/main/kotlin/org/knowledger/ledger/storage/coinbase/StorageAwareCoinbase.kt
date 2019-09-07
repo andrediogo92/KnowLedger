@@ -20,12 +20,8 @@ import org.tinylog.kotlin.Logger
 @SerialName("StorageCoinbaseWrapper")
 internal data class StorageAwareCoinbase(
     internal val coinbase: HashedCoinbaseImpl
-) : HashedCoinbase by coinbase, StorageAware<HashedCoinbase> {
-    override fun update(session: NewInstanceSession): Outcome<StorageID, UpdateFailure> {
-        Logger.warn("Coinbase IS NOT update ready!! -> NOOP")
-        return Outcome.Ok(id!!)
-    }
-
+) : HashedCoinbase by coinbase,
+    StorageAware<HashedCoinbase> {
     override val invalidated: Map<String, Any>
         get() = invalidatedFields
 
@@ -36,14 +32,22 @@ internal data class StorageAwareCoinbase(
     private var invalidatedFields =
         mutableMapOf<String, Any>()
 
+
+    override fun update(
+        session: NewInstanceSession
+    ): Outcome<StorageID, UpdateFailure> {
+        Logger.warn("Coinbase IS NOT update ready!! -> NOOP")
+        return Outcome.Ok(id!!)
+    }
+
     internal constructor(
         difficulty: Difficulty,
         blockheight: Long,
         container: LedgerContainer
     ) : this(
-        HashedCoinbaseImpl(
-            difficulty, blockheight,
-            container
+        coinbase = HashedCoinbaseImpl(
+            difficulty = difficulty, blockheight = blockheight,
+            container = container
         )
     )
 
@@ -53,9 +57,10 @@ internal data class StorageAwareCoinbase(
         dataFormula: DataFormula,
         cbor: Cbor, hasher: Hashers
     ) : this(
-        HashedCoinbaseImpl(
-            difficulty, blockheight,
-            coinbaseParams, hasher, cbor, dataFormula
+        coinbase = HashedCoinbaseImpl(
+            difficulty = difficulty, blockheight = blockheight,
+            coinbaseParams = coinbaseParams, dataFormula = dataFormula,
+            hasher = hasher, cbor = cbor
         )
     )
 }

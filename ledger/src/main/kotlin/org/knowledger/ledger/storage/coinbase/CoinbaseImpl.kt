@@ -26,10 +26,10 @@ internal data class CoinbaseImpl(
     // Difficulty is fixed at block generation time.
     override val difficulty: Difficulty,
     override var blockHeight: Long,
-    @Transient
-    override val formula: DataFormula = DefaultDiff,
     @SerialName("coinbaseParams")
-    override val coinbaseParams: CoinbaseParams
+    override val coinbaseParams: CoinbaseParams,
+    @Transient
+    override val formula: DataFormula = DefaultDiff
 ) : Coinbase {
     override val transactionOutputs: Set<HashedTransactionOutput>
         get() = _transactionOutputs
@@ -44,8 +44,8 @@ internal data class CoinbaseImpl(
         Payout(BigDecimal.ZERO),
         difficulty,
         blockheight,
-        container.formula,
-        container.coinbaseParams
+        container.coinbaseParams,
+        container.formula
     )
 
     internal fun getTimeDelta(

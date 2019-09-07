@@ -30,7 +30,10 @@ internal data class SignedTransactionImpl(
     constructor(
         transaction: TransactionImpl,
         privateKey: PrivateKey, cbor: Cbor
-    ) : this(transaction, ByteArray(0)) {
+    ) : this(
+        transaction = transaction,
+        _signature = ByteArray(0)
+    ) {
         _signature = generateSignature(
             privateKey, transaction,
             cbor
@@ -42,25 +45,32 @@ internal data class SignedTransactionImpl(
         identity: Identity, data: PhysicalData,
         cbor: Cbor
     ) : this(
-        TransactionImpl(identity.publicKey, data),
-        identity.privateKey, cbor
+        transaction = TransactionImpl(
+            publicKey = identity.publicKey,
+            data = data
+        ), privateKey = identity.privateKey,
+        cbor = cbor
     )
 
     constructor(
-        privateKey: PrivateKey,
-        publicKey: PublicKey, data: PhysicalData,
-        cbor: Cbor
+        privateKey: PrivateKey, publicKey: PublicKey,
+        data: PhysicalData, cbor: Cbor
     ) : this(
-        TransactionImpl(publicKey, data),
-        privateKey, cbor
+        transaction = TransactionImpl(
+            publicKey = publicKey,
+            data = data
+        ), privateKey = privateKey,
+        cbor = cbor
     )
 
     constructor(
         publicKey: PublicKey, data: PhysicalData,
         signature: ByteArray
     ) : this(
-        TransactionImpl(publicKey, data),
-        signature
+        transaction = TransactionImpl(
+            publicKey = publicKey,
+            data = data
+        ), _signature = signature
     )
 
     override fun serialize(

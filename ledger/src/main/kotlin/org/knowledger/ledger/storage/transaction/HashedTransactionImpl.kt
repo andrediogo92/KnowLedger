@@ -32,41 +32,37 @@ internal data class HashedTransactionImpl(
         get() = _hash ?: throw UninitializedPropertyAccessException("Hash was not initialized")
 
     constructor(
-        privateKey: PrivateKey,
-        publicKey: PublicKey,
-        data: PhysicalData,
-        hasher: Hashers,
-        cbor: Cbor
+        privateKey: PrivateKey, publicKey: PublicKey,
+        data: PhysicalData, hasher: Hashers, cbor: Cbor
     ) : this(
         signedTransaction = SignedTransactionImpl(
-            privateKey,
-            publicKey,
-            data,
-            cbor
+            privateKey = privateKey,
+            publicKey = publicKey,
+            data = data, cbor = cbor
         )
     ) {
         updateHash(hasher, cbor)
     }
 
     constructor(
-        publicKey: PublicKey,
-        data: PhysicalData, signature: ByteArray,
-        hash: Hash, hasher: Hashers, cbor: Cbor
+        publicKey: PublicKey, data: PhysicalData,
+        signature: ByteArray, hash: Hash, hasher: Hashers,
+        cbor: Cbor
     ) : this(
-        SignedTransactionImpl(
-            publicKey,
-            data, signature
-        ), hash
+        signedTransaction = SignedTransactionImpl(
+            publicKey = publicKey, data = data,
+            signature = signature
+        ), _hash = hash
     )
 
     constructor(
-        identity: Identity,
-        data: PhysicalData, hasher: Hashers,
-        cbor: Cbor
+        identity: Identity, data: PhysicalData,
+        hasher: Hashers, cbor: Cbor
     ) : this(
-        identity.privateKey,
-        identity.publicKey,
-        data, hasher, cbor
+        privateKey = identity.privateKey,
+        publicKey = identity.publicKey,
+        data = data, hasher = hasher,
+        cbor = cbor
     )
 
 

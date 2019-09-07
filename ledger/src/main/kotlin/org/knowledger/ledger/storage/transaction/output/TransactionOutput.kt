@@ -15,7 +15,7 @@ interface TransactionOutput : HashSerializable, LedgerContract {
 
     fun addToPayout(
         payout: Payout,
-        tx: Hash,
-        prev: Hash
+        newTransaction: Hash,
+        previousTransaction: Hash
     )
 }

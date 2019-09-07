@@ -45,63 +45,43 @@ internal data class HashedCoinbaseImpl(
         get() = _hash ?: recalculateHash(hasher, cbor)
 
     internal constructor(
-        difficulty: Difficulty,
-        blockheight: Long,
+        difficulty: Difficulty, blockheight: Long,
         container: LedgerContainer
     ) : this(
-        difficulty,
-        blockheight,
+        difficulty, blockheight,
         container.coinbaseParams,
-        container.hasher,
-        container.cbor,
-        container.formula
+        container.formula,
+        container.hasher, container.cbor
     )
 
     constructor(
-        payoutTXO: MutableSet<HashedTransactionOutput>,
+        transactionOutputs: Set<HashedTransactionOutput>,
         payout: Payout, difficulty: Difficulty,
         blockheight: Long, coinbaseParams: CoinbaseParams,
-        hasher: Hashers, cbor: Cbor, formula: DataFormula
-    ) : this(
-        coinbase = CoinbaseImpl(
-            _transactionOutputs = payoutTXO,
-            payout = payout,
-            difficulty = difficulty,
-            blockHeight = blockheight,
-            coinbaseParams = coinbaseParams,
-            formula = formula
-        ),
-        cbor = cbor,
-        hasher = hasher
-    )
-
-    constructor(
-        txSet: MutableSet<HashedTransactionOutput>,
-        payout: Payout, difficulty: Difficulty,
-        blockheight: Long, formula: DataFormula,
-        coinbaseParams: CoinbaseParams,
-        cbor: Cbor, hasher: Hashers, hash: Hash
+        formula: DataFormula, hash: Hash, hasher: Hashers,
+        cbor: Cbor
     ) : this(
         CoinbaseImpl(
-            txSet, payout, difficulty,
-            blockheight, formula,
-            coinbaseParams
-        ), hash, hasher, cbor
+            _transactionOutputs = transactionOutputs.toMutableSet(),
+            payout = payout, difficulty = difficulty,
+            blockHeight = blockheight, coinbaseParams = coinbaseParams,
+            formula = formula
+        ), _hash = hash, hasher = hasher, cbor = cbor
     )
 
     constructor(
         difficulty: Difficulty, blockheight: Long,
-        coinbaseParams: CoinbaseParams, hasher: Hashers,
-        cbor: Cbor, dataFormula: DataFormula
+        coinbaseParams: CoinbaseParams, dataFormula: DataFormula,
+        hasher: Hashers, cbor: Cbor
     ) : this(
         coinbase = CoinbaseImpl(
-            mutableSetOf(), Payout(BigDecimal.ZERO),
-            difficulty, blockheight,
-            dataFormula, coinbaseParams
-        ),
-        cbor = cbor,
-        hasher = hasher
+            _transactionOutputs = mutableSetOf(),
+            payout = Payout(BigDecimal.ZERO), difficulty = difficulty,
+            blockHeight = blockheight, coinbaseParams = coinbaseParams,
+            formula = dataFormula
+        ), cbor = cbor, hasher = hasher
     )
+
 
     override fun updateHash(
         hasher: Hasher, cbor: Cbor

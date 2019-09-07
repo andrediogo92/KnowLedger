@@ -35,27 +35,26 @@ internal data class TransactionOutputImpl(
         get() = _transactionHashes
 
     constructor(
-        publicKey: PublicKey,
-        prevCoinbase: Hash,
-        cumUTXO: Payout,
-        newT: Hash,
-        prev: Hash
+        publicKey: PublicKey, previousCoinbase: Hash,
+        payout: Payout, newTransaction: Hash,
+        previousTransaction: Hash
     ) : this(
-        publicKey,
-        prevCoinbase,
-        Payout(BigDecimal.ZERO),
-        mutableSetOf<Hash>()
+        publicKey = publicKey, previousCoinbase = previousCoinbase,
+        _payout = Payout(BigDecimal.ZERO),
+        _transactionHashes = mutableSetOf<Hash>()
     ) {
-        addToPayout(cumUTXO, newT, prev)
+        addToPayout(payout, newTransaction, previousTransaction)
     }
 
 
     override fun addToPayout(
         payout: Payout,
-        tx: Hash,
-        prev: Hash
+        newTransaction: Hash,
+        previousTransaction: Hash
     ) {
-        _transactionHashes.add(prev + tx)
+        _transactionHashes.add(
+            previousTransaction + newTransaction
+        )
         _payout += payout
     }
 
