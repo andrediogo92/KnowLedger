@@ -3,10 +3,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     kotlin("jvm")
-    kotlin("kapt")
     id("org.jetbrains.kotlin.plugin.noarg")
     id("org.jetbrains.dokka")
-//    id("kotlinx-serialization")
+    id("kotlinx-serialization")
     application
 }
 
@@ -16,17 +15,18 @@ repositories {
 }
 
 dependencies {
+    implementation(kotlin("stdlib", Versions.kotlin))
+
     //Project dependencies
     implementation(project(":ledger"))
     implementation(project(":ledger-core"))
     implementation(project(":agent"))
 
-    //Annotation Processing
-    kapt(Libs.moshiCodeGen)
-    kapt(project(":generation"))
+    Libs.jade.forEach {
+        implementation(it)
+    }
 
     //Standard dependencies
-    implementation(Libs.koin)
     Libs.tinylog.forEach {
         implementation(it)
     }
@@ -38,7 +38,6 @@ dependencies {
     Libs.jUnitRuntime.forEach {
         testRuntimeOnly(it)
     }
-    implementation(kotlin("stdlib-jdk8"))
 }
 
 tasks {
