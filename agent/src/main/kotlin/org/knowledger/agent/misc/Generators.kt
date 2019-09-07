@@ -1,4 +1,4 @@
-package org.knowledger.agent.utils
+package org.knowledger.agent.misc
 
 import java.util.concurrent.atomic.AtomicLong
 
