@@ -47,6 +47,16 @@ data class MerkleTreeImpl(
         rebuildMerkleTree(coinbase, data)
     }
 
+    constructor(
+        hasher: Hashers,
+        collapsedTree: List<Hash>,
+        levelIndex: List<Int>
+    ) : this(
+        collapsedTree.toMutableList(),
+        levelIndex.toMutableList(),
+        hasher
+    )
+
     override fun hasTransaction(hash: Hash): Boolean {
         var res = false
         var i = _collapsedTree.size - 1
