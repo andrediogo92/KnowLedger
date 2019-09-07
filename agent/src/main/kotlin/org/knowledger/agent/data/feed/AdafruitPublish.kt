@@ -1,9 +1,9 @@
 package org.knowledger.agent.data.feed
 
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class AdafruitPublish(
     var value: String = "",
     var lat: String = "",
