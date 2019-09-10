@@ -14,8 +14,6 @@ import kotlin.math.abs
 import kotlin.math.sqrt
 
 fun captureSound(): PhysicalData? {
-    var max: Short = -1
-    var bytesRead: Int
     val line: TargetDataLine
     val bufSize = 2048
 
