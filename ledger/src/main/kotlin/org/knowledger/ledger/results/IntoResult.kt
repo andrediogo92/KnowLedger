@@ -205,4 +205,4 @@ fun QueryFailure.intoData(): DataFailure =
 private inline fun <T : Failable, R : PropagatedFailure> T.propagate(
     cons: (String, Failable) -> R
 ): R =
-    cons(this::class.simpleName!!, this)
+    cons(this::class.java.simpleName, this)
