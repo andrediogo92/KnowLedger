@@ -410,7 +410,7 @@ data class ChainHandle internal constructor(
     private fun recalculateDifficulty(
         triggerBlock: Block
     ): Difficulty {
-        val cmp = triggerBlock.coinbase.blockHeight
+        val cmp = triggerBlock.coinbase.blockheight
         val cstamp = triggerBlock.header.seconds
         val fromHeight = cmp - ledgerParams.recalcTrigger
         val recalcBlock =

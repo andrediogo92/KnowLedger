@@ -46,8 +46,7 @@ internal data class HashedTransactionImpl(
 
     constructor(
         publicKey: PublicKey, data: PhysicalData,
-        signature: ByteArray, hash: Hash, hasher: Hashers,
-        cbor: Cbor
+        signature: ByteArray, hash: Hash
     ) : this(
         signedTransaction = SignedTransactionImpl(
             publicKey = publicKey, data = data,

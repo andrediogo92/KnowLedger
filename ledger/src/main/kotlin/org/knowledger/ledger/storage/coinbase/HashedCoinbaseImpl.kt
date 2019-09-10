@@ -64,7 +64,7 @@ internal data class HashedCoinbaseImpl(
         CoinbaseImpl(
             _transactionOutputs = transactionOutputs.toMutableSet(),
             payout = payout, difficulty = difficulty,
-            blockHeight = blockheight, coinbaseParams = coinbaseParams,
+            blockheight = blockheight, coinbaseParams = coinbaseParams,
             formula = formula
         ), _hash = hash, hasher = hasher, cbor = cbor
     )
@@ -77,9 +77,23 @@ internal data class HashedCoinbaseImpl(
         coinbase = CoinbaseImpl(
             _transactionOutputs = mutableSetOf(),
             payout = Payout(BigDecimal.ZERO), difficulty = difficulty,
-            blockHeight = blockheight, coinbaseParams = coinbaseParams,
+            blockheight = blockheight, coinbaseParams = coinbaseParams,
             formula = dataFormula
         ), cbor = cbor, hasher = hasher
+    )
+
+    constructor(
+        transactionOutputs: MutableSet<HashedTransactionOutput>,
+        payout: Payout, difficulty: Difficulty,
+        blockheight: Long, coinbaseParams: CoinbaseParams,
+        formula: DataFormula, hasher: Hashers, cbor: Cbor
+    ) : this(
+        coinbase = CoinbaseImpl(
+            _transactionOutputs = transactionOutputs,
+            payout = payout, difficulty = difficulty,
+            blockheight = blockheight, coinbaseParams = coinbaseParams,
+            formula = formula
+        ), hasher = hasher, cbor = cbor
     )
 
 

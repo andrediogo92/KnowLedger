@@ -53,7 +53,7 @@ interface ChainBuilder {
 
     fun transaction(
         publicKey: PublicKey, physicalData: PhysicalData,
-        signature: ByteArray, transactionId: Hash
+        signature: ByteArray, hash: Hash
     ): HashedTransaction
 
     fun transaction(

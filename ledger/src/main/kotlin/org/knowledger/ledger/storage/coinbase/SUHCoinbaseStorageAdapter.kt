@@ -37,7 +37,7 @@ internal object SUHCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseI
                     }.toSet()
             ).setDifficultyProperty(
                 "difficulty", toStore.difficulty, session
-            ).setStorageProperty("blockheight", toStore.blockHeight)
+            ).setStorageProperty("blockheight", toStore.blockheight)
             .setPayoutProperty("payout", toStore.payout)
             .setHashProperty("hash", toStore.hash)
 
@@ -64,11 +64,11 @@ internal object SUHCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseI
                             element.getPayoutProperty("payout"),
                             difficulty,
                             blockheight,
-                            it.formula,
                             it.coinbaseParams,
-                            it.cbor,
+                            it.formula,
+                            element.getHashProperty("hash"),
                             it.hasher,
-                            element.getHashProperty("hash")
+                            it.cbor
                         )
                     }
                 }

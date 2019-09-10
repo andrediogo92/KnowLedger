@@ -110,9 +110,7 @@ internal data class WorkingChainBuilder(
     ): HashedTransaction =
         HashedTransactionImpl(
             publicKey = publicKey, hash = hash,
-            data = physicalData, signature = signature,
-            hasher = ledgerContainer.hasher,
-            cbor = ledgerContainer.cbor
+            data = physicalData, signature = signature
         )
 
     override fun transaction(

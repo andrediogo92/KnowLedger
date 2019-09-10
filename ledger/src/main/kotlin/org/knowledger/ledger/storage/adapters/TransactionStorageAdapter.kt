@@ -10,8 +10,6 @@ import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.mapSuccess
 import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.service.LedgerContainer
-import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
@@ -64,13 +62,9 @@ object TransactionStorageAdapter : LedgerStorageAdapter<HashedTransaction> {
                 val hash =
                     element.getHashProperty("hash")
 
-                val container: LedgerContainer =
-                    LedgerHandle.getContainer(ledgerHash)!!
-
                 HashedTransactionImpl(
                     publicKeyString.toPublicKey(),
-                    data, signature, hash,
-                    container.hasher, container.cbor
+                    data, signature, hash
                 )
             }
         }

@@ -25,7 +25,7 @@ internal data class CoinbaseImpl(
     override var payout: Payout,
     // Difficulty is fixed at block generation time.
     override val difficulty: Difficulty,
-    override var blockHeight: Long,
+    override var blockheight: Long,
     @SerialName("coinbaseParams")
     override val coinbaseParams: CoinbaseParams,
     @Transient
