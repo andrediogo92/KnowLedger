@@ -251,9 +251,11 @@ internal fun generateCoinbase(
         ts[4].hash, ts[0].hash
     )
     return HashedCoinbaseImpl(
-        sets.toMutableSet(), Payout(BigDecimal("3")),
-        Difficulty.INIT_DIFFICULTY, 2,
-        coinbaseParams, hasher, cbor, formula
+        transactionOutputs = sets.toMutableSet(),
+        payout = Payout(BigDecimal("3")),
+        difficulty = Difficulty.INIT_DIFFICULTY,
+        blockheight = 2, coinbaseParams = coinbaseParams,
+        formula = formula, hasher = hasher, cbor = cbor
     )
 }
 
@@ -263,9 +265,11 @@ internal fun generateCoinbase(
     coinbaseParams: CoinbaseParams = CoinbaseParams()
 ): HashedCoinbase =
     HashedCoinbaseImpl(
-        mutableSetOf(), Payout(BigDecimal("3")),
-        Difficulty.INIT_DIFFICULTY, 2,
-        coinbaseParams, hasher, cbor, formula
+        transactionOutputs = mutableSetOf(),
+        payout = Payout(BigDecimal("3")),
+        difficulty = Difficulty.INIT_DIFFICULTY,
+        blockheight = 2, coinbaseParams = coinbaseParams,
+        formula = formula, hasher = hasher, cbor = cbor
     )
 
 internal fun logActualToExpectedLists(
@@ -294,59 +298,67 @@ internal fun logActualToExpectedLists(
     }
 }
 
-internal fun StringBuilder.appendByLine(toPrint: Collection<String>): StringBuilder {
-    for (thing in toPrint) {
-        append(System.lineSeparator())
-        append('\t')
-        append(thing)
-        append(',')
+internal fun StringBuilder.appendByLine(toPrint: Collection<String>): StringBuilder =
+    apply {
+        toPrint.forEach { thing ->
+            append(System.lineSeparator())
+            append('\t')
+            append(thing)
+            append(',')
+        }
     }
-    return this
-}
 
 fun <T> Outcome<T, LoadFailure>.failOnLoadError() {
-    this.peekFailure {
+    peekFailure {
         when (it) {
             is LoadFailure.UnknownFailure ->
                 it.exception?.let { ex ->
                     throw ex
                 }
+            else -> {
+            }
         }
         fail(it.cause)
     }
 }
 
 fun <T> Outcome<T, DataFailure>.failOnDataError() {
-    this.peekFailure {
+    peekFailure {
         when (it) {
             is DataFailure.UnknownFailure ->
                 it.exception?.let { ex ->
                     throw ex
                 }
+            else -> {
+            }
         }
         fail(it.cause)
     }
 }
 
 fun <T : Any> Outcome<T, LedgerFailure>.failOnLedgerError() {
-    this.peekFailure {
+    peekFailure {
         when (it) {
             is LedgerFailure.UnknownFailure ->
                 it.exception?.let { ex ->
                     throw ex
                 }
+            else -> {
+            }
         }
         fail(it.cause)
     }
 }
 
 fun <T : Any> Outcome<T, QueryFailure>.failOnQueryError() {
-    this.peekFailure {
+    peekFailure {
         when (it) {
             is QueryFailure.UnknownFailure ->
                 it.exception?.let { ex ->
                     throw ex
                 }
+            else -> {
+            }
         }
         fail(it.cause)
     }
