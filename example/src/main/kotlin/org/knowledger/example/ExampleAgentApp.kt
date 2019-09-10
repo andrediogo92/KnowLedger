@@ -2,6 +2,7 @@ package org.knowledger.example
 
 import org.knowledger.agent.agents.AgentContainer
 import org.knowledger.ledger.core.results.unwrap
+import org.knowledger.ledger.data.adapters.NoiseDataStorageAdapter
 import org.knowledger.ledger.service.handles.LedgerHandle
 
 class ExampleAgentApp {
@@ -25,6 +26,7 @@ class ExampleAgentApp {
             container.runLedgerAgent(
                 "MinerAgent",
                 handle,
+                setOf(NoiseDataStorageAdapter),
                 emptyArray()
             )
 
