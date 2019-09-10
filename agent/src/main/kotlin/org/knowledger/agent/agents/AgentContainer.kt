@@ -5,6 +5,8 @@ import jade.core.ProfileImpl
 import jade.core.Runtime
 import jade.wrapper.AgentController
 import jade.wrapper.ContainerController
+import org.knowledger.ledger.core.data.LedgerData
+import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.service.handles.LedgerHandle
 
 /**
@@ -52,10 +54,12 @@ class AgentContainer(
     fun runLedgerAgent(
         name: String,
         handle: LedgerHandle,
+        knownTypes: Set<AbstractStorageAdapter<out LedgerData>>,
         arguments: Array<Any>
     ) {
-        runAgent(name, ledgerAgent, arrayOf(handle, *arguments))
+        runAgent(name, ledgerAgent, arrayOf(handle, knownTypes, *arguments))
     }
+
 
     fun killAgent(agent: String) {
         val index =
