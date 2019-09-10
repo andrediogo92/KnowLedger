@@ -15,7 +15,6 @@ import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import java.time.Instant
 
 internal object SUHBlockHeaderStorageAdapter : LedgerStorageAdapter<HashedBlockHeaderImpl> {
     override val id: String
@@ -70,9 +69,6 @@ internal object SUHBlockHeaderStorageAdapter : LedgerStorageAdapter<HashedBlockH
                 val nonce: Long =
                     element.getStorageProperty("nonce")
 
-                val instant = Instant.ofEpochSecond(
-                    seconds
-                )
                 LedgerHandle.getContainer(chainId.ledgerHash)!!.let {
                     HashedBlockHeaderImpl(
                         chainId,
