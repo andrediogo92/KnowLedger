@@ -14,19 +14,12 @@ buildscript {
 }
 
 plugins {
-    base
-    kotlin("jvm") version
-            Versions.kotlin apply
-            false
     id("org.jetbrains.kotlin.plugin.noarg") version
             Versions.kotlin apply
             false
     id("org.jetbrains.kotlin.plugin.serialization") version
             Versions.kotlin apply
             false
-    id("org.jetbrains.dokka") version
-            Versions.dokka apply
-            true
 }
 
 allprojects {
