@@ -9,6 +9,8 @@ object Versions {
     const val eclipsePaho = "1.2.0"
     const val jade = "4.5.0"
     const val jadeMisc = "2.8.0"
+    const val jdk = "1.8"
+    const val jdkV = 8
     const val jol = "0.9"
     const val jUnit = "5.5.1"
     const val jUnitRunner = "1.5.1"
@@ -129,4 +131,10 @@ object Libs {
     )
     */
 
+}
+
+object Plugins {
+    const val serialization = "org.jetbrains.kotlin.plugin.serialization"
+    const val noarg = "org.jetbrains.kotlin.plugin.noarg"
+    const val dokka = "org.jetbrains.dokka"
 }
