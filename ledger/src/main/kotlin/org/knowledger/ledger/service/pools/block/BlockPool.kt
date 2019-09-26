@@ -6,10 +6,10 @@ interface BlockPool {
     val blocks: List<Hash>
 
     val firstUnconfirmed: Hash?
-        get() = blocks.first()
+        get() = blocks.firstOrNull()
 
-    operator fun get(hash: Hash) =
-        blocks.first {
+    operator fun get(hash: Hash): Hash? =
+        blocks.firstOrNull {
             it == hash
         }
 }
