@@ -4,9 +4,9 @@ package org.knowledger.ledger.core.hash
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
+import kotlinx.serialization.internal.ByteArraySerializer
 import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.misc.toHexString
-import org.knowledger.ledger.core.serial.ByteArraySerializer
 import java.math.BigInteger
 
 /**

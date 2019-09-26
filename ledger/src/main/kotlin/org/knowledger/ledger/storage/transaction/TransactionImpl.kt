@@ -6,8 +6,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.internal.ByteArraySerializer
 import org.knowledger.ledger.core.data.PhysicalData
-import org.knowledger.ledger.core.serial.ByteArraySerializer
 import org.knowledger.ledger.core.serial.PublicKeySerializer
 import java.security.PublicKey
 

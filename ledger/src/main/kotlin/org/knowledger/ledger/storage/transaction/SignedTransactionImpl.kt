@@ -6,10 +6,10 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.internal.ByteArraySerializer
 import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.misc.generateSignature
 import org.knowledger.ledger.core.misc.verifyECDSASig
-import org.knowledger.ledger.core.serial.ByteArraySerializer
 import org.knowledger.ledger.crypto.service.Identity
 import java.security.PrivateKey
 import java.security.PublicKey
