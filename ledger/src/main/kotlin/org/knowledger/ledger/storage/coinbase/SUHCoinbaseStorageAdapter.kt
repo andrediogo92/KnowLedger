@@ -38,6 +38,7 @@ internal object SUHCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseI
             ).setDifficultyProperty(
                 "difficulty", toStore.difficulty, session
             ).setStorageProperty("blockheight", toStore.blockheight)
+            .setStorageProperty("extraNonce", toStore.extraNonce)
             .setPayoutProperty("payout", toStore.payout)
             .setHashProperty("hash", toStore.hash)
 
@@ -50,6 +51,9 @@ internal object SUHCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseI
 
             val blockheight: Long =
                 element.getStorageProperty("blockheight")
+
+            val extraNonce: Long =
+                element.getStorageProperty("extraNonce")
 
             element
                 .getElementSet("payoutTXOs")
@@ -64,6 +68,7 @@ internal object SUHCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseI
                             element.getPayoutProperty("payout"),
                             difficulty,
                             blockheight,
+                            extraNonce,
                             it.coinbaseParams,
                             it.formula,
                             element.getHashProperty("hash"),

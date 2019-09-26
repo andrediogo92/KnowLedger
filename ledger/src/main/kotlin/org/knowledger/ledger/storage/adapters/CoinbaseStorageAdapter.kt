@@ -23,7 +23,8 @@ object CoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbase> {
             "payout" to StorageType.PAYOUT,
             "hash" to StorageType.HASH,
             "difficulty" to StorageType.DIFFICULTY,
-            "blockheight" to StorageType.LONG
+            "blockheight" to StorageType.LONG,
+            "extraNonce" to StorageType.LONG
         )
 
     override fun store(

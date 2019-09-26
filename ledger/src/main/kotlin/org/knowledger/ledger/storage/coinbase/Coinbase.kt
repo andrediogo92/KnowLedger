@@ -24,6 +24,7 @@ interface Coinbase : Cloneable,
     // Difficulty is fixed at block generation time.
     val difficulty: Difficulty
     var blockheight: Long
+    var extraNonce: Long
     val formula: DataFormula
     val coinbaseParams: CoinbaseParams
 

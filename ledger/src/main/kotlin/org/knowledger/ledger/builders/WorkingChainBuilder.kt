@@ -71,7 +71,7 @@ internal data class WorkingChainBuilder(
         blockheight: Long, hash: Hash
     ): HashedCoinbase =
         HashedCoinbaseImpl(
-            transactionOutputs = transactionOutputs,
+            transactionOutputs = transactionOutputs.toMutableSet(),
             payout = payout, difficulty = difficulty,
             blockheight = blockheight,
             coinbaseParams = ledgerContainer.coinbaseParams,

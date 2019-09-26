@@ -26,6 +26,7 @@ internal data class CoinbaseImpl(
     // Difficulty is fixed at block generation time.
     override val difficulty: Difficulty,
     override var blockheight: Long,
+    override var extraNonce: Long = 0,
     @SerialName("coinbaseParams")
     override val coinbaseParams: CoinbaseParams,
     @Transient
@@ -40,12 +41,12 @@ internal data class CoinbaseImpl(
         blockheight: Long,
         container: LedgerContainer
     ) : this(
-        mutableSetOf(),
-        Payout(BigDecimal.ZERO),
-        difficulty,
-        blockheight,
-        container.coinbaseParams,
-        container.formula
+        _transactionOutputs = mutableSetOf(),
+        payout = Payout(BigDecimal.ZERO),
+        difficulty = difficulty,
+        blockheight = blockheight,
+        coinbaseParams = container.coinbaseParams,
+        formula = container.formula
     )
 
     internal fun getTimeDelta(

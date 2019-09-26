@@ -44,6 +44,10 @@ internal data class HashedCoinbaseImpl(
     override val hash: Hash
         get() = _hash ?: recalculateHash(hasher, cbor)
 
+    /**
+     * Internally used constructor to construct new [HashedCoinbaseImpl] from inside
+     * ledger context.
+     */
     internal constructor(
         difficulty: Difficulty, blockheight: Long,
         container: LedgerContainer
@@ -55,31 +59,32 @@ internal data class HashedCoinbaseImpl(
     )
 
     constructor(
-        transactionOutputs: Set<HashedTransactionOutput>,
+        transactionOutputs: MutableSet<HashedTransactionOutput>,
         payout: Payout, difficulty: Difficulty,
-        blockheight: Long, coinbaseParams: CoinbaseParams,
-        formula: DataFormula, hash: Hash, hasher: Hashers,
-        cbor: Cbor
+        blockheight: Long, extraNonce: Long,
+        coinbaseParams: CoinbaseParams, formula: DataFormula,
+        hash: Hash, hasher: Hashers, cbor: Cbor
     ) : this(
         CoinbaseImpl(
-            _transactionOutputs = transactionOutputs.toMutableSet(),
+            _transactionOutputs = transactionOutputs,
             payout = payout, difficulty = difficulty,
-            blockheight = blockheight, coinbaseParams = coinbaseParams,
-            formula = formula
+            blockheight = blockheight, extraNonce = extraNonce,
+            coinbaseParams = coinbaseParams, formula = formula
         ), _hash = hash, hasher = hasher, cbor = cbor
     )
 
     constructor(
-        difficulty: Difficulty, blockheight: Long,
-        coinbaseParams: CoinbaseParams, dataFormula: DataFormula,
-        hasher: Hashers, cbor: Cbor
+        transactionOutputs: MutableSet<HashedTransactionOutput>,
+        payout: Payout, difficulty: Difficulty,
+        blockheight: Long, coinbaseParams: CoinbaseParams, formula: DataFormula,
+        hash: Hash, hasher: Hashers, cbor: Cbor
     ) : this(
-        coinbase = CoinbaseImpl(
-            _transactionOutputs = mutableSetOf(),
-            payout = Payout(BigDecimal.ZERO), difficulty = difficulty,
-            blockheight = blockheight, coinbaseParams = coinbaseParams,
-            formula = dataFormula
-        ), cbor = cbor, hasher = hasher
+        CoinbaseImpl(
+            _transactionOutputs = transactionOutputs,
+            payout = payout, difficulty = difficulty,
+            blockheight = blockheight,
+            coinbaseParams = coinbaseParams, formula = formula
+        ), _hash = hash, hasher = hasher, cbor = cbor
     )
 
     constructor(
@@ -88,12 +93,26 @@ internal data class HashedCoinbaseImpl(
         blockheight: Long, coinbaseParams: CoinbaseParams,
         formula: DataFormula, hasher: Hashers, cbor: Cbor
     ) : this(
-        coinbase = CoinbaseImpl(
+        CoinbaseImpl(
             _transactionOutputs = transactionOutputs,
             payout = payout, difficulty = difficulty,
-            blockheight = blockheight, coinbaseParams = coinbaseParams,
-            formula = formula
+            blockheight = blockheight,
+            coinbaseParams = coinbaseParams, formula = formula
         ), hasher = hasher, cbor = cbor
+    )
+
+    /**
+     * New Hashed Coinbase Constructor.
+     */
+    constructor(
+        difficulty: Difficulty, blockheight: Long,
+        coinbaseParams: CoinbaseParams, dataFormula: DataFormula,
+        hasher: Hashers, cbor: Cbor
+    ) : this(
+        transactionOutputs = mutableSetOf(),
+        payout = Payout(BigDecimal.ZERO), difficulty = difficulty,
+        blockheight = blockheight, coinbaseParams = coinbaseParams,
+        formula = dataFormula, hasher = hasher, cbor = cbor
     )
 
 
