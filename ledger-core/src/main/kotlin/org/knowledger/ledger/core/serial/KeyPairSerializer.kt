@@ -9,7 +9,7 @@ import java.security.PublicKey
 @Serializer(forClass = KeyPair::class)
 object KeyPairSerializer : KSerializer<KeyPair> {
     override val descriptor: SerialDescriptor =
-        object : SerialClassDescImpl("key_pair") {
+        object : SerialClassDescImpl("keyPair") {
             init {
                 addElement("private")
                 addElement("public")
