@@ -2,10 +2,10 @@
 
 package org.knowledger.ledger.core.data
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.serial.HashSerializable
 import org.knowledger.ledger.core.serial.InstantSerializer
 import org.knowledger.ledger.core.storage.LedgerContract
@@ -29,8 +29,8 @@ data class PhysicalData(
     SelfInterval by data,
     Comparable<PhysicalData>,
     LedgerContract {
-    override fun serialize(cbor: Cbor): ByteArray =
-        cbor.dump(serializer(), this)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(serializer(), this)
 
     constructor(
         geoCoords: GeoCoords, data: LedgerData

@@ -1,6 +1,6 @@
 package org.knowledger.ledger.core.hash
 
-import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.BinaryFormat
 
 /**
  * Indicates capability to produce
@@ -10,7 +10,7 @@ interface Hashable {
     /**
      * Pure function that must produce a unique digest
      * through the use of a [Hasher] instance and
-     * a [Cbor] encoder.
+     * a [BinaryFormat] encoder.
      */
-    fun digest(c: Hasher, cbor: Cbor): Hash
+    fun digest(c: Hasher, encoder: BinaryFormat): Hash
 }
