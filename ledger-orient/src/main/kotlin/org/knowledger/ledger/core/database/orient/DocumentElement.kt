@@ -20,8 +20,8 @@ data class DocumentElement internal constructor(
     override val identity: StorageID
         get() = DocumentID(elem.identity)
 
-    override val json: String =
-        elem.toJSON()
+    override val json: String
+        get() = elem.toJSON()
 
     override val presentProperties: MutableSet<String>
         get() = elem.propertyNames
@@ -172,6 +172,11 @@ data class DocumentElement internal constructor(
     ): StorageElement =
         DocumentElement(elem.getProperty(name))
 
+    override fun getLinkedID(
+        name: String
+    ): StorageID =
+        DocumentID(elem.getProperty(name))
+
 
     override fun <T> getStorageProperty(
         name: String
@@ -265,6 +270,14 @@ data class DocumentElement internal constructor(
                     .map { it.bytes }
                     .toSet()
             )
+        }
+
+    override fun setLinkedID(
+        name: String, linked: StorageID
+    ): StorageElement =
+        apply {
+            linked as DocumentID
+            elem.setProperty(name, linked.id)
         }
 
     override fun setLinked(

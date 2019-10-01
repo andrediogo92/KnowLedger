@@ -1,5 +1,7 @@
 package org.knowledger.ledger.core.database
 
+import org.knowledger.ledger.core.data.Difficulty
+import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.storage.adapters.Storable
 
@@ -12,9 +14,9 @@ interface StorageElement :
 
     fun getDifficultyProperty(
         name: String
-    ): org.knowledger.ledger.core.data.Difficulty
+    ): Difficulty
     fun getHashProperty(name: String): Hash
-    fun getPayoutProperty(name: String): org.knowledger.ledger.core.data.Payout
+    fun getPayoutProperty(name: String): Payout
     fun getStorageIDs(name: String): List<StorageID>
     fun getMutableStorageIDs(
         name: String
@@ -52,12 +54,13 @@ interface StorageElement :
         name: String
     ): MutableList<Hash>
     fun getLinked(name: String): StorageElement
+    fun getLinkedID(name: String): StorageID
 
 
 
     fun setDifficultyProperty(
         name: String,
-        difficulty: org.knowledger.ledger.core.data.Difficulty,
+        difficulty: Difficulty,
         session: NewInstanceSession
     ): StorageElement
     fun setHashProperty(
@@ -70,7 +73,7 @@ interface StorageElement :
         name: String, hashes: Set<Hash>
     ): StorageElement
     fun setPayoutProperty(
-        name: String, payout: org.knowledger.ledger.core.data.Payout
+        name: String, payout: Payout
     ): StorageElement
 
     fun <T> setStorageProperty(
@@ -79,6 +82,10 @@ interface StorageElement :
 
     fun setStorageBytes(
         name: String, property: StorageBytes
+    ): StorageElement
+
+    fun setLinkedID(
+        name: String, linked: StorageID
     ): StorageElement
 
     fun setLinked(
