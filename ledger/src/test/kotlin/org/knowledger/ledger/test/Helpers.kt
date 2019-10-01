@@ -1,6 +1,6 @@
 package org.knowledger.ledger.test
 
-import assertk.fail
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.UpdateMode
 import kotlinx.serialization.cbor.Cbor
@@ -21,10 +21,10 @@ import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
 import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.core.results.Failure
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.peekFailure
-import org.knowledger.ledger.core.storage.results.DataFailure
-import org.knowledger.ledger.core.storage.results.QueryFailure
+import org.knowledger.ledger.core.results.unwrap
 import org.knowledger.ledger.core.test.randomByteArray
 import org.knowledger.ledger.core.test.randomDouble
 import org.knowledger.ledger.crypto.hash.Hashers
@@ -37,8 +37,6 @@ import org.knowledger.ledger.data.TrafficFlowData
 import org.knowledger.ledger.serial.baseModule
 import org.knowledger.ledger.serial.withDataFormulas
 import org.knowledger.ledger.serial.withLedger
-import org.knowledger.ledger.service.results.LedgerFailure
-import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.block.Block
 import org.knowledger.ledger.storage.block.BlockImpl
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
@@ -60,7 +58,7 @@ internal val serialModule: SerialModule by lazy {
     }.withDataFormulas {}
 }
 
-internal val cbor: Cbor by lazy {
+internal val encoder: BinaryFormat by lazy {
     Cbor(
         UpdateMode.OVERWRITE, true,
         serialModule
@@ -79,7 +77,7 @@ internal fun generateChainId(
 ): ChainId =
     StorageAwareChainId(
         StorageUnawareChainId(
-            hasher, cbor,
+            hasher, encoder,
             Hash(randomByteArray(32)),
             Hash(randomByteArray(32))
         )
@@ -102,14 +100,14 @@ internal fun generateBlock(
         ts.toSortedSet(), coinbase,
         HashedBlockHeaderImpl(
             generateChainId(hasher),
-            hasher, cbor,
+            hasher, encoder,
             Hash(randomByteArray(32)),
             blockParams
         ),
         MerkleTreeImpl(
             hasher, coinbase,
             ts.toTypedArray()
-        ), cbor, hasher
+        ), encoder, hasher
     )
 }
 
@@ -135,7 +133,7 @@ internal fun generateXTransactions(
                             randomDouble() * 100
                         ), TemperatureUnit.Celsius
                     )
-                ), hasher, cbor
+                ), hasher, encoder
             )
         )
     }
@@ -162,7 +160,7 @@ internal fun generateXTransactions(
                             randomDouble() * 100
                         ), TemperatureUnit.Celsius
                     )
-                ), hasher, cbor
+                ), hasher, encoder
             )
         )
     }
@@ -185,12 +183,12 @@ internal fun generateBlockWithChain(
     return BlockImpl(
         ts.toSortedSet(), coinbase,
         HashedBlockHeaderImpl(
-            chainId, hasher, cbor,
+            chainId, hasher, encoder,
             Hash(randomByteArray(32)),
             blockParams
         ),
         MerkleTreeImpl(hasher, coinbase, ts.toTypedArray()),
-        cbor, hasher
+        encoder, hasher
     )
 }
 
@@ -207,11 +205,11 @@ internal fun generateBlockWithChain(
     return BlockImpl(
         sortedSetOf(), coinbase,
         HashedBlockHeaderImpl(
-            chainId, hasher, cbor,
+            chainId, hasher, encoder,
             Hash(randomByteArray(32)),
             blockParams
         ), MerkleTreeImpl(hasher, coinbase, emptyArray()),
-        cbor, hasher
+        encoder, hasher
     )
 }
 
@@ -227,13 +225,13 @@ internal fun generateCoinbase(
             id[0].publicKey, emptyHash,
             Payout(BigDecimal.ONE),
             ts[0].hash, emptyHash,
-            hasher, cbor
+            hasher, encoder
         ),
         HashedTransactionOutputImpl(
             id[1].publicKey, emptyHash,
             Payout(BigDecimal.ONE),
             ts[1].hash, emptyHash,
-            hasher, cbor
+            hasher, encoder
         )
     )
     //First transaction output has
@@ -255,7 +253,7 @@ internal fun generateCoinbase(
         payout = Payout(BigDecimal("3")),
         difficulty = Difficulty.INIT_DIFFICULTY,
         blockheight = 2, coinbaseParams = coinbaseParams,
-        formula = formula, hasher = hasher, cbor = cbor
+        formula = formula, hasher = hasher, encoder = encoder
     )
 }
 
@@ -269,7 +267,7 @@ internal fun generateCoinbase(
         payout = Payout(BigDecimal("3")),
         difficulty = Difficulty.INIT_DIFFICULTY,
         blockheight = 2, coinbaseParams = coinbaseParams,
-        formula = formula, hasher = hasher, cbor = cbor
+        formula = formula, hasher = hasher, encoder = encoder
     )
 
 internal fun logActualToExpectedLists(
@@ -308,58 +306,8 @@ internal fun StringBuilder.appendByLine(toPrint: Collection<String>): StringBuil
         }
     }
 
-fun <T> Outcome<T, LoadFailure>.failOnLoadError() {
+fun <T> Outcome<T, Failure>.failOnError() {
     peekFailure {
-        when (it) {
-            is LoadFailure.UnknownFailure ->
-                it.exception?.let { ex ->
-                    throw ex
-                }
-            else -> {
-            }
-        }
-        fail(it.cause)
-    }
-}
-
-fun <T> Outcome<T, DataFailure>.failOnDataError() {
-    peekFailure {
-        when (it) {
-            is DataFailure.UnknownFailure ->
-                it.exception?.let { ex ->
-                    throw ex
-                }
-            else -> {
-            }
-        }
-        fail(it.cause)
-    }
-}
-
-fun <T : Any> Outcome<T, LedgerFailure>.failOnLedgerError() {
-    peekFailure {
-        when (it) {
-            is LedgerFailure.UnknownFailure ->
-                it.exception?.let { ex ->
-                    throw ex
-                }
-            else -> {
-            }
-        }
-        fail(it.cause)
-    }
-}
-
-fun <T : Any> Outcome<T, QueryFailure>.failOnQueryError() {
-    peekFailure {
-        when (it) {
-            is QueryFailure.UnknownFailure ->
-                it.exception?.let { ex ->
-                    throw ex
-                }
-            else -> {
-            }
-        }
-        fail(it.cause)
+        it.unwrap()
     }
 }
