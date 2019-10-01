@@ -100,13 +100,13 @@ class LedgerByTag(
 
     private fun attemptToResolveId() {
         ledgerConfig = LedgerConfig(
-            LedgerId(identity, hasher, cbor), ledgerParams!!,
+            LedgerId(identity, hasher, encoder), ledgerParams!!,
             coinbaseParams!!
         )
     }
 
     override fun build(): Outcome<LedgerHandle, LedgerHandle.Failure> {
-        cbor = Cbor(UpdateMode.UPDATE, true, serialModule)
+        encoder = Cbor(UpdateMode.UPDATE, true, serialModule)
         generateLedgerParams()
         attemptToResolveId()
         buildDB(ledgerConfig.ledgerId.hash)

@@ -1,6 +1,6 @@
 package org.knowledger.ledger.service.handles.builder
 
-import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.modules.SerialModule
 import org.knowledger.ledger.core.data.DefaultDiff
 import org.knowledger.ledger.core.database.DatabaseMode
@@ -30,7 +30,7 @@ abstract class AbstractLedgerBuilder {
     protected var dbUser: String = "admin"
     protected var dbPassword: String = "admin"
     protected var serialModule: SerialModule = baseModule
-    lateinit var cbor: Cbor
+    lateinit var encoder: BinaryFormat
 
     internal lateinit var ledgerConfig: LedgerConfig
     internal lateinit var persistenceWrapper: PersistenceWrapper
@@ -103,7 +103,7 @@ abstract class AbstractLedgerBuilder {
                 serialModule,
                 persistenceWrapper,
                 DefaultDiff,
-                cbor
+                encoder
             )
     }
 

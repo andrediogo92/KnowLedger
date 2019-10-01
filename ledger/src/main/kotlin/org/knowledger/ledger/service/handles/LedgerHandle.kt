@@ -1,6 +1,6 @@
 package org.knowledger.ledger.service.handles
 
-import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.core.data.DataFormula
 import org.knowledger.ledger.core.data.DefaultDiff
 import org.knowledger.ledger.core.data.LedgerData
@@ -11,9 +11,7 @@ import org.knowledger.ledger.core.misc.base64DecodedToHash
 import org.knowledger.ledger.core.misc.base64Encoded
 import org.knowledger.ledger.core.misc.classDigest
 import org.knowledger.ledger.core.results.Failable
-import org.knowledger.ledger.core.results.HardFailure
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.results.PropagatedFailure
 import org.knowledger.ledger.core.results.fold
 import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.storage.results.QueryFailure
@@ -35,6 +33,7 @@ import org.knowledger.ledger.service.transactions.getKnownChainHandleIDs
 import org.knowledger.ledger.service.transactions.getKnownChainHandleTypes
 import org.knowledger.ledger.service.transactions.getKnownChainHandles
 import org.knowledger.ledger.service.transactions.tryAddChainHandle
+import org.knowledger.ledger.core.results.Failure as CoreFailure
 
 
 /**
@@ -47,7 +46,7 @@ class LedgerHandle internal constructor(
     val ledgerConfig: LedgerConfig = builder.ledgerConfig
     val ledgerHash = ledgerConfig.ledgerId.hash
     val hasher: Hashers = builder.hasher
-    val cbor: Cbor = builder.cbor
+    val encoder: BinaryFormat = builder.encoder
     val isClosed: Boolean
         get() = pw.isClosed
 
@@ -120,7 +119,7 @@ class LedgerHandle internal constructor(
         ChainHandle(
             adapter.id.base64DecodedToHash(),
             ledgerConfig.ledgerId.hash,
-            hasher, cbor
+            hasher, encoder
         ).let { ch ->
             addStorageAdapter(adapter)
             pw.tryAddChainHandle(ch).fold(
@@ -160,34 +159,50 @@ class LedgerHandle internal constructor(
             }
     }
 
-    sealed class Failure : Failable {
-        data class PathCannotResolveAsDirectory(
-            override val cause: String
-        ) : Failure()
+    sealed class Failure : CoreFailure {
+        class PathCannotResolveAsDirectory(
+            cause: String
+        ) : Failure() {
+            override val failable: Failable.LightFailure =
+                Failable.LightFailure(cause)
+        }
 
         object NoIdentitySupplied : Failure() {
-            override val cause: String
-                get() = "No hash or identity supplied to builder."
+            override val failable: Failable.LightFailure =
+                Failable.LightFailure(
+                    "No hash or identity supplied to builder."
+                )
         }
 
         object NonExistentLedger : Failure() {
-            override val cause: String
-                get() = "No ledger matching hash in DB"
+            override val failable: Failable.LightFailure =
+                Failable.LightFailure(
+                    "No ledger matching hash in DB"
+                )
         }
 
-        data class NotRegisteredDataFormula(
-            override val cause: String
-        ) : Failure()
+        class NotRegisteredDataFormula(
+            cause: String
+        ) : Failure() {
+            override val failable: Failable.LightFailure =
+                Failable.LightFailure(cause)
+        }
 
-        data class UnknownFailure(
-            override val cause: String,
-            override val exception: Exception? = null
-        ) : Failure(), HardFailure
+        class UnknownFailure(
+            cause: String,
+            exception: Exception?
+        ) : Failure() {
+            override val failable: Failable.HardFailure =
+                Failable.HardFailure(cause, exception)
+        }
 
-        data class Propagated(
-            override val pointOfFailure: String,
-            override val failable: Failable
-        ) : Failure(), PropagatedFailure
+        class Propagated(
+            pointOfFailure: String,
+            failable: Failable
+        ) : Failure() {
+            override val failable: Failable.PropagatedFailure =
+                Failable.PropagatedFailure(pointOfFailure, failable)
+        }
     }
 
 

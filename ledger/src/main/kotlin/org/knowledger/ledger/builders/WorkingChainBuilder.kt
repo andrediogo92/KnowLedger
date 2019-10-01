@@ -7,18 +7,18 @@ import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.crypto.service.Identity
-import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.service.LedgerContainer
-import org.knowledger.ledger.storage.block.Block
+import org.knowledger.ledger.storage.Block
+import org.knowledger.ledger.storage.BlockHeader
+import org.knowledger.ledger.storage.Coinbase
+import org.knowledger.ledger.storage.MerkleTree
+import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.storage.TransactionOutput
 import org.knowledger.ledger.storage.block.BlockImpl
-import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
-import org.knowledger.ledger.storage.coinbase.HashedCoinbase
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
-import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
 import java.security.PublicKey
 import java.util.*
@@ -34,9 +34,9 @@ internal data class WorkingChainBuilder(
         get() = chainId.tag
 
     override fun block(
-        transactions: SortedSet<HashedTransaction>,
-        coinbase: HashedCoinbase,
-        blockHeader: HashedBlockHeader,
+        transactions: SortedSet<Transaction>,
+        coinbase: Coinbase,
+        blockHeader: BlockHeader,
         merkleTree: MerkleTree
     ): Block =
         BlockImpl(
@@ -52,7 +52,7 @@ internal data class WorkingChainBuilder(
         hash: Hash,
         seconds: Long,
         nonce: Long
-    ): HashedBlockHeader =
+    ): BlockHeader =
         HashedBlockHeaderImpl(
             chainId = chainId,
             previousHash = previousHash,
@@ -61,15 +61,15 @@ internal data class WorkingChainBuilder(
             hash = hash,
             seconds = seconds,
             nonce = nonce,
-            cbor = ledgerContainer.cbor,
+            encoder = ledgerContainer.encoder,
             hasher = ledgerContainer.hasher
         )
 
     override fun coinbase(
-        transactionOutputs: Set<HashedTransactionOutput>,
+        transactionOutputs: Set<TransactionOutput>,
         payout: Payout, difficulty: Difficulty,
         blockheight: Long, hash: Hash
-    ): HashedCoinbase =
+    ): Coinbase =
         HashedCoinbaseImpl(
             transactionOutputs = transactionOutputs.toMutableSet(),
             payout = payout, difficulty = difficulty,
@@ -77,7 +77,7 @@ internal data class WorkingChainBuilder(
             coinbaseParams = ledgerContainer.coinbaseParams,
             formula = ledgerContainer.formula, hash = hash,
             hasher = ledgerContainer.hasher,
-            cbor = ledgerContainer.cbor
+            encoder = ledgerContainer.encoder
         )
 
     override fun merkletree(
@@ -95,19 +95,19 @@ internal data class WorkingChainBuilder(
         prevCoinbase: Hash,
         publicKey: PublicKey, hash: Hash,
         payout: Payout
-    ): HashedTransactionOutput =
+    ): TransactionOutput =
         HashedTransactionOutputImpl(
             previousCoinbase = prevCoinbase,
             publicKey = publicKey, hash = hash,
             payout = payout, transactionSet = transactionSet,
             hasher = ledgerContainer.hasher,
-            cbor = ledgerContainer.cbor
+            encoder = ledgerContainer.encoder
         )
 
     override fun transaction(
         publicKey: PublicKey, physicalData: PhysicalData,
         signature: ByteArray, hash: Hash
-    ): HashedTransaction =
+    ): Transaction =
         HashedTransactionImpl(
             publicKey = publicKey, hash = hash,
             data = physicalData, signature = signature
@@ -115,11 +115,11 @@ internal data class WorkingChainBuilder(
 
     override fun transaction(
         data: PhysicalData
-    ): HashedTransaction =
+    ): Transaction =
         HashedTransactionImpl(
             identity = identity, data = data,
             hasher = ledgerContainer.hasher,
-            cbor = ledgerContainer.cbor
+            encoder = ledgerContainer.encoder
         )
 
 }

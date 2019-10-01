@@ -5,12 +5,12 @@ import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.crypto.storage.MerkleTree
-import org.knowledger.ledger.storage.block.Block
-import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
-import org.knowledger.ledger.storage.coinbase.HashedCoinbase
-import org.knowledger.ledger.storage.transaction.HashedTransaction
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
+import org.knowledger.ledger.storage.Block
+import org.knowledger.ledger.storage.BlockHeader
+import org.knowledger.ledger.storage.Coinbase
+import org.knowledger.ledger.storage.MerkleTree
+import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.storage.TransactionOutput
 import java.security.PublicKey
 import java.util.*
 
@@ -19,9 +19,9 @@ interface ChainBuilder {
     val tag: Tag
 
     fun block(
-        transactions: SortedSet<HashedTransaction>,
-        coinbase: HashedCoinbase,
-        blockHeader: HashedBlockHeader,
+        transactions: SortedSet<Transaction>,
+        coinbase: Coinbase,
+        blockHeader: BlockHeader,
         merkleTree: MerkleTree
     ): Block
 
@@ -31,13 +31,13 @@ interface ChainBuilder {
         hash: Hash,
         seconds: Long,
         nonce: Long
-    ): HashedBlockHeader
+    ): BlockHeader
 
     fun coinbase(
-        transactionOutputs: Set<HashedTransactionOutput>,
+        transactionOutputs: Set<TransactionOutput>,
         payout: Payout, difficulty: Difficulty,
         blockheight: Long, hash: Hash
-    ): HashedCoinbase
+    ): Coinbase
 
     fun merkletree(
         collapsedTree: List<Hash>,
@@ -49,14 +49,14 @@ interface ChainBuilder {
         prevCoinbase: Hash,
         publicKey: PublicKey, hash: Hash,
         payout: Payout
-    ): HashedTransactionOutput
+    ): TransactionOutput
 
     fun transaction(
         publicKey: PublicKey, physicalData: PhysicalData,
         signature: ByteArray, hash: Hash
-    ): HashedTransaction
+    ): Transaction
 
     fun transaction(
         data: PhysicalData
-    ): HashedTransaction
+    ): Transaction
 }

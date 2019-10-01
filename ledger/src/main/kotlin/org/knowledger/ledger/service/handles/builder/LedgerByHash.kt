@@ -70,7 +70,7 @@ data class LedgerByHash(
         }
 
     override fun build(): Outcome<LedgerHandle, LedgerHandle.Failure> {
-        cbor = Cbor(UpdateMode.UPDATE, true, serialModule)
+        encoder = Cbor(UpdateMode.UPDATE, true, serialModule)
         buildDB(hash)
         return attemptToResolveId().mapSuccess {
             ledgerConfig = it

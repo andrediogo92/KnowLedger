@@ -1,6 +1,6 @@
 package org.knowledger.ledger.service.handles
 
-import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
@@ -60,7 +60,7 @@ data class ChainHandle internal constructor(
 ) : ServiceClass {
     val chainHash = id.hash
     private val hasher: Hasher
-    private val cbor: Cbor
+    private val encoder: BinaryFormat
     private val pw: PersistenceWrapper
     val ledgerParams: LedgerParams
     val coinbaseParams: CoinbaseParams
@@ -73,7 +73,7 @@ data class ChainHandle internal constructor(
             hasher = it.hasher
             pw = it.persistenceWrapper
             ledgerParams = it.ledgerParams
-            cbor = it.cbor
+            encoder = it.encoder
             coinbaseParams = it.coinbaseParams
         }
     }
@@ -116,9 +116,9 @@ data class ChainHandle internal constructor(
         tag: Tag,
         ledgerHash: Hash,
         hasher: Hasher,
-        cbor: Cbor
+        encoder: BinaryFormat
     ) : this(
-        StorageAwareChainId(tag, ledgerHash, hasher, cbor)
+        StorageAwareChainId(tag, ledgerHash, hasher, encoder)
     )
 
 
@@ -193,7 +193,7 @@ data class ChainHandle internal constructor(
         while (data.hasNext()) {
             val currentBlock = data.next()
             val curHeader = currentBlock.header
-            val cmpHash = curHeader.digest(hasher, cbor)
+            val cmpHash = curHeader.digest(hasher, encoder)
             // compare registered hashId and calculated hashId:
             if (curHeader.hash != cmpHash) {
                 Logger.debug {
@@ -426,7 +426,7 @@ data class ChainHandle internal constructor(
                     """
                     | Difficulty retrigger without 2048 blocks existent?
                     |   Grab from Index: $fromHeight
-                    |   Cause: ${recalcBlock.failure.cause}
+                    |   Cause: ${recalcBlock.failure.failable.cause}
                     """.trimMargin()
                 }
                 difficultyTarget
@@ -506,7 +506,7 @@ data class ChainHandle internal constructor(
                 HashedBlockHeaderImpl(
                     chainId,
                     it.hasher,
-                    it.cbor,
+                    it.encoder,
                     emptyHash,
                     BlockParams(),
                     emptyHash,
