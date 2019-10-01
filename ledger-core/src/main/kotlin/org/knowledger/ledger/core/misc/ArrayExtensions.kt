@@ -50,6 +50,20 @@ fun <T> Iterator<T>.filterByIndex(
     return mutList
 }
 
+fun <E> MutableIterable<E>.removeByUnique(
+    predicate: (E) -> Boolean
+): Boolean {
+    val it = iterator()
+    while (it.hasNext()) {
+        if (predicate(it.next())) {
+            it.remove()
+            return true
+        }
+    }
+    return false
+}
+
+
 fun <T> Sequence<T>.filterByIndex(
     function: (Int) -> Boolean
 ): List<T> =

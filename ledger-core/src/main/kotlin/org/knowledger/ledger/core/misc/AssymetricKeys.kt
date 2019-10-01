@@ -1,6 +1,6 @@
 package org.knowledger.ledger.core.misc
 
-import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.core.serial.HashSerializable
 import java.security.Key
 import java.security.KeyFactory
@@ -23,18 +23,17 @@ private val dsa: Signature =
     )
 
 /**
- * Signs the [data]'s digest appended to the [publicKey]
- * using the [privateKey].
+ * Signs the [data]'s byte encoding using the [privateKey].
  * Returns the generated signature as a [ByteArray].
  */
 fun generateSignature(
     privateKey: PrivateKey,
     data: HashSerializable,
-    cbor: Cbor
+    encoder: BinaryFormat
 ): ByteArray =
     applyECDSASig(
         privateKey,
-        data.serialize(cbor)
+        data.serialize(encoder)
     )
 
 
