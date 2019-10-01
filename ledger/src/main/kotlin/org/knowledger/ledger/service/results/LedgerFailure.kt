@@ -1,33 +1,52 @@
 package org.knowledger.ledger.service.results
 
 import org.knowledger.ledger.core.results.Failable
-import org.knowledger.ledger.core.results.HardFailure
-import org.knowledger.ledger.core.results.PropagatedFailure
+import org.knowledger.ledger.core.results.Failure
 
 
-sealed class LedgerFailure : Failable {
+sealed class LedgerFailure : Failure {
 
-    data class NonExistentData(
-        override val cause: String
-    ) : LedgerFailure()
+    class NonExistentData(
+        pointOfFailure: String
+    ) : LedgerFailure() {
+        override val failable: Failable.LightFailure =
+            Failable.LightFailure(
+                "Empty result set for $pointOfFailure"
+            )
+    }
 
-    data class NonMatchingCrypter(
-        override val cause: String
-    ) : LedgerFailure()
+    class NonMatchingCrypter(
+        cause: String
+    ) : LedgerFailure() {
+        override val failable: Failable.LightFailure =
+            Failable.LightFailure(
+                cause
+            )
+    }
 
-    data class NoKnownStorageAdapter(
-        override val cause: String
-    ) : LedgerFailure()
+    class NoKnownStorageAdapter(
+        cause: String
+    ) : LedgerFailure() {
+        override val failable: Failable.LightFailure =
+            Failable.LightFailure(
+                cause
+            )
+    }
 
 
-    data class UnknownFailure(
-        override val cause: String,
-        override val exception: Exception? = null
-    ) : LedgerFailure(), HardFailure
+    class UnknownFailure(
+        cause: String,
+        exception: Exception?
+    ) : LedgerFailure() {
+        override val failable: Failable.HardFailure =
+            Failable.HardFailure(cause, exception)
+    }
 
-    data class Propagated(
-        override val pointOfFailure: String,
-        override val failable: Failable
-    ) : LedgerFailure(), PropagatedFailure
-
+    class Propagated(
+        pointOfFailure: String,
+        failable: Failable
+    ) : LedgerFailure() {
+        override val failable: Failable.PropagatedFailure =
+            Failable.PropagatedFailure(pointOfFailure, failable)
+    }
 }

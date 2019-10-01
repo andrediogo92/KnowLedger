@@ -1,27 +1,39 @@
 package org.knowledger.ledger.service.results
 
 import org.knowledger.ledger.core.results.Failable
-import org.knowledger.ledger.core.results.HardFailure
-import org.knowledger.ledger.core.results.PropagatedFailure
+import org.knowledger.ledger.core.results.Failure
 
 
-sealed class UpdateFailure : Failable {
+sealed class UpdateFailure : Failure {
     object NotYetStored : UpdateFailure() {
-        override val cause: String =
-            "Element has not yet been persisted first."
+        override val failable: Failable.LightFailure =
+            Failable.LightFailure(
+                "Element has not yet been persisted first."
+            )
     }
 
-    data class FailedToSave(
-        override val cause: String
-    ) : UpdateFailure()
+    class FailedToSave(
+        cause: String
+    ) : UpdateFailure() {
+        override val failable: Failable.LightFailure =
+            Failable.LightFailure(
+                cause
+            )
+    }
 
-    data class UnknownFailure(
-        override val cause: String,
-        override val exception: Exception? = null
-    ) : UpdateFailure(), HardFailure
+    class UnknownFailure(
+        cause: String,
+        exception: Exception?
+    ) : UpdateFailure() {
+        override val failable: Failable.HardFailure =
+            Failable.HardFailure(cause, exception)
+    }
 
-    data class Propagated(
-        override val pointOfFailure: String,
-        override val failable: Failable
-    ) : UpdateFailure(), PropagatedFailure
+    class Propagated(
+        pointOfFailure: String,
+        failable: Failable
+    ) : UpdateFailure() {
+        override val failable: Failable.PropagatedFailure =
+            Failable.PropagatedFailure(pointOfFailure, failable)
+    }
 }

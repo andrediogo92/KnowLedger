@@ -1,7 +1,5 @@
 package org.knowledger.ledger.results
 
-import org.knowledger.ledger.core.results.Failable
-import org.knowledger.ledger.core.results.HardFailure
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.storage.results.DataFailure
 import org.knowledger.ledger.core.storage.results.QueryFailure
@@ -10,7 +8,6 @@ import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.service.results.UpdateFailure
-import org.tinylog.kotlin.Logger
 
 //-----------------------------------------
 // Exception Handlers
@@ -116,16 +113,3 @@ fun deadCode(): Nothing {
 
 @Suppress("unused")
 fun <T> T.checkSealed() {}
-
-fun HardFailure.logAndThrow(): Nothing {
-    if (exception != null) {
-        Logger.error(cause)
-        throw RuntimeException(exception)
-    } else {
-        throw RuntimeException(cause)
-    }
-}
-
-fun Failable.throwCause(): Nothing {
-    throw RuntimeException(cause)
-}

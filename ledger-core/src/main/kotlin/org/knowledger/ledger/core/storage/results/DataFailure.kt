@@ -1,38 +1,68 @@
 package org.knowledger.ledger.core.storage.results
 
 import org.knowledger.ledger.core.results.Failable
-import org.knowledger.ledger.core.results.HardFailure
-import org.knowledger.ledger.core.results.PropagatedFailure
+import org.knowledger.ledger.core.results.Failure
 
 
-sealed class DataFailure : Failable {
-    data class NonExistentData(
-        override val cause: String
-    ) : DataFailure()
+sealed class DataFailure : Failure {
+    class NonExistentData(
+        val cause: String
+    ) : DataFailure() {
+        override val failable: Failable.LightFailure =
+            Failable.LightFailure(
+                cause
+            )
+    }
 
-    data class UnrecognizedDataType(
-        override val cause: String
-    ) : DataFailure()
+    class UnrecognizedDataType(
+        cause: String
+    ) : DataFailure() {
+        override val failable: Failable.LightFailure =
+            Failable.LightFailure(
+                cause
+            )
+    }
 
-    data class UnrecognizedUnit(
-        override val cause: String
-    ) : DataFailure()
+    class UnrecognizedUnit(
+        cause: String
+    ) : DataFailure() {
+        override val failable: Failable.LightFailure =
+            Failable.LightFailure(
+                cause
+            )
+    }
 
-    data class UnexpectedClass(
-        override val cause: String
-    ) : DataFailure()
+    class UnexpectedClass(
+        cause: String
+    ) : DataFailure() {
+        override val failable: Failable.LightFailure =
+            Failable.LightFailure(
+                cause
+            )
+    }
 
-    data class NonRegisteredSchema(
-        override val cause: String
-    ) : DataFailure()
+    class NonRegisteredSchema(
+        val cause: String
+    ) : DataFailure() {
+        override val failable: Failable.LightFailure =
+            Failable.LightFailure(
+                cause
+            )
+    }
 
-    data class UnknownFailure(
-        override val cause: String,
-        override val exception: Exception? = null
-    ) : DataFailure(), HardFailure
+    class UnknownFailure(
+        cause: String,
+        exception: Exception?
+    ) : DataFailure() {
+        override val failable: Failable.HardFailure =
+            Failable.HardFailure(cause, exception)
+    }
 
-    data class Propagated(
-        override val pointOfFailure: String,
-        override val failable: Failable
-    ) : DataFailure(), PropagatedFailure
+    class Propagated(
+        pointOfFailure: String,
+        failable: Failable
+    ) : DataFailure() {
+        override val failable: Failable.PropagatedFailure =
+            Failable.PropagatedFailure(pointOfFailure, failable)
+    }
 }
