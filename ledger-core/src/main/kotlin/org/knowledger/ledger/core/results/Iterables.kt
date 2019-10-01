@@ -3,7 +3,7 @@ package org.knowledger.ledger.core.results
 /**
  * Attempts to extract all values or short circuits on first failure.
  */
-fun <T, U : Failable> Iterable<Outcome<T, U>>.allValues(): Outcome<List<T>, U> =
+fun <T, U : Failure> Iterable<Outcome<T, U>>.allValues(): Outcome<List<T>, U> =
     Outcome.Ok(
         map { r -> r.onFailure { return it } }
     )
@@ -11,7 +11,7 @@ fun <T, U : Failable> Iterable<Outcome<T, U>>.allValues(): Outcome<List<T>, U> =
 /**
  * Attempts to extract all values or short circuits on first failure.
  */
-fun <T, U : Failable> List<Outcome<T, U>>.allValues(): Outcome<List<T>, U> =
+fun <T, U : Failure> List<Outcome<T, U>>.allValues(): Outcome<List<T>, U> =
     Outcome.Ok(
         map { r -> r.onFailure { return it } }
     )
@@ -19,7 +19,7 @@ fun <T, U : Failable> List<Outcome<T, U>>.allValues(): Outcome<List<T>, U> =
 /**
  * Attempts to extract all values or short circuits on first failure.
  */
-fun <T, U : Failable> Sequence<Outcome<T, U>>.allValues(): Outcome<Sequence<T>, U> {
+fun <T, U : Failure> Sequence<Outcome<T, U>>.allValues(): Outcome<Sequence<T>, U> {
     val accumulator: MutableList<T> = mutableListOf()
     var short = false
     lateinit var shorter: U
@@ -45,7 +45,7 @@ fun <T, U : Failable> Sequence<Outcome<T, U>>.allValues(): Outcome<Sequence<T>, 
 /**
  * Extracts all successful [Outcome]s, discards failures.
  */
-fun <T, U : Failable> Iterable<Outcome<T, U>>.anyValues(): List<T> =
+fun <T, U : Failure> Iterable<Outcome<T, U>>.anyValues(): List<T> =
     filterIsInstance<Outcome.Ok<T>>().map {
         it.value
     }
@@ -53,7 +53,7 @@ fun <T, U : Failable> Iterable<Outcome<T, U>>.anyValues(): List<T> =
 /**
  * Extracts all successful [Outcome]s, discards failures.
  */
-fun <T, U : Failable> List<Outcome<T, U>>.anyValues(): List<T> =
+fun <T, U : Failure> List<Outcome<T, U>>.anyValues(): List<T> =
     filterIsInstance<Outcome.Ok<T>>().map {
         it.value
     }
@@ -61,7 +61,7 @@ fun <T, U : Failable> List<Outcome<T, U>>.anyValues(): List<T> =
 /**
  * Extracts all successful [Outcome]s, discards failures.
  */
-fun <T, U : Failable> Sequence<Outcome<T, U>>.anyValues(): Sequence<T> =
+fun <T, U : Failure> Sequence<Outcome<T, U>>.anyValues(): Sequence<T> =
     filterIsInstance<Outcome.Ok<T>>().map {
         it.value
     }
@@ -70,7 +70,7 @@ fun <T, U : Failable> Sequence<Outcome<T, U>>.anyValues(): Sequence<T> =
  * Extracts all successful [Outcome]s, and all failed [Outcome]s into a pair.
  */
 @Suppress("DuplicatedCode")
-fun <T, U : Failable> Iterable<Outcome<T, U>>.partition(): Pair<List<T>, List<U>> {
+fun <T, U : Failure> Iterable<Outcome<T, U>>.partition(): Pair<List<T>, List<U>> {
     val oks = mutableListOf<T>()
     val errs = mutableListOf<U>()
     forEach {
@@ -87,7 +87,7 @@ fun <T, U : Failable> Iterable<Outcome<T, U>>.partition(): Pair<List<T>, List<U>
  * Extracts all successful [Outcome]s, and all failed [Outcome]s into a pair.
  */
 @Suppress("DuplicatedCode")
-fun <T, U : Failable> Sequence<Outcome<T, U>>.partition(): Pair<List<T>, List<U>> {
+fun <T, U : Failure> Sequence<Outcome<T, U>>.partition(): Pair<List<T>, List<U>> {
     val oks = mutableListOf<T>()
     val errs = mutableListOf<U>()
     forEach {

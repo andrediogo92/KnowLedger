@@ -1,10 +1,10 @@
 package org.knowledger.ledger.core.results
 
-sealed class Outcome<out T, out U : Failable> {
+sealed class Outcome<out T, out U : Failure> {
     data class Ok<out T>(
         val value: T
     ) : Outcome<T, Nothing>() {
-        inline fun <M, S : Failable> flatMap(
+        inline fun <M, S : Failure> flatMap(
             apply: (T) -> Outcome<M, S>
         ): Outcome<M, S> =
             apply(this.value)
@@ -19,16 +19,16 @@ sealed class Outcome<out T, out U : Failable> {
 
     }
 
-    data class Error<out U : Failable>(
+    data class Error<out U : Failure>(
         val failure: U
     ) : Outcome<Nothing, U>() {
 
-        inline fun <M, S : Failable> flatMap(
+        inline fun <M, S : Failure> flatMap(
             apply: (U) -> Outcome<M, S>
         ): Outcome<M, S> =
             apply(this.failure)
 
-        inline fun <S : Failable> map(
+        inline fun <S : Failure> map(
             apply: (U) -> S
         ): Error<S> =
             Error(apply(failure))
