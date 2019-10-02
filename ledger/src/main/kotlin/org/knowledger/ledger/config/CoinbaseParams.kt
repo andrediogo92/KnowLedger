@@ -1,8 +1,8 @@
 package org.knowledger.ledger.config
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.data.DefaultDiff
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.misc.classDigest
@@ -19,6 +19,6 @@ data class CoinbaseParams(
     val dividingThreshold: Long = 100000,
     val formula: Hash = DefaultDiff.classDigest(Hashers.SHA3512Hasher)
 ) : HashSerializable, ServiceClass {
-    override fun serialize(cbor: Cbor): ByteArray =
-        cbor.dump(serializer(), this)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(serializer(), this)
 }

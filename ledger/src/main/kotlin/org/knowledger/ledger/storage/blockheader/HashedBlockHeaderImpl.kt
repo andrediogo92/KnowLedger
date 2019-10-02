@@ -1,5 +1,6 @@
 package org.knowledger.ledger.storage.blockheader
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -21,7 +22,7 @@ internal data class HashedBlockHeaderImpl(
     @Transient
     private var hasher: Hashers = DEFAULT_HASHER,
     @Transient
-    private var cbor: Cbor = Cbor.plain
+    private var encoder: BinaryFormat = Cbor.plain
 ) : HashedBlockHeader,
     HashUpdateable,
     BlockHeader by blockHeader {
@@ -29,14 +30,14 @@ internal data class HashedBlockHeaderImpl(
     private var cachedSize: Long? = null
 
     override val approximateSize: Long
-        get() = cachedSize ?: recalculateSize(hasher, cbor)
+        get() = cachedSize ?: recalculateSize(hasher, encoder)
 
     override val hash: Hash
-        get() = _hash ?: recalculateHash(hasher, cbor)
+        get() = _hash ?: recalculateHash(hasher, encoder)
 
 
     internal constructor(
-        chainId: ChainId, hasher: Hashers, cbor: Cbor,
+        chainId: ChainId, hasher: Hashers, encoder: BinaryFormat,
         previousHash: Hash, blockParams: BlockParams
     ) : this(
         blockHeader = BlockHeaderImpl(
@@ -45,12 +46,12 @@ internal data class HashedBlockHeaderImpl(
             params = blockParams
         ),
         hasher = hasher,
-        cbor = cbor
+        encoder = encoder
     )
 
     internal constructor(
         chainId: ChainId, hasher: Hashers,
-        cbor: Cbor, hash: Hash,
+        encoder: BinaryFormat, hash: Hash,
         blockParams: BlockParams, previousHash: Hash,
         merkleRoot: Hash, seconds: Long, nonce: Long
     ) : this(
@@ -59,36 +60,36 @@ internal data class HashedBlockHeaderImpl(
             previousHash = previousHash,
             params = blockParams, _merkleRoot = merkleRoot,
             seconds = seconds, _nonce = nonce
-        ), _hash = hash, hasher = hasher, cbor = cbor
+        ), _hash = hash, hasher = hasher, encoder = encoder
     )
 
-    override fun serialize(cbor: Cbor): ByteArray =
-        blockHeader.serialize(cbor)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        blockHeader.serialize(encoder)
 
     override fun updateMerkleTree(newRoot: Hash) {
         blockHeader._merkleRoot = newRoot
         blockHeader._nonce = 0
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
     }
 
     override fun recalculateSize(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ): Long {
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
         return cachedSize as Long
     }
 
     override fun recalculateHash(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ): Hash {
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
         return _hash as Hash
     }
 
     override fun updateHash(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ) {
-        val bytes = blockHeader.serialize(cbor)
+        val bytes = blockHeader.serialize(encoder)
         _hash = hasher.applyHash(bytes)
         cachedSize = cachedSize ?: bytes.size.toLong() +
                 _hash!!.bytes.size.toLong()
@@ -96,7 +97,7 @@ internal data class HashedBlockHeaderImpl(
 
     override fun newHash() {
         blockHeader._nonce++
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
     }
 
 

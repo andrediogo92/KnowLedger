@@ -1,9 +1,9 @@
 package org.knowledger.ledger.storage.transaction
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
@@ -33,15 +33,15 @@ internal data class HashedTransactionImpl(
 
     constructor(
         privateKey: PrivateKey, publicKey: PublicKey,
-        data: PhysicalData, hasher: Hashers, cbor: Cbor
+        data: PhysicalData, hasher: Hashers, encoder: BinaryFormat
     ) : this(
         signedTransaction = SignedTransactionImpl(
             privateKey = privateKey,
             publicKey = publicKey,
-            data = data, cbor = cbor
+            data = data, encoder = encoder
         )
     ) {
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
     }
 
     constructor(
@@ -56,33 +56,33 @@ internal data class HashedTransactionImpl(
 
     constructor(
         identity: Identity, data: PhysicalData,
-        hasher: Hashers, cbor: Cbor
+        hasher: Hashers, encoder: BinaryFormat
     ) : this(
         privateKey = identity.privateKey,
         publicKey = identity.publicKey,
         data = data, hasher = hasher,
-        cbor = cbor
+        encoder = encoder
     )
 
 
     override fun recalculateSize(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ): Long {
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
         return cachedSize as Long
     }
 
     override fun recalculateHash(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ): Hash {
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
         return _hash as Hash
     }
 
     override fun updateHash(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ) {
-        val bytes = signedTransaction.serialize(cbor)
+        val bytes = signedTransaction.serialize(encoder)
         _hash = hasher.applyHash(bytes)
         cachedSize = cachedSize ?: bytes.size.toLong() +
                 _hash!!.bytes.size.toLong()

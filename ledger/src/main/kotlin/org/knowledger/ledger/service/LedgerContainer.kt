@@ -1,6 +1,6 @@
 package org.knowledger.ledger.service
 
-import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.modules.SerialModule
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.LedgerParams
@@ -17,5 +17,5 @@ internal data class LedgerContainer(
     val serialModule: SerialModule,
     val persistenceWrapper: PersistenceWrapper,
     val formula: DataFormula,
-    val cbor: Cbor
+    val encoder: BinaryFormat
 )

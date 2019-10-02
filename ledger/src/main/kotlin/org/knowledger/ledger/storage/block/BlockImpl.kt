@@ -1,5 +1,6 @@
 package org.knowledger.ledger.storage.block
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -36,7 +37,7 @@ internal data class BlockImpl(
     override val header: HashedBlockHeader,
     override var merkleTree: MerkleTree,
     @Transient
-    internal var cbor: Cbor = Cbor.plain,
+    internal var encoder: BinaryFormat = Cbor.plain,
     @Transient
     internal var hasher: Hashers = DEFAULT_HASHER
 ) : Block, Sizeable, LedgerContract {
@@ -59,7 +60,7 @@ internal data class BlockImpl(
         StorageAwareBlockHeader(
             chainId,
             ledgerContainer.hasher,
-            ledgerContainer.cbor,
+            ledgerContainer.encoder,
             previousHash,
             params
         ),
@@ -82,25 +83,25 @@ internal data class BlockImpl(
         chainId: ChainId, difficulty: Difficulty,
         previousHash: Hash, coinbaseParams: CoinbaseParams,
         dataFormula: DataFormula, blockheight: Long,
-        blockParams: BlockParams, cbor: Cbor, hasher: Hashers
+        blockParams: BlockParams, encoder: BinaryFormat, hasher: Hashers
     ) : this(
         sortedSetOf(),
         StorageAwareCoinbase(
             difficulty, blockheight, coinbaseParams,
-            dataFormula, cbor, hasher
+            dataFormula, encoder, hasher
         ),
         StorageAwareBlockHeader(
             chainId,
             hasher,
-            cbor,
+            encoder,
             previousHash,
             blockParams
         ),
         StorageAwareMerkleTree(hasher)
     )
 
-    override fun serialize(cbor: Cbor): ByteArray =
-        cbor.dump(serializer(), this)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(serializer(), this)
 
     override fun clone(): Block =
         copy(
@@ -121,11 +122,11 @@ internal data class BlockImpl(
      */
     override fun plus(transaction: HashedTransaction): Boolean {
         val transactionSize =
-            transaction.approximateSize(cbor)
+            transaction.approximateSize(encoder)
         val cumSize = approximateSize + transactionSize
         if (cumSize < header.params.blockMemSize) {
             if (data.size < header.params.blockLength) {
-                if (transaction.processTransaction(cbor)) {
+                if (transaction.processTransaction(encoder)) {
                     data.add(transaction)
                     cachedSize = cumSize
                     Logger.info {
@@ -165,7 +166,7 @@ internal data class BlockImpl(
      *         of a block from a database.
      */
     fun recalculateApproximateSize(): Long {
-        cachedSize = serialize(cbor).size.toLong()
+        cachedSize = serialize(encoder).size.toLong()
         return cachedSize as Long
     }
 

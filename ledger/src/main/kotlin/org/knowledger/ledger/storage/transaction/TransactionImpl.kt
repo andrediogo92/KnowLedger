@@ -2,10 +2,10 @@
 
 package org.knowledger.ledger.storage.transaction
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.internal.ByteArraySerializer
 import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.serial.PublicKeySerializer
@@ -18,8 +18,8 @@ internal data class TransactionImpl(
     override val publicKey: PublicKey,
     override val data: PhysicalData
 ) : Transaction {
-    override fun serialize(cbor: Cbor): ByteArray =
-        cbor.dump(serializer(), this)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(serializer(), this)
 
     override fun compareTo(other: Transaction): Int =
         data.compareTo(other.data)

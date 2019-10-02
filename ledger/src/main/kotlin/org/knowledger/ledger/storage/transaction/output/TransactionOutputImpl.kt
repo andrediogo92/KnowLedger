@@ -2,10 +2,10 @@
 
 package org.knowledger.ledger.storage.transaction.output
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.serial.PublicKeySerializer
@@ -58,7 +58,7 @@ internal data class TransactionOutputImpl(
         _payout += payout
     }
 
-    override fun serialize(cbor: Cbor): ByteArray =
-        cbor.dump(serializer(), this)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(serializer(), this)
 
 }

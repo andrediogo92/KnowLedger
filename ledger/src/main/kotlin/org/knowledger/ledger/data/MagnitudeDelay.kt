@@ -2,7 +2,7 @@ package org.knowledger.ledger.data
 
 import org.knowledger.ledger.core.data.PhysicalUnit
 
-enum class MagnitudeDelay() : PhysicalUnit {
+enum class MagnitudeDelay : PhysicalUnit {
     /**
      * Shown as grey on traffic tiles.
      */

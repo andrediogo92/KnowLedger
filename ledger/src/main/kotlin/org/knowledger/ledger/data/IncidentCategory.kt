@@ -2,8 +2,7 @@ package org.knowledger.ledger.data
 
 import org.knowledger.ledger.core.data.PhysicalUnit
 
-enum class IncidentCategory(
-) : PhysicalUnit {
+enum class IncidentCategory : PhysicalUnit {
     //Incident Category Constants
     Unknown,
     Accident,

@@ -1,10 +1,10 @@
 @file:UseSerializers(BigDecimalSerializer::class)
 package org.knowledger.ledger.data
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
@@ -16,7 +16,7 @@ import java.math.BigDecimal
 /**
  * Humidity value can be expressed in Absolute/Volumetric
  * or Relative humidity. As such possible measurements
- * can be in g/Kg ([HumidityUnit.G_By_KG]), Kg/Kg ([HumidityUnit.KG_By_KG])
+ * can be in g/Kg ([HumidityUnit.GramsByKilograms]), Kg/Kg ([HumidityUnit.KilogramsByKilograms])
  * or percentage ([HumidityUnit.Relative]) expressed by the [unit].
  */
 @Serializable
@@ -25,8 +25,8 @@ data class HumidityData(
     val humidity: BigDecimal,
     val unit: HumidityUnit
 ) : LedgerData {
-    override fun serialize(cbor: Cbor): ByteArray =
-        cbor.dump(serializer(), this)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(serializer(), this)
 
     override fun calculateDiff(previous: SelfInterval): BigDecimal =
         when (previous) {
@@ -46,8 +46,8 @@ data class HumidityData(
             newH = humidity
             oldH = previous.humidity
         } else {
-            newH = unit.convertTo(humidity, HumidityUnit.KG_By_KG)
-            oldH = previous.unit.convertTo(humidity, HumidityUnit.KG_By_KG)
+            newH = unit.convertTo(humidity, HumidityUnit.KilogramsByKilograms)
+            oldH = previous.unit.convertTo(humidity, HumidityUnit.KilogramsByKilograms)
         }
         return newH.subtract(oldH)
             .divide(oldH, GLOBALCONTEXT)

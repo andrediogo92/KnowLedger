@@ -1,5 +1,6 @@
 package org.knowledger.ledger.storage.coinbase
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -31,7 +32,7 @@ internal data class HashedCoinbaseImpl(
     @Transient
     private var hasher: Hashers = DEFAULT_HASHER,
     @Transient
-    private var cbor: Cbor = Cbor.plain
+    private var encoder: BinaryFormat = Cbor.plain
 ) : HashedCoinbase,
     HashUpdateable,
     Coinbase by coinbase {
@@ -39,10 +40,10 @@ internal data class HashedCoinbaseImpl(
     private var cachedSize: Long? = null
 
     override val approximateSize: Long
-        get() = cachedSize ?: recalculateSize(hasher, cbor)
+        get() = cachedSize ?: recalculateSize(hasher, encoder)
 
     override val hash: Hash
-        get() = _hash ?: recalculateHash(hasher, cbor)
+        get() = _hash ?: recalculateHash(hasher, encoder)
 
     /**
      * Internally used constructor to construct new [HashedCoinbaseImpl] from inside
@@ -55,7 +56,7 @@ internal data class HashedCoinbaseImpl(
         difficulty, blockheight,
         container.coinbaseParams,
         container.formula,
-        container.hasher, container.cbor
+        container.hasher, container.encoder
     )
 
     constructor(
@@ -63,42 +64,42 @@ internal data class HashedCoinbaseImpl(
         payout: Payout, difficulty: Difficulty,
         blockheight: Long, extraNonce: Long,
         coinbaseParams: CoinbaseParams, formula: DataFormula,
-        hash: Hash, hasher: Hashers, cbor: Cbor
+        hash: Hash, hasher: Hashers, encoder: BinaryFormat
     ) : this(
         CoinbaseImpl(
             _transactionOutputs = transactionOutputs,
             payout = payout, difficulty = difficulty,
             blockheight = blockheight, extraNonce = extraNonce,
             coinbaseParams = coinbaseParams, formula = formula
-        ), _hash = hash, hasher = hasher, cbor = cbor
+        ), _hash = hash, hasher = hasher, encoder = encoder
     )
 
     constructor(
         transactionOutputs: MutableSet<HashedTransactionOutput>,
         payout: Payout, difficulty: Difficulty,
         blockheight: Long, coinbaseParams: CoinbaseParams, formula: DataFormula,
-        hash: Hash, hasher: Hashers, cbor: Cbor
+        hash: Hash, hasher: Hashers, encoder: BinaryFormat
     ) : this(
         CoinbaseImpl(
             _transactionOutputs = transactionOutputs,
             payout = payout, difficulty = difficulty,
             blockheight = blockheight,
             coinbaseParams = coinbaseParams, formula = formula
-        ), _hash = hash, hasher = hasher, cbor = cbor
+        ), _hash = hash, hasher = hasher, encoder = encoder
     )
 
     constructor(
         transactionOutputs: MutableSet<HashedTransactionOutput>,
         payout: Payout, difficulty: Difficulty,
         blockheight: Long, coinbaseParams: CoinbaseParams,
-        formula: DataFormula, hasher: Hashers, cbor: Cbor
+        formula: DataFormula, hasher: Hashers, encoder: BinaryFormat
     ) : this(
         CoinbaseImpl(
             _transactionOutputs = transactionOutputs,
             payout = payout, difficulty = difficulty,
             blockheight = blockheight,
             coinbaseParams = coinbaseParams, formula = formula
-        ), hasher = hasher, cbor = cbor
+        ), hasher = hasher, encoder = encoder
     )
 
     /**
@@ -107,35 +108,35 @@ internal data class HashedCoinbaseImpl(
     constructor(
         difficulty: Difficulty, blockheight: Long,
         coinbaseParams: CoinbaseParams, dataFormula: DataFormula,
-        hasher: Hashers, cbor: Cbor
+        hasher: Hashers, encoder: BinaryFormat
     ) : this(
         transactionOutputs = mutableSetOf(),
         payout = Payout(BigDecimal.ZERO), difficulty = difficulty,
         blockheight = blockheight, coinbaseParams = coinbaseParams,
-        formula = dataFormula, hasher = hasher, cbor = cbor
+        formula = dataFormula, hasher = hasher, encoder = encoder
     )
 
 
     override fun updateHash(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ) {
-        val bytes = coinbase.serialize(cbor)
+        val bytes = coinbase.serialize(encoder)
         _hash = hasher.applyHash(bytes)
         cachedSize = cachedSize ?: bytes.size.toLong() +
                 _hash!!.bytes.size.toLong()
     }
 
     override fun recalculateHash(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ): Hash {
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
         return _hash as Hash
     }
 
     override fun recalculateSize(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ): Long {
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
         return cachedSize as Long
     }
 
@@ -206,13 +207,13 @@ internal data class HashedCoinbaseImpl(
         transactionOutputs
             .firstOrNull { it.publicKey == publicKey }
             ?.let {
-                cachedSize = approximateSize - it.approximateSize(cbor)
+                cachedSize = approximateSize - it.approximateSize(encoder)
                 it.addToPayout(
                     payout,
                     newTransaction,
                     previousTransaction
                 )
-                cachedSize = approximateSize + it.approximateSize(cbor)
+                cachedSize = approximateSize + it.approximateSize(encoder)
             }
             ?: coinbase._transactionOutputs.add(
                 HashedTransactionOutputImpl(
@@ -222,9 +223,9 @@ internal data class HashedCoinbaseImpl(
                     newTransaction,
                     previousTransaction,
                     hasher,
-                    cbor
+                    encoder
                 ).also {
-                    cachedSize = approximateSize + it.approximateSize(cbor)
+                    cachedSize = approximateSize + it.approximateSize(encoder)
                 }
             )
     }

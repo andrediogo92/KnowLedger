@@ -1,8 +1,8 @@
 package org.knowledger.ledger.data
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
 import java.io.InvalidClassException
@@ -61,8 +61,8 @@ data class PollutionAQData(
         city, citySeqNum
     )
 
-    override fun serialize(cbor: Cbor): ByteArray =
-        cbor.dump(serializer(), this)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(serializer(), this)
 
     override fun calculateDiff(
         previous: SelfInterval

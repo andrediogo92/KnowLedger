@@ -2,9 +2,9 @@
 
 package org.knowledger.ledger.config
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.hash.Hashing
@@ -24,28 +24,28 @@ data class LedgerId(
     internal constructor(
         tag: String,
         hasher: Hasher,
-        cbor: Cbor
-    ) : this(tag, generateLedgerHandleHash(hasher, cbor, tag))
+        encoder: BinaryFormat
+    ) : this(tag, generateLedgerHandleHash(hasher, encoder, tag))
 
     @Serializable
     private data class LedgerBuilder(
         val tag: String, val uuid: UUID,
         val instant: Instant
     ) : HashSerializable {
-        override fun serialize(cbor: Cbor): ByteArray =
-            cbor.dump(serializer(), this)
+        override fun serialize(encoder: BinaryFormat): ByteArray =
+            encoder.dump(serializer(), this)
     }
 
     companion object {
         private fun generateLedgerHandleHash(
             hasher: Hasher,
-            cbor: Cbor,
+            encoder: BinaryFormat,
             tag: String
         ): Hash =
             LedgerBuilder(
                 tag,
                 UUID.randomUUID(),
                 Instant.now()
-            ).digest(hasher, cbor)
+            ).digest(hasher, encoder)
     }
 }

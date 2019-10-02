@@ -1,8 +1,8 @@
 package org.knowledger.ledger.storage.blockheader
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.hash.Hash
@@ -26,8 +26,8 @@ internal data class BlockHeaderImpl(
     override val merkleRoot: Hash
         get() = _merkleRoot
 
-    override fun serialize(cbor: Cbor): ByteArray =
-        cbor.dump(serializer(), this)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(serializer(), this)
 
 
     override fun clone(): BlockHeader =

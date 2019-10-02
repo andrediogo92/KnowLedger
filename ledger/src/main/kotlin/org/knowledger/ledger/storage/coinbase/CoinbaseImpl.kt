@@ -1,9 +1,9 @@
 package org.knowledger.ledger.storage.coinbase
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.data.DataFormula
@@ -83,8 +83,8 @@ internal data class CoinbaseImpl(
             GLOBALCONTEXT
         )
 
-    override fun serialize(cbor: Cbor): ByteArray =
-        cbor.dump(serializer(), this)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(serializer(), this)
 
     override fun clone(): Coinbase =
         copy(

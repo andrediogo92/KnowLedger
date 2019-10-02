@@ -1,6 +1,6 @@
 package org.knowledger.ledger.storage.transaction
 
-import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.BinaryFormat
 
 interface SignedTransaction : Transaction {
     val signature: ByteArray
@@ -12,11 +12,11 @@ interface SignedTransaction : Transaction {
      * @return Whether the value was signed with the
      * corresponding private key.
      */
-    fun verifySignature(cbor: Cbor): Boolean
+    fun verifySignature(encoder: BinaryFormat): Boolean
 
     /**
      * TODO: Transaction verification.
      * @return Whether the transaction is valid.
      */
-    fun processTransaction(cbor: Cbor): Boolean
+    fun processTransaction(encoder: BinaryFormat): Boolean
 }

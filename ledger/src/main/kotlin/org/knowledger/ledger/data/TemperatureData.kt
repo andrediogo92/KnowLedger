@@ -1,10 +1,10 @@
 @file:UseSerializers(BigDecimalSerializer::class)
 package org.knowledger.ledger.data
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
@@ -24,8 +24,8 @@ data class TemperatureData(
     val temperature: BigDecimal,
     val unit: TemperatureUnit
 ) : LedgerData {
-    override fun serialize(cbor: Cbor): ByteArray =
-        cbor.dump(serializer(), this)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(serializer(), this)
 
     override fun calculateDiff(
         previous: SelfInterval

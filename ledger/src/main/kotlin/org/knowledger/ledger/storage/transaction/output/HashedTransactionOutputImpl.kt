@@ -1,5 +1,6 @@
 package org.knowledger.ledger.storage.transaction.output
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -21,7 +22,7 @@ internal data class HashedTransactionOutputImpl(
     @Transient
     var hasher: Hashers = DEFAULT_HASHER,
     @Transient
-    var cbor: Cbor = Cbor.plain
+    var encoder: BinaryFormat = Cbor.plain
 ) : HashedTransactionOutput,
     HashUpdateable,
     TransactionOutput by transactionOutput {
@@ -29,17 +30,17 @@ internal data class HashedTransactionOutputImpl(
     private var cachedSize: Long? = null
 
     override val approximateSize: Long
-        get() = cachedSize ?: recalculateSize(hasher, cbor)
+        get() = cachedSize ?: recalculateSize(hasher, encoder)
 
     override val hash
-        get() = _hash ?: recalculateHash(hasher, cbor)
+        get() = _hash ?: recalculateHash(hasher, encoder)
 
 
     constructor(
         publicKey: PublicKey, previousCoinbase: Hash,
         payout: Payout, newTransaction: Hash,
         previousTransaction: Hash, hasher: Hashers,
-        cbor: Cbor
+        encoder: BinaryFormat
     ) : this(
         transactionOutput = TransactionOutputImpl(
             publicKey = publicKey,
@@ -49,44 +50,44 @@ internal data class HashedTransactionOutputImpl(
             previousTransaction = previousTransaction
         ),
         hasher = hasher,
-        cbor = cbor
+        encoder = encoder
     ) {
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
     }
 
     constructor(
         publicKey: PublicKey, previousCoinbase: Hash,
         payout: Payout, transactionSet: Set<Hash>,
-        hash: Hash, hasher: Hashers, cbor: Cbor
+        hash: Hash, hasher: Hashers, encoder: BinaryFormat
     ) : this(
         transactionOutput = TransactionOutputImpl(
             publicKey = publicKey,
             previousCoinbase = previousCoinbase,
             _payout = payout,
             _transactionHashes = transactionSet.toMutableSet()
-        ), _hash = hash, hasher = hasher, cbor = cbor
+        ), _hash = hash, hasher = hasher, encoder = encoder
     )
 
     override fun updateHash(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ) {
-        val bytes = transactionOutput.serialize(cbor)
+        val bytes = transactionOutput.serialize(encoder)
         _hash = hasher.applyHash(bytes)
         cachedSize = cachedSize ?: bytes.size.toLong() +
                 _hash!!.bytes.size.toLong()
     }
 
     override fun recalculateSize(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ): Long {
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
         return cachedSize as Long
     }
 
     override fun recalculateHash(
-        hasher: Hasher, cbor: Cbor
+        hasher: Hasher, encoder: BinaryFormat
     ): Hash {
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
         return _hash as Hash
     }
 
@@ -99,13 +100,13 @@ internal data class HashedTransactionOutputImpl(
                     newTransaction.bytes.size.toLong() +
                     previousTransaction.bytes.size.toLong()
         }
-        updateHash(hasher, cbor)
+        updateHash(hasher, encoder)
     }
 
     override fun serialize(
-        cbor: Cbor
+        encoder: BinaryFormat
     ): ByteArray =
-        cbor.dump(serializer(), this)
+        encoder.dump(serializer(), this)
 
     override fun equals(
         other: Any?

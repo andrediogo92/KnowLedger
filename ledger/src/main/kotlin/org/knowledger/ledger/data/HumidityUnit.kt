@@ -22,20 +22,20 @@ enum class HumidityUnit : PhysicalUnit,
             to: HumidityUnit
         ): BigDecimal = value
     },
-    G_By_KG {
+    GramsByKilograms {
         override fun convertTo(
             value: BigDecimal, to: HumidityUnit
         ): BigDecimal = when (to) {
-            Relative, G_By_KG -> value
-            KG_By_KG -> value.multiply(BigDecimal("1000"))
+            Relative, GramsByKilograms -> value
+            KilogramsByKilograms -> value.multiply(BigDecimal("1000"))
         }
     },
-    KG_By_KG {
+    KilogramsByKilograms {
         override fun convertTo(
             value: BigDecimal, to: HumidityUnit
         ): BigDecimal = when (to) {
-            Relative, KG_By_KG -> value
-            G_By_KG -> value.divide(
+            Relative, KilogramsByKilograms -> value
+            GramsByKilograms -> value.divide(
                 BigDecimal("1000"),
                 GLOBALCONTEXT
             )

@@ -2,10 +2,10 @@
 
 package org.knowledger.ledger.storage.transaction
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.internal.ByteArraySerializer
 import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.misc.generateSignature
@@ -29,38 +29,38 @@ internal data class SignedTransactionImpl(
 
     constructor(
         transaction: TransactionImpl,
-        privateKey: PrivateKey, cbor: Cbor
+        privateKey: PrivateKey, encoder: BinaryFormat
     ) : this(
         transaction = transaction,
         _signature = ByteArray(0)
     ) {
         _signature = generateSignature(
             privateKey, transaction,
-            cbor
+            encoder
         )
     }
 
 
     constructor(
         identity: Identity, data: PhysicalData,
-        cbor: Cbor
+        encoder: BinaryFormat
     ) : this(
         transaction = TransactionImpl(
             publicKey = identity.publicKey,
             data = data
         ), privateKey = identity.privateKey,
-        cbor = cbor
+        encoder = encoder
     )
 
     constructor(
         privateKey: PrivateKey, publicKey: PublicKey,
-        data: PhysicalData, cbor: Cbor
+        data: PhysicalData, encoder: BinaryFormat
     ) : this(
         transaction = TransactionImpl(
             publicKey = publicKey,
             data = data
         ), privateKey = privateKey,
-        cbor = cbor
+        encoder = encoder
     )
 
     constructor(
@@ -74,9 +74,9 @@ internal data class SignedTransactionImpl(
     )
 
     override fun serialize(
-        cbor: Cbor
+        encoder: BinaryFormat
     ): ByteArray =
-        cbor.dump(serializer(), this)
+        encoder.dump(serializer(), this)
 
     override fun compareTo(
         other: Transaction
@@ -84,16 +84,16 @@ internal data class SignedTransactionImpl(
         transaction.compareTo(other)
 
 
-    override fun verifySignature(cbor: Cbor): Boolean {
+    override fun verifySignature(encoder: BinaryFormat): Boolean {
         return verifyECDSASig(
             transaction.publicKey,
-            transaction.serialize(cbor),
+            transaction.serialize(encoder),
             signature
         )
     }
 
-    override fun processTransaction(cbor: Cbor): Boolean {
-        return verifySignature(cbor)
+    override fun processTransaction(encoder: BinaryFormat): Boolean {
+        return verifySignature(encoder)
     }
 
 
