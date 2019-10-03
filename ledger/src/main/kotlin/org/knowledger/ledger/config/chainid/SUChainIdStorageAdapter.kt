@@ -1,7 +1,7 @@
 package org.knowledger.ledger.config.chainid
 
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -18,7 +18,7 @@ object SUChainIdStorageAdapter : ServiceStorageAdapter<StorageUnawareChainId> {
         get() = ChainIdStorageAdapter.properties
 
     override fun store(
-        toStore: StorageUnawareChainId, session: NewInstanceSession
+        toStore: StorageUnawareChainId, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)

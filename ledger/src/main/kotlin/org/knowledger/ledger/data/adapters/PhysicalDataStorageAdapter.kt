@@ -2,7 +2,7 @@ package org.knowledger.ledger.data.adapters
 
 import org.knowledger.ledger.core.data.GeoCoords
 import org.knowledger.ledger.core.data.PhysicalData
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -32,7 +32,7 @@ object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
         )
 
     override fun store(
-        toStore: PhysicalData, session: NewInstanceSession
+        toStore: PhysicalData, session: ManagedSession
     ): StorageElement =
         LedgerHandle.getStorageAdapter(
             toStore.data.javaClass

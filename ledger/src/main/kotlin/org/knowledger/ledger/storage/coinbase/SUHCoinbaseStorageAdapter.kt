@@ -1,18 +1,19 @@
 package org.knowledger.ledger.storage.coinbase
 
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.allValues
-import org.knowledger.ledger.core.results.mapSuccess
+import org.knowledger.ledger.core.results.flatMapSuccess
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
+import org.knowledger.ledger.storage.adapters.loadTransactionOutput
+import org.knowledger.ledger.storage.adapters.persist
 
 internal object SUHCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseImpl> {
     override val id: String
@@ -21,7 +22,7 @@ internal object SUHCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseI
         get() = CoinbaseStorageAdapter.properties
 
     override fun store(
-        toStore: HashedCoinbaseImpl, session: NewInstanceSession
+        toStore: HashedCoinbaseImpl, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(CoinbaseStorageAdapter.id)
@@ -29,11 +30,8 @@ internal object SUHCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseI
                 "payoutTXOs",
                 toStore
                     .transactionOutputs
-                    .asSequence()
                     .map {
-                        TransactionOutputStorageAdapter.store(
-                            it, session
-                        )
+                        it.persist(session)
                     }.toSet()
             ).setDifficultyProperty(
                 "difficulty", toStore.difficulty, session
@@ -57,25 +55,25 @@ internal object SUHCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseI
 
             element
                 .getElementSet("payoutTXOs")
-                .asSequence()
                 .map {
-                    TransactionOutputStorageAdapter.load(ledgerHash, it)
+                    it.loadTransactionOutput(ledgerHash)
                 }.allValues()
-                .mapSuccess { txos ->
-                    LedgerHandle.getContainer(ledgerHash)!!.let {
-                        HashedCoinbaseImpl(
-                            txos.toMutableSet(),
-                            element.getPayoutProperty("payout"),
-                            difficulty,
-                            blockheight,
-                            extraNonce,
-                            it.coinbaseParams,
-                            it.formula,
-                            element.getHashProperty("hash"),
-                            it.hasher,
-                            it.cbor
+                .flatMapSuccess { txos ->
+                    val container = LedgerHandle.getContainer(ledgerHash)
+                    container?.let {
+                        Outcome.Ok(
+                            HashedCoinbaseImpl(
+                                txos.toMutableSet(),
+                                element.getPayoutProperty("payout"),
+                                difficulty, blockheight, extraNonce,
+                                it.coinbaseParams, it.formula,
+                                element.getHashProperty("hash"),
+                                it.hasher, it.encoder
+                            )
                         )
-                    }
+                    } ?: Outcome.Error(
+                        LoadFailure.NoMatchingContainer(ledgerHash)
+                    )
                 }
         }
 }

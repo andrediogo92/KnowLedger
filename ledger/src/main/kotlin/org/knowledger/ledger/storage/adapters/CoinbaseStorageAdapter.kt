@@ -1,6 +1,6 @@
 package org.knowledger.ledger.storage.adapters
 
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -29,7 +29,7 @@ object CoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbase> {
 
     override fun store(
         toStore: HashedCoinbase,
-        session: NewInstanceSession
+        session: ManagedSession
     ): StorageElement =
         when (toStore) {
             is StorageAwareCoinbase ->

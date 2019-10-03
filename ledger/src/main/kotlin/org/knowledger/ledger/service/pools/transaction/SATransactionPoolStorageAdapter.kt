@@ -2,7 +2,7 @@ package org.knowledger.ledger.service.pools.transaction
 
 import org.knowledger.ledger.adapters.cacheStore
 import org.knowledger.ledger.adapters.cachedLoad
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -21,7 +21,7 @@ object SATransactionPoolStorageAdapter :
 
     override fun store(
         toStore: StorageAwareTransactionPool,
-        session: NewInstanceSession
+        session: ManagedSession
     ): StorageElement =
         session.cacheStore(
             SUTransactionPoolStorageAdapter,

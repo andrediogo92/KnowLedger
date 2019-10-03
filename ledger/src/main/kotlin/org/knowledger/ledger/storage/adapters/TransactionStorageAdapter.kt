@@ -1,20 +1,20 @@
 package org.knowledger.ledger.storage.adapters
 
 
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.misc.toPublicKey
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.mapSuccess
-import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.transaction.HashedTransaction
-import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
+import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.storage.transaction
+import java.security.PublicKey
 
-object TransactionStorageAdapter : LedgerStorageAdapter<HashedTransaction> {
+object TransactionStorageAdapter : LedgerStorageAdapter<Transaction> {
     override val id: String
         get() = "Transaction"
 
@@ -27,16 +27,16 @@ object TransactionStorageAdapter : LedgerStorageAdapter<HashedTransaction> {
         )
 
     override fun store(
-        toStore: HashedTransaction,
-        session: NewInstanceSession
+        toStore: Transaction,
+        session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
             .setStorageProperty(
                 "publicKey", toStore.publicKey.encoded
             ).setLinked(
-                "value", PhysicalDataStorageAdapter,
-                toStore.data, session
+                "value",
+                toStore.data.persist(session)
             ).setStorageBytes(
                 "signature",
                 session.newInstance(
@@ -47,24 +47,27 @@ object TransactionStorageAdapter : LedgerStorageAdapter<HashedTransaction> {
     override fun load(
         ledgerHash: Hash,
         element: StorageElement
-    ): Outcome<HashedTransaction, LoadFailure> =
+    ): Outcome<Transaction, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val publicKeyString: ByteArray =
-                element.getStorageProperty("publicKey")
+            val physicalData = element.getLinked("value")
 
-            PhysicalDataStorageAdapter.load(
-                ledgerHash,
-                element.getLinked("value")
+            physicalData.loadPhysicalData(
+                ledgerHash
             ).mapSuccess { data ->
+                val publicKey: PublicKey =
+                    element
+                        .getStorageProperty<ByteArray>("publicKey")
+                        .toPublicKey()
+
                 val signature =
                     element.getStorageBytes("signature").bytes
 
                 val hash =
                     element.getHashProperty("hash")
 
-                HashedTransactionImpl(
-                    publicKeyString.toPublicKey(),
-                    data, signature, hash
+                transaction(
+                    publicKey, data,
+                    signature, hash
                 )
             }
         }

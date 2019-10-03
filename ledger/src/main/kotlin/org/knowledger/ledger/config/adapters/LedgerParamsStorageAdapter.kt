@@ -1,7 +1,7 @@
 package org.knowledger.ledger.config.adapters
 
 import org.knowledger.ledger.config.LedgerParams
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -17,14 +17,14 @@ object LedgerParamsStorageAdapter : ServiceStorageAdapter<LedgerParams> {
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "crypter" to StorageType.BYTES,
+            "crypter" to StorageType.HASH,
             "recalcTime" to StorageType.LONG,
             "recalcTrigger" to StorageType.LONG,
             "blockParams" to StorageType.LINK
         )
 
     override fun store(
-        toStore: LedgerParams, session: NewInstanceSession
+        toStore: LedgerParams, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
@@ -34,8 +34,8 @@ object LedgerParamsStorageAdapter : ServiceStorageAdapter<LedgerParams> {
             ).setStorageProperty(
                 "recalcTrigger", toStore.recalcTrigger
             ).setLinked(
-                "blockParams", BlockParamsStorageAdapter,
-                toStore.blockParams, session
+                "blockParams",
+                toStore.blockParams.persist(session)
             )
 
 
@@ -43,10 +43,9 @@ object LedgerParamsStorageAdapter : ServiceStorageAdapter<LedgerParams> {
         ledgerHash: Hash, element: StorageElement
     ): Outcome<LedgerParams, LedgerFailure> =
         tryOrLedgerUnknownFailure {
-            BlockParamsStorageAdapter.load(
-                ledgerHash,
-                element.getLinked("blockParams")
-            ).mapSuccess {
+            val blockParams = element.getLinked("blockParams")
+
+            blockParams.loadBlockParams(ledgerHash).mapSuccess {
                 LedgerParams(
                     element.getHashProperty("crypter"),
                     element.getStorageProperty("recalcTime"),

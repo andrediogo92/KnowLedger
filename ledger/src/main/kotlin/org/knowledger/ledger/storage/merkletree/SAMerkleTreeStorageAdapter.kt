@@ -2,7 +2,7 @@ package org.knowledger.ledger.storage.merkletree
 
 import org.knowledger.ledger.adapters.cacheStore
 import org.knowledger.ledger.adapters.cachedLoad
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -18,7 +18,7 @@ internal object SAMerkleTreeStorageAdapter : LedgerStorageAdapter<StorageAwareMe
         get() = MerkleTreeStorageAdapter.properties
 
     override fun store(
-        toStore: StorageAwareMerkleTree, session: NewInstanceSession
+        toStore: StorageAwareMerkleTree, session: ManagedSession
     ): StorageElement =
         session.cacheStore(
             SUMerkleTreeStorageAdapter,

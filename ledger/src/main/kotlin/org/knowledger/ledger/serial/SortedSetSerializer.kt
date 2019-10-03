@@ -51,10 +51,8 @@ class SortedSetSerializer<T>(
     }
 
 
-    private fun readSize(decoder: CompositeDecoder): Int {
-        val size = decoder.decodeCollectionSize(descriptor)
-        return size
-    }
+    private fun readSize(decoder: CompositeDecoder): Int =
+        decoder.decodeCollectionSize(descriptor)
 
     private fun readItem(
         decoder: CompositeDecoder, index: Int,

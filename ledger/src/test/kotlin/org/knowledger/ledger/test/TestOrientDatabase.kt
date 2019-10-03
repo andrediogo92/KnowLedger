@@ -32,6 +32,7 @@ import org.knowledger.ledger.data.adapters.TrafficFlowDataStorageAdapter
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
 import org.knowledger.ledger.service.adapters.LedgerConfigStorageAdapter
+import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.transactions.getTransactionByHash
@@ -108,6 +109,7 @@ class TestOrientDatabase {
                 //ServiceAdapters
                 ChainHandleStorageAdapter,
                 IdentityStorageAdapter,
+                TransactionPoolStorageAdapter,
                 //StorageAdapters
                 BlockHeaderStorageAdapter,
                 BlockStorageAdapter,
@@ -290,7 +292,7 @@ class TestOrientDatabase {
                             12.6
                         )
                     ),
-                    hasher, cbor
+                    hasher, encoder
                 )
 
                 val block = generateBlockWithChain(
@@ -329,7 +331,7 @@ class TestOrientDatabase {
                         *transactions.toTypedArray()
                     )
                 }
-            }.failOnLoadError()
+            }.failOnError()
         }
 
         @Test
@@ -352,7 +354,7 @@ class TestOrientDatabase {
                     )
 
                 }
-            }.failOnLoadError()
+            }.failOnError()
 
         }
 
@@ -375,7 +377,7 @@ class TestOrientDatabase {
                         *transactions.toTypedArray()
                     )
                 }
-            }.failOnLoadError()
+            }.failOnError()
         }
 
         @Test
@@ -387,7 +389,7 @@ class TestOrientDatabase {
                 assertThat(it)
                     .isNotNull()
                     .isEqualTo(transactions.elementAt(2))
-            }.failOnLoadError()
+            }.failOnError()
         }
     }
 

@@ -5,7 +5,7 @@ import org.knowledger.ledger.config.chainid.SAChainIdStorageAdapter
 import org.knowledger.ledger.config.chainid.SUChainIdStorageAdapter
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
 import org.knowledger.ledger.config.chainid.StorageUnawareChainId
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -26,7 +26,7 @@ object ChainIdStorageAdapter : ServiceStorageAdapter<ChainId> {
         )
 
     override fun store(
-        toStore: ChainId, session: NewInstanceSession
+        toStore: ChainId, session: ManagedSession
     ): StorageElement =
         when (toStore) {
             is StorageAwareChainId ->

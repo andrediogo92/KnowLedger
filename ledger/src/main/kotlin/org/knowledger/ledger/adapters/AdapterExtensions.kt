@@ -1,6 +1,6 @@
 package org.knowledger.ledger.adapters
 
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
@@ -14,7 +14,7 @@ import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 
 @Suppress("NOTHING_TO_INLINE")
-internal inline fun <T, U : LedgerContract> NewInstanceSession.cacheStore(
+internal inline fun <T, U : LedgerContract> ManagedSession.cacheStore(
     storageAdapter: LedgerStorageAdapter<U>,
     toStore: T,
     inner: U
@@ -22,13 +22,13 @@ internal inline fun <T, U : LedgerContract> NewInstanceSession.cacheStore(
         where T : StorageAware<*>,
               T : LedgerContract =
     toStore.id?.element
-        ?: storageAdapter.store(inner, this)
+        ?: storageAdapter.persist(inner, this)
             .also {
                 toStore.id = it.identity
             }
 
 @Suppress("NOTHING_TO_INLINE")
-internal inline fun <T, U : ServiceClass> NewInstanceSession.cacheStore(
+internal inline fun <T, U : ServiceClass> ManagedSession.cacheStore(
     storageAdapter: ServiceStorageAdapter<U>,
     toStore: T,
     inner: U
@@ -36,7 +36,7 @@ internal inline fun <T, U : ServiceClass> NewInstanceSession.cacheStore(
         where T : StorageAware<*>,
               T : ServiceClass =
     toStore.id?.element
-        ?: storageAdapter.store(inner, this)
+        ?: storageAdapter.persist(inner, this)
             .also {
                 toStore.id = it.identity
             }

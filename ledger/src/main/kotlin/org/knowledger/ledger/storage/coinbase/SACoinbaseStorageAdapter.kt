@@ -2,7 +2,7 @@ package org.knowledger.ledger.storage.coinbase
 
 import org.knowledger.ledger.adapters.cacheStore
 import org.knowledger.ledger.adapters.cachedLoad
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -18,7 +18,7 @@ internal object SACoinbaseStorageAdapter : LedgerStorageAdapter<StorageAwareCoin
         get() = CoinbaseStorageAdapter.properties
 
     override fun store(
-        toStore: StorageAwareCoinbase, session: NewInstanceSession
+        toStore: StorageAwareCoinbase, session: ManagedSession
     ): StorageElement =
         session.cacheStore(
             SUHCoinbaseStorageAdapter,

@@ -30,8 +30,8 @@ object HumidityDataStorageAdapter : AbstractStorageAdapter<HumidityData>(
                 .setStorageProperty("humidity", it.humidity)
                 .setStorageProperty(
                     "unit", when (it.unit) {
-                        HumidityUnit.G_By_KG -> HumidityUnit.G_By_KG.ordinal
-                        HumidityUnit.KG_By_KG -> HumidityUnit.KG_By_KG.ordinal
+                        HumidityUnit.GramsByKilograms -> HumidityUnit.GramsByKilograms.ordinal
+                        HumidityUnit.KilogramsByKilograms -> HumidityUnit.KilogramsByKilograms.ordinal
                         HumidityUnit.Relative -> HumidityUnit.Relative.ordinal
                     }
                 )
@@ -43,8 +43,8 @@ object HumidityDataStorageAdapter : AbstractStorageAdapter<HumidityData>(
         commonLoad(element, id) {
             val prop = getStorageProperty<Int>("unit")
             val unit = when (prop) {
-                HumidityUnit.G_By_KG.ordinal -> HumidityUnit.G_By_KG
-                HumidityUnit.KG_By_KG.ordinal -> HumidityUnit.KG_By_KG
+                HumidityUnit.GramsByKilograms.ordinal -> HumidityUnit.GramsByKilograms
+                HumidityUnit.KilogramsByKilograms.ordinal -> HumidityUnit.KilogramsByKilograms
                 HumidityUnit.Relative.ordinal -> HumidityUnit.Relative
                 else -> null
             }

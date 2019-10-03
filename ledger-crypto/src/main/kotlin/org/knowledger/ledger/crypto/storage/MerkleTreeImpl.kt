@@ -1,8 +1,8 @@
 package org.knowledger.ledger.crypto.storage
 
+import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.misc.mapAndAdd
@@ -20,8 +20,8 @@ data class MerkleTreeImpl(
     @Serializable(with = HashAlgorithmSerializer::class)
     private var hasher: Hashers
 ) : MerkleTree {
-    override fun serialize(cbor: Cbor): ByteArray =
-        cbor.dump(serializer(), this)
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(serializer(), this)
 
     override fun clone(): MerkleTree =
         copy()

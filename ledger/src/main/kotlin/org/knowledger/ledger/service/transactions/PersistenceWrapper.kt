@@ -1,5 +1,6 @@
 package org.knowledger.ledger.service.transactions
 
+import org.knowledger.ledger.adapters.EagerStorable
 import org.knowledger.ledger.config.adapters.BlockParamsStorageAdapter
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerIdStorageAdapter
@@ -19,7 +20,6 @@ import org.knowledger.ledger.core.results.peekSuccess
 import org.knowledger.ledger.core.storage.LedgerContract
 import org.knowledger.ledger.core.storage.adapters.Loadable
 import org.knowledger.ledger.core.storage.adapters.SchemaProvider
-import org.knowledger.ledger.core.storage.adapters.Storable
 import org.knowledger.ledger.core.storage.results.DataFailure
 import org.knowledger.ledger.core.storage.results.QueryFailure
 import org.knowledger.ledger.crypto.service.Identity
@@ -268,7 +268,7 @@ internal data class PersistenceWrapper(
                 } else {
                     Outcome.Error<LedgerFailure>(
                         LedgerFailure.NonExistentData(
-                            "Empty ResultSet for ${query.query}"
+                            query.query
                         )
                     )
                 }
@@ -429,11 +429,11 @@ internal data class PersistenceWrapper(
     @Synchronized
     internal fun <T> persistEntity(
         element: T,
-        storable: Storable<T>
+        storable: EagerStorable<T>
     ): Outcome<StorageID, QueryFailure> =
         tryOrQueryUnknownFailure {
-            val elem = storable.store(element, session)
             beginTransaction()
+            val elem = storable.persist(element, session)
             val r = session.save(elem)
             if (r != null) {
                 commitTransaction()
@@ -458,12 +458,12 @@ internal data class PersistenceWrapper(
     @Synchronized
     internal fun <T> persistEntity(
         element: T,
-        storable: Storable<T>,
+        storable: EagerStorable<T>,
         cluster: String
     ): Outcome<StorageID, QueryFailure> =
         tryOrQueryUnknownFailure {
-            val elem = storable.store(element, session)
             beginTransaction()
+            val elem = storable.persist(element, session)
             val r = session.save(elem, cluster)
             if (r != null) {
                 commitTransaction()

@@ -1,7 +1,7 @@
 package org.knowledger.ledger.config.adapters
 
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -23,7 +23,7 @@ object CoinbaseParamsStorageAdapter : ServiceStorageAdapter<CoinbaseParams> {
         )
 
     override fun store(
-        toStore: CoinbaseParams, session: NewInstanceSession
+        toStore: CoinbaseParams, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)

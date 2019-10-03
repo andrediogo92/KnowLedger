@@ -3,7 +3,7 @@ package org.knowledger.ledger.storage.merkletree
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.results.Outcome
@@ -12,6 +12,8 @@ import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.storage.StorageAware
+import org.knowledger.ledger.storage.StoragePairs
+import org.knowledger.ledger.storage.addOrReplaceInstances
 import org.knowledger.ledger.storage.simpleUpdate
 
 @Serializable
@@ -20,11 +22,11 @@ internal data class StorageAwareMerkleTree(
     internal val merkleTree: MerkleTreeImpl
 ) : MerkleTree by merkleTree, StorageAware<MerkleTree> {
     override fun update(
-        session: NewInstanceSession
+        session: ManagedSession
     ): Outcome<StorageID, UpdateFailure> =
         simpleUpdate(invalidatedFields)
 
-    override val invalidated: Map<String, Any>
+    override val invalidated: List<StoragePairs>
         get() = invalidatedFields
 
     @Transient
@@ -32,7 +34,7 @@ internal data class StorageAwareMerkleTree(
 
     @Transient
     private val invalidatedFields =
-        mutableMapOf<String, Any>()
+        mutableListOf<StoragePairs>()
 
 
     internal constructor(
@@ -54,8 +56,16 @@ internal data class StorageAwareMerkleTree(
     override fun rebuildMerkleTree(data: Array<out Hashing>) {
         merkleTree.rebuildMerkleTree(data)
         if (id != null) {
-            invalidatedFields["nakedTree"] = merkleTree.collapsedTree
-            invalidatedFields["levelIndexes"] = merkleTree.levelIndex
+            invalidatedFields.addOrReplaceInstances(
+                arrayOf(
+                    "nakedTree",
+                    "levelIndexes"
+                ),
+                arrayOf(
+                    StoragePairs.Element.HashList(merkleTree.collapsedTree),
+                    StoragePairs.Element.Native(merkleTree.levelIndex)
+                )
+            )
         }
     }
 }

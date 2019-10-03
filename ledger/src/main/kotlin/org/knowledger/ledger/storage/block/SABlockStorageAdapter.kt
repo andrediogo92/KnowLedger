@@ -2,7 +2,7 @@ package org.knowledger.ledger.storage.block
 
 import org.knowledger.ledger.adapters.cacheStore
 import org.knowledger.ledger.adapters.cachedLoad
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -20,7 +20,7 @@ internal object SABlockStorageAdapter : LedgerStorageAdapter<StorageAwareBlock> 
 
     override fun store(
         toStore: StorageAwareBlock,
-        session: NewInstanceSession
+        session: ManagedSession
     ): StorageElement =
         session.cacheStore(
             SUBlockStorageAdapter,

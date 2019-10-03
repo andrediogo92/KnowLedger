@@ -1,7 +1,7 @@
 package org.knowledger.ledger.config.adapters
 
 import org.knowledger.ledger.config.BlockParams
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -21,7 +21,7 @@ object BlockParamsStorageAdapter : ServiceStorageAdapter<BlockParams> {
         )
 
     override fun store(
-        toStore: BlockParams, session: NewInstanceSession
+        toStore: BlockParams, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)

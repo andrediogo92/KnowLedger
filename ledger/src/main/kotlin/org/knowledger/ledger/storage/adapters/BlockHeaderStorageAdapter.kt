@@ -1,6 +1,6 @@
 package org.knowledger.ledger.storage.adapters
 
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -23,14 +23,14 @@ object BlockHeaderStorageAdapter : LedgerStorageAdapter<HashedBlockHeader> {
             "hash" to StorageType.HASH,
             "merkleRoot" to StorageType.HASH,
             "previousHash" to StorageType.HASH,
-            "ledgerParams" to StorageType.LINK,
+            "blockParams" to StorageType.LINK,
             "seconds" to StorageType.LONG,
             "nonce" to StorageType.LONG
         )
 
     override fun store(
         toStore: HashedBlockHeader,
-        session: NewInstanceSession
+        session: ManagedSession
     ): StorageElement =
         when (toStore) {
             is StorageAwareBlockHeader ->

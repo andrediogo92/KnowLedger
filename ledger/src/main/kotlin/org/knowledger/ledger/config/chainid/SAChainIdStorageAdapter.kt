@@ -3,7 +3,7 @@ package org.knowledger.ledger.config.chainid
 import org.knowledger.ledger.adapters.cacheStore
 import org.knowledger.ledger.adapters.cachedLoad
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -19,7 +19,7 @@ object SAChainIdStorageAdapter : ServiceStorageAdapter<StorageAwareChainId> {
         get() = ChainIdStorageAdapter.properties
 
     override fun store(
-        toStore: StorageAwareChainId, session: NewInstanceSession
+        toStore: StorageAwareChainId, session: ManagedSession
     ): StorageElement =
         session.cacheStore(
             SUChainIdStorageAdapter,

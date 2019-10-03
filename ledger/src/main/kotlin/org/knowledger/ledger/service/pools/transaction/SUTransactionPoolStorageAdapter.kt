@@ -1,15 +1,19 @@
 package org.knowledger.ledger.service.pools.transaction
 
-import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.config.adapters.loadChainId
+import org.knowledger.ledger.config.adapters.persist
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.results.mapSuccess
+import org.knowledger.ledger.core.results.allValues
+import org.knowledger.ledger.core.results.zip
 import org.knowledger.ledger.results.tryOrLedgerUnknownFailure
 import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
 import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
+import org.knowledger.ledger.service.adapters.loadPoolTransaction
+import org.knowledger.ledger.service.adapters.persist
 import org.knowledger.ledger.service.results.LedgerFailure
 
 object SUTransactionPoolStorageAdapter :
@@ -22,25 +26,38 @@ object SUTransactionPoolStorageAdapter :
 
     override fun store(
         toStore: TransactionPoolImpl,
-        session: NewInstanceSession
+        session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
-            .setHashList("transactions", toStore.transactions)
-            .setStorageProperty("confirmations", toStore.confirmations)
+            .setLinked(
+                "chainId",
+                toStore.chainId.persist(session)
+            ).setElementSet(
+                "transactions",
+                toStore.transactions.map {
+                    it.persist(session)
+                }.toSet()
+            )
 
+    @Suppress("NAME_SHADOWING")
     override fun load(
         ledgerHash: Hash,
         element: StorageElement
     ): Outcome<TransactionPoolImpl, LedgerFailure> =
         tryOrLedgerUnknownFailure {
-            ChainIdStorageAdapter.load(
-                ledgerHash, element.getLinked("chainId")
-            ).mapSuccess {
+            val chainId = element.getLinked("chainId")
+            val transactions = element.getElementSet("transactions")
+
+            zip(
+                chainId.loadChainId(ledgerHash),
+                transactions.map {
+                    it.loadPoolTransaction(ledgerHash)
+                }.allValues()
+            ) { chainId, transactions ->
                 TransactionPoolImpl(
-                    it,
-                    element.getMutableHashList("transactions"),
-                    element.getStorageProperty("confirmations")
+                    chainId,
+                    transactions.toMutableSet()
                 )
             }
         }

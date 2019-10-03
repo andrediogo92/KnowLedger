@@ -1,6 +1,6 @@
 package org.knowledger.ledger.service.adapters
 
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -20,13 +20,12 @@ object TransactionPoolStorageAdapter : ServiceStorageAdapter<TransactionPool> {
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "chainId" to StorageType.LINK,
-            "transactions" to StorageType.LIST,
-            "confirmations" to StorageType.LIST
+            "transactions" to StorageType.SET
         )
 
     override fun store(
         toStore: TransactionPool,
-        session: NewInstanceSession
+        session: ManagedSession
     ): StorageElement =
         when (toStore) {
             is StorageAwareTransactionPool ->

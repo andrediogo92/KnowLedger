@@ -1,9 +1,10 @@
 package org.knowledger.ledger.service.adapters
 
-import org.knowledger.ledger.config.adapters.CoinbaseParamsStorageAdapter
-import org.knowledger.ledger.config.adapters.LedgerIdStorageAdapter
-import org.knowledger.ledger.config.adapters.LedgerParamsStorageAdapter
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.config.adapters.loadCoinbaseParams
+import org.knowledger.ledger.config.adapters.loadLedgerId
+import org.knowledger.ledger.config.adapters.loadLedgerParams
+import org.knowledger.ledger.config.adapters.persist
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -28,19 +29,19 @@ object LedgerConfigStorageAdapter : HandleStorageAdapter {
         )
 
     override fun store(
-        toStore: LedgerConfig, session: NewInstanceSession
+        toStore: LedgerConfig, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
             .setLinked(
-                "ledgerId", LedgerIdStorageAdapter,
-                toStore.ledgerId, session
+                "ledgerId",
+                toStore.ledgerId.persist(session)
             ).setLinked(
-                "ledgerParams", LedgerParamsStorageAdapter,
-                toStore.ledgerParams, session
+                "ledgerParams",
+                toStore.ledgerParams.persist(session)
             ).setLinked(
-                "coinbaseParams", CoinbaseParamsStorageAdapter,
-                toStore.coinbaseParams, session
+                "coinbaseParams",
+                toStore.coinbaseParams.persist(session)
             )
 
 
@@ -54,11 +55,9 @@ object LedgerConfigStorageAdapter : HandleStorageAdapter {
             val ledgerP = element.getLinked("ledgerParams")
             val coinbaseParams = element.getLinked("coinbaseParams")
             zip(
-                LedgerIdStorageAdapter.load(ledgerHash, ledger),
-                LedgerParamsStorageAdapter.load(ledgerHash, ledgerP),
-                CoinbaseParamsStorageAdapter.load(
-                    ledgerHash, coinbaseParams
-                )
+                ledger.loadLedgerId(ledgerHash),
+                ledgerP.loadLedgerParams(ledgerHash),
+                coinbaseParams.loadCoinbaseParams(ledgerHash)
             ) { ledgerId, ledgerParams, coinbaseParams ->
                 LedgerConfig(
                     ledgerId,

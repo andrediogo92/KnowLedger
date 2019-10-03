@@ -1,6 +1,6 @@
 package org.knowledger.ledger.storage.merkletree
 
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -19,7 +19,7 @@ internal object SUMerkleTreeStorageAdapter : LedgerStorageAdapter<MerkleTreeImpl
         get() = MerkleTreeStorageAdapter.properties
 
     override fun store(
-        toStore: MerkleTreeImpl, session: NewInstanceSession
+        toStore: MerkleTreeImpl, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(MerkleTreeStorageAdapter.id)

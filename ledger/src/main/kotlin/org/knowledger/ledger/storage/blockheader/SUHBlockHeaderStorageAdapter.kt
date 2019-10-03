@@ -1,16 +1,18 @@
 package org.knowledger.ledger.storage.blockheader
 
-import org.knowledger.ledger.config.adapters.BlockParamsStorageAdapter
-import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.config.adapters.loadBlockParams
+import org.knowledger.ledger.config.adapters.loadChainId
+import org.knowledger.ledger.config.adapters.persist
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.results.flatZip
 import org.knowledger.ledger.core.results.mapFailure
-import org.knowledger.ledger.core.results.zip
 import org.knowledger.ledger.results.intoLoad
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
+import org.knowledger.ledger.service.LedgerContainer
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
@@ -23,67 +25,68 @@ internal object SUHBlockHeaderStorageAdapter : LedgerStorageAdapter<HashedBlockH
         get() = BlockHeaderStorageAdapter.properties
 
     override fun store(
-        toStore: HashedBlockHeaderImpl, session: NewInstanceSession
+        toStore: HashedBlockHeaderImpl, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(BlockHeaderStorageAdapter.id)
             .setLinked(
-                "chainId", ChainIdStorageAdapter,
-                toStore.chainId, session
+                "chainId",
+                toStore.chainId.persist(session)
             ).setHashProperty("hash", toStore.hash)
             .setHashProperty("merkleRoot", toStore.merkleRoot)
             .setHashProperty("previousHash", toStore.previousHash)
             .setLinked(
-                "ledgerParams", BlockParamsStorageAdapter,
-                toStore.params, session
+                "blockParams",
+                toStore.params.persist(session)
             ).setStorageProperty(
                 "seconds", toStore.seconds
             ).setStorageProperty("nonce", toStore.nonce)
 
+    @Suppress("NAME_SHADOWING")
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<HashedBlockHeaderImpl, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val hash =
-                element.getHashProperty("hash")
-
-            val merkleRoot =
-                element.getHashProperty("merkleRoot")
-
-            val previousHash =
-                element.getHashProperty("previousHash")
-
-            zip(
-                ChainIdStorageAdapter.load(
-                    ledgerHash,
-                    element.getLinked("chainId")
-                ),
-                BlockParamsStorageAdapter.load(
-                    ledgerHash,
-                    element.getLinked("ledgerParams")
-                )
+            val chainId = element.getLinked("chainId")
+            val blockParams = element.getLinked("blockParams")
+            flatZip(
+                chainId
+                    .loadChainId(ledgerHash)
+                    .mapFailure { it.intoLoad() },
+                blockParams
+                    .loadBlockParams(ledgerHash)
+                    .mapFailure { it.intoLoad() }
             ) { chainId, blockParams ->
-                val seconds: Long =
-                    element.getStorageProperty("seconds")
+                val container: LedgerContainer? =
+                    LedgerHandle.getContainer(chainId.ledgerHash)
+                container?.let {
+                    val hash =
+                        element.getHashProperty("hash")
 
-                val nonce: Long =
-                    element.getStorageProperty("nonce")
+                    val merkleRoot =
+                        element.getHashProperty("merkleRoot")
 
-                LedgerHandle.getContainer(chainId.ledgerHash)!!.let {
-                    HashedBlockHeaderImpl(
-                        chainId,
-                        it.hasher,
-                        it.cbor,
-                        hash,
-                        blockParams,
-                        previousHash,
-                        merkleRoot,
-                        seconds,
-                        nonce
+                    val previousHash =
+                        element.getHashProperty("previousHash")
+
+                    val seconds: Long =
+                        element.getStorageProperty("seconds")
+
+                    val nonce: Long =
+                        element.getStorageProperty("nonce")
+
+                    Outcome.Ok(
+                        HashedBlockHeaderImpl(
+                            chainId, it.hasher, it.encoder,
+                            hash, blockParams, previousHash,
+                            merkleRoot, seconds, nonce
+                        )
                     )
-                }
-            }.mapFailure {
-                it.intoLoad()
+                } ?: Outcome.Error(
+                    LoadFailure.NoMatchingContainer(
+                        ledgerHash
+                    )
+                )
             }
 
         }

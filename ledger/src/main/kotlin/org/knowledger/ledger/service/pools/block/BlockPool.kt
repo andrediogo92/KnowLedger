@@ -1,14 +1,15 @@
 package org.knowledger.ledger.service.pools.block
 
-import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.database.StorageID
+import org.knowledger.ledger.service.ServiceClass
 
-interface BlockPool {
-    val blocks: List<Hash>
+interface BlockPool : ServiceClass {
+    val blocks: Set<StorageID>
 
-    val firstUnconfirmed: Hash?
+    val firstUnconfirmed: StorageID?
         get() = blocks.firstOrNull()
 
-    operator fun get(hash: Hash): Hash? =
+    operator fun get(hash: StorageID): StorageID? =
         blocks.firstOrNull {
             it == hash
         }

@@ -1,6 +1,6 @@
 package org.knowledger.ledger.storage.adapters
 
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -9,11 +9,11 @@ import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
+import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.storage.transactionOutput
 import java.security.PublicKey
 
-object TransactionOutputStorageAdapter : LedgerStorageAdapter<HashedTransactionOutput> {
+object TransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutput> {
     override val id: String
         get() = "TransactionOutput"
 
@@ -27,8 +27,8 @@ object TransactionOutputStorageAdapter : LedgerStorageAdapter<HashedTransactionO
         )
 
     override fun store(
-        toStore: HashedTransactionOutput,
-        session: NewInstanceSession
+        toStore: TransactionOutput,
+        session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
@@ -43,11 +43,11 @@ object TransactionOutputStorageAdapter : LedgerStorageAdapter<HashedTransactionO
     override fun load(
         ledgerHash: Hash,
         element: StorageElement
-    ): Outcome<HashedTransactionOutput, LoadFailure> =
+    ): Outcome<TransactionOutput, LoadFailure> =
         tryOrLoadUnknownFailure {
             val publicKey: PublicKey =
                 element
-                    .getStorageProperty<String>("publicKey")
+                    .getStorageProperty<ByteArray>("publicKey")
                     .toPublicKey()
             val prevCoinbase =
                 element.getHashProperty("prevCoinbase")
@@ -56,19 +56,18 @@ object TransactionOutputStorageAdapter : LedgerStorageAdapter<HashedTransactionO
             val payout =
                 element.getPayoutProperty("payout")
             val txSet = element.getMutableHashSet("txSet")
-            val container = LedgerHandle.getContainer(ledgerHash)!!
+            val container = LedgerHandle.getContainer(ledgerHash)
 
-
-            Outcome.Ok(
-                HashedTransactionOutputImpl(
-                    publicKey,
-                    prevCoinbase,
-                    payout,
-                    txSet,
-                    hash,
-                    container.hasher,
-                    container.cbor
+            container?.let {
+                Outcome.Ok(
+                    transactionOutput(
+                        publicKey, prevCoinbase, payout,
+                        txSet, hash, it.hasher, it.encoder
+                    )
                 )
+            } ?: Outcome.Error(
+                LoadFailure.NoMatchingContainer(ledgerHash)
             )
+
         }
 }

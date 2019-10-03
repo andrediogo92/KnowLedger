@@ -1,6 +1,6 @@
 package org.knowledger.ledger.storage.adapters
 
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -25,7 +25,7 @@ object MerkleTreeStorageAdapter : LedgerStorageAdapter<MerkleTree> {
 
     override fun store(
         toStore: MerkleTree,
-        session: NewInstanceSession
+        session: ManagedSession
     ): StorageElement =
         when (toStore) {
             is StorageAwareMerkleTree ->

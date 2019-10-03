@@ -1,7 +1,7 @@
 package org.knowledger.ledger.config.adapters
 
 import org.knowledger.ledger.config.LedgerId
-import org.knowledger.ledger.core.database.NewInstanceSession
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
@@ -21,7 +21,7 @@ object LedgerIdStorageAdapter : ServiceStorageAdapter<LedgerId> {
         )
 
     override fun store(
-        toStore: LedgerId, session: NewInstanceSession
+        toStore: LedgerId, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
