@@ -12,7 +12,5 @@ docs {
 
 dependencies {
     implementation(project(":ledger-core"))
-    Libs.orientDB.forEach {
-        implementation(it)
-    }
+    Libs.orientDB.forEach(::implementation)
 }

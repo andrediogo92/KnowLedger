@@ -11,6 +11,8 @@ object Versions {
     const val jadeMisc = "2.8.0"
     const val jdk = "1.8"
     const val jdkV = 8
+    const val jmh = "1.21"
+    const val jmhPlugin = "0.5.0-rc-2"
     const val jol = "0.9"
     const val jUnit = "5.5.2"
     const val jUnitRunner = "1.5.2"
@@ -62,6 +64,14 @@ object Libs {
         "com.tilab.jade:jade:${Versions.jade}",
         "com.tilab.jade:jade-misc:${Versions.jadeMisc}"
     )
+
+    val jmh = listOf(
+        "org.openjdk.jmh:jmh-generator-annprocess:${Versions.jmh}",
+        "org.openjdk.jmh:jmh-core:${Versions.jmh}"
+    )
+
+    const val jmhPlugin =
+        "me.champeau.gradle:jmh-gradle-plugin:${Versions.jmhPlugin}"
 
     const val jol =
         "org.openjdk.jol:jol-core:${Versions.jol}"
@@ -137,4 +147,5 @@ object Plugins {
     const val serialization = "org.jetbrains.kotlin.plugin.serialization"
     const val noarg = "org.jetbrains.kotlin.plugin.noarg"
     const val dokka = "org.jetbrains.dokka"
+    const val jmh = "me.champeau.gradle.jmh"
 }

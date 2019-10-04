@@ -9,11 +9,17 @@ plugins {
 }
 
 dependencies {
-    val dokka = "0.9.18"
-    val dokkaPlugin =
+    val kotlinVersion by extra {
+        "1.3.50"
+    }
+    val dokka by extra {
+        "0.9.18"
+    }
+    val dokkaPlugin by extra {
         "org.jetbrains.dokka:dokka-gradle-plugin:${dokka}"
+    }
 
-    implementation(kotlin("gradle-plugin", "1.3.50"))
+    implementation(kotlin("gradle-plugin", kotlinVersion))
     implementation(dokkaPlugin)
     implementation(gradleApi())
     implementation(localGroovy())

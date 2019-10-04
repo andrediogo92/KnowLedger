@@ -7,7 +7,9 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
+import org.gradle.kotlin.dsl.getValue
 import org.gradle.kotlin.dsl.kotlin
+import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -48,7 +50,7 @@ private fun DokkaTask.configureDokka(
 
         // URL showing where the source code can be accessed through the
         // web browser.
-        url = "https://github.com/Seriyin/KnowLedger/blob/master/${extension.module}/src/main/kotlin"
+        url = "https://github.com/Seriyin/KnowLedger/blob/master/${moduleName}/src/main/kotlin"
 
         // Suffix which is used to append the line number to the URL.
         // Use #L for GitHub.

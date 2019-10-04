@@ -14,7 +14,5 @@ docs {
 }
 
 dependencies {
-    Libs.jade.forEach {
-        implementation(it)
-    }
+    Libs.jade.forEach(::implementation)
 }

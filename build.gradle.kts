@@ -2,6 +2,7 @@ buildscript {
     repositories {
         jcenter()
         maven("https://kotlin.bintray.com/kotlinx")
+        maven("https://plugins.gradle.org/m2/")
     }
 
     dependencies {
@@ -9,6 +10,7 @@ buildscript {
         classpath(kotlin("noarg", Versions.kotlin))
         classpath(kotlin("serialization", Versions.kotlin))
         classpath(Libs.dokkaPlugin)
+        classpath(Libs.jmhPlugin)
     }
 
 }

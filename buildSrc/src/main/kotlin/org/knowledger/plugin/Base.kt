@@ -35,14 +35,10 @@ internal fun Project.addCommonDependencies() {
     dependencies {
         implementation(Libs.serialization)
 
-        Libs.tinylog.forEach {
-            implementation(it)
-        }
+        Libs.tinylog.forEach(::implementation)
 
         testImplementation(Libs.assertK)
         testImplementation(Libs.jUnitApi)
-        Libs.jUnitRuntime.forEach {
-            testRuntimeOnly(it)
-        }
+        Libs.jUnitRuntime.forEach(::testRuntimeOnly)
     }
 }
