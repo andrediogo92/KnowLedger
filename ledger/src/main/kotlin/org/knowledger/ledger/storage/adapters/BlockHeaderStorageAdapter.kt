@@ -5,15 +5,12 @@ import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.results.deadCode
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
-import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
-import org.knowledger.ledger.storage.blockheader.SABlockHeaderStorageAdapter
-import org.knowledger.ledger.storage.blockheader.SUHBlockHeaderStorageAdapter
-import org.knowledger.ledger.storage.blockheader.StorageAwareBlockHeader
+import org.knowledger.ledger.storage.BlockHeader
+import org.knowledger.ledger.storage.blockheader.loadBlockHeaderByImpl
+import org.knowledger.ledger.storage.blockheader.store
 
-object BlockHeaderStorageAdapter : LedgerStorageAdapter<HashedBlockHeader> {
+object BlockHeaderStorageAdapter : LedgerStorageAdapter<BlockHeader> {
     override val id: String
         get() = "BlockHeader"
 
@@ -29,20 +26,14 @@ object BlockHeaderStorageAdapter : LedgerStorageAdapter<HashedBlockHeader> {
         )
 
     override fun store(
-        toStore: HashedBlockHeader,
+        toStore: BlockHeader,
         session: ManagedSession
     ): StorageElement =
-        when (toStore) {
-            is StorageAwareBlockHeader ->
-                SABlockHeaderStorageAdapter.store(toStore, session)
-            is HashedBlockHeaderImpl ->
-                SUHBlockHeaderStorageAdapter.store(toStore, session)
-            else -> deadCode()
-        }
+        toStore.store(session)
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<HashedBlockHeader, LoadFailure> =
-        SABlockHeaderStorageAdapter.load(ledgerHash, element)
+    ): Outcome<BlockHeader, LoadFailure> =
+        element.loadBlockHeaderByImpl(ledgerHash)
 
 }

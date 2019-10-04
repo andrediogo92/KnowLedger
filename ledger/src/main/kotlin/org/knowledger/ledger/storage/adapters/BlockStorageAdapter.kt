@@ -5,13 +5,10 @@ import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.results.deadCode
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.block.Block
-import org.knowledger.ledger.storage.block.BlockImpl
-import org.knowledger.ledger.storage.block.SABlockStorageAdapter
-import org.knowledger.ledger.storage.block.SUBlockStorageAdapter
-import org.knowledger.ledger.storage.block.StorageAwareBlock
+import org.knowledger.ledger.storage.Block
+import org.knowledger.ledger.storage.block.loadBlockByImpl
+import org.knowledger.ledger.storage.block.store
 
 object BlockStorageAdapter : LedgerStorageAdapter<Block> {
     override val id: String
@@ -29,17 +26,11 @@ object BlockStorageAdapter : LedgerStorageAdapter<Block> {
         toStore: Block,
         session: ManagedSession
     ): StorageElement =
-        when (toStore) {
-            is StorageAwareBlock ->
-                SABlockStorageAdapter.store(toStore, session)
-            is BlockImpl ->
-                SUBlockStorageAdapter.store(toStore, session)
-            else -> deadCode()
-        }
+        toStore.store(session)
 
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<Block, LoadFailure> =
-        SABlockStorageAdapter.load(ledgerHash, element)
+        element.loadBlockByImpl(ledgerHash)
 }

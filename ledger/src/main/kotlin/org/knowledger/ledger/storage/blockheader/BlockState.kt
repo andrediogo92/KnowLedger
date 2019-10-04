@@ -1,8 +1,10 @@
 package org.knowledger.ledger.storage.blockheader
 
+import org.knowledger.ledger.storage.BlockHeader
+
 sealed class BlockState {
     data class BlockReady(
-        internal val header: HashedBlockHeader
+        internal val header: BlockHeader
     ) {
         val hashId
             get() = header.hash

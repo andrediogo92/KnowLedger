@@ -14,7 +14,7 @@ import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.StoragePairs
-import org.knowledger.ledger.storage.replaceInstances
+import org.knowledger.ledger.storage.addOrReplaceInstances
 import org.knowledger.ledger.storage.simpleUpdate
 
 @Serializable
@@ -49,7 +49,7 @@ internal data class StorageAwareBlockHeader(
     override fun updateMerkleTree(newRoot: Hash) {
         blockHeader.updateMerkleTree(newRoot)
         if (id != null) {
-            invalidatedFields.replaceInstances(
+            invalidatedFields.addOrReplaceInstances(
                 arrayOf("merkleRoot", "hash", "seconds"),
                 arrayOf(
                     StoragePairs.Element.Hash(newRoot),

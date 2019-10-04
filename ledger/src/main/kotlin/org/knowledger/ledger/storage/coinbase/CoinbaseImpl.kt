@@ -12,7 +12,7 @@ import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.service.LedgerContainer
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
+import org.knowledger.ledger.storage.TransactionOutput
 import java.math.BigDecimal
 import java.time.temporal.ChronoField
 
@@ -21,7 +21,7 @@ import java.time.temporal.ChronoField
 @SerialName("Coinbase")
 internal data class CoinbaseImpl(
     @SerialName("transactionOutputs")
-    internal var _transactionOutputs: MutableSet<HashedTransactionOutput>,
+    internal var _transactionOutputs: MutableSet<TransactionOutput>,
     override var payout: Payout,
     // Difficulty is fixed at block generation time.
     override val difficulty: Difficulty,
@@ -32,7 +32,7 @@ internal data class CoinbaseImpl(
     @Transient
     override val formula: DataFormula = DefaultDiff
 ) : Coinbase {
-    override val transactionOutputs: Set<HashedTransactionOutput>
+    override val transactionOutputs: Set<TransactionOutput>
         get() = _transactionOutputs
 
 

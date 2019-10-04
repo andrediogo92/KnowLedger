@@ -15,16 +15,16 @@ import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.storage.LedgerContract
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
-import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.serial.SortedSetSerializer
 import org.knowledger.ledger.service.LedgerContainer
 import org.knowledger.ledger.service.handles.LedgerHandle
-import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
+import org.knowledger.ledger.storage.BlockHeader
+import org.knowledger.ledger.storage.Coinbase
+import org.knowledger.ledger.storage.MerkleTree
+import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.blockheader.StorageAwareBlockHeader
-import org.knowledger.ledger.storage.coinbase.HashedCoinbase
 import org.knowledger.ledger.storage.coinbase.StorageAwareCoinbase
 import org.knowledger.ledger.storage.merkletree.StorageAwareMerkleTree
-import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.tinylog.kotlin.Logger
 import java.util.*
 
@@ -32,9 +32,9 @@ import java.util.*
 @SerialName("Block")
 internal data class BlockImpl(
     @Serializable(with = SortedSetSerializer::class)
-    override val data: SortedSet<HashedTransaction>,
-    override val coinbase: HashedCoinbase,
-    override val header: HashedBlockHeader,
+    override val data: SortedSet<Transaction>,
+    override val coinbase: Coinbase,
+    override val header: BlockHeader,
     override var merkleTree: MerkleTree,
     @Transient
     internal var encoder: BinaryFormat = Cbor.plain,
@@ -120,7 +120,7 @@ internal data class BlockImpl(
      * @param transaction   Transaction to attempt to add to the block.
      * @return Whether the transaction was valid and cprrectly inserted.
      */
-    override fun plus(transaction: HashedTransaction): Boolean {
+    override fun plus(transaction: Transaction): Boolean {
         val transactionSize =
             transaction.approximateSize(encoder)
         val cumSize = approximateSize + transactionSize
