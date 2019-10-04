@@ -25,10 +25,14 @@ data class PhysicalData(
     val coords: GeoCoords,
     val data: LedgerData
 ) : HashSerializable,
+    Cloneable,
     DataCategory by data,
     SelfInterval by data,
     Comparable<PhysicalData>,
     LedgerContract {
+    public override fun clone(): PhysicalData =
+        copy()
+
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
 
