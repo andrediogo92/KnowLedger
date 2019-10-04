@@ -14,16 +14,29 @@ fun randomDouble(): Double =
 fun randomInt(): Int =
     r.nextInt()
 
-fun randomInt(bound: Int): Int =
+fun randomInt(bound: Int = 1): Int =
     r.nextInt(bound)
+
+fun randomInts(): Sequence<Int> =
+    generateSequence {
+        randomInt()
+    }
+
+fun randomInts(bound: Int = 1): Sequence<Int> =
+    generateSequence {
+        randomInt(bound)
+    }
 
 fun randomBytesIntoArray(byteArray: ByteArray) {
     r.nextBytes(byteArray)
 }
 
-fun randomByteArray(size: Int): ByteArray =
-    ByteArray(size).also {
-        randomBytesIntoArray(it)
+fun randomByteArray(size: Int = 0): ByteArray =
+    ByteArray(size).also(::randomBytesIntoArray)
+
+fun randomByteArrays(size: Int = 0): Sequence<ByteArray> =
+    generateSequence {
+        randomByteArray(size)
     }
 
 
