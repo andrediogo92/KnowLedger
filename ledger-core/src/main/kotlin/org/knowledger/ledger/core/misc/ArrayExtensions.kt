@@ -1,5 +1,10 @@
 package org.knowledger.ledger.core.misc
 
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.LinkedHashMap
+import kotlin.collections.LinkedHashSet
+
 inline fun <T, reified R> Array<out T>.mapToArray(
     transform: (T) -> R
 ): Array<R> =
@@ -20,7 +25,7 @@ inline fun <T, reified R> Array<out T>.mapAndAdd(
 fun <T> List<T>.filterByIndex(
     function: (Int) -> Boolean
 ): List<T> {
-    val mutList = mutableListOf<T>()
+    val mutList = ArrayList<T>(size / 2)
     var i = 0
     while (i < size) {
         if (function(i)) {
@@ -33,7 +38,7 @@ fun <T> List<T>.filterByIndex(
 
 fun <T> Iterable<T>.filterByIndex(
     function: (Int) -> Boolean
-): Iterable<T> =
+): List<T> =
     iterator().filterByIndex(function)
 
 fun <T> Iterator<T>.filterByIndex(
@@ -68,3 +73,74 @@ fun <T> Sequence<T>.filterByIndex(
     function: (Int) -> Boolean
 ): List<T> =
     iterator().filterByIndex(function)
+
+
+inline fun <T, R> Collection<T>.mapMutableList(
+    map: (T) -> R
+): MutableList<R> =
+    ArrayList<R>(size).also { al ->
+        forEach {
+            al += map(it)
+        }
+    }
+
+inline fun <T, R> Collection<T>.mapMutableSet(
+    map: (T) -> R
+): MutableSet<R> =
+    LinkedHashSet<R>(size).also { lhs ->
+        forEach {
+            lhs += map(it)
+        }
+    }
+
+inline fun <T, R, S> Map<T, R>.mapMutable(
+    map: (R) -> S
+): MutableMap<T, S> =
+    LinkedHashMap<T, S>(size).also { lhm ->
+        forEach {
+            lhm[it.key] = map(it.value)
+        }
+    }
+
+
+inline fun <T, R> Collection<T>.mapToSet(
+    map: (T) -> R
+): Set<R> =
+    LinkedHashSet<R>(size).also { lhs ->
+        forEach {
+            lhs += map(it)
+        }
+    }
+
+inline fun <T, R> Collection<T>.mapToSortedSet(
+    map: (T) -> R
+): SortedSet<R> =
+    mapTo(TreeSet<R>()) {
+        map(it)
+    }
+
+
+inline fun <T> Collection<T>.copy(
+    clone: (T) -> T
+): List<T> =
+    map(clone)
+
+inline fun <T> Collection<T>.copyMutableList(
+    clone: (T) -> T
+): MutableList<T> =
+    mapMutableList(clone)
+
+inline fun <T> Collection<T>.copySet(
+    clone: (T) -> T
+): Set<T> =
+    mapToSet(clone)
+
+inline fun <T> Collection<T>.copyMutableSet(
+    clone: (T) -> T
+): MutableSet<T> =
+    mapMutableSet(clone)
+
+inline fun <T> Collection<T>.copySortedSet(
+    clone: (T) -> T
+): SortedSet<T> =
+    mapToSortedSet(clone)
