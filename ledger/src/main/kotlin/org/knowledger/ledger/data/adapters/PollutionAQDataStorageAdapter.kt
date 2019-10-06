@@ -1,20 +1,24 @@
 package org.knowledger.ledger.data.adapters
 
-import org.knowledger.ledger.core.data.LedgerData
+import kotlinx.serialization.DeserializationStrategy
 import org.knowledger.ledger.core.database.NewInstanceSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.storage.results.DataFailure
-import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.ledger.crypto.hash.Hashers.SHA3512Hasher
+import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.PollutionAQData
 import org.knowledger.ledger.data.PollutionType
 
 object PollutionAQDataStorageAdapter : AbstractStorageAdapter<PollutionAQData>(
     PollutionAQData::class.java,
-    Hashers.SHA3512Hasher
+    SHA3512Hasher
 ) {
+    override val serializer: DeserializationStrategy<PollutionAQData>
+        get() = PollutionAQData.serializer()
+
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "lastUpdated" to StorageType.STRING,

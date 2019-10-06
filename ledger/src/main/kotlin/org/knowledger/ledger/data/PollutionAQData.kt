@@ -3,8 +3,6 @@ package org.knowledger.ledger.data
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import org.knowledger.ledger.core.data.LedgerData
-import org.knowledger.ledger.core.data.SelfInterval
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -60,6 +58,10 @@ data class PollutionAQData(
         }, value, sourceName,
         city, citySeqNum
     )
+
+    override fun clone(): PollutionAQData =
+        copy()
+
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)

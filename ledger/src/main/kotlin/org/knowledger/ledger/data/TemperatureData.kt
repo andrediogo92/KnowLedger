@@ -6,8 +6,6 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
-import org.knowledger.ledger.core.data.LedgerData
-import org.knowledger.ledger.core.data.SelfInterval
 import org.knowledger.ledger.core.serial.BigDecimalSerializer
 import java.io.InvalidClassException
 import java.math.BigDecimal
@@ -24,6 +22,9 @@ data class TemperatureData(
     val temperature: BigDecimal,
     val unit: TemperatureUnit
 ) : LedgerData {
+    override fun clone(): TemperatureData =
+        copy()
+
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
 

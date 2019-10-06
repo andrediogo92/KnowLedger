@@ -3,8 +3,6 @@ package org.knowledger.ledger.data
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import org.knowledger.ledger.core.data.LedgerData
-import org.knowledger.ledger.core.data.SelfInterval
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -68,14 +66,17 @@ data class PollutionOWMData(
             else -> -99.0
         },
         when (parameter) {
-            "CO", "SO2", "NO2" -> data.asSequence().map {
-                it.asSequence().toList()
+            "CO", "SO2", "NO2" -> data.map {
+                it.toList()
             }.toList()
             else -> emptyList()
         },
         city,
         citySeqNum
     )
+
+    override fun clone(): PollutionOWMData =
+        copy()
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
