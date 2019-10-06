@@ -1,6 +1,5 @@
 package org.knowledger.ledger.storage
 
-import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.storage.block.Block
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
@@ -14,4 +13,3 @@ typealias MerkleTree = MerkleTree
 typealias Coinbase = HashedCoinbase
 typealias BlockHeader = HashedBlockHeader
 typealias Block = Block
-typealias PhysicalData = PhysicalData
