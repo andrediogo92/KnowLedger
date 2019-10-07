@@ -5,6 +5,7 @@ import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
@@ -20,17 +21,13 @@ interface ChainBuilder {
 
     fun block(
         transactions: SortedSet<Transaction>,
-        coinbase: Coinbase,
-        blockHeader: BlockHeader,
+        coinbase: Coinbase, blockHeader: BlockHeader,
         merkleTree: MerkleTree
     ): Block
 
     fun blockheader(
-        previousHash: Hash,
-        merkleRoot: Hash,
-        hash: Hash,
-        seconds: Long,
-        nonce: Long
+        previousHash: Hash, merkleRoot: Hash,
+        hash: Hash, seconds: Long, nonce: Long
     ): BlockHeader
 
     fun coinbase(
@@ -45,10 +42,8 @@ interface ChainBuilder {
     ): MerkleTree
 
     fun transactionOutput(
-        transactionSet: Set<Hash>,
-        prevCoinbase: Hash,
-        publicKey: PublicKey, hash: Hash,
-        payout: Payout
+        transactionSet: Set<Hash>, prevCoinbase: Hash,
+        publicKey: PublicKey, hash: Hash, payout: Payout
     ): TransactionOutput
 
     fun transaction(
@@ -59,4 +54,6 @@ interface ChainBuilder {
     fun transaction(
         data: PhysicalData
     ): Transaction
+
+    fun data(bytes: ByteArray): LedgerData
 }

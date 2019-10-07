@@ -8,7 +8,9 @@ import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
+import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.service.LedgerContainer
+import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
@@ -40,7 +42,7 @@ internal data class WorkingChainBuilder(
         merkleTree: MerkleTree
     ): Block =
         BlockImpl(
-            data = transactions,
+            transactions = transactions.toSortedSet(),
             coinbase = coinbase,
             header = blockHeader,
             merkleTree = merkleTree
@@ -85,9 +87,9 @@ internal data class WorkingChainBuilder(
         levelIndex: List<Int>
     ): MerkleTree =
         MerkleTreeImpl(
-            hasher = ledgerContainer.hasher,
             collapsedTree = collapsedTree,
-            levelIndex = levelIndex
+            levelIndex = levelIndex,
+            hasher = ledgerContainer.hasher
         )
 
     override fun transactionOutput(
@@ -98,8 +100,9 @@ internal data class WorkingChainBuilder(
     ): TransactionOutput =
         HashedTransactionOutputImpl(
             previousCoinbase = prevCoinbase,
-            publicKey = publicKey, hash = hash,
-            payout = payout, transactionSet = transactionSet,
+            publicKey = publicKey,
+            hash = hash, payout = payout,
+            transactionSet = transactionSet.toMutableSet(),
             hasher = ledgerContainer.hasher,
             encoder = ledgerContainer.encoder
         )
@@ -120,6 +123,12 @@ internal data class WorkingChainBuilder(
             identity = identity, data = data,
             hasher = ledgerContainer.hasher,
             encoder = ledgerContainer.encoder
+        )
+
+    override fun data(bytes: ByteArray): LedgerData =
+        ledgerContainer.encoder.load(
+            LedgerHandle.getStorageAdapter(tag)!!.serializer,
+            bytes
         )
 
 }
