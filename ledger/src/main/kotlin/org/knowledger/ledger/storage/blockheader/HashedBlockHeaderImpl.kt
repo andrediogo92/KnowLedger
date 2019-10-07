@@ -1,32 +1,23 @@
 package org.knowledger.ledger.storage.blockheader
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.Hashers
 import org.knowledger.ledger.storage.HashUpdateable
 
-@Serializable
-@SerialName("HashedBlockHeader")
 internal data class HashedBlockHeaderImpl(
     internal val blockHeader: BlockHeaderImpl,
-    @SerialName("hash")
     internal var _hash: Hash? = null,
-    @Transient
     private var hasher: Hashers = DEFAULT_HASHER,
-    @Transient
     private var encoder: BinaryFormat = Cbor.plain
 ) : HashedBlockHeader,
     HashUpdateable,
     BlockHeader by blockHeader {
-    @Transient
     private var cachedSize: Long? = null
 
     override val approximateSize: Long
@@ -62,9 +53,6 @@ internal data class HashedBlockHeaderImpl(
             seconds = seconds, _nonce = nonce
         ), _hash = hash, hasher = hasher, encoder = encoder
     )
-
-    override fun serialize(encoder: BinaryFormat): ByteArray =
-        blockHeader.serialize(encoder)
 
     override fun updateMerkleTree(newRoot: Hash) {
         blockHeader._merkleRoot = newRoot
@@ -102,7 +90,9 @@ internal data class HashedBlockHeaderImpl(
 
 
     override fun clone(): HashedBlockHeader =
-        copy()
+        copy(
+            blockHeader = blockHeader.clone()
+        )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
