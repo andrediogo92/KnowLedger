@@ -10,12 +10,9 @@ import org.knowledger.ledger.core.config.GlobalLedgerConfiguration
 import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.CACHE_SIZE
 import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.RECALC_DIV
 import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.RECALC_MULT
-import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.data.Difficulty.Companion.INIT_DIFFICULTY
 import org.knowledger.ledger.core.data.Difficulty.Companion.MAX_DIFFICULTY
 import org.knowledger.ledger.core.data.Difficulty.Companion.MIN_DIFFICULTY
-import org.knowledger.ledger.core.data.Tag
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
 import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.core.misc.toBytes
@@ -23,25 +20,32 @@ import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.flatMapSuccess
 import org.knowledger.ledger.core.results.fold
 import org.knowledger.ledger.core.results.mapSuccess
+import org.knowledger.ledger.core.results.unwrap
 import org.knowledger.ledger.core.storage.results.QueryFailure
-import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
+import org.knowledger.ledger.data.Difficulty
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.Tag
+import org.knowledger.ledger.mining.BlockState
 import org.knowledger.ledger.results.intoQuery
+import org.knowledger.ledger.service.Identity
+import org.knowledger.ledger.service.LedgerContainer
 import org.knowledger.ledger.service.ServiceClass
+import org.knowledger.ledger.service.handles.LedgerHandle.Companion.getContainer
+import org.knowledger.ledger.service.pools.block.BlockPool
+import org.knowledger.ledger.service.pools.block.BlockPoolImpl
 import org.knowledger.ledger.service.pools.transaction.StorageAwareTransactionPool
 import org.knowledger.ledger.service.pools.transaction.TransactionPool
 import org.knowledger.ledger.service.results.BlockFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.service.transactions.*
+import org.knowledger.ledger.storage.Block
+import org.knowledger.ledger.storage.BlockHeader
+import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
-import org.knowledger.ledger.storage.block.Block
 import org.knowledger.ledger.storage.block.BlockImpl
-import org.knowledger.ledger.storage.blockheader.BlockHeader
-import org.knowledger.ledger.storage.blockheader.BlockState
-import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
-import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 import java.math.BigInteger
@@ -54,28 +58,27 @@ import java.time.ZonedDateTime
  */
 data class ChainHandle internal constructor(
     val id: ChainId,
-    val transactionPool: TransactionPool = StorageAwareTransactionPool(
-        id
-    )
+    internal val transactionPool: TransactionPool =
+        StorageAwareTransactionPool(
+            id
+        )
 ) : ServiceClass {
     val chainHash = id.hash
     private val hasher: Hasher
     private val encoder: BinaryFormat
     private val pw: PersistenceWrapper
+    private val blockPool: BlockPool = BlockPoolImpl(id)
     val ledgerParams: LedgerParams
     val coinbaseParams: CoinbaseParams
 
 
     init {
-        LedgerHandle.getContainer(
-            id.ledgerHash
-        )!!.let {
-            hasher = it.hasher
-            pw = it.persistenceWrapper
-            ledgerParams = it.ledgerParams
-            encoder = it.encoder
-            coinbaseParams = it.coinbaseParams
-        }
+        val container = containerOrThrow(id)
+        hasher = container.hasher
+        pw = container.persistenceWrapper
+        ledgerParams = container.ledgerParams
+        encoder = container.encoder
+        coinbaseParams = container.coinbaseParams
     }
 
 
@@ -108,7 +111,7 @@ data class ChainHandle internal constructor(
      * Returns a [LoadFailure] for the tail-end
      * [BlockHeader] in the ledger.
      */
-    val lastBlockHeader: Outcome<HashedBlockHeader, LoadFailure>
+    val lastBlockHeader: Outcome<BlockHeader, LoadFailure>
         get() = pw.getLatestBlockHeader(chainHash)
 
 
@@ -482,7 +485,7 @@ data class ChainHandle internal constructor(
      * Add a transaction to the transaction pool.
      */
     fun addTransaction(
-        t: HashedTransaction
+        t: Transaction
     ): Outcome<BlockState, BlockFailure> {
         TODO()
     }
@@ -490,10 +493,10 @@ data class ChainHandle internal constructor(
     fun checkAgainstTarget(hashId: Hash): Boolean =
         hashId.difficulty <= currentDifficulty
 
-    fun refreshHeader(merkleRoot: Hash): BlockState.BlockReady {
-        TODO()
-        //blockPool[merkleRoot]
-    }
+    fun refreshHeader(merkleRoot: Hash): BlockState =
+        blockPool[merkleRoot]?.newNonce()?.let {
+            BlockState.BlockReady(it)
+        } ?: BlockState.BlockFailure
 
 
     companion object {
@@ -501,43 +504,53 @@ data class ChainHandle internal constructor(
 
         fun getOriginHeader(
             chainId: ChainId
-        ): HashedBlockHeader {
-            return LedgerHandle.getContainer(chainId.ledgerHash)!!.let {
-                HashedBlockHeaderImpl(
-                    chainId,
-                    it.hasher,
-                    it.encoder,
-                    emptyHash,
-                    BlockParams(),
-                    emptyHash,
-                    emptyHash,
-                    ZonedDateTime.of(
-                        2018, 3, 13, 0,
-                        0, 0, 0, ZoneOffset.UTC
-                    ).toEpochSecond(),
-                    0L
-                )
-            }
-        }
+        ): BlockHeader =
+            originHeader(chainId, containerOrThrow(chainId))
+
+        private fun originHeader(
+            chainId: ChainId,
+            container: LedgerContainer
+        ): BlockHeader =
+            HashedBlockHeaderImpl(
+                chainId,
+                container.hasher,
+                container.encoder,
+                emptyHash,
+                BlockParams(),
+                emptyHash,
+                emptyHash,
+                ZonedDateTime.of(
+                    2018, 3, 13, 0,
+                    0, 0, 0, ZoneOffset.UTC
+                ).toEpochSecond(),
+                0L
+            )
+
 
         fun getOriginBlock(
             chainId: ChainId
-        ): Block =
-            LedgerHandle
-                .getContainer(chainId.ledgerHash)!!
-                .let {
-                    BlockImpl(
-                        sortedSetOf(),
-                        HashedCoinbaseImpl(
-                            INIT_DIFFICULTY,
-                            0,
-                            it
-                        ),
-                        getOriginHeader(chainId),
-                        MerkleTreeImpl(hasher = it.hasher)
-                    )
-                }
+        ): Block {
+            val container = containerOrThrow(chainId)
+            return BlockImpl(
+                sortedSetOf(),
+                HashedCoinbaseImpl(
+                    INIT_DIFFICULTY,
+                    0,
+                    container
+                ),
+                originHeader(chainId, container),
+                MerkleTreeImpl(hasher = container.hasher)
+            )
+        }
 
+        private fun containerOrThrow(
+            chainId: ChainId
+        ): LedgerContainer =
+            getContainer(
+                chainId.ledgerHash
+            ) ?: LoadFailure.NoMatchingContainer(
+                chainId.ledgerHash
+            ).unwrap()
     }
 }
 
