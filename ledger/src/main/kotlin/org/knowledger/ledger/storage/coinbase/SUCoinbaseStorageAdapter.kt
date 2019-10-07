@@ -3,10 +3,10 @@ package org.knowledger.ledger.storage.coinbase
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.allValues
 import org.knowledger.ledger.core.results.flatMapSuccess
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
@@ -15,7 +15,7 @@ import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import org.knowledger.ledger.storage.adapters.loadTransactionOutput
 import org.knowledger.ledger.storage.adapters.persist
 
-internal object SUHCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseImpl> {
+internal object SUCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseImpl> {
     override val id: String
         get() = CoinbaseStorageAdapter.id
     override val properties: Map<String, StorageType>
