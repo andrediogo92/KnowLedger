@@ -6,12 +6,12 @@ import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
 import org.knowledger.ledger.service.results.LedgerFailure
 
-object SAChainIdStorageAdapter : ServiceStorageAdapter<StorageAwareChainId> {
+internal object SAChainIdStorageAdapter : ServiceStorageAdapter<StorageAwareChainId> {
     override val id: String
         get() = ChainIdStorageAdapter.id
 
@@ -31,7 +31,7 @@ object SAChainIdStorageAdapter : ServiceStorageAdapter<StorageAwareChainId> {
         ledgerHash: Hash,
         element: StorageElement
     ): Outcome<StorageAwareChainId, LedgerFailure> =
-        element.cachedLoad(ledgerHash, SUChainIdStorageAdapter) {
-            StorageAwareChainId(it)
-        }
+        element.cachedLoad(
+            ledgerHash, SUChainIdStorageAdapter, ::StorageAwareChainId
+        )
 }

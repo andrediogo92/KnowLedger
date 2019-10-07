@@ -4,13 +4,13 @@ import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.results.tryOrLedgerUnknownFailure
 import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
 import org.knowledger.ledger.service.results.LedgerFailure
 
-object SUChainIdStorageAdapter : ServiceStorageAdapter<StorageUnawareChainId> {
+internal object SUChainIdStorageAdapter : ServiceStorageAdapter<ChainIdImpl> {
     override val id: String
         get() = ChainIdStorageAdapter.id
 
@@ -18,7 +18,7 @@ object SUChainIdStorageAdapter : ServiceStorageAdapter<StorageUnawareChainId> {
         get() = ChainIdStorageAdapter.properties
 
     override fun store(
-        toStore: StorageUnawareChainId, session: ManagedSession
+        toStore: ChainIdImpl, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
@@ -30,7 +30,7 @@ object SUChainIdStorageAdapter : ServiceStorageAdapter<StorageUnawareChainId> {
     override fun load(
         ledgerHash: Hash,
         element: StorageElement
-    ): Outcome<StorageUnawareChainId, LedgerFailure> =
+    ): Outcome<ChainIdImpl, LedgerFailure> =
         tryOrLedgerUnknownFailure {
             val hash: Hash =
                 element.getHashProperty("hash")
@@ -45,10 +45,8 @@ object SUChainIdStorageAdapter : ServiceStorageAdapter<StorageUnawareChainId> {
             assert(ledger == ledgerHash)
 
             Outcome.Ok(
-                StorageUnawareChainId(
-                    tag,
-                    ledger,
-                    hash
+                ChainIdImpl(
+                    tag, ledger, hash
                 )
             )
         }
