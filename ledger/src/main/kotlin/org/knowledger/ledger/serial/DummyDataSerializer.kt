@@ -10,14 +10,15 @@ import kotlinx.serialization.withName
 import org.knowledger.ledger.data.DummyData
 
 @Serializer(forClass = DummyData::class)
-object DummyDataSerializer : KSerializer<DummyData> {
-    override val descriptor: SerialDescriptor
-        get() = StringDescriptor.withName("DummyData")
+@PublishedApi
+internal object DummyDataSerializer : KSerializer<DummyData> {
+    override val descriptor: SerialDescriptor =
+        StringDescriptor.withName("DummyData")
 
-    override fun deserialize(decoder: Decoder): DummyData {
-        assert(decoder.decodeByte() == 0xCC.toByte())
-        return DummyData
-    }
+    override fun deserialize(decoder: Decoder): DummyData =
+        DummyData.also {
+            assert(decoder.decodeByte() == 0xCC.toByte())
+        }
 
     override fun serialize(encoder: Encoder, obj: DummyData) =
         encoder.encodeByte(0xCC.toByte())
