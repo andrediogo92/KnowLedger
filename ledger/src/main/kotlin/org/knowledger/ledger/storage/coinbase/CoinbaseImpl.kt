@@ -1,33 +1,33 @@
+@file:UseSerializers(TransactionOutputByteSerializer::class, CoinbaseParamsByteSerializer::class)
 package org.knowledger.ledger.storage.coinbase
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlinx.serialization.UseSerializers
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
-import org.knowledger.ledger.core.data.DataFormula
 import org.knowledger.ledger.core.data.DefaultDiff
-import org.knowledger.ledger.core.data.Difficulty
-import org.knowledger.ledger.core.data.Payout
-import org.knowledger.ledger.core.data.PhysicalData
+import org.knowledger.ledger.core.misc.copyMutableSet
+import org.knowledger.ledger.data.DataFormula
+import org.knowledger.ledger.data.Difficulty
+import org.knowledger.ledger.data.Payout
+import org.knowledger.ledger.data.PhysicalData
+import org.knowledger.ledger.serial.internal.CoinbaseParamsByteSerializer
+import org.knowledger.ledger.serial.internal.TransactionOutputByteSerializer
 import org.knowledger.ledger.service.LedgerContainer
 import org.knowledger.ledger.storage.TransactionOutput
 import java.math.BigDecimal
 import java.time.temporal.ChronoField
 
-
 @Serializable
-@SerialName("Coinbase")
 internal data class CoinbaseImpl(
-    @SerialName("transactionOutputs")
     internal var _transactionOutputs: MutableSet<TransactionOutput>,
     override var payout: Payout,
     // Difficulty is fixed at block generation time.
     override val difficulty: Difficulty,
     override var blockheight: Long,
     override var extraNonce: Long = 0,
-    @SerialName("coinbaseParams")
     override val coinbaseParams: CoinbaseParams,
     @Transient
     override val formula: DataFormula = DefaultDiff
@@ -86,12 +86,10 @@ internal data class CoinbaseImpl(
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
 
-    override fun clone(): Coinbase =
+    override fun clone(): CoinbaseImpl =
         copy(
             _transactionOutputs =
-            transactionOutputs
-                .asSequence()
-                .toMutableSet()
+            transactionOutputs.copyMutableSet(TransactionOutput::clone)
         )
 
 

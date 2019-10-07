@@ -1,21 +1,19 @@
 package org.knowledger.ledger.storage.coinbase
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
-import org.knowledger.ledger.core.data.DataFormula
-import org.knowledger.ledger.core.data.Difficulty
-import org.knowledger.ledger.core.data.Payout
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
+import org.knowledger.ledger.data.DataFormula
+import org.knowledger.ledger.data.Difficulty
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.Hashers
+import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.service.LedgerContainer
 import org.knowledger.ledger.storage.HashUpdateable
+import org.knowledger.ledger.storage.TransactionOutput
 import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
@@ -23,20 +21,14 @@ import org.knowledger.ledger.storage.transaction.output.TransactionOutputImpl
 import java.math.BigDecimal
 import java.security.PublicKey
 
-@Serializable
-@SerialName("HashedCoinbase")
 internal data class HashedCoinbaseImpl(
     val coinbase: CoinbaseImpl,
-    @SerialName("hash")
     internal var _hash: Hash? = null,
-    @Transient
     private var hasher: Hashers = DEFAULT_HASHER,
-    @Transient
     private var encoder: BinaryFormat = Cbor.plain
 ) : HashedCoinbase,
     HashUpdateable,
     Coinbase by coinbase {
-    @Transient
     private var cachedSize: Long? = null
 
     override val approximateSize: Long
@@ -46,8 +38,8 @@ internal data class HashedCoinbaseImpl(
         get() = _hash ?: recalculateHash(hasher, encoder)
 
     /**
-     * Internally used constructor to construct new [HashedCoinbaseImpl] from inside
-     * ledger context.
+     * Internally used constructor to construct new
+     * [HashedCoinbaseImpl] from inside ledger context.
      */
     internal constructor(
         difficulty: Difficulty, blockheight: Long,
@@ -59,8 +51,8 @@ internal data class HashedCoinbaseImpl(
         container.hasher, container.encoder
     )
 
-    constructor(
-        transactionOutputs: MutableSet<HashedTransactionOutput>,
+    internal constructor(
+        transactionOutputs: MutableSet<TransactionOutput>,
         payout: Payout, difficulty: Difficulty,
         blockheight: Long, extraNonce: Long,
         coinbaseParams: CoinbaseParams, formula: DataFormula,
@@ -74,11 +66,12 @@ internal data class HashedCoinbaseImpl(
         ), _hash = hash, hasher = hasher, encoder = encoder
     )
 
-    constructor(
-        transactionOutputs: MutableSet<HashedTransactionOutput>,
+    internal constructor(
+        transactionOutputs: MutableSet<TransactionOutput>,
         payout: Payout, difficulty: Difficulty,
-        blockheight: Long, coinbaseParams: CoinbaseParams, formula: DataFormula,
-        hash: Hash, hasher: Hashers, encoder: BinaryFormat
+        blockheight: Long, coinbaseParams: CoinbaseParams,
+        formula: DataFormula, hash: Hash,
+        hasher: Hashers, encoder: BinaryFormat
     ) : this(
         CoinbaseImpl(
             _transactionOutputs = transactionOutputs,
@@ -88,8 +81,8 @@ internal data class HashedCoinbaseImpl(
         ), _hash = hash, hasher = hasher, encoder = encoder
     )
 
-    constructor(
-        transactionOutputs: MutableSet<HashedTransactionOutput>,
+    internal constructor(
+        transactionOutputs: MutableSet<TransactionOutput>,
         payout: Payout, difficulty: Difficulty,
         blockheight: Long, coinbaseParams: CoinbaseParams,
         formula: DataFormula, hasher: Hashers, encoder: BinaryFormat
@@ -105,7 +98,7 @@ internal data class HashedCoinbaseImpl(
     /**
      * New Hashed Coinbase Constructor.
      */
-    constructor(
+    internal constructor(
         difficulty: Difficulty, blockheight: Long,
         coinbaseParams: CoinbaseParams, dataFormula: DataFormula,
         hasher: Hashers, encoder: BinaryFormat
@@ -116,6 +109,11 @@ internal data class HashedCoinbaseImpl(
         formula = dataFormula, hasher = hasher, encoder = encoder
     )
 
+
+    override fun newNonce() {
+        extraNonce++
+        updateHash(hasher, encoder)
+    }
 
     override fun updateHash(
         hasher: Hasher, encoder: BinaryFormat
@@ -230,8 +228,10 @@ internal data class HashedCoinbaseImpl(
             )
     }
 
-    override fun clone(): HashedCoinbase =
-        copy()
+    override fun clone(): HashedCoinbaseImpl =
+        copy(
+            coinbase = coinbase.clone()
+        )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -1,12 +1,12 @@
 package org.knowledger.ledger.storage.coinbase
 
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.data.DataFormula
-import org.knowledger.ledger.core.data.Difficulty
-import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.serial.HashSerializable
 import org.knowledger.ledger.core.storage.LedgerContract
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
+import org.knowledger.ledger.data.DataFormula
+import org.knowledger.ledger.data.Difficulty
+import org.knowledger.ledger.data.Payout
+import org.knowledger.ledger.storage.TransactionOutput
 
 /**
  * The coinbase transaction. Pays out to contributors to
@@ -19,7 +19,7 @@ interface Coinbase : Cloneable,
                      HashSerializable,
                      LedgerContract {
 
-    val transactionOutputs: Set<HashedTransactionOutput>
+    val transactionOutputs: Set<TransactionOutput>
     var payout: Payout
     // Difficulty is fixed at block generation time.
     val difficulty: Difficulty

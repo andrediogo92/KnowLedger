@@ -1,12 +1,15 @@
 package org.knowledger.ledger.storage.coinbase
 
+import kotlinx.serialization.Serializable
 import org.knowledger.ledger.core.Sizeable
 import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.crypto.service.Identity
+import org.knowledger.ledger.serial.CoinbaseSerializer
 import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
 
+@Serializable(with = CoinbaseSerializer::class)
 interface HashedCoinbase : Hashing,
                            Coinbase,
                            Sizeable {
@@ -32,6 +35,8 @@ interface HashedCoinbase : Hashing,
         latestKnown: HashedTransaction?,
         latestUTXO: HashedTransactionOutput?
     )
+
+    fun newNonce()
 
     override fun clone(): HashedCoinbase
 }
