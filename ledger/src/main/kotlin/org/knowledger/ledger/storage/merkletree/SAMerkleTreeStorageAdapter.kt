@@ -5,8 +5,8 @@ import org.knowledger.ledger.adapters.cachedLoad
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
@@ -28,7 +28,7 @@ internal object SAMerkleTreeStorageAdapter : LedgerStorageAdapter<StorageAwareMe
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<StorageAwareMerkleTree, LoadFailure> =
-        element.cachedLoad(ledgerHash, SUMerkleTreeStorageAdapter) {
-            StorageAwareMerkleTree(it)
-        }
+        element.cachedLoad(
+            ledgerHash, SUMerkleTreeStorageAdapter, ::StorageAwareMerkleTree
+        )
 }

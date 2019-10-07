@@ -1,8 +1,5 @@
 package org.knowledger.ledger.storage.merkletree
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.hash.Hashing
@@ -13,29 +10,24 @@ import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.StoragePairs
-import org.knowledger.ledger.storage.addOrReplaceInstances
+import org.knowledger.ledger.storage.replace
 import org.knowledger.ledger.storage.simpleUpdate
 
-@Serializable
-@SerialName("StorageMerkleTreeWrapper")
 internal data class StorageAwareMerkleTree(
     internal val merkleTree: MerkleTreeImpl
 ) : MerkleTree by merkleTree, StorageAware<MerkleTree> {
     override fun update(
         session: ManagedSession
     ): Outcome<StorageID, UpdateFailure> =
-        simpleUpdate(invalidatedFields)
+        simpleUpdate(invalidated)
 
-    override val invalidated: List<StoragePairs>
-        get() = invalidatedFields
+    override val invalidated: Array<StoragePairs<*>> =
+        arrayOf(
+            StoragePairs.HashList("nakedTree"),
+            StoragePairs.Native("levelIndexes")
+        )
 
-    @Transient
     override var id: StorageID? = null
-
-    @Transient
-    private val invalidatedFields =
-        mutableListOf<StoragePairs>()
-
 
     internal constructor(
         hasher: Hashers
@@ -56,16 +48,8 @@ internal data class StorageAwareMerkleTree(
     override fun rebuildMerkleTree(data: Array<out Hashing>) {
         merkleTree.rebuildMerkleTree(data)
         if (id != null) {
-            invalidatedFields.addOrReplaceInstances(
-                arrayOf(
-                    "nakedTree",
-                    "levelIndexes"
-                ),
-                arrayOf(
-                    StoragePairs.Element.HashList(merkleTree.collapsedTree),
-                    StoragePairs.Element.Native(merkleTree.levelIndex)
-                )
-            )
+            invalidated.replace(0, merkleTree.collapsedTree)
+            invalidated.replace(1, merkleTree.levelIndex)
         }
     }
 }
