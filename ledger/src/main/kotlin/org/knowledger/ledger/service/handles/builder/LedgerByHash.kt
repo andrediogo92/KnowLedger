@@ -7,12 +7,11 @@ import org.knowledger.ledger.core.database.DatabaseMode
 import org.knowledger.ledger.core.database.DatabaseType
 import org.knowledger.ledger.core.database.ManagedDatabase
 import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.mapSuccess
-import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.Hashers
 import org.knowledger.ledger.serial.withLedger
-import org.knowledger.ledger.service.LedgerConfig
 import org.knowledger.ledger.service.handles.LedgerHandle
 import java.io.File
 

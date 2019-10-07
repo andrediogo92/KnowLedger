@@ -1,12 +1,12 @@
 package org.knowledger.ledger.service.transactions
 
 import org.knowledger.ledger.core.database.query.UnspecificQuery
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.misc.base64Encoded
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.results.LoadFailure
+import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
-import org.knowledger.ledger.storage.transaction.HashedTransaction
 import java.security.PublicKey
 
 
@@ -19,7 +19,7 @@ import java.security.PublicKey
 internal fun PersistenceWrapper.getTransactionsFromAgent(
     tag: String,
     publicKey: PublicKey
-): Outcome<Sequence<HashedTransaction>, LoadFailure> =
+): Outcome<Sequence<Transaction>, LoadFailure> =
     TransactionStorageAdapter.let {
         queryResults(
             UnspecificQuery(
@@ -41,7 +41,7 @@ internal fun PersistenceWrapper.getTransactionsFromAgent(
 internal fun PersistenceWrapper.getTransactionsFromAgent(
     tag: Hash,
     publicKey: PublicKey
-): Outcome<Sequence<HashedTransaction>, LoadFailure> =
+): Outcome<Sequence<Transaction>, LoadFailure> =
     getTransactionsFromAgent(
         tag.base64Encoded(), publicKey
     )
@@ -50,7 +50,7 @@ internal fun PersistenceWrapper.getTransactionsFromAgent(
 internal fun PersistenceWrapper.getTransactionByHash(
     tag: String,
     hash: Hash
-): Outcome<HashedTransaction, LoadFailure> =
+): Outcome<Transaction, LoadFailure> =
     TransactionStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
@@ -72,14 +72,14 @@ internal fun PersistenceWrapper.getTransactionByHash(
 internal fun PersistenceWrapper.getTransactionByHash(
     tag: Hash,
     hash: Hash
-): Outcome<HashedTransaction, LoadFailure> =
+): Outcome<Transaction, LoadFailure> =
     getTransactionByHash(tag.base64Encoded(), hash)
 
 
 //Execution must be runtime determined.
 internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
     tag: String
-): Outcome<Sequence<HashedTransaction>, LoadFailure> =
+): Outcome<Sequence<Transaction>, LoadFailure> =
     TransactionStorageAdapter.let {
         queryResults(
             UnspecificQuery(
@@ -101,13 +101,13 @@ internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
 //Execution must be runtime determined.
 internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
     tag: Hash
-): Outcome<Sequence<HashedTransaction>, LoadFailure> =
+): Outcome<Sequence<Transaction>, LoadFailure> =
     getTransactionsOrderedByTimestamp(tag.base64Encoded())
 
 
 internal fun PersistenceWrapper.getTransactionsByClass(
     tag: String
-): Outcome<Sequence<HashedTransaction>, LoadFailure> =
+): Outcome<Sequence<Transaction>, LoadFailure> =
     TransactionStorageAdapter.let {
         queryResults(
             UnspecificQuery(
@@ -127,5 +127,5 @@ internal fun PersistenceWrapper.getTransactionsByClass(
 
 internal fun PersistenceWrapper.getTransactionsByClass(
     tag: Hash
-): Outcome<Sequence<HashedTransaction>, LoadFailure> =
+): Outcome<Sequence<Transaction>, LoadFailure> =
     getTransactionsByClass(tag.base64Encoded())

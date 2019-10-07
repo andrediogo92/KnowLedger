@@ -9,13 +9,12 @@ import org.knowledger.ledger.core.database.ManagedDatabase
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.orient.OrientDatabase
 import org.knowledger.ledger.core.database.orient.OrientDatabaseInfo
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.misc.base64Encoded
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.Hashers
 import org.knowledger.ledger.serial.baseModule
-import org.knowledger.ledger.service.LedgerConfig
 import org.knowledger.ledger.service.LedgerContainer
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.transactions.PersistenceWrapper

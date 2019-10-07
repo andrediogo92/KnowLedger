@@ -1,4 +1,4 @@
-package org.knowledger.ledger.storage.blockheader
+package org.knowledger.ledger.mining
 
 enum class MiningState {
     Attempted,

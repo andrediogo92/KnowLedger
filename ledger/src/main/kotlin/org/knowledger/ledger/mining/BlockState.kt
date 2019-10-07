@@ -1,11 +1,11 @@
-package org.knowledger.ledger.storage.blockheader
+package org.knowledger.ledger.mining
 
 import org.knowledger.ledger.storage.BlockHeader
 
 sealed class BlockState {
     data class BlockReady(
         internal val header: BlockHeader
-    ) {
+    ) : BlockState() {
         val hashId
             get() = header.hash
         val merkleRoot
@@ -20,5 +20,7 @@ sealed class BlockState {
             }
     }
 
-    object BlockNotReady
+    object BlockNotReady : BlockState()
+
+    object BlockFailure : BlockState()
 }

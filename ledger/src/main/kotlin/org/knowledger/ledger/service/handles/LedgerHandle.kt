@@ -1,12 +1,8 @@
 package org.knowledger.ledger.service.handles
 
 import kotlinx.serialization.BinaryFormat
-import org.knowledger.ledger.core.data.DataFormula
 import org.knowledger.ledger.core.data.DefaultDiff
-import org.knowledger.ledger.core.data.LedgerData
-import org.knowledger.ledger.core.data.Tag
 import org.knowledger.ledger.core.database.StorageID
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.misc.base64DecodedToHash
 import org.knowledger.ledger.core.misc.base64Encoded
 import org.knowledger.ledger.core.misc.classDigest
@@ -15,16 +11,20 @@ import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.fold
 import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.storage.results.QueryFailure
-import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.service.Identity
+import org.knowledger.ledger.data.DataFormula
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.Hashers
+import org.knowledger.ledger.data.LedgerData
+import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
 import org.knowledger.ledger.results.intoLedger
-import org.knowledger.ledger.service.LedgerConfig
+import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.LedgerContainer
 import org.knowledger.ledger.service.ServiceClass
 import org.knowledger.ledger.service.handles.builder.AbstractLedgerBuilder
 import org.knowledger.ledger.service.handles.builder.LedgerByHash
 import org.knowledger.ledger.service.handles.builder.LedgerByTag
+import org.knowledger.ledger.service.handles.builder.LedgerConfig
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.service.transactions.PersistenceWrapper

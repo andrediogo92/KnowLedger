@@ -18,7 +18,7 @@ fun LoadFailure.intoHandle(): LedgerHandle.Failure =
             failable.propagate(LedgerHandle.Failure::Propagated)
         is LoadFailure.NonExistentData ->
             failable.propagate(LedgerHandle.Failure::Propagated)
-        is LoadFailure.NonMatchingCrypter ->
+        is LoadFailure.NonMatchingHasher ->
             failable.propagate(LedgerHandle.Failure::Propagated)
         is LoadFailure.NoMatchingContainer ->
             failable.propagate(LedgerHandle.Failure::Propagated)
@@ -37,7 +37,7 @@ fun LedgerFailure.intoHandle(): LedgerHandle.Failure =
     when (this) {
         is LedgerFailure.NonExistentData ->
             failable.propagate(LedgerHandle.Failure::Propagated)
-        is LedgerFailure.NonMatchingCrypter ->
+        is LedgerFailure.NonMatchingHasher ->
             failable.propagate(LedgerHandle.Failure::Propagated)
         is LedgerFailure.NoKnownStorageAdapter ->
             failable.propagate(LedgerHandle.Failure::Propagated)
@@ -63,8 +63,8 @@ fun LoadFailure.intoLedger(): LedgerFailure =
     when (this) {
         is LoadFailure.UnknownFailure ->
             LedgerFailure.UnknownFailure(failable.cause, failable.exception)
-        is LoadFailure.NonMatchingCrypter ->
-            LedgerFailure.NonMatchingCrypter(failable.cause)
+        is LoadFailure.NonMatchingHasher ->
+            LedgerFailure.NonMatchingHasher(ledgerHash)
         is LoadFailure.UnrecognizedDataType ->
             failable.propagate(LedgerFailure::Propagated)
         is LoadFailure.NonExistentData ->
@@ -122,8 +122,8 @@ fun LedgerFailure.intoLoad(): LoadFailure =
     when (this) {
         is LedgerFailure.UnknownFailure ->
             LoadFailure.UnknownFailure(failable.cause, failable.exception)
-        is LedgerFailure.NonMatchingCrypter ->
-            LoadFailure.NonMatchingCrypter(failable.cause)
+        is LedgerFailure.NonMatchingHasher ->
+            LoadFailure.NonMatchingHasher(ledgerHash)
         is LedgerFailure.NonExistentData ->
             LoadFailure.NonExistentData(failable.cause)
         is LedgerFailure.NoKnownStorageAdapter ->
@@ -163,7 +163,7 @@ fun LoadFailure.intoQuery(): QueryFailure =
             QueryFailure.NonExistentData(failable.cause)
         is LoadFailure.UnrecognizedDataType ->
             failable.propagate(QueryFailure::Propagated)
-        is LoadFailure.NonMatchingCrypter ->
+        is LoadFailure.NonMatchingHasher ->
             failable.propagate(QueryFailure::Propagated)
         is LoadFailure.NoMatchingContainer ->
             failable.propagate(QueryFailure::Propagated)
@@ -180,7 +180,7 @@ fun LedgerFailure.intoQuery(): QueryFailure =
             QueryFailure.UnknownFailure(failable.cause, failable.exception)
         is LedgerFailure.NonExistentData ->
             QueryFailure.NonExistentData(failable.cause)
-        is LedgerFailure.NonMatchingCrypter ->
+        is LedgerFailure.NonMatchingHasher ->
             failable.propagate(QueryFailure::Propagated)
         is LedgerFailure.NoKnownStorageAdapter ->
             failable.propagate(QueryFailure::Propagated)

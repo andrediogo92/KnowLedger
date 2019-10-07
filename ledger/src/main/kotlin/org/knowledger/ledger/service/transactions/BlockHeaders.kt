@@ -1,12 +1,12 @@
 package org.knowledger.ledger.service.transactions
 
 import org.knowledger.ledger.core.database.query.UnspecificQuery
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.results.LoadFailure
+import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
-import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
 
 
 // ------------------------------
@@ -18,7 +18,7 @@ import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
 internal fun PersistenceWrapper.getBlockHeaderByHash(
     chainHash: Hash,
     hash: Hash
-): Outcome<HashedBlockHeader, LoadFailure> =
+): Outcome<BlockHeader, LoadFailure> =
     BlockHeaderStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
@@ -41,7 +41,7 @@ internal fun PersistenceWrapper.getBlockHeaderByHash(
 internal fun PersistenceWrapper.getBlockHeaderByBlockHeight(
     chainHash: Hash,
     height: Long
-): Outcome<HashedBlockHeader, LoadFailure> =
+): Outcome<BlockHeader, LoadFailure> =
     queryUniqueResult(
         UnspecificQuery(
             """
@@ -62,7 +62,7 @@ internal fun PersistenceWrapper.getBlockHeaderByBlockHeight(
 internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
     chainHash: Hash,
     hash: Hash
-): Outcome<HashedBlockHeader, LoadFailure> =
+): Outcome<BlockHeader, LoadFailure> =
     BlockHeaderStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
@@ -84,7 +84,7 @@ internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
 
 internal fun PersistenceWrapper.getLatestBlockHeader(
     chainHash: Hash
-): Outcome<HashedBlockHeader, LoadFailure> =
+): Outcome<BlockHeader, LoadFailure> =
     queryUniqueResult(
         UnspecificQuery(
             """

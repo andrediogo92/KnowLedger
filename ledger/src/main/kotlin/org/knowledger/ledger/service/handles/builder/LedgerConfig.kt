@@ -1,4 +1,4 @@
-package org.knowledger.ledger.service
+package org.knowledger.ledger.service.handles.builder
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

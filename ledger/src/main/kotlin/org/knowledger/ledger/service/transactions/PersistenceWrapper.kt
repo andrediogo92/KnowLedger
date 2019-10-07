@@ -5,14 +5,12 @@ import org.knowledger.ledger.config.adapters.BlockParamsStorageAdapter
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerParamsStorageAdapter
-import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.database.ManagedSchemas
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.NewInstanceSession
 import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.database.query.GenericQuery
 import org.knowledger.ledger.core.database.query.UnspecificQuery
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.allValues
 import org.knowledger.ledger.core.results.peekFailure
@@ -22,7 +20,8 @@ import org.knowledger.ledger.core.storage.adapters.Loadable
 import org.knowledger.ledger.core.storage.adapters.SchemaProvider
 import org.knowledger.ledger.core.storage.results.DataFailure
 import org.knowledger.ledger.core.storage.results.QueryFailure
-import org.knowledger.ledger.crypto.service.Identity
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
 import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.results.tryOrDataUnknownFailure
@@ -31,7 +30,7 @@ import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.results.tryOrQueryUnknownFailure
 import org.knowledger.ledger.results.tryOrUpdateUnknownFailure
 import org.knowledger.ledger.results.use
-import org.knowledger.ledger.service.LedgerConfig
+import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.ServiceClass
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
@@ -39,6 +38,7 @@ import org.knowledger.ledger.service.adapters.LedgerConfigStorageAdapter
 import org.knowledger.ledger.service.adapters.ServiceLoadable
 import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
 import org.knowledger.ledger.service.handles.LedgerHandle
+import org.knowledger.ledger.service.handles.builder.LedgerConfig
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.service.results.UpdateFailure
@@ -127,17 +127,14 @@ internal data class PersistenceWrapper(
     ) {
         val cl = schema.getSchema(provider.id)
         cl?.let {
-            val (propsIn, propsNotIn) = cl
-                .declaredPropertyNames()
-                .partition {
+            val (propsIn, propsNotIn) =
+                cl.declaredPropertyNames().partition {
                     it in provider.properties.keys
                 }
 
             if (propsNotIn.isNotEmpty()) {
                 //Drop properties that no longer exist in provider.
-                propsNotIn.forEach {
-                    cl.dropProperty(it)
-                }
+                propsNotIn.forEach(cl::dropProperty)
             }
 
             if (propsIn.size != provider.properties.keys.size) {
@@ -145,7 +142,6 @@ internal data class PersistenceWrapper(
                 provider
                     .properties
                     .keys
-                    .asSequence()
                     .filter {
                         it !in propsIn
                     }.forEach {
