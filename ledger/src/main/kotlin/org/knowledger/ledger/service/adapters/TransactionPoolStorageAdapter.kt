@@ -3,8 +3,8 @@ package org.knowledger.ledger.service.adapters
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.results.deadCode
 import org.knowledger.ledger.service.pools.transaction.SATransactionPoolStorageAdapter
 import org.knowledger.ledger.service.pools.transaction.SUTransactionPoolStorageAdapter
@@ -13,7 +13,7 @@ import org.knowledger.ledger.service.pools.transaction.TransactionPool
 import org.knowledger.ledger.service.pools.transaction.TransactionPoolImpl
 import org.knowledger.ledger.service.results.LedgerFailure
 
-object TransactionPoolStorageAdapter : ServiceStorageAdapter<TransactionPool> {
+internal object TransactionPoolStorageAdapter : ServiceStorageAdapter<TransactionPool> {
     override val id: String
         get() = "TransactionPool"
 

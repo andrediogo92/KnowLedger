@@ -7,8 +7,8 @@ import org.knowledger.ledger.config.LedgerId
 import org.knowledger.ledger.config.LedgerParams
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.results.LedgerFailure
 
 internal fun BlockParams.persist(
@@ -22,8 +22,7 @@ internal fun StorageElement.loadBlockParams(
     ledgerHash: Hash
 ): Outcome<BlockParams, LedgerFailure> =
     BlockParamsStorageAdapter.load(
-        ledgerHash,
-        this
+        ledgerHash, this
     )
 
 internal fun ChainId.persist(
@@ -37,8 +36,7 @@ internal fun StorageElement.loadChainId(
     ledgerHash: Hash
 ): Outcome<ChainId, LedgerFailure> =
     ChainIdStorageAdapter.load(
-        ledgerHash,
-        this
+        ledgerHash, this
     )
 
 internal fun CoinbaseParams.persist(
@@ -52,8 +50,7 @@ internal fun StorageElement.loadCoinbaseParams(
     ledgerHash: Hash
 ): Outcome<CoinbaseParams, LedgerFailure> =
     CoinbaseParamsStorageAdapter.load(
-        ledgerHash,
-        this
+        ledgerHash, this
     )
 
 internal fun LedgerId.persist(
@@ -67,8 +64,7 @@ internal fun StorageElement.loadLedgerId(
     ledgerHash: Hash
 ): Outcome<LedgerId, LedgerFailure> =
     LedgerIdStorageAdapter.load(
-        ledgerHash,
-        this
+        ledgerHash, this
     )
 
 internal fun LedgerParams.persist(
@@ -82,6 +78,5 @@ internal fun StorageElement.loadLedgerParams(
     ledgerHash: Hash
 ): Outcome<LedgerParams, LedgerFailure> =
     LedgerParamsStorageAdapter.load(
-        ledgerHash,
-        this
+        ledgerHash, this
     )

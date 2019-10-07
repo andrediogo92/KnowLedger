@@ -3,14 +3,14 @@ package org.knowledger.ledger.storage.adapters
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.coinbase.loadCoinbaseByImpl
 import org.knowledger.ledger.storage.coinbase.store
 
-object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
+internal object CoinbaseStorageAdapter : LedgerStorageAdapter<Coinbase> {
     override val id: String
         get() = "Coinbase"
 

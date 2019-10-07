@@ -3,17 +3,17 @@ package org.knowledger.ledger.service.adapters
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.misc.toPrivateKey
 import org.knowledger.ledger.core.misc.toPublicKey
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.crypto.service.Identity
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
+import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import java.security.KeyPair
 
-object IdentityStorageAdapter : LedgerStorageAdapter<Identity> {
+internal object IdentityStorageAdapter : LedgerStorageAdapter<Identity> {
     override val id: String
         get() = "Identity"
 

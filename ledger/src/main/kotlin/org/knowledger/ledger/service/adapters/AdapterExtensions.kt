@@ -2,8 +2,8 @@ package org.knowledger.ledger.service.adapters
 
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.pools.transaction.PoolTransaction
 import org.knowledger.ledger.service.pools.transaction.PoolTransactionStorageAdapter
 import org.knowledger.ledger.service.pools.transaction.TransactionPool

@@ -4,13 +4,13 @@ import org.knowledger.ledger.config.LedgerId
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.results.tryOrLedgerUnknownFailure
 import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
 import org.knowledger.ledger.service.results.LedgerFailure
 
-object LedgerIdStorageAdapter : ServiceStorageAdapter<LedgerId> {
+internal object LedgerIdStorageAdapter : ServiceStorageAdapter<LedgerId> {
     override val id: String
         get() = "LedgerId"
 

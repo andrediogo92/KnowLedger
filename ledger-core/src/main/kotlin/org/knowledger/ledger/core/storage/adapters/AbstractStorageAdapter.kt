@@ -1,5 +1,6 @@
 package org.knowledger.ledger.core.storage.adapters
 
+import kotlinx.serialization.DeserializationStrategy
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.hash.Hasher
@@ -21,6 +22,8 @@ abstract class AbstractStorageAdapter<T : LedgerData>(
     override val id: String by lazy {
         clazz.classDigest(hasher).base64Encoded()
     }
+
+    abstract val serializer: DeserializationStrategy<T>
 
     protected inline fun <T : LedgerData> commonLoad(
         document: StorageElement,
