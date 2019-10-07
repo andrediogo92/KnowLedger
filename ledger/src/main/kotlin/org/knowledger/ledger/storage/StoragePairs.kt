@@ -1,73 +1,204 @@
 package org.knowledger.ledger.storage
 
+import org.knowledger.ledger.adapters.EagerStorable
+import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageBytes
-import org.knowledger.ledger.core.data.Payout as LedgerPayout
-import org.knowledger.ledger.core.hash.Hash as LedgerHash
+import org.knowledger.ledger.core.database.StorageElement
+import org.knowledger.ledger.core.database.StorageID
+import org.knowledger.ledger.core.hash.Hashing
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.service.results.UpdateFailure
+import org.knowledger.ledger.data.Hash as LedgerHash
+import org.knowledger.ledger.data.Payout as LedgerPayout
 
-data class StoragePairs(
-    val key: String,
-    private var _value: Element
+internal sealed class StoragePairs<T>(
 ) {
-    val value: Element
-        get() = _value
+    abstract val key: String
+    internal var wrapped: T? = null
+    internal var dirty: Boolean = false
 
-    internal fun updateWithBlob(blob: StorageBytes) {
-        _value = Element.Blob(blob)
+    val value: T
+        get() = wrapped!!
+
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is StoragePairs<*>) return false
+
+        if (key != other.key) return false
+
+        return true
     }
 
-    private fun updateDifficulty(difficulty: StorageBytes) {
-        _value = Element.Difficulty(difficulty)
+    override fun hashCode(): Int {
+        return key.hashCode()
     }
 
-    private fun updatePayout(payout: LedgerPayout) {
-        _value = Element.Payout(payout)
+    abstract fun set(
+        element: StorageElement
+    ): StorageElement
+
+    fun replace(new: T) {
+        wrapped = new
+        dirty = true
     }
 
-    private fun updateHash(hash: LedgerHash) {
-        _value = Element.Hash(hash)
+    protected inline fun invalidate(
+        element: StorageElement,
+        apply: StorageElement.() -> StorageElement
+    ): StorageElement {
+        dirty = false
+        val elem = element.apply()
+        wrapped = null
+        return elem
     }
 
-    private fun updateListHash(hashList: List<LedgerHash>) {
-        _value = Element.HashList(hashList)
-    }
+    internal data class LinkedList<T : Hashing>(
+        override val key: String,
+        internal val adapter: EagerStorable<T>
+    ) : StoragePairs<MutableList<StorageID>>() {
+        fun add(new: T, session: ManagedSession) {
+            if (!value.any {
+                    it.element.getHashProperty("hash") == new.hash
+                }) {
+                value += adapter.persist(new, session).identity
+            }
+            dirty = true
+        }
 
-    private fun updateListSet(hashSet: Set<LedgerHash>) {
-        _value = Element.HashSet(hashSet)
-    }
+        fun remove(new: T) {
+            value.removeIf {
+                it.element.getHashProperty("hash") == new.hash
+            }
+            dirty = true
+        }
 
-    @Suppress("UNCHECKED_CAST")
-    internal fun updateValue(value: Any) {
-        when (value) {
-            is StorageBytes -> updateDifficulty(value)
-            is LedgerPayout -> updatePayout(value)
-            is LedgerHash -> updateHash(value)
-            is List<*> ->
-                if (value.isNotEmpty() && value[0] is LedgerHash) {
-                    updateListHash(value as List<LedgerHash>)
-                } else {
-                    _value = Element.Native(value)
-                }
-            is Set<*> ->
-                if (value.isNotEmpty() && value.first() is LedgerHash) {
-                    updateListSet(value as Set<LedgerHash>)
-                } else {
-                    _value = Element.Native(value)
-                }
-            else -> _value = Element.Native(value)
+        override fun set(
+            element: StorageElement
+        ): StorageElement {
+            val elem = element.setElementListById(key, value)
+            dirty = false
+            return elem
         }
     }
 
-    internal fun updateElement(element: Element) {
-        _value = element
+    internal data class LinkedSet<T : Hashing>(
+        override val key: String,
+        internal val adapter: EagerStorable<T>
+    ) : StoragePairs<MutableSet<StorageID>>() {
+        fun add(new: T, session: ManagedSession) {
+            if (!value.any {
+                    it.element.getHashProperty("hash") == new.hash
+                }) {
+                value += adapter.persist(new, session).identity
+            }
+            dirty = true
+        }
+
+        fun remove(new: T) {
+            value.removeIf {
+                it.element.getHashProperty("hash") == new.hash
+            }
+            dirty = true
+        }
+
+        override fun set(
+            element: StorageElement
+        ): StorageElement {
+            val elem = element.setElementSetById(key, value)
+            dirty = false
+            return elem
+        }
     }
 
-    sealed class Element {
-        data class Blob(val blob: StorageBytes) : Element()
-        data class Hash(val hash: LedgerHash) : Element()
-        data class HashList(val hashList: List<LedgerHash>) : Element()
-        data class HashSet(val hashSet: Set<LedgerHash>) : Element()
-        data class Payout(val payout: LedgerPayout) : Element()
-        data class Difficulty(val difficulty: StorageBytes) : Element()
-        data class Native(val any: Any) : Element()
+
+    internal data class Linked<T>(
+        override val key: String,
+        internal val adapter: EagerStorable<T>
+    ) : StoragePairs<T>() {
+        override fun set(
+            element: StorageElement
+        ): StorageElement =
+            element.apply {
+                dirty = false
+            }
+
+        fun update(
+            session: ManagedSession
+        ): Outcome<StorageID, UpdateFailure> =
+            when (value) {
+                is StorageAware<*> ->
+                    (value as StorageAware<*>).update(session)
+                else -> {
+                    adapter.persist(value, session).let {
+                        Outcome.Ok(it.identity)
+                    }
+                }
+            }
     }
+
+    internal data class Blob(
+        override val key: String
+    ) : StoragePairs<StorageBytes>() {
+        override fun set(
+            element: StorageElement
+        ): StorageElement =
+            invalidate(element) { setStorageBytes(key, value) }
+    }
+
+    internal data class Hash(
+        override val key: String
+    ) : StoragePairs<LedgerHash>() {
+        override fun set(
+            element: StorageElement
+        ): StorageElement =
+            invalidate(element) { setHashProperty(key, value) }
+    }
+
+    internal data class HashList(
+        override val key: String
+    ) : StoragePairs<List<LedgerHash>>() {
+        override fun set(
+            element: StorageElement
+        ): StorageElement =
+            invalidate(element) { setHashList(key, value) }
+    }
+
+    internal data class HashSet(
+        override val key: String
+    ) : StoragePairs<Set<LedgerHash>>() {
+        override fun set(
+            element: StorageElement
+        ): StorageElement =
+            invalidate(element) { setHashSet(key, value) }
+
+    }
+
+    internal data class Payout(
+        override val key: String
+    ) : StoragePairs<LedgerPayout>() {
+        override fun set(
+            element: StorageElement
+        ): StorageElement =
+            invalidate(element) { setPayoutProperty(key, value) }
+    }
+
+    internal data class Difficulty(
+        override val key: String
+    ) : StoragePairs<StorageBytes>() {
+        override fun set(
+            element: StorageElement
+        ): StorageElement =
+            invalidate(element) { setStorageBytes(key, value) }
+    }
+
+    internal data class Native(
+        override val key: String
+    ) : StoragePairs<Any>() {
+        override fun set(
+            element: StorageElement
+        ): StorageElement =
+            invalidate(element) { setStorageProperty(key, value) }
+    }
+
 }
