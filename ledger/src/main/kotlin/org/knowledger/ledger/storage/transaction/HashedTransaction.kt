@@ -2,8 +2,10 @@ package org.knowledger.ledger.storage.transaction
 
 import kotlinx.serialization.Serializable
 import org.knowledger.ledger.core.hash.Hashing
-import org.knowledger.ledger.serial.HashedTransactionSerializer
+import org.knowledger.ledger.serial.TransactionSerializer
 
-@Serializable(with = HashedTransactionSerializer::class)
+@Serializable(with = TransactionSerializer::class)
 interface HashedTransaction : Hashing,
-                              SignedTransaction
+                              SignedTransaction {
+    override fun clone(): HashedTransaction
+}

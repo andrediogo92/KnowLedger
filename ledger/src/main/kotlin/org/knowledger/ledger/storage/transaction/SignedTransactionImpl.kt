@@ -3,31 +3,27 @@
 package org.knowledger.ledger.storage.transaction
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.internal.ByteArraySerializer
-import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.misc.generateSignature
 import org.knowledger.ledger.core.misc.verifyECDSASig
-import org.knowledger.ledger.crypto.service.Identity
+import org.knowledger.ledger.data.PhysicalData
+import org.knowledger.ledger.service.Identity
 import java.security.PrivateKey
 import java.security.PublicKey
 
 @Serializable
-@SerialName("SignedTransaction")
 internal data class SignedTransactionImpl(
     val transaction: TransactionImpl,
     // This is to identify unequivocally an agent.
-    @SerialName("signature")
     internal var _signature: ByteArray
 ) : SignedTransaction,
-
     Transaction by transaction {
     override val signature: ByteArray
         get() = _signature
 
-    constructor(
+    internal constructor(
         transaction: TransactionImpl,
         privateKey: PrivateKey, encoder: BinaryFormat
     ) : this(
@@ -41,7 +37,7 @@ internal data class SignedTransactionImpl(
     }
 
 
-    constructor(
+    internal constructor(
         identity: Identity, data: PhysicalData,
         encoder: BinaryFormat
     ) : this(
@@ -52,7 +48,7 @@ internal data class SignedTransactionImpl(
         encoder = encoder
     )
 
-    constructor(
+    internal constructor(
         privateKey: PrivateKey, publicKey: PublicKey,
         data: PhysicalData, encoder: BinaryFormat
     ) : this(
@@ -63,7 +59,7 @@ internal data class SignedTransactionImpl(
         encoder = encoder
     )
 
-    constructor(
+    internal constructor(
         publicKey: PublicKey, data: PhysicalData,
         signature: ByteArray
     ) : this(
@@ -83,6 +79,11 @@ internal data class SignedTransactionImpl(
     ): Int =
         transaction.compareTo(other)
 
+    override fun clone(): SignedTransactionImpl =
+        copy(
+            transaction = transaction.clone(),
+            _signature = _signature.clone()
+        )
 
     override fun verifySignature(encoder: BinaryFormat): Boolean {
         return verifyECDSASig(

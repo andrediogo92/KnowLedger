@@ -19,4 +19,6 @@ interface SignedTransaction : Transaction {
      * @return Whether the transaction is valid.
      */
     fun processTransaction(encoder: BinaryFormat): Boolean
+
+    override fun clone(): SignedTransaction
 }

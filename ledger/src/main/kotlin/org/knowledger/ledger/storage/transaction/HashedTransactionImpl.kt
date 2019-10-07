@@ -1,28 +1,21 @@
 package org.knowledger.ledger.storage.transaction
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.Transient
-import org.knowledger.ledger.core.data.PhysicalData
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.service.Identity
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.Hashers
+import org.knowledger.ledger.data.PhysicalData
+import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.storage.HashUpdateable
 import java.security.PrivateKey
 import java.security.PublicKey
 
-@Serializable
-@SerialName("HashedTransaction")
 internal data class HashedTransactionImpl(
     val signedTransaction: SignedTransactionImpl,
-    @SerialName("hash")
     internal var _hash: Hash? = null
 ) : HashedTransaction,
     HashUpdateable,
     SignedTransaction by signedTransaction {
-    @Transient
     private var cachedSize: Long? = null
 
     override val approximateSize: Long?
@@ -31,7 +24,7 @@ internal data class HashedTransactionImpl(
     override val hash: Hash
         get() = _hash ?: throw UninitializedPropertyAccessException("Hash was not initialized")
 
-    constructor(
+    internal constructor(
         privateKey: PrivateKey, publicKey: PublicKey,
         data: PhysicalData, hasher: Hashers, encoder: BinaryFormat
     ) : this(
@@ -44,7 +37,7 @@ internal data class HashedTransactionImpl(
         updateHash(hasher, encoder)
     }
 
-    constructor(
+    internal constructor(
         publicKey: PublicKey, data: PhysicalData,
         signature: ByteArray, hash: Hash
     ) : this(
@@ -54,7 +47,7 @@ internal data class HashedTransactionImpl(
         ), _hash = hash
     )
 
-    constructor(
+    internal constructor(
         identity: Identity, data: PhysicalData,
         hasher: Hashers, encoder: BinaryFormat
     ) : this(
@@ -64,6 +57,10 @@ internal data class HashedTransactionImpl(
         encoder = encoder
     )
 
+    override fun clone(): HashedTransactionImpl =
+        copy(
+            signedTransaction = signedTransaction.clone()
+        )
 
     override fun recalculateSize(
         hasher: Hasher, encoder: BinaryFormat
