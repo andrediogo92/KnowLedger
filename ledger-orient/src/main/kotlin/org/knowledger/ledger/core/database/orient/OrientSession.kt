@@ -34,7 +34,7 @@ data class OrientSession(
         OrientSchemas(session.metadata.schema)
 
     val clustersPresent: List<String>
-        get() = session.clusterNames.toMutableList()
+        get() = session.clusterNames.toList()
 
     val name: String
         get() = session.name
@@ -125,8 +125,5 @@ data class OrientSession(
         }
 
     fun browseClass(clazz: String): List<StorageElement> =
-        session.browseClass(clazz).toList().map {
-            DocumentElement(it)
-        }
-
+        session.browseClass(clazz).map(::DocumentElement)
 }

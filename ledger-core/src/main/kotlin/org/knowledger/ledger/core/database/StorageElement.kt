@@ -17,12 +17,9 @@ interface StorageElement :
     ): Difficulty
     fun getHashProperty(name: String): Hash
     fun getPayoutProperty(name: String): Payout
-    fun getStorageIDs(name: String): List<StorageID>
-    fun getMutableStorageIDs(
-        name: String
-    ): MutableList<StorageID>
     fun <T> getStorageProperty(name: String): T
     fun getStorageBytes(name: String): StorageBytes
+
     fun getElementList(
         name: String
     ): List<StorageElement>
@@ -30,6 +27,15 @@ interface StorageElement :
     fun getMutableElementList(
         name: String
     ): MutableList<StorageElement>
+
+    fun getElementListById(
+        name: String
+    ): List<StorageID>
+
+    fun getMutableElementListById(
+        name: String
+    ): MutableList<StorageID>
+
     fun getElementSet(
         name: String
     ): Set<StorageElement>
@@ -37,6 +43,15 @@ interface StorageElement :
     fun getMutableElementSet(
         name: String
     ): MutableSet<StorageElement>
+
+    fun getElementSetById(
+        name: String
+    ): Set<StorageID>
+
+    fun getMutableElementSetById(
+        name: String
+    ): MutableSet<StorageID>
+
     fun getElementMap(
         name: String
     ): Map<String, StorageElement>
@@ -45,16 +60,26 @@ interface StorageElement :
         name: String
     ): MutableMap<String, StorageElement>
 
+    fun getElementMapById(
+        name: String
+    ): Map<String, StorageID>
+
+    fun getMutableElementMapById(
+        name: String
+    ): MutableMap<String, StorageID>
+
     fun getHashSet(name: String): Set<Hash>
     fun getMutableHashSet(
         name: String
     ): MutableSet<Hash>
+
     fun getHashList(name: String): List<Hash>
     fun getMutableHashList(
         name: String
     ): MutableList<Hash>
+
     fun getLinked(name: String): StorageElement
-    fun getLinkedID(name: String): StorageID
+    fun getLinkedById(name: String): StorageID
 
 
 
@@ -103,8 +128,16 @@ interface StorageElement :
         name: String, property: List<StorageElement>
     ): StorageElement
 
+    fun setElementListById(
+        name: String, property: List<StorageID>
+    ): StorageElement
+
     fun setElementSet(
         name: String, property: Set<StorageElement>
+    ): StorageElement
+
+    fun setElementSetById(
+        name: String, property: Set<StorageID>
     ): StorageElement
 
     fun setElementMap(
@@ -112,4 +145,8 @@ interface StorageElement :
         property: Map<String, StorageElement>
     ): StorageElement
 
+    fun setElementMapById(
+        name: String,
+        property: Map<String, StorageID>
+    ): StorageElement
 }

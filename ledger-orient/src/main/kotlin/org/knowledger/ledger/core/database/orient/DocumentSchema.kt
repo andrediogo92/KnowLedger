@@ -1,6 +1,7 @@
 package org.knowledger.ledger.core.database.orient
 
 import com.orientechnologies.orient.core.metadata.schema.OClass
+import com.orientechnologies.orient.core.metadata.schema.OProperty
 import org.knowledger.ledger.core.database.ManagedSchema
 import org.knowledger.ledger.core.database.SchemaProperty
 import org.knowledger.ledger.core.database.StorageType
@@ -24,5 +25,5 @@ data class DocumentSchema internal constructor(
         clazz.dropProperty(key)
 
     override fun declaredPropertyNames(): List<String> =
-        clazz.declaredProperties().map { it.name }
+        clazz.declaredProperties().map(OProperty::getName)
 }

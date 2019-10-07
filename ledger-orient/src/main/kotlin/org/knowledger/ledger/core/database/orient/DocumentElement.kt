@@ -10,6 +10,10 @@ import org.knowledger.ledger.core.database.StorageBytes
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.misc.mapMutable
+import org.knowledger.ledger.core.misc.mapMutableList
+import org.knowledger.ledger.core.misc.mapMutableSet
+import org.knowledger.ledger.core.misc.mapToSet
 import org.knowledger.ledger.core.storage.adapters.Storable
 import java.math.BigInteger
 
@@ -51,22 +55,6 @@ data class DocumentElement internal constructor(
     ): Payout =
         Payout(elem.getProperty(name))
 
-    override fun getStorageIDs(
-        name: String
-    ): List<StorageID> =
-        elem.getProperty<List<ORID>>(name).map {
-            DocumentID(it)
-        }
-
-    override fun getMutableStorageIDs(
-        name: String
-    ): MutableList<StorageID> =
-        elem.getProperty<List<ORID>>(name)
-            .asSequence()
-            .map {
-                DocumentID(it)
-            }.toMutableList()
-
     override fun getHashProperty(
         name: String
     ): Hash =
@@ -76,35 +64,23 @@ data class DocumentElement internal constructor(
         name: String
     ): List<Hash> =
         elem.getProperty<List<ByteArray>>(name)
-            .map {
-                Hash(it)
-            }
+            .map(::Hash)
 
     override fun getMutableHashList(name: String): MutableList<Hash> =
         elem.getProperty<List<ByteArray>>(name)
-            .asSequence()
-            .map {
-                Hash(it)
-            }.toMutableList()
-
+            .mapMutableList(::Hash)
 
     override fun getHashSet(
         name: String
     ): Set<Hash> =
         elem.getProperty<Set<ByteArray>>(name)
-            .asSequence()
-            .map {
-                Hash(it)
-            }.toSet()
+            .mapToSet(::Hash).toSet()
 
     override fun getMutableHashSet(
         name: String
     ): MutableSet<Hash> =
         elem.getProperty<Set<ByteArray>>(name)
-            .asSequence()
-            .map {
-                Hash(it)
-            }.toMutableSet()
+            .mapMutableSet(::Hash)
 
 
     override fun getStorageBytes(
@@ -116,36 +92,49 @@ data class DocumentElement internal constructor(
         name: String
     ): List<StorageElement> =
         elem.getProperty<List<OElement>>(name)
-            .map {
-                DocumentElement(it)
-            }
+            .map(::DocumentElement)
 
     override fun getMutableElementList(name: String): MutableList<StorageElement> =
         elem.getProperty<List<OElement>>(name)
-            .asSequence()
-            .map {
-                DocumentElement(it)
-            }.toMutableList()
+            .mapMutableList(::DocumentElement)
+
+    override fun getElementListById(
+        name: String
+    ): List<StorageID> =
+        elem.getProperty<List<ORID>>(name)
+            .map(::DocumentID)
+
+    override fun getMutableElementListById(
+        name: String
+    ): MutableList<StorageID> =
+        elem.getProperty<List<ORID>>(name)
+            .mapMutableList(::DocumentID)
 
 
     override fun getElementSet(
         name: String
     ): Set<StorageElement> =
-        mutableSetOf<StorageElement>().let { set ->
-            elem.getProperty<Set<OElement>>(name)
-                .mapTo(set) {
-                    DocumentElement(it)
-                }
-        }
+        elem.getProperty<Set<OElement>>(name)
+            .mapToSet(::DocumentElement)
 
     override fun getMutableElementSet(
         name: String
     ): MutableSet<StorageElement> =
         elem.getProperty<Set<OElement>>(name)
-            .asSequence()
-            .map {
-                DocumentElement(it)
-            }.toMutableSet()
+            .mapMutableSet(::DocumentElement)
+
+
+    override fun getElementSetById(
+        name: String
+    ): Set<StorageID> =
+        elem.getProperty<Set<ORID>>(name)
+            .mapToSet(::DocumentID)
+
+    override fun getMutableElementSetById(
+        name: String
+    ): MutableSet<StorageID> =
+        elem.getProperty<Set<ORID>>(name)
+            .mapMutableSet(::DocumentID)
 
 
     override fun getElementMap(
@@ -159,12 +148,23 @@ data class DocumentElement internal constructor(
     override fun getMutableElementMap(
         name: String
     ): MutableMap<String, StorageElement> =
-        mutableMapOf<String, StorageElement>().let { map ->
-            elem.getProperty<Map<String, OElement>>(name)
-                .mapValuesTo(map) {
-                    DocumentElement(it.value)
-                }
-        }
+        elem.getProperty<MutableMap<String, OElement>>(name)
+            .mapMutable(::DocumentElement)
+
+
+    override fun getElementMapById(
+        name: String
+    ): Map<String, StorageID> =
+        elem.getProperty<Map<String, ORID>>(name)
+            .mapValues {
+                DocumentID(it.value)
+            }
+
+    override fun getMutableElementMapById(
+        name: String
+    ): MutableMap<String, StorageID> =
+        elem.getProperty<MutableMap<String, ORID>>(name)
+            .mapMutable(::DocumentID)
 
 
     override fun getLinked(
@@ -172,7 +172,7 @@ data class DocumentElement internal constructor(
     ): StorageElement =
         DocumentElement(elem.getProperty(name))
 
-    override fun getLinkedID(
+    override fun getLinkedById(
         name: String
     ): StorageID =
         DocumentID(elem.getProperty(name))
@@ -226,19 +226,42 @@ data class DocumentElement internal constructor(
             )
         }
 
+    override fun setElementListById(
+        name: String, property: List<StorageID>
+    ): StorageElement =
+        apply {
+            elem.setProperty(
+                name,
+                property.map {
+                    (it as DocumentID).id
+                }
+            )
+        }
+
     override fun setElementSet(
         name: String, property: Set<StorageElement>
     ): StorageElement =
         apply {
             elem.setProperty(
                 name,
-                property
-                    .asSequence()
-                    .map {
-                        (it as DocumentElement).elem
-                    }.toSet()
+                property.mapToSet {
+                    (it as DocumentElement).elem
+                }
             )
         }
+
+    override fun setElementSetById(
+        name: String, property: Set<StorageID>
+    ): StorageElement =
+        apply {
+            elem.setProperty(
+                name,
+                property.mapToSet {
+                    (it as DocumentID).id
+                }
+            )
+        }
+
 
     override fun setElementMap(
         name: String, property: Map<String, StorageElement>
@@ -249,13 +272,23 @@ data class DocumentElement internal constructor(
             })
         }
 
+    override fun setElementMapById(
+        name: String, property: Map<String, StorageID>
+    ): StorageElement =
+        apply {
+            elem.setProperty(name, property.mapValues {
+                (it.value as DocumentID).id
+            })
+        }
+
+
     override fun setHashList(
         name: String, hashes: List<Hash>
     ): StorageElement =
         apply {
             elem.setProperty(
                 name,
-                hashes.map { it.bytes }
+                hashes.map(Hash::bytes)
             )
         }
 
@@ -265,10 +298,7 @@ data class DocumentElement internal constructor(
         apply {
             elem.setProperty(
                 name,
-                hashes
-                    .asSequence()
-                    .map { it.bytes }
-                    .toSet()
+                hashes.mapToSet(Hash::bytes)
             )
         }
 

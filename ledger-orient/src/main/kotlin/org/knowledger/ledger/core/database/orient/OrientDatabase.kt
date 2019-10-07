@@ -7,7 +7,7 @@ import org.knowledger.ledger.core.database.ManagedSession
 class OrientDatabase(
     val dbInfo: OrientDatabaseInfo
 ) : ManagedDatabase {
-    internal val instance: OrientDB =
+    private val instance: OrientDB =
         OrientDB(
             "${dbInfo.databaseMode.mode}:${dbInfo.path}",
             dbInfo.config
