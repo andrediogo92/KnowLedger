@@ -5,8 +5,8 @@ import org.knowledger.ledger.adapters.cachedLoad
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
@@ -31,7 +31,7 @@ internal object SABlockStorageAdapter : LedgerStorageAdapter<StorageAwareBlock> 
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<StorageAwareBlock, LoadFailure> =
-        element.cachedLoad(ledgerHash, SUBlockStorageAdapter) {
-            StorageAwareBlock(it)
-        }
+        element.cachedLoad(
+            ledgerHash, SUBlockStorageAdapter, ::StorageAwareBlock
+        )
 }
