@@ -1,8 +1,6 @@
 package org.knowledger.ledger.core.serial
 
 import kotlinx.serialization.*
-import kotlinx.serialization.internal.IntSerializer
-import kotlinx.serialization.internal.LongSerializer
 import kotlinx.serialization.internal.SerialClassDescImpl
 import java.time.Instant
 
@@ -25,11 +23,11 @@ object InstantSerializer : KSerializer<Instant> {
         loop@ while (true) {
             when (val i = dec.decodeElementIndex(descriptor)) {
                 CompositeDecoder.READ_DONE -> break@loop
-                0 -> seconds = dec.decodeSerializableElement(
-                    descriptor, i, LongSerializer
+                0 -> seconds = dec.decodeLongElement(
+                    descriptor, i
                 )
-                1 -> nanos = dec.decodeSerializableElement(
-                    descriptor, i, IntSerializer
+                1 -> nanos = dec.decodeIntElement(
+                    descriptor, i
                 )
                 else -> throw SerializationException("Unknown index $i")
             }
@@ -44,14 +42,13 @@ object InstantSerializer : KSerializer<Instant> {
     override fun serialize(
         encoder: Encoder, obj: Instant
     ) {
-        val enc: CompositeEncoder = encoder.beginStructure(descriptor)
-        enc.encodeSerializableElement(
-            descriptor, 0,
-            LongSerializer, obj.epochSecond
+        val enc: CompositeEncoder =
+            encoder.beginStructure(descriptor)
+        enc.encodeLongElement(
+            descriptor, 0, obj.epochSecond
         )
-        enc.encodeSerializableElement(
-            descriptor, 1,
-            IntSerializer, obj.nano
+        enc.encodeIntElement(
+            descriptor, 1, obj.nano
         )
         enc.endStructure(descriptor)
     }

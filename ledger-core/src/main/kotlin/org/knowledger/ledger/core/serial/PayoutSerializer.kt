@@ -5,27 +5,27 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.ByteArraySerializer
 import kotlinx.serialization.internal.StringDescriptor
 import kotlinx.serialization.withName
-import java.math.BigInteger
+import org.knowledger.ledger.core.data.Payout
 
-@Serializer(forClass = BigInteger::class)
-object BigIntegerSerializer : KSerializer<BigInteger> {
+@Serializer(forClass = Payout::class)
+object PayoutSerializer : KSerializer<Payout> {
     override val descriptor: SerialDescriptor =
-        StringDescriptor.withName("BigInteger")
+        StringDescriptor.withName("Payout")
 
-    override fun deserialize(decoder: Decoder): BigInteger =
-        BigInteger(
+    override fun deserialize(decoder: Decoder): Payout =
+        Payout(
             decoder.decodeSerializableValue(
-                ByteArraySerializer
+                BigDecimalSerializer
             )
         )
 
-
-    override fun serialize(encoder: Encoder, obj: BigInteger) {
+    override fun serialize(
+        encoder: Encoder, obj: Payout
+    ) {
         encoder.encodeSerializableValue(
-            ByteArraySerializer, obj.toByteArray()
+            BigDecimalSerializer, obj.payout
         )
     }
 }

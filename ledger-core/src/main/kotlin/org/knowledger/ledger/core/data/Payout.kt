@@ -1,19 +1,14 @@
-@file:UseSerializers(BigDecimalSerializer::class)
-
 package org.knowledger.ledger.core.data
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.UseSerializers
-import org.knowledger.ledger.core.serial.BigDecimalSerializer
+import org.knowledger.ledger.core.serial.PayoutSerializer
 import java.math.BigDecimal
 
 /**
  * Payouts are a numeric representation
  * of the value of transactions.
  */
-@Serializable
-@SerialName("Payout")
+@Serializable(with = PayoutSerializer::class)
 data class Payout(
     val payout: BigDecimal
 ) {

@@ -3,30 +3,28 @@ package org.knowledger.ledger.core.serial
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.SerialClassDescImpl
+import kotlinx.serialization.internal.ByteArraySerializer
+import kotlinx.serialization.internal.StringDescriptor
+import kotlinx.serialization.withName
 import org.knowledger.ledger.core.misc.toPublicKey
 import java.security.PublicKey
 
 @Serializer(forClass = PublicKey::class)
 object PublicKeySerializer : KSerializer<PublicKey> {
     override val descriptor: SerialDescriptor =
-        object : SerialClassDescImpl("publicKey") {
-            init {
-                addElement("bytes")
-            }
-        }
+        StringDescriptor.withName("PublicKey")
 
     override fun deserialize(decoder: Decoder): PublicKey =
         decoder
-            .decodeByArray(descriptor)
-            ?.toPublicKey()
-            ?: throw MissingFieldException("bytes")
+            .decodeSerializableValue(ByteArraySerializer)
+            .toPublicKey()
 
 
     override fun serialize(encoder: Encoder, obj: PublicKey) {
-        encoder.encodeByArray(descriptor, obj.encoded)
+        encoder.encodeSerializableValue(
+            ByteArraySerializer, obj.encoded
+        )
     }
 }

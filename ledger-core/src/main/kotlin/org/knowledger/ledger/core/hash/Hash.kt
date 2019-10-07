@@ -1,12 +1,9 @@
-@file:UseSerializers(ByteArraySerializer::class)
 package org.knowledger.ledger.core.hash
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.UseSerializers
-import kotlinx.serialization.internal.ByteArraySerializer
 import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.misc.toHexString
+import org.knowledger.ledger.core.serial.HashSerializer
 import java.math.BigInteger
 
 /**
@@ -14,8 +11,7 @@ import java.math.BigInteger
  * a value structure instance which subsumes its value
  * into a digest of it.
  */
-@Serializable
-@SerialName("hash")
+@Serializable(with = HashSerializer::class)
 data class Hash(val bytes: ByteArray) {
     operator fun plus(tx: Hash): Hash =
         Hash(bytes + tx.bytes)

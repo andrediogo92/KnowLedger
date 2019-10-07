@@ -8,23 +8,22 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.ByteArraySerializer
 import kotlinx.serialization.internal.StringDescriptor
 import kotlinx.serialization.withName
-import org.knowledger.ledger.core.misc.toPrivateKey
-import java.security.PrivateKey
+import org.knowledger.ledger.core.hash.Hash
 
-@Serializer(forClass = PrivateKey::class)
-object PrivateKeySerializer : KSerializer<PrivateKey> {
+@Serializer(forClass = Hash::class)
+object HashSerializer : KSerializer<Hash> {
     override val descriptor: SerialDescriptor =
-        StringDescriptor.withName("PrivateKey")
+        StringDescriptor.withName("Hash")
 
-    override fun deserialize(decoder: Decoder): PrivateKey =
-        decoder
-            .decodeSerializableValue(ByteArraySerializer)
-            .toPrivateKey()
+    override fun deserialize(decoder: Decoder): Hash =
+        Hash(
+            decoder.decodeSerializableValue(ByteArraySerializer)
+        )
 
 
-    override fun serialize(encoder: Encoder, obj: PrivateKey) {
+    override fun serialize(encoder: Encoder, obj: Hash) {
         encoder.encodeSerializableValue(
-            ByteArraySerializer, obj.encoded
+            ByteArraySerializer, obj.bytes
         )
     }
 }
