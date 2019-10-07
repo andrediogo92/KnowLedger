@@ -7,7 +7,7 @@ import org.knowledger.ledger.service.results.UpdateFailure
 
 internal interface StorageAware<T> : Cloneable {
     var id: StorageID?
-    val invalidated: List<StoragePairs>
+    val invalidated: Array<StoragePairs<*>>
     fun update(
         session: ManagedSession
     ): Outcome<StorageID, UpdateFailure>
