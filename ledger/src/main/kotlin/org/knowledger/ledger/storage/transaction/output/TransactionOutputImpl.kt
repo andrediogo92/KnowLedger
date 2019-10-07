@@ -3,12 +3,11 @@
 package org.knowledger.ledger.storage.transaction.output
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import org.knowledger.ledger.core.data.Payout
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.serial.PublicKeySerializer
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.Payout
 import java.math.BigDecimal
 import java.security.PublicKey
 
@@ -19,13 +18,10 @@ import java.security.PublicKey
  * coinbase.
  */
 @Serializable
-@SerialName("TransactionOutput")
 internal data class TransactionOutputImpl(
     override val publicKey: PublicKey,
     override val previousCoinbase: Hash,
-    @SerialName("payout")
     private var _payout: Payout,
-    @SerialName("transactionHashes")
     private var _transactionHashes: MutableSet<Hash>
 ) : TransactionOutput {
     override val payout: Payout
@@ -34,7 +30,7 @@ internal data class TransactionOutputImpl(
     override val transactionHashes: Set<Hash>
         get() = _transactionHashes
 
-    constructor(
+    internal constructor(
         publicKey: PublicKey, previousCoinbase: Hash,
         payout: Payout, newTransaction: Hash,
         previousTransaction: Hash
@@ -45,6 +41,9 @@ internal data class TransactionOutputImpl(
     ) {
         addToPayout(payout, newTransaction, previousTransaction)
     }
+
+    override fun clone(): TransactionOutputImpl =
+        copy()
 
 
     override fun addToPayout(

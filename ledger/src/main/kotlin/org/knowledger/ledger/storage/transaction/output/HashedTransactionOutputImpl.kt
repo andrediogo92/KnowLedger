@@ -1,23 +1,18 @@
 package org.knowledger.ledger.storage.transaction.output
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.cbor.Cbor
-import org.knowledger.ledger.core.data.Payout
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.Hashers
+import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.storage.HashUpdateable
 import java.security.PublicKey
 
-@Serializable
-@SerialName("HashedTransactionOutput")
 internal data class HashedTransactionOutputImpl(
     val transactionOutput: TransactionOutputImpl,
-    @SerialName("hash")
     private var _hash: Hash? = null,
     @Transient
     var hasher: Hashers = DEFAULT_HASHER,
@@ -26,7 +21,6 @@ internal data class HashedTransactionOutputImpl(
 ) : HashedTransactionOutput,
     HashUpdateable,
     TransactionOutput by transactionOutput {
-    @Transient
     private var cachedSize: Long? = null
 
     override val approximateSize: Long
@@ -36,7 +30,7 @@ internal data class HashedTransactionOutputImpl(
         get() = _hash ?: recalculateHash(hasher, encoder)
 
 
-    constructor(
+    internal constructor(
         publicKey: PublicKey, previousCoinbase: Hash,
         payout: Payout, newTransaction: Hash,
         previousTransaction: Hash, hasher: Hashers,
@@ -55,18 +49,23 @@ internal data class HashedTransactionOutputImpl(
         updateHash(hasher, encoder)
     }
 
-    constructor(
+    internal constructor(
         publicKey: PublicKey, previousCoinbase: Hash,
-        payout: Payout, transactionSet: Set<Hash>,
+        payout: Payout, transactionSet: MutableSet<Hash>,
         hash: Hash, hasher: Hashers, encoder: BinaryFormat
     ) : this(
         transactionOutput = TransactionOutputImpl(
             publicKey = publicKey,
             previousCoinbase = previousCoinbase,
             _payout = payout,
-            _transactionHashes = transactionSet.toMutableSet()
+            _transactionHashes = transactionSet
         ), _hash = hash, hasher = hasher, encoder = encoder
     )
+
+    override fun clone(): HashedTransactionOutputImpl =
+        copy(
+            transactionOutput = transactionOutput.clone()
+        )
 
     override fun updateHash(
         hasher: Hasher, encoder: BinaryFormat
@@ -102,11 +101,6 @@ internal data class HashedTransactionOutputImpl(
         }
         updateHash(hasher, encoder)
     }
-
-    override fun serialize(
-        encoder: BinaryFormat
-    ): ByteArray =
-        encoder.dump(serializer(), this)
 
     override fun equals(
         other: Any?
