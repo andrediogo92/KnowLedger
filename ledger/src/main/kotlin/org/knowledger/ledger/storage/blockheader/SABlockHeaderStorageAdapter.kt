@@ -5,8 +5,8 @@ import org.knowledger.ledger.adapters.cachedLoad
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
@@ -21,7 +21,7 @@ internal object SABlockHeaderStorageAdapter : LedgerStorageAdapter<StorageAwareB
         toStore: StorageAwareBlockHeader, session: ManagedSession
     ): StorageElement =
         session.cacheStore(
-            SUHBlockHeaderStorageAdapter,
+            SUBlockHeaderStorageAdapter,
             toStore, toStore.blockHeader
         )
 
@@ -29,9 +29,7 @@ internal object SABlockHeaderStorageAdapter : LedgerStorageAdapter<StorageAwareB
         ledgerHash: Hash, element: StorageElement
     ): Outcome<StorageAwareBlockHeader, LoadFailure> =
         element.cachedLoad(
-            ledgerHash, SUHBlockHeaderStorageAdapter
-        ) {
-            StorageAwareBlockHeader(it)
-        }
+            ledgerHash, SUBlockHeaderStorageAdapter, ::StorageAwareBlockHeader
+        )
 
 }

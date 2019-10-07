@@ -6,10 +6,10 @@ import org.knowledger.ledger.config.adapters.persist
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.flatZip
 import org.knowledger.ledger.core.results.mapFailure
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.results.intoLoad
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.LedgerContainer
@@ -18,7 +18,7 @@ import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 
-internal object SUHBlockHeaderStorageAdapter : LedgerStorageAdapter<HashedBlockHeaderImpl> {
+internal object SUBlockHeaderStorageAdapter : LedgerStorageAdapter<HashedBlockHeaderImpl> {
     override val id: String
         get() = BlockHeaderStorageAdapter.id
     override val properties: Map<String, StorageType>
