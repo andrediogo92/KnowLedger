@@ -1,21 +1,30 @@
+@file:UseSerializers(
+    TransactionByteSerializer::class, MerkleTreeByteSerializer::class,
+    BlockHeaderByteSerializer::class, CoinbaseByteSerializer::class
+)
+
 package org.knowledger.ledger.storage.block
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.Sizeable
-import org.knowledger.ledger.core.data.DataFormula
-import org.knowledger.ledger.core.data.Difficulty
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.storage.LedgerContract
-import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
+import org.knowledger.ledger.data.DataFormula
+import org.knowledger.ledger.data.Difficulty
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.Hashers
 import org.knowledger.ledger.serial.SortedSetSerializer
+import org.knowledger.ledger.serial.internal.BlockHeaderByteSerializer
+import org.knowledger.ledger.serial.internal.CoinbaseByteSerializer
+import org.knowledger.ledger.serial.internal.MerkleTreeByteSerializer
+import org.knowledger.ledger.serial.internal.TransactionByteSerializer
 import org.knowledger.ledger.service.LedgerContainer
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.storage.BlockHeader
@@ -29,10 +38,9 @@ import org.tinylog.kotlin.Logger
 import java.util.*
 
 @Serializable
-@SerialName("Block")
 internal data class BlockImpl(
-    @Serializable(with = SortedSetSerializer::class)
-    override val data: SortedSet<Transaction>,
+    @Serializable(SortedSetSerializer::class)
+    override val transactions: SortedSet<Transaction>,
     override val coinbase: Coinbase,
     override val header: BlockHeader,
     override var merkleTree: MerkleTree,
@@ -47,7 +55,7 @@ internal data class BlockImpl(
     override val approximateSize: Long
         get() = cachedSize ?: recalculateApproximateSize()
 
-    constructor(
+    internal constructor(
         chainId: ChainId, previousHash: Hash,
         difficulty: Difficulty, blockheight: Long,
         params: BlockParams, ledgerContainer: LedgerContainer
@@ -67,7 +75,7 @@ internal data class BlockImpl(
         StorageAwareMerkleTree(ledgerContainer.hasher)
     )
 
-    constructor(
+    internal constructor(
         chainId: ChainId,
         previousHash: Hash,
         difficulty: Difficulty,
@@ -79,7 +87,7 @@ internal data class BlockImpl(
         LedgerHandle.getContainer(chainId.ledgerHash)!!
     )
 
-    constructor(
+    internal constructor(
         chainId: ChainId, difficulty: Difficulty,
         previousHash: Hash, coinbaseParams: CoinbaseParams,
         dataFormula: DataFormula, blockheight: Long,
@@ -99,6 +107,13 @@ internal data class BlockImpl(
         ),
         StorageAwareMerkleTree(hasher)
     )
+
+    override fun newNonce(): BlockHeader {
+        coinbase.newNonce()
+        merkleTree.buildFromCoinbase(coinbase)
+        header.updateMerkleTree(merkleTree.hash)
+        return header
+    }
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
@@ -125,9 +140,9 @@ internal data class BlockImpl(
             transaction.approximateSize(encoder)
         val cumSize = approximateSize + transactionSize
         if (cumSize < header.params.blockMemSize) {
-            if (data.size < header.params.blockLength) {
+            if (transactions.size < header.params.blockLength) {
                 if (transaction.processTransaction(encoder)) {
-                    data.add(transaction)
+                    transactions.add(transaction)
                     cachedSize = cumSize
                     Logger.info {
                         "Transaction Successfully added to Block"
@@ -144,7 +159,7 @@ internal data class BlockImpl(
 
 
     override fun updateHashes() {
-        merkleTree.rebuildMerkleTree(coinbase, data.toTypedArray())
+        merkleTree.rebuildMerkleTree(coinbase, transactions.toTypedArray())
         header.updateMerkleTree(merkleTree.hash)
     }
 
@@ -152,7 +167,7 @@ internal data class BlockImpl(
     override fun verifyTransactions(): Boolean {
         return merkleTree.verifyBlockTransactions(
             coinbase,
-            data.toTypedArray()
+            transactions.toTypedArray()
         )
     }
 
@@ -174,7 +189,7 @@ internal data class BlockImpl(
         if (this === other) return true
         if (other !is BlockImpl) return false
 
-        if (data != other.data) return false
+        if (transactions != other.transactions) return false
         if (coinbase != other.coinbase) return false
         if (header != other.header) return false
         if (merkleTree != other.merkleTree) return false
@@ -183,7 +198,7 @@ internal data class BlockImpl(
     }
 
     override fun hashCode(): Int {
-        var result = data.hashCode()
+        var result = transactions.hashCode()
         result = 31 * result + coinbase.hashCode()
         result = 31 * result + header.hashCode()
         result = 31 * result + merkleTree.hashCode()
