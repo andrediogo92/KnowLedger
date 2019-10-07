@@ -1,30 +1,26 @@
 package org.knowledger.ledger.crypto.storage
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.misc.mapAndAdd
 import org.knowledger.ledger.core.misc.mapToArray
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.serial.HashAlgorithmSerializer
 
 @Serializable
-@SerialName("MerkleTree")
 data class MerkleTreeImpl(
-    @SerialName("collapsedTree")
     internal val _collapsedTree: MutableList<Hash> = mutableListOf(),
-    @SerialName("levelIndex")
     internal val _levelIndex: MutableList<Int> = mutableListOf(),
-    @Serializable(with = HashAlgorithmSerializer::class)
-    private var hasher: Hashers
+    override val hasher: Hashers
 ) : MerkleTree {
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
 
-    override fun clone(): MerkleTree =
-        copy()
+    override fun clone(): MerkleTreeImpl =
+        copy(
+            _collapsedTree = _collapsedTree.toMutableList()
+        )
 
     override val collapsedTree: List<Hash>
         get() = _collapsedTree

@@ -14,6 +14,7 @@ interface MerkleTree : HashSerializable,
                        Cloneable {
     val collapsedTree: List<Hash>
     val levelIndex: List<Int>
+    val hasher: Hashers
 
     /**
      * The root hash.
