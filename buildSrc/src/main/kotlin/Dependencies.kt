@@ -65,10 +65,7 @@ object Libs {
         "com.tilab.jade:jade-misc:${Versions.jadeMisc}"
     )
 
-    val jmh = listOf(
-        "org.openjdk.jmh:jmh-generator-annprocess:${Versions.jmh}",
-        "org.openjdk.jmh:jmh-core:${Versions.jmh}"
-    )
+    const val jmh = "org.openjdk.jmh:jmh-core:${Versions.jmh}"
 
     const val jmhPlugin =
         "me.champeau.gradle:jmh-gradle-plugin:${Versions.jmhPlugin}"
