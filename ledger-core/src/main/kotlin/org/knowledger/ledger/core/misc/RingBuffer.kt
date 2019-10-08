@@ -1,103 +1,156 @@
-package org.knowledger.ledger.core.misc
-
-import java.io.Serializable
-import java.util.*
+import kotlin.math.min
 
 @Suppress("UNCHECKED_CAST")
-/**
- * TODO: Needs testing.
- * An evicting queue implementation.
- * @param <E> the element type to store.
- */
-class RingBuffer<E>(
-    val capacity: Int
-) : AbstractCollection<E>(), Queue<E>, Cloneable, Serializable {
+class RingBuffer<T : Any>(capacity: Int) {
+    var elements: Array<Any> = Array(capacity) {}
+    var capacity = capacity
+    var writePos = 0
+    var available = 0
 
-    private val buf: Array<Any?> =
-        Array(capacity) { null } // a List implementing RandomAccess
-    private var head = 0
-    private var tail = 0
-    override var size = 0
-
-    override fun iterator(): MutableIterator<E> =
-        RingBufferIterator()
-
-
-    override fun offer(e: E): Boolean {
-        try {
-            if (size == capacity) {
-                buf[head] = e
-                head = (head + 1) % capacity
-                tail = (tail + 1) % capacity
-            } else {
-                buf[head] = e
-                head = (head + 1) % capacity
-            }
-        } catch (ex: Exception) {
-            return false
-        }
-        size += 1
-        return true
+    fun reset() {
+        writePos = 0
+        available = 0
     }
 
-    override fun remove(): E =
-        if (size == 0) {
-            throw NoSuchElementException()
+    fun remainingCapacity(): Int =
+        capacity - available
+
+
+    fun put(element: Any): Boolean =
+        if (available < capacity) {
+            if (writePos >= capacity) {
+                writePos = 0
+            }
+            elements[writePos] = element
+            writePos++
+            available++
+            true
         } else {
-            val res = buf[head - 1]
-            head = (head - 1) % capacity
-            size -= 1
-            res as E
+            false
         }
 
-    override fun poll(): E? =
-        if (size == 0) {
-            null
-        } else {
-            val res = buf[head - 1]
-            head = (head - 1) % capacity
-            size -= 1
-            res as E?
-        }
+    fun put(
+        newElements: Array<T>,
+        length: Int = newElements.size
+    ): Int {
+        var readPos = 0
+        return if (writePos > available) {
+            //space above writePos is all empty
 
-    override fun element(): E =
-        if (size == 0) {
-            throw NoSuchElementException()
-        } else {
-            buf[head - 1] as E
-        }
+            if (length <= capacity - writePos) {
+                //space above writePos is sufficient to insert batch
 
-    override fun peek(): E? =
-        if (size == 0) {
-            null
-        } else {
-            buf[head - 1] as E?
-        }
+                while (readPos < length) {
+                    elements[writePos] = newElements[readPos]
+                    writePos++
+                    readPos++
+                }
+                available += readPos
+                length
 
-
-    private inner class RingBufferIterator<E> : MutableIterator<E> {
-
-
-        private var cursor: Int = tail
-        private var remaining: Int = size
-        /**
-         * @throws NotImplementedError It's impossible to remove in place
-         */
-        override fun remove() {
-            throw NotImplementedError("Impossible to remove in place")
-        }
-
-        override fun hasNext(): Boolean =
-            remaining > 0
-
-        override fun next(): E {
-            if (remaining > 0) {
-                remaining -= 1
-                val r = buf[cursor]
-                cursor = (cursor + 1) % capacity
-                return r as E
             } else {
-                throw NoSuchElementException()
+                //both space above writePos and below writePos is necessary to use
+                //to insert batch.
+
+                val lastEmptyPos = writePos - available
+
+                while (writePos < capacity) {
+                    elements[writePos] = newElements[readPos]
+                    readPos++
+                    writePos++
+                }
+
+                //fill into bottom of array too.
+                writePos = 0
+
+                val endPos = min(length - readPos, capacity - available - readPos)
+                while (writePos < endPos) {
+                    elements[writePos] = newElements[readPos]
+                    writePos++
+                    readPos++
+                }
+                available += readPos
+                readPos
+            }
+        } else {
+            val endPos = capacity - available + writePos
+
+            while (writePos < endPos) {
+                elements[writePos] = newElements[readPos]
+                readPos++
+                writePos++
+            }
+            available += readPos
+
+            readPos
+        }
+
+    }
+
+
+    fun take(): T? {
+        if (available == 0) {
+            return null
+        }
+        var nextSlot = writePos - available
+        if (nextSlot < 0) {
+            nextSlot += capacity
+        }
+        val nextObj = elements[nextSlot]
+        available--
+        return nextObj as T
+    }
+
+
+    fun take(into: Array<T>, length: Int = into.size): Int {
+        var intoPos = 0
+
+        return if (available <= writePos) {
+            var nextPos = writePos - available
+            val endPos = nextPos + min(available, length)
+
+            while (nextPos < endPos) {
+                into[intoPos] = elements[nextPos] as T
+                intoPos++
+                nextPos++
+            }
+            available -= intoPos
+            intoPos
+        } else {
+            var nextPos = writePos - available + capacity
+
+            val leftInTop = capacity - nextPos
+            if (length <= leftInTop) {
+                //copy directly
+                while (intoPos < length) {
+                    into[intoPos] = elements[nextPos] as T
+                    nextPos++
+                    intoPos++
+                }
+                this.available -= length
+                length
+            } else {
+                //copy top
+                while (nextPos < capacity) {
+                    into[intoPos] = elements[nextPos] as T
+                    intoPos++
+                    nextPos++
+                }
+
+                //copy bottom - from 0 to writePos
+                nextPos = 0
+                val leftToCopy = length - intoPos
+                val endPos = min(writePos, leftToCopy)
+
+                while (nextPos < endPos) {
+                    into[intoPos] = elements[nextPos] as T
+                    intoPos++
+                    nextPos++
+                }
+
+                available -= intoPos
+
+                intoPos
             }
         }
     }
