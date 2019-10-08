@@ -1,23 +1,42 @@
 package org.knowledger.ledger.service.pools.transaction
 
-import org.knowledger.ledger.core.database.StorageID
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.ServiceClass
+import org.knowledger.ledger.storage.Transaction
 
-interface TransactionPool : ServiceClass {
+internal interface TransactionPool : ServiceClass {
     val transactions: Set<PoolTransaction>
-    val unconfirmed: List<StorageID>
+    val unconfirmed: List<Transaction>
         get() = transactions.filter {
             !it.confirmed
         }.map {
-            it.id
+            it.transaction
         }
 
-    val firstUnconfirmed: StorageID?
+    val firstUnconfirmed: Transaction?
         get() = unconfirmed.firstOrNull()
 
-    operator fun get(id: StorageID) =
-        transactions.firstOrNull {
-            it.id == id
+    fun invalidate(hash: Hash)
+
+    fun unconfirmed(hash: Hash): Boolean =
+        unconfirmed.any {
+            it.hash == hash
         }
 
+    fun confirmed(hash: Hash): Boolean =
+        transactions.firstOrNull {
+            it.transaction.hash == hash
+        }?.confirmed ?: false
+
+    operator fun get(transaction: Transaction): PoolTransaction? =
+        get(transaction.hash)
+
+    operator fun get(hash: Hash): PoolTransaction? =
+        transactions.firstOrNull {
+            it.transaction.hash == hash
+        }
+
+    operator fun plusAssign(transaction: Transaction)
+
+    operator fun minusAssign(transaction: Transaction)
 }
