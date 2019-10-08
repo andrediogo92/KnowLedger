@@ -1,16 +1,26 @@
 package org.knowledger.ledger.service.pools.block
 
-import org.knowledger.ledger.core.database.StorageID
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.ServiceClass
+import org.knowledger.ledger.service.results.BlockFailure
+import org.knowledger.ledger.storage.Block
+import org.knowledger.ledger.storage.BlockHeader
 
-interface BlockPool : ServiceClass {
-    val blocks: Set<StorageID>
+internal interface BlockPool : ServiceClass {
+    val blocks: Set<Block>
 
-    val firstUnconfirmed: StorageID?
+    val firstUnconfirmed: Block?
         get() = blocks.firstOrNull()
 
-    operator fun get(hash: StorageID): StorageID? =
+    operator fun get(hash: Hash): Block? =
         blocks.firstOrNull {
-            it == hash
+            it.header.hash == hash
         }
+
+    fun refresh(hash: Hash): Outcome<BlockHeader, BlockFailure>
+
+    operator fun plusAssign(block: Block)
+
+    operator fun minusAssign(block: Block)
 }

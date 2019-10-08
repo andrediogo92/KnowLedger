@@ -1,21 +1,31 @@
 package org.knowledger.ledger.service.pools.block
 
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.database.StorageID
-import org.knowledger.ledger.core.misc.removeByUnique
+import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.service.results.BlockFailure
+import org.knowledger.ledger.storage.Block
+import org.knowledger.ledger.storage.BlockHeader
 
-data class BlockPoolImpl(
+internal data class BlockPoolImpl(
     internal val chainId: ChainId,
-    internal val candidateBlocks: MutableSet<StorageID> = mutableSetOf()
+    private val candidateBlocks: MutableSet<Block> = mutableSetOf()
 ) : BlockPool {
-    override val blocks: Set<StorageID>
+    override val blocks: Set<Block>
         get() = candidateBlocks
 
-    operator fun plus(transaction: StorageID): Boolean =
-        candidateBlocks.add(transaction)
+    override fun refresh(hash: Hash): Outcome<BlockHeader, BlockFailure> =
+        get(hash)?.newNonce()?.let {
+            Outcome.Ok(it)
+        } ?: Outcome.Error(BlockFailure.NoBlockForHash(hash))
 
-    operator fun minus(transaction: StorageID): Boolean =
-        candidateBlocks.removeByUnique {
-            it == transaction
-        }
+
+    override operator fun plusAssign(block: Block) {
+        candidateBlocks.add(block)
+    }
+
+    override operator fun minusAssign(block: Block) {
+        candidateBlocks.remove(block)
+    }
 }
+
