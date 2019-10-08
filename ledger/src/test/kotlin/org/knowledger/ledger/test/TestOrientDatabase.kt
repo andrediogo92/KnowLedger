@@ -18,6 +18,7 @@ import org.knowledger.ledger.core.database.orient.OrientDatabase
 import org.knowledger.ledger.core.database.orient.OrientDatabaseInfo
 import org.knowledger.ledger.core.database.orient.OrientSession
 import org.knowledger.ledger.core.database.query.UnspecificQuery
+import org.knowledger.ledger.core.misc.mapToSet
 import org.knowledger.ledger.core.results.mapSuccess
 import org.knowledger.ledger.core.results.unwrap
 import org.knowledger.ledger.core.storage.adapters.SchemaProvider
@@ -32,6 +33,7 @@ import org.knowledger.ledger.data.adapters.TrafficFlowDataStorageAdapter
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
 import org.knowledger.ledger.service.adapters.LedgerConfigStorageAdapter
+import org.knowledger.ledger.service.adapters.PoolTransactionStorageAdapter
 import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.handles.LedgerHandle
@@ -46,6 +48,7 @@ import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
+import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 
@@ -110,6 +113,7 @@ class TestOrientDatabase {
                 ChainHandleStorageAdapter,
                 IdentityStorageAdapter,
                 TransactionPoolStorageAdapter,
+                PoolTransactionStorageAdapter,
                 //StorageAdapters
                 BlockHeaderStorageAdapter,
                 BlockStorageAdapter,
@@ -128,14 +132,15 @@ class TestOrientDatabase {
                 val clusterNames = session.clustersPresent
                 Logger.info {
                     StringBuilder()
+                        .append(System.lineSeparator())
                         .append("Clusters present in ${plug.name}")
                         .appendByLine(clusterNames)
                         .toString()
                 }
                 assertThat(
-                    clusterNames.asSequence().map {
+                    clusterNames.mapToSet {
                         it.substringBeforeLast('_')
-                    }.toSet()
+                    }
                 ).containsAll(
                     *adapters.map {
                         it.id.toLowerCase()
@@ -146,34 +151,32 @@ class TestOrientDatabase {
             @Test
             fun `cluster query`() {
                 //Query from first cluster.
-                session.query(
+                val elements = session.queryToList(
                     """
-                    SELECT 
-                    FROM CLUSTER:${tid}_1
-                """.trimIndent()
-                ).let { set ->
-                    val l = set.asSequence().toList()
-                    l.forEach { res ->
-                        Logger.info {
-                            res.element.json
-                        }
+                        SELECT 
+                        FROM CLUSTER:${tid}_1
+                    """.trimIndent()
+                )
+                elements.forEach { res ->
+                    Logger.info {
+                        res.json
                     }
-                    //Ensure there is a subset of the generated transactions
-                    //present.
-                    assertAll {
-                        assertThat(l.size).isLessThanOrEqualTo(transactions.size)
-                        l.map {
-                            it.element.getHashProperty("hash")
-                        }.forEach { hash ->
-                            assertThat(transactions.map {
-                                it.hash
-                            }).contains(
-                                hash
-                            )
-                        }
-                    }
-
                 }
+                //Ensure there is a subset of the generated transactions
+                //present.
+                assertAll {
+                    assertThat(elements.size).isLessThanOrEqualTo(transactions.size)
+                    elements.map {
+                        it.getHashProperty("hash")
+                    }.forEach { hash ->
+                        assertThat(transactions.map {
+                            it.hash
+                        }).contains(
+                            hash
+                        )
+                    }
+                }
+
             }
 
         }
@@ -213,14 +216,14 @@ class TestOrientDatabase {
 
         @Test
         fun `binary records`() {
-            val t = session.query(
+            val elements = session.queryToList(
                 """
-                SELECT 
-                FROM $tid
-            """.trimIndent()
+                    SELECT 
+                    FROM $tid
+                """.trimIndent()
             )
-            assertThat(t.hasNext()).isTrue()
-            val binary = t.next().element.getHashProperty("hash")
+            assertThat(elements.isNotEmpty()).isTrue()
+            val binary = elements[0].getHashProperty("hash")
             assertThat(binary.bytes).containsExactly(
                 *transactions.first().hash.bytes
             )
@@ -228,7 +231,7 @@ class TestOrientDatabase {
 
         @Test
         fun `transaction with hash id`() {
-            val t = session.query(
+            val elements = session.queryToList(
                 UnspecificQuery(
                     """
                     SELECT
@@ -240,8 +243,8 @@ class TestOrientDatabase {
                     )
                 )
             )
-            assertThat(t.hasNext()).isTrue()
-            val binary = t.next().element.getHashProperty("hash")
+            assertThat(elements.isNotEmpty()).isTrue()
+            val binary = elements[0].getHashProperty("hash")
             assertThat(binary.bytes).containsExactly(
                 *transactions.first().hash.bytes
             )
@@ -268,7 +271,7 @@ class TestOrientDatabase {
                 )
                 assertThat(block + transactions.first())
                     .isTrue()
-                assertThat(block.data.first())
+                assertThat(block.transactions.first())
                     .isNotNull()
                     .isEqualTo(transactions.first())
             }
@@ -301,7 +304,7 @@ class TestOrientDatabase {
                 assertThat(block).isNotNull()
                 assertThat(block + testTraffic)
                     .isTrue()
-                assertThat(block.data.first())
+                assertThat(block.transactions.first())
                     .isNotNull()
                     .isEqualTo(testTraffic)
             }
@@ -317,7 +320,7 @@ class TestOrientDatabase {
             pw.getTransactionsByClass(
                 chainId.tag
             ).mapSuccess { seq ->
-                seq.toList().apply {
+                seq.asTransactions().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
                         map { it.hash.print },
@@ -339,7 +342,7 @@ class TestOrientDatabase {
             pw.getTransactionsOrderedByTimestamp(
                 chainId.tag
             ).mapSuccess { seq ->
-                seq.toList().apply {
+                seq.asTransactions().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
                         map { it.hash.print },
@@ -363,7 +366,7 @@ class TestOrientDatabase {
             pw.getTransactionsFromAgent(
                 chainId.tag, id.publicKey
             ).mapSuccess { seq ->
-                seq.toList().apply {
+                seq.asTransactions().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
                         map { it.hash.print },
@@ -386,7 +389,7 @@ class TestOrientDatabase {
                 chainId.tag,
                 transactions.elementAt(2).hash
             ).mapSuccess {
-                assertThat(it)
+                assertThat((it as StorageAwareTransaction).transaction)
                     .isNotNull()
                     .isEqualTo(transactions.elementAt(2))
             }.failOnError()
