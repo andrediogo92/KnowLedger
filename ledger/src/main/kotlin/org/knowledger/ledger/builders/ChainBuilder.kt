@@ -1,5 +1,6 @@
 package org.knowledger.ledger.builders
 
+import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.data.PhysicalData
@@ -18,6 +19,7 @@ import java.util.*
 interface ChainBuilder {
     val chainHash: Hash
     val tag: Tag
+    val chainId: ChainId
 
     fun block(
         transactions: SortedSet<Transaction>,
@@ -56,4 +58,6 @@ interface ChainBuilder {
     ): Transaction
 
     fun data(bytes: ByteArray): LedgerData
+
+    fun toBytes(ledgerData: LedgerData): ByteArray
 }

@@ -1,5 +1,6 @@
 package org.knowledger.ledger.builders
 
+import kotlinx.serialization.PolymorphicSerializer
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.data.Payout
@@ -27,7 +28,7 @@ import java.util.*
 
 internal data class WorkingChainBuilder(
     internal val ledgerContainer: LedgerContainer,
-    internal val chainId: ChainId,
+    override val chainId: ChainId,
     internal val identity: Identity
 ) : ChainBuilder {
     override val chainHash: Hash
@@ -131,4 +132,9 @@ internal data class WorkingChainBuilder(
             bytes
         )
 
+    override fun toBytes(ledgerData: LedgerData): ByteArray =
+        ledgerContainer.encoder.dump(
+            PolymorphicSerializer(LedgerData::class),
+            ledgerData
+        )
 }
