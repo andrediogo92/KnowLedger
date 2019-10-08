@@ -19,9 +19,7 @@ dependencies {
     implementation(project(":ledger-core"))
     implementation(project(":agent"))
 
-    Libs.jade.forEach {
-        implementation(it)
-    }
+    Libs.jade.forEach(::implementation)
 
     //Test dependencies
     testImplementation(Libs.commonsRNG)
