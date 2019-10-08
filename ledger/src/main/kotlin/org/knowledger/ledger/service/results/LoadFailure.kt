@@ -1,9 +1,9 @@
 package org.knowledger.ledger.service.results
 
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Failable
 import org.knowledger.ledger.core.results.Failure
 import org.knowledger.ledger.core.storage.LedgerContract
+import org.knowledger.ledger.data.Hash
 
 /**
  * Result class representing loading of [LedgerContract] classes
@@ -19,12 +19,12 @@ sealed class LoadFailure : Failure {
             )
     }
 
-    class NonMatchingCrypter(
-        cause: String
+    data class NonMatchingHasher(
+        val ledgerHash: Hash
     ) : LoadFailure() {
         override val failable: Failable.LightFailure =
             Failable.LightFailure(
-                cause
+                "No matching hasher present for $ledgerHash"
             )
     }
 

@@ -5,7 +5,6 @@ import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.service.pools.transaction.PoolTransaction
-import org.knowledger.ledger.service.pools.transaction.PoolTransactionStorageAdapter
 import org.knowledger.ledger.service.pools.transaction.TransactionPool
 import org.knowledger.ledger.service.results.LedgerFailure
 

@@ -16,7 +16,9 @@ internal data class StorageAwareTransaction(
     override val invalidated: Array<StoragePairs<*>>
         get() = emptyArray()
 
-    override fun update(session: ManagedSession): Outcome<StorageID, UpdateFailure> =
+    override fun update(
+        session: ManagedSession
+    ): Outcome<StorageID, UpdateFailure> =
         commonUpdate {
             Outcome.Ok(it.identity)
         }

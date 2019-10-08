@@ -35,6 +35,7 @@ import org.knowledger.ledger.service.ServiceClass
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
 import org.knowledger.ledger.service.adapters.LedgerConfigStorageAdapter
+import org.knowledger.ledger.service.adapters.PoolTransactionStorageAdapter
 import org.knowledger.ledger.service.adapters.ServiceLoadable
 import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
 import org.knowledger.ledger.service.handles.LedgerHandle
@@ -73,6 +74,7 @@ internal data class PersistenceWrapper(
                 ChainHandleStorageAdapter,
                 IdentityStorageAdapter,
                 TransactionPoolStorageAdapter,
+                PoolTransactionStorageAdapter,
                 //StorageAdapters
                 BlockHeaderStorageAdapter,
                 BlockStorageAdapter,
@@ -142,9 +144,8 @@ internal data class PersistenceWrapper(
                 provider
                     .properties
                     .keys
-                    .filter {
-                        it !in propsIn
-                    }.forEach {
+                    .filter { it !in propsIn }
+                    .forEach {
                         cl.createProperty(
                             it,
                             provider.properties.getValue(it)

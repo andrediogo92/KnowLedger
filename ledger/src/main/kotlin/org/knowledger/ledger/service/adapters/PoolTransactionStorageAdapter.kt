@@ -1,15 +1,20 @@
-package org.knowledger.ledger.service.pools.transaction
+package org.knowledger.ledger.service.adapters
 
 import org.knowledger.ledger.core.database.ManagedSession
 import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.core.results.mapFailure
+import org.knowledger.ledger.core.results.mapSuccess
+import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.results.intoLedger
 import org.knowledger.ledger.results.tryOrLedgerUnknownFailure
-import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
+import org.knowledger.ledger.service.pools.transaction.PoolTransaction
 import org.knowledger.ledger.service.results.LedgerFailure
+import org.knowledger.ledger.storage.adapters.loadTransaction
+import org.knowledger.ledger.storage.adapters.persist
 
-object PoolTransactionStorageAdapter : ServiceStorageAdapter<PoolTransaction> {
+internal object PoolTransactionStorageAdapter : ServiceStorageAdapter<PoolTransaction> {
     override val id: String = "PoolTransaction"
     override val properties: Map<String, StorageType> =
         mapOf(
@@ -23,7 +28,7 @@ object PoolTransactionStorageAdapter : ServiceStorageAdapter<PoolTransaction> {
     ): StorageElement =
         session
             .newInstance(id)
-            .setLinkedID("transaction", toStore.id)
+            .setLinked("transaction", toStore.transaction.persist(session))
             .setStorageProperty("confirmed", toStore.confirmed)
 
     override fun load(
@@ -31,15 +36,17 @@ object PoolTransactionStorageAdapter : ServiceStorageAdapter<PoolTransaction> {
         element: StorageElement
     ): Outcome<PoolTransaction, LedgerFailure> =
         tryOrLedgerUnknownFailure {
-            val transaction = element.getLinkedID("transaction")
+            val transaction = element.getLinked("transaction")
             val confirmed: Boolean = element.getStorageProperty("confirmed")
 
-            Outcome.Ok(
+            transaction.loadTransaction(ledgerHash).mapSuccess {
                 PoolTransaction(
-                    transaction,
+                    it,
                     confirmed
                 )
-            )
+            }.mapFailure {
+                it.intoLedger()
+            }
         }
 
 }
