@@ -1,10 +1,13 @@
+@file:UseSerializers(HashSerializer::class)
 package org.knowledger.ledger.config
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.serial.HashSerializable
+import kotlinx.serialization.UseSerializers
+import org.knowledger.ledger.core.serial.HashSerializer
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.serial.HashSerializable
 import org.knowledger.ledger.service.ServiceClass
 
 @Serializable

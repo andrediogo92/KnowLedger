@@ -5,10 +5,10 @@ import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.LedgerId
 import org.knowledger.ledger.config.LedgerParams
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.service.results.LedgerFailure
 
 internal fun BlockParams.persist(

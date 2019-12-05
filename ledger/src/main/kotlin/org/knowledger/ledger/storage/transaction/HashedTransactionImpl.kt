@@ -1,9 +1,9 @@
 package org.knowledger.ledger.storage.transaction
 
 import kotlinx.serialization.BinaryFormat
-import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.data.Hash
-import org.knowledger.ledger.data.Hashers
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hasher
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.storage.HashUpdateable
@@ -87,10 +87,10 @@ internal data class HashedTransactionImpl(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is HashedTransactionImpl) return false
+        if (other !is HashedTransaction) return false
 
-        if (signedTransaction != other.signedTransaction) return false
-        if (_hash != other._hash) return false
+        if (signedTransaction != other) return false
+        if (_hash != other.hash) return false
 
         return true
     }

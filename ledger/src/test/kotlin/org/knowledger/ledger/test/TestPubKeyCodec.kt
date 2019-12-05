@@ -3,11 +3,14 @@ package org.knowledger.ledger.test
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.misc.base64Encoded
-import org.knowledger.ledger.core.misc.toHexString
-import org.knowledger.ledger.core.misc.toPrivateKey
-import org.knowledger.ledger.core.misc.toPublicKey
+import org.knowledger.base64.base64Decoded
+import org.knowledger.base64.base64Encoded
+import org.knowledger.ledger.core.base.hash.toHexString
+import org.knowledger.ledger.crypto.EncodedPrivateKey
+import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.service.Identity
+import org.knowledger.ledger.crypto.toPrivateKey
+import org.knowledger.ledger.crypto.toPublicKey
 import org.tinylog.kotlin.Logger
 import java.security.Key
 
@@ -25,14 +28,14 @@ TestPubKeyCodec {
     fun `Test encode and decode of private and public keys`() {
         val encpr = pr.base64Encoded()
         val encpub = pub.base64Encoded()
-        val decpr = encpr.toPrivateKey()
-        val decpub = encpub.toPublicKey()
+        val decpr = EncodedPrivateKey(encpr.base64Decoded()).toPrivateKey()
+        val decpub = EncodedPublicKey(encpub.base64Decoded()).toPublicKey()
         //Decode of encode matches decode
         assertThat(
-            encpub.toPublicKey()
+            EncodedPublicKey(encpub.base64Decoded()).toPublicKey()
         ).isEqualTo(decpub)
         assertThat(
-            encpr.toPrivateKey()
+            EncodedPrivateKey(encpr.base64Decoded()).toPrivateKey()
         ).isEqualTo(decpr)
         //Re-encode matches original encode.
         assertThat(

@@ -4,13 +4,13 @@ import org.knowledger.ledger.config.adapters.loadCoinbaseParams
 import org.knowledger.ledger.config.adapters.loadLedgerId
 import org.knowledger.ledger.config.adapters.loadLedgerParams
 import org.knowledger.ledger.config.adapters.persist
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.mapFailure
 import org.knowledger.ledger.core.results.zip
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.intoHandle
 import org.knowledger.ledger.results.tryOrHandleUnknownFailure
 import org.knowledger.ledger.service.handles.LedgerHandle

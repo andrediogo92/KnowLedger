@@ -10,8 +10,9 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.misc.hashFromHexString
+import org.knowledger.ledger.core.base.hash.hashFromHexString
+import org.knowledger.ledger.core.base.hash.toHexString
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.blockheader.BlockHeaderImpl
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
@@ -88,10 +89,10 @@ object BlockHeaderSerializer : KSerializer<BlockHeader> {
                 descriptor, 0, ChainIdSerializer, obj.chainId
             )
             encodeStringElement(
-                descriptor, 1, obj.merkleRoot.print
+                descriptor, 1, obj.merkleRoot.toHexString()
             )
             encodeStringElement(
-                descriptor, 2, obj.previousHash.print
+                descriptor, 2, obj.previousHash.toHexString()
             )
             encodeSerializableElement(
                 descriptor, 3, BlockParams.serializer(), obj.params
@@ -103,7 +104,7 @@ object BlockHeaderSerializer : KSerializer<BlockHeader> {
                 descriptor, 5, obj.nonce
             )
             encodeStringElement(
-                descriptor, 6, obj.hash.print
+                descriptor, 6, obj.hash.toHexString()
             )
             endStructure(descriptor)
         }

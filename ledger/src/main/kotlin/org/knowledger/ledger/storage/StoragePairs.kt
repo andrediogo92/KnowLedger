@@ -1,14 +1,14 @@
 package org.knowledger.ledger.storage
 
 import org.knowledger.ledger.adapters.EagerStorable
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageBytes
-import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.database.StorageID
-import org.knowledger.ledger.core.hash.Hashing
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.crypto.hash.Hashing
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageBytes
+import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.database.StorageID
 import org.knowledger.ledger.service.results.UpdateFailure
-import org.knowledger.ledger.data.Hash as LedgerHash
+import org.knowledger.ledger.crypto.hash.Hash as LedgerHash
 import org.knowledger.ledger.data.Payout as LedgerPayout
 
 internal sealed class StoragePairs<T>(

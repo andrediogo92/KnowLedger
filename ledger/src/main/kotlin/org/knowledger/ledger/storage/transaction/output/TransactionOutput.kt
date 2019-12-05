@@ -1,9 +1,9 @@
 package org.knowledger.ledger.storage.transaction.output
 
-import org.knowledger.ledger.core.serial.HashSerializable
-import org.knowledger.ledger.core.storage.LedgerContract
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.Payout
+import org.knowledger.ledger.serial.HashSerializable
+import org.knowledger.ledger.storage.LedgerContract
 import java.security.PublicKey
 
 interface TransactionOutput : HashSerializable, LedgerContract, Cloneable {

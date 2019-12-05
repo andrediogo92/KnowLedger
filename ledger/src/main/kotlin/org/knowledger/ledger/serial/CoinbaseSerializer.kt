@@ -3,10 +3,11 @@ package org.knowledger.ledger.serial
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.misc.hashFromHexString
+import org.knowledger.ledger.core.base.hash.hashFromHexString
+import org.knowledger.ledger.core.base.hash.toHexString
 import org.knowledger.ledger.core.serial.DifficultySerializer
 import org.knowledger.ledger.core.serial.PayoutSerializer
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.storage.Coinbase
@@ -104,7 +105,7 @@ object CoinbaseSerializer : KSerializer<Coinbase> {
                 descriptor, 5, CoinbaseParamsSerializer, obj.coinbaseParams
             )
             encodeStringElement(
-                descriptor, 6, obj.hash.print
+                descriptor, 6, obj.hash.toHexString()
             )
             endStructure(descriptor)
         }

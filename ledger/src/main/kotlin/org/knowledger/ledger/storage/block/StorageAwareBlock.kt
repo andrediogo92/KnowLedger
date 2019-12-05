@@ -3,9 +3,9 @@ package org.knowledger.ledger.storage.block
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageID
 import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.StorageAware
@@ -75,4 +75,10 @@ internal data class StorageAwareBlock(
             merkleTree.clone()
         )
     }
+
+    override fun equals(other: Any?): Boolean =
+        block == other
+
+    override fun hashCode(): Int =
+        block.hashCode()
 }

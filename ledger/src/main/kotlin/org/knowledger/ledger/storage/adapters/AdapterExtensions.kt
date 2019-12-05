@@ -1,11 +1,11 @@
 package org.knowledger.ledger.storage.adapters
 
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader

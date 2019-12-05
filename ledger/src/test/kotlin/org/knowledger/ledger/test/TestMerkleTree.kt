@@ -7,12 +7,14 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.test.applyHashInPairs
+import org.knowledger.ledger.core.base.hash.toHexString
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbase
 import org.knowledger.ledger.storage.transaction.HashedTransaction
+import org.knowledger.testing.core.applyHashInPairs
+import org.knowledger.testing.ledger.testHasher
 import org.tinylog.kotlin.Logger
 
 /**
@@ -33,7 +35,7 @@ class TestMerkleTree {
     ) {
         tree.collapsedTree.forEachIndexed { i, it ->
             Logger.debug {
-                "Naked tree @$i -> ${it.print}"
+                "Naked tree @$i -> ${it.toHexString()}"
             }
         }
 
@@ -45,7 +47,7 @@ class TestMerkleTree {
 
         ts.forEachIndexed { i, it ->
             Logger.debug {
-                "Transactions @$i -> ${it.hash.print}"
+                "Transactions @$i -> ${it.hash.toHexString()}"
             }
         }
     }
@@ -57,7 +59,7 @@ class TestMerkleTree {
     ) {
         logMerkle(ts, tree)
         Logger.debug {
-            "Coinbase is ${coinbase.hash.print}"
+            "Coinbase is ${coinbase.hash.toHexString()}"
         }
     }
 

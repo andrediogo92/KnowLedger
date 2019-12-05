@@ -7,21 +7,15 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.knowledger.collections.mapToSet
 import org.knowledger.ledger.config.adapters.BlockParamsStorageAdapter
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerParamsStorageAdapter
+import org.knowledger.ledger.core.base.hash.toHexString
 import org.knowledger.ledger.core.data.PhysicalData
-import org.knowledger.ledger.core.database.DatabaseMode
-import org.knowledger.ledger.core.database.DatabaseType
-import org.knowledger.ledger.core.database.orient.OrientDatabase
-import org.knowledger.ledger.core.database.orient.OrientDatabaseInfo
-import org.knowledger.ledger.core.database.orient.OrientSession
-import org.knowledger.ledger.core.database.query.UnspecificQuery
-import org.knowledger.ledger.core.misc.mapToSet
 import org.knowledger.ledger.core.results.mapSuccess
 import org.knowledger.ledger.core.results.unwrap
-import org.knowledger.ledger.core.storage.adapters.SchemaProvider
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.data.TemperatureData
@@ -30,6 +24,13 @@ import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
 import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.data.adapters.TemperatureDataStorageAdapter
 import org.knowledger.ledger.data.adapters.TrafficFlowDataStorageAdapter
+import org.knowledger.ledger.database.DatabaseMode
+import org.knowledger.ledger.database.DatabaseType
+import org.knowledger.ledger.database.adapters.SchemaProvider
+import org.knowledger.ledger.database.orient.OrientDatabase
+import org.knowledger.ledger.database.orient.OrientDatabaseInfo
+import org.knowledger.ledger.database.orient.OrientSession
+import org.knowledger.ledger.database.query.UnspecificQuery
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
 import org.knowledger.ledger.service.adapters.LedgerConfigStorageAdapter
@@ -49,6 +50,11 @@ import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
+import org.knowledger.testing.ledger.appendByLine
+import org.knowledger.testing.ledger.encoder
+import org.knowledger.testing.ledger.failOnError
+import org.knowledger.testing.ledger.logActualToExpectedLists
+import org.knowledger.testing.ledger.queryToList
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 
@@ -75,7 +81,7 @@ class TestOrientDatabase {
         .build()
         .unwrap()
 
-    val hash = ledger.ledgerConfig.ledgerId.hash
+    val hash = ledger.ledgerHash
 
     val temperatureChain: ChainHandle = ledger.registerNewChainHandleOf(
         TemperatureDataStorageAdapter
@@ -207,10 +213,10 @@ class TestOrientDatabase {
             logActualToExpectedLists(
                 "Transactions' hashes from DB:",
                 present.map {
-                    it.getHashProperty("hash").print
+                    it.getHashProperty("hash").toHexString()
                 },
                 "Transactions' hashes from test:",
-                transactions.map { it.hash.print }
+                transactions.map { it.hash.toHexString() }
             )
         }
 
@@ -323,9 +329,9 @@ class TestOrientDatabase {
                 seq.asTransactions().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
-                        map { it.hash.print },
+                        map { it.hash.toHexString() },
                         "Transactions' hashes from test:",
-                        transactions.map { it.hash.print }
+                        transactions.map { it.hash.toHexString() }
                     )
                     assertThat(size).isEqualTo(
                         transactions.size
@@ -345,9 +351,9 @@ class TestOrientDatabase {
                 seq.asTransactions().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
-                        map { it.hash.print },
+                        map { it.hash.toHexString() },
                         "Transactions' hashes from test:",
-                        transactions.map { it.hash.print }
+                        transactions.map { it.hash.toHexString() }
                     )
                     assertThat(size).isEqualTo(
                         transactions.size
@@ -369,9 +375,9 @@ class TestOrientDatabase {
                 seq.asTransactions().apply {
                     logActualToExpectedLists(
                         "Transactions' hashes from DB:",
-                        map { it.hash.print },
+                        map { it.hash.toHexString() },
                         "Transactions' hashes from test:",
-                        transactions.map { it.hash.print }
+                        transactions.map { it.hash.toHexString() }
                     )
                     assertThat(size).isEqualTo(
                         transactions.size

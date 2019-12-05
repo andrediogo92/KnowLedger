@@ -1,10 +1,10 @@
 package org.knowledger.ledger.storage.coinbase
 
 import kotlinx.serialization.Serializable
-import org.knowledger.ledger.core.Sizeable
-import org.knowledger.ledger.core.data.Payout
-import org.knowledger.ledger.core.hash.Hashing
+import org.knowledger.ledger.core.base.Sizeable
+import org.knowledger.ledger.crypto.hash.Hashing
 import org.knowledger.ledger.crypto.service.Identity
+import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.serial.CoinbaseSerializer
 import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput

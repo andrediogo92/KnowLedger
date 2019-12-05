@@ -11,6 +11,8 @@ import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.serial.BlockSerializer
 import org.knowledger.ledger.serial.internal.BlockByteSerializer
 import org.knowledger.ledger.storage.Block
+import org.knowledger.testing.ledger.encoder
+import org.knowledger.testing.ledger.json
 import org.tinylog.kotlin.Logger
 
 @UnstableDefault

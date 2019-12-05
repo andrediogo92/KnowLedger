@@ -3,9 +3,9 @@ package org.knowledger.ledger.serial.internal
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.IntSerializer
 import org.knowledger.ledger.core.serial.HashSerializer
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
-import org.knowledger.ledger.data.Hash
-import org.knowledger.ledger.data.Hashers
 import org.knowledger.ledger.serial.MerkleTreeSerializer
 import org.knowledger.ledger.storage.MerkleTree
 

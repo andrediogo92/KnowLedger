@@ -3,15 +3,15 @@ package org.knowledger.ledger.storage.coinbase
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
-import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.config.GlobalLedgerConfiguration.GLOBALCONTEXT
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hasher
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.Difficulty
-import org.knowledger.ledger.data.Hash
-import org.knowledger.ledger.data.Hashers
 import org.knowledger.ledger.data.Payout
-import org.knowledger.ledger.service.LedgerContainer
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.storage.HashUpdateable
 import org.knowledger.ledger.storage.TransactionOutput
 import org.knowledger.ledger.storage.transaction.HashedTransaction
@@ -43,12 +43,12 @@ internal data class HashedCoinbaseImpl(
      */
     internal constructor(
         difficulty: Difficulty, blockheight: Long,
-        container: LedgerContainer
+        info: LedgerInfo
     ) : this(
         difficulty, blockheight,
-        container.coinbaseParams,
-        container.formula,
-        container.hasher, container.encoder
+        info.coinbaseParams,
+        info.formula,
+        info.hasher, info.encoder
     )
 
     internal constructor(
@@ -235,10 +235,10 @@ internal data class HashedCoinbaseImpl(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is HashedCoinbaseImpl) return false
+        if (other !is HashedCoinbase) return false
 
-        if (coinbase != other.coinbase) return false
-        if (_hash != other._hash) return false
+        if (coinbase != other) return false
+        if (_hash != other.hash) return false
 
         return true
     }

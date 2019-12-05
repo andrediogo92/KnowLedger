@@ -1,7 +1,7 @@
 package org.knowledger.ledger.adapters
 
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageElement
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageElement
 
 /**
  * EagerStorable immediately persists every nested [EagerStorable]

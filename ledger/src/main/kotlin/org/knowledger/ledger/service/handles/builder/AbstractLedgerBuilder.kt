@@ -2,20 +2,20 @@ package org.knowledger.ledger.service.handles.builder
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.modules.SerialModule
-import org.knowledger.ledger.core.data.DefaultDiff
-import org.knowledger.ledger.core.database.DatabaseMode
-import org.knowledger.ledger.core.database.DatabaseType
-import org.knowledger.ledger.core.database.ManagedDatabase
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.orient.OrientDatabase
-import org.knowledger.ledger.core.database.orient.OrientDatabaseInfo
-import org.knowledger.ledger.core.misc.base64Encoded
+import org.knowledger.base64.base64Encoded
+import org.knowledger.ledger.core.base.data.DefaultDiff
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
-import org.knowledger.ledger.data.Hash
-import org.knowledger.ledger.data.Hashers
+import org.knowledger.ledger.database.DatabaseMode
+import org.knowledger.ledger.database.DatabaseType
+import org.knowledger.ledger.database.ManagedDatabase
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.orient.OrientDatabase
+import org.knowledger.ledger.database.orient.OrientDatabaseInfo
 import org.knowledger.ledger.serial.baseModule
-import org.knowledger.ledger.service.LedgerContainer
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.transactions.PersistenceWrapper
 import java.io.File
@@ -33,6 +33,7 @@ abstract class AbstractLedgerBuilder {
 
     internal lateinit var ledgerConfig: LedgerConfig
     internal lateinit var persistenceWrapper: PersistenceWrapper
+    internal lateinit var ledgerInfo: LedgerInfo
     internal var hasher: Hashers = DEFAULT_HASHER
 
     fun setDBPath(path: File): Outcome<Unit, LedgerHandle.Failure> =
@@ -92,18 +93,18 @@ abstract class AbstractLedgerBuilder {
     }
 
     protected fun addToContainers() {
+        ledgerInfo = LedgerInfo(
+            ledgerId = ledgerConfig.ledgerId,
+            hasher = hasher,
+            ledgerParams = ledgerConfig.ledgerParams,
+            coinbaseParams = ledgerConfig.coinbaseParams,
+            serialModule = serialModule,
+            persistenceWrapper = persistenceWrapper,
+            formula = DefaultDiff,
+            encoder = encoder
+        )
         val hash = ledgerConfig.ledgerId.hash
-        LedgerHandle.containers[hash] =
-            LedgerContainer(
-                hash,
-                hasher,
-                ledgerConfig.ledgerParams,
-                ledgerConfig.coinbaseParams,
-                serialModule,
-                persistenceWrapper,
-                DefaultDiff,
-                encoder
-            )
+        LedgerHandle.containers[hash] = ledgerInfo
     }
 
     @PublishedApi

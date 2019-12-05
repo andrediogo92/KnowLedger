@@ -10,7 +10,7 @@ import kotlinx.serialization.Serializer
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.chainid.ChainIdImpl
 import org.knowledger.ledger.core.serial.HashSerializer
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.serial.ChainIdSerializer
 

@@ -1,7 +1,7 @@
 package org.knowledger.ledger.service.pools.transaction
 
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.storage.Transaction
 
 internal data class TransactionPoolImpl internal constructor(

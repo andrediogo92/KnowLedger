@@ -1,6 +1,6 @@
 package org.knowledger.ledger.data
 
-import org.knowledger.ledger.core.data.PhysicalUnit
+import org.knowledger.ledger.core.base.data.PhysicalUnit
 
 enum class MagnitudeDelay : PhysicalUnit {
     /**

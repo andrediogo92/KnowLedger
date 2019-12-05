@@ -1,8 +1,8 @@
 package org.knowledger.ledger.results
 
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.storage.results.DataFailure
-import org.knowledger.ledger.core.storage.results.QueryFailure
+import org.knowledger.ledger.database.results.DataFailure
+import org.knowledger.ledger.database.results.QueryFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.handles.builder.LedgerConfig
 import org.knowledger.ledger.service.results.LedgerFailure
@@ -13,7 +13,7 @@ import org.knowledger.ledger.service.results.UpdateFailure
 // Exception Handlers
 //-----------------------------------------
 
-inline fun tryOrHandleUnknownFailure(
+internal inline fun tryOrHandleUnknownFailure(
     run: () -> Outcome<LedgerConfig, LedgerHandle.Failure>
 ): Outcome<LedgerConfig, LedgerHandle.Failure> =
     try {

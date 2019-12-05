@@ -1,9 +1,10 @@
 package org.knowledger.ledger.storage.transaction
 
 import kotlinx.serialization.BinaryFormat
+import org.knowledger.ledger.crypto.EncodedSignature
 
 interface SignedTransaction : Transaction {
-    val signature: ByteArray
+    val signature: EncodedSignature
 
     /**
      * Verifies the value we signed hasn't been

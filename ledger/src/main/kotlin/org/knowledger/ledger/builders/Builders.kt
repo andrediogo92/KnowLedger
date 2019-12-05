@@ -1,8 +1,8 @@
 package org.knowledger.ledger.builders
 
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.results.BuilderFailure
 import org.knowledger.ledger.service.handles.LedgerHandle

@@ -3,14 +3,15 @@ package org.knowledger.ledger.serial
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.SerialClassDescImpl
 import kotlinx.serialization.internal.StringSerializer
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.misc.bytesFromHexString
-import org.knowledger.ledger.core.misc.hashFromHexString
-import org.knowledger.ledger.core.misc.mapMutableSet
-import org.knowledger.ledger.core.misc.mapToSet
-import org.knowledger.ledger.core.misc.toHexString
-import org.knowledger.ledger.core.misc.toPublicKey
+import org.knowledger.collections.mapMutableSet
+import org.knowledger.collections.mapToSet
+import org.knowledger.ledger.core.base.hash.hashFromHexString
+import org.knowledger.ledger.core.base.hash.toHexString
 import org.knowledger.ledger.core.serial.PayoutSerializer
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.toEncoded
+import org.knowledger.ledger.crypto.serial.EncodedPublicKeySerializer
+import org.knowledger.ledger.crypto.toPublicKey
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.storage.TransactionOutput
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
@@ -42,9 +43,9 @@ object TransactionOutputSerializer : KSerializer<TransactionOutput> {
             loop@ while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
-                    0 -> publicKey = decodeStringElement(
-                        descriptor, i
-                    ).bytesFromHexString().toPublicKey()
+                    0 -> publicKey = decodeSerializableElement(
+                        descriptor, i, EncodedPublicKeySerializer
+                    ).toPublicKey()
                     1 -> previousCoinbase = decodeStringElement(
                         descriptor, i
                     ).hashFromHexString()
@@ -73,21 +74,22 @@ object TransactionOutputSerializer : KSerializer<TransactionOutput> {
 
     override fun serialize(encoder: Encoder, obj: TransactionOutput) {
         with(encoder.beginStructure(descriptor)) {
-            encodeStringElement(
-                descriptor, 0, obj.publicKey.toHexString()
+            encodeSerializableElement(
+                descriptor, 0, EncodedPublicKeySerializer,
+                obj.publicKey.toEncoded()
             )
             encodeStringElement(
-                descriptor, 1, obj.previousCoinbase.print
+                descriptor, 1, obj.previousCoinbase.toHexString()
             )
             encodeSerializableElement(
                 descriptor, 2, PayoutSerializer, obj.payout
             )
             encodeSerializableElement(
                 descriptor, 3, hashsSerializer,
-                obj.transactionHashes.mapToSet { it.print }
+                obj.transactionHashes.mapToSet { it.toHexString() }
             )
             encodeStringElement(
-                descriptor, 4, obj.hash.print
+                descriptor, 4, obj.hash.toHexString()
             )
             endStructure(descriptor)
         }

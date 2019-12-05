@@ -1,12 +1,14 @@
 package org.knowledger.ledger.service.adapters
 
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.misc.toPrivateKey
-import org.knowledger.ledger.core.misc.toPublicKey
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.EncodedPrivateKey
+import org.knowledger.ledger.crypto.EncodedPublicKey
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.toPrivateKey
+import org.knowledger.ledger.crypto.toPublicKey
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.results.LoadFailure
@@ -41,14 +43,15 @@ internal object IdentityStorageAdapter : LedgerStorageAdapter<Identity> {
         element: StorageElement
     ): Outcome<Identity, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val publicKeyString: ByteArray =
+            val encodedPublicKey = EncodedPublicKey(
                 element.getStorageProperty("publicKey")
-            val privateKeyString: ByteArray =
+            )
+            val encodedPrivateKey = EncodedPrivateKey(
                 element.getStorageProperty("privateKey")
-
+            )
             val keyPair = KeyPair(
-                publicKeyString.toPublicKey(),
-                privateKeyString.toPrivateKey()
+                encodedPublicKey.toPublicKey(),
+                encodedPrivateKey.toPrivateKey()
             )
             Outcome.Ok(
                 Identity(id, keyPair)

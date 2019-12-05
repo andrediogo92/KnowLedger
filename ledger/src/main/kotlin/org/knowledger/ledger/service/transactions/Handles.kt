@@ -1,12 +1,12 @@
 package org.knowledger.ledger.service.transactions
 
-import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.database.StorageID
-import org.knowledger.ledger.core.database.query.UnspecificQuery
-import org.knowledger.ledger.core.misc.base64Encoded
+import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.storage.results.QueryFailure
 import org.knowledger.ledger.data.Tag
+import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.database.StorageID
+import org.knowledger.ledger.database.query.UnspecificQuery
+import org.knowledger.ledger.database.results.QueryFailure
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.results.LedgerFailure

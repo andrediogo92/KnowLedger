@@ -4,8 +4,8 @@ import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.overwriteWith
-import org.knowledger.ledger.core.data.DefaultDiff
-import org.knowledger.ledger.core.misc.mapToArray
+import org.knowledger.collections.mapToArray
+import org.knowledger.ledger.core.base.data.DefaultDiff
 import org.knowledger.ledger.crypto.serial.DefaultDataFormulaSerializer
 import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.DummyData

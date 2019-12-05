@@ -2,11 +2,11 @@ package org.knowledger.ledger.config
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.Serializable
-import org.knowledger.ledger.core.data.DefaultDiff
-import org.knowledger.ledger.core.misc.classDigest
-import org.knowledger.ledger.core.serial.HashSerializable
+import org.knowledger.ledger.core.base.hash.classDigest
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers.SHA3512Hasher
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.DefaultDiff
+import org.knowledger.ledger.serial.HashSerializable
 import org.knowledger.ledger.serial.internal.CoinbaseParamsByteSerializer
 import org.knowledger.ledger.service.ServiceClass
 

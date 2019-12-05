@@ -1,21 +1,28 @@
-@file:UseSerializers(TransactionOutputByteSerializer::class, CoinbaseParamsByteSerializer::class)
+@file:UseSerializers(
+    TransactionOutputByteSerializer::class,
+    CoinbaseParamsByteSerializer::class,
+    DifficultySerializer::class,
+    PayoutSerializer::class
+)
 package org.knowledger.ledger.storage.coinbase
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.UseSerializers
+import org.knowledger.collections.copyMutableSet
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
-import org.knowledger.ledger.core.data.DefaultDiff
-import org.knowledger.ledger.core.misc.copyMutableSet
+import org.knowledger.ledger.config.GlobalLedgerConfiguration.GLOBALCONTEXT
+import org.knowledger.ledger.core.base.data.DefaultDiff
+import org.knowledger.ledger.core.serial.DifficultySerializer
+import org.knowledger.ledger.core.serial.PayoutSerializer
 import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.serial.internal.CoinbaseParamsByteSerializer
 import org.knowledger.ledger.serial.internal.TransactionOutputByteSerializer
-import org.knowledger.ledger.service.LedgerContainer
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.storage.TransactionOutput
 import java.math.BigDecimal
 import java.time.temporal.ChronoField
@@ -39,14 +46,14 @@ internal data class CoinbaseImpl(
     internal constructor(
         difficulty: Difficulty,
         blockheight: Long,
-        container: LedgerContainer
+        info: LedgerInfo
     ) : this(
         _transactionOutputs = mutableSetOf(),
         payout = Payout(BigDecimal.ZERO),
         difficulty = difficulty,
         blockheight = blockheight,
-        coinbaseParams = container.coinbaseParams,
-        formula = container.formula
+        coinbaseParams = info.coinbaseParams,
+        formula = info.formula
     )
 
     internal fun getTimeDelta(
@@ -91,6 +98,32 @@ internal data class CoinbaseImpl(
             _transactionOutputs =
             transactionOutputs.copyMutableSet(TransactionOutput::clone)
         )
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Coinbase) return false
+
+        if (_transactionOutputs != other.transactionOutputs) return false
+        if (payout != other.payout) return false
+        if (difficulty != other.difficulty) return false
+        if (blockheight != other.blockheight) return false
+        if (extraNonce != other.extraNonce) return false
+        if (coinbaseParams != other.coinbaseParams) return false
+        if (formula != other.formula) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = _transactionOutputs.hashCode()
+        result = 31 * result + payout.hashCode()
+        result = 31 * result + difficulty.hashCode()
+        result = 31 * result + blockheight.hashCode()
+        result = 31 * result + extraNonce.hashCode()
+        result = 31 * result + coinbaseParams.hashCode()
+        result = 31 * result + formula.hashCode()
+        return result
+    }
 
 
 }

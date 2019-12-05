@@ -1,12 +1,13 @@
 package org.knowledger.ledger.storage.transaction
 
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.database.StorageType
-import org.knowledger.ledger.core.misc.toPublicKey
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.mapSuccess
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.EncodedPublicKey
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.toPublicKey
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
@@ -35,7 +36,7 @@ internal object SUTransactionStorageAdapter : LedgerStorageAdapter<HashedTransac
             ).setStorageBytes(
                 "signature",
                 session.newInstance(
-                    toStore.signature
+                    toStore.signature.encoded
                 )
             ).setHashProperty("hash", toStore.hash)
 
@@ -48,11 +49,9 @@ internal object SUTransactionStorageAdapter : LedgerStorageAdapter<HashedTransac
             physicalData.loadPhysicalData(
                 ledgerHash
             ).mapSuccess { data ->
-                val publicKey: PublicKey =
-                    element
-                        .getStorageProperty<ByteArray>("publicKey")
-                        .toPublicKey()
-
+                val publicKey: PublicKey = EncodedPublicKey(
+                    element.getStorageProperty("publicKey")
+                ).toPublicKey()
                 val signature =
                     element.getStorageBytes("signature").bytes
 

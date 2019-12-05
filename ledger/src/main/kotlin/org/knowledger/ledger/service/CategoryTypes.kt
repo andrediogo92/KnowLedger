@@ -1,6 +1,6 @@
 package org.knowledger.ledger.service
 
-import org.knowledger.ledger.core.storage.LedgerContract
+import org.knowledger.ledger.storage.LedgerContract
 
 
 data class CategoryTypes(

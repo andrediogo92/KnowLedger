@@ -2,15 +2,15 @@ package org.knowledger.ledger.builders
 
 import kotlinx.serialization.PolymorphicSerializer
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.data.Difficulty
-import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.data.PhysicalData
-import org.knowledger.ledger.core.data.Tag
-import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
+import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.LedgerData
-import org.knowledger.ledger.service.LedgerContainer
+import org.knowledger.ledger.data.Payout
+import org.knowledger.ledger.data.Tag
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
@@ -27,7 +27,7 @@ import java.security.PublicKey
 import java.util.*
 
 internal data class WorkingChainBuilder(
-    internal val ledgerContainer: LedgerContainer,
+    internal val ledgerInfo: LedgerInfo,
     override val chainId: ChainId,
     internal val identity: Identity
 ) : ChainBuilder {
@@ -59,13 +59,13 @@ internal data class WorkingChainBuilder(
         HashedBlockHeaderImpl(
             chainId = chainId,
             previousHash = previousHash,
-            blockParams = ledgerContainer.ledgerParams.blockParams,
+            blockParams = ledgerInfo.ledgerParams.blockParams,
             merkleRoot = merkleRoot,
             hash = hash,
             seconds = seconds,
             nonce = nonce,
-            encoder = ledgerContainer.encoder,
-            hasher = ledgerContainer.hasher
+            encoder = ledgerInfo.encoder,
+            hasher = ledgerInfo.hasher
         )
 
     override fun coinbase(
@@ -77,10 +77,10 @@ internal data class WorkingChainBuilder(
             transactionOutputs = transactionOutputs.toMutableSet(),
             payout = payout, difficulty = difficulty,
             blockheight = blockheight,
-            coinbaseParams = ledgerContainer.coinbaseParams,
-            formula = ledgerContainer.formula, hash = hash,
-            hasher = ledgerContainer.hasher,
-            encoder = ledgerContainer.encoder
+            coinbaseParams = ledgerInfo.coinbaseParams,
+            formula = ledgerInfo.formula, hash = hash,
+            hasher = ledgerInfo.hasher,
+            encoder = ledgerInfo.encoder
         )
 
     override fun merkletree(
@@ -90,7 +90,7 @@ internal data class WorkingChainBuilder(
         MerkleTreeImpl(
             collapsedTree = collapsedTree,
             levelIndex = levelIndex,
-            hasher = ledgerContainer.hasher
+            hasher = ledgerInfo.hasher
         )
 
     override fun transactionOutput(
@@ -104,8 +104,8 @@ internal data class WorkingChainBuilder(
             publicKey = publicKey,
             hash = hash, payout = payout,
             transactionSet = transactionSet.toMutableSet(),
-            hasher = ledgerContainer.hasher,
-            encoder = ledgerContainer.encoder
+            hasher = ledgerInfo.hasher,
+            encoder = ledgerInfo.encoder
         )
 
     override fun transaction(
@@ -122,18 +122,18 @@ internal data class WorkingChainBuilder(
     ): Transaction =
         HashedTransactionImpl(
             identity = identity, data = data,
-            hasher = ledgerContainer.hasher,
-            encoder = ledgerContainer.encoder
+            hasher = ledgerInfo.hasher,
+            encoder = ledgerInfo.encoder
         )
 
     override fun data(bytes: ByteArray): LedgerData =
-        ledgerContainer.encoder.load(
+        ledgerInfo.encoder.load(
             LedgerHandle.getStorageAdapter(tag)!!.serializer,
             bytes
         )
 
     override fun toBytes(ledgerData: LedgerData): ByteArray =
-        ledgerContainer.encoder.dump(
+        ledgerInfo.encoder.dump(
             PolymorphicSerializer(LedgerData::class),
             ledgerData
         )

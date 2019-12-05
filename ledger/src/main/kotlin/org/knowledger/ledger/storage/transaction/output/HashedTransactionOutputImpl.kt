@@ -3,10 +3,10 @@ package org.knowledger.ledger.storage.transaction.output
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.Transient
 import kotlinx.serialization.cbor.Cbor
-import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hasher
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
-import org.knowledger.ledger.data.Hash
-import org.knowledger.ledger.data.Hashers
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.storage.HashUpdateable
 import java.security.PublicKey
@@ -106,10 +106,10 @@ internal data class HashedTransactionOutputImpl(
         other: Any?
     ): Boolean {
         if (this === other) return true
-        if (other !is HashedTransactionOutputImpl) return false
+        if (other !is HashedTransactionOutput) return false
 
-        if (transactionOutput != other.transactionOutput) return false
-        if (_hash != other._hash) return false
+        if (transactionOutput != other) return false
+        if (_hash != other.hash) return false
 
         return true
     }

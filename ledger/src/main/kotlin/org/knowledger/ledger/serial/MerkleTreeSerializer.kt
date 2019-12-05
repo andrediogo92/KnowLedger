@@ -4,11 +4,12 @@ import kotlinx.serialization.*
 import kotlinx.serialization.internal.IntSerializer
 import kotlinx.serialization.internal.SerialClassDescImpl
 import kotlinx.serialization.internal.StringSerializer
-import org.knowledger.ledger.core.misc.hashFromHexString
-import org.knowledger.ledger.core.misc.mapMutableList
+import org.knowledger.collections.mapMutableList
+import org.knowledger.ledger.core.base.hash.hashFromHexString
+import org.knowledger.ledger.core.base.hash.toHexString
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
-import org.knowledger.ledger.data.Hash
-import org.knowledger.ledger.data.Hashers
 import org.knowledger.ledger.storage.MerkleTree
 
 @Serializer(forClass = MerkleTree::class)
@@ -54,7 +55,7 @@ object MerkleTreeSerializer : KSerializer<MerkleTree> {
         with(encoder.beginStructure(descriptor)) {
             encodeSerializableElement(
                 descriptor, 0, StringSerializer.list,
-                obj.collapsedTree.map { it.print }
+                obj.collapsedTree.map { it.toHexString() }
             )
             encodeSerializableElement(
                 descriptor, 1, IntSerializer.list, obj.levelIndex

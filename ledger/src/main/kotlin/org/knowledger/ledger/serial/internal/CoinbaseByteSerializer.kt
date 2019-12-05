@@ -2,10 +2,10 @@ package org.knowledger.ledger.serial.internal
 
 import kotlinx.serialization.*
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.serial.DifficultySerializer
 import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.core.serial.PayoutSerializer
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.serial.CoinbaseSerializer

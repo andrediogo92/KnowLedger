@@ -1,7 +1,7 @@
 package org.knowledger.ledger.storage.transaction.output
 
 import kotlinx.serialization.Serializable
-import org.knowledger.ledger.core.hash.Hashing
+import org.knowledger.ledger.crypto.hash.Hashing
 import org.knowledger.ledger.serial.TransactionOutputSerializer
 
 @Serializable(with = TransactionOutputSerializer::class)

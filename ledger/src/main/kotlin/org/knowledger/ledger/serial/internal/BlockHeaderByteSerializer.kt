@@ -9,8 +9,8 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializer
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.serial.HashSerializer
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.serial.BlockHeaderSerializer
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.blockheader.BlockHeaderImpl

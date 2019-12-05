@@ -1,10 +1,10 @@
 package org.knowledger.ledger.service.handles.builder
 
 import org.knowledger.ledger.builders.Builder
-import org.knowledger.ledger.core.database.DatabaseMode
-import org.knowledger.ledger.core.database.DatabaseType
-import org.knowledger.ledger.core.database.ManagedDatabase
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.database.DatabaseMode
+import org.knowledger.ledger.database.DatabaseType
+import org.knowledger.ledger.database.ManagedDatabase
 import org.knowledger.ledger.service.handles.LedgerHandle
 import java.io.File
 

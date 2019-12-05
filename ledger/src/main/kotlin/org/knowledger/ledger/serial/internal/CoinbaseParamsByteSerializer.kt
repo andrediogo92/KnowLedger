@@ -8,8 +8,8 @@ import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializer
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.hash.Hash
 import org.knowledger.ledger.core.serial.HashSerializer
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.serial.CoinbaseParamsSerializer
 import kotlin.properties.Delegates
 

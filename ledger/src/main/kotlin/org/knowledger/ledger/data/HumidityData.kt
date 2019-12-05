@@ -5,7 +5,7 @@ import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.GLOBALCONTEXT
+import org.knowledger.ledger.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.serial.BigDecimalSerializer
 import java.io.InvalidClassException
 import java.math.BigDecimal

@@ -1,15 +1,15 @@
 package org.knowledger.ledger.adapters
 
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageElement
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.mapSuccess
-import org.knowledger.ledger.core.storage.LedgerContract
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.service.ServiceClass
 import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
+import org.knowledger.ledger.storage.LedgerContract
 import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 

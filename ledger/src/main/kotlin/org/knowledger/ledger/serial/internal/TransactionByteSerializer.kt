@@ -7,10 +7,11 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.ByteArraySerializer
 import org.knowledger.ledger.core.serial.HashSerializer
-import org.knowledger.ledger.core.serial.PublicKeySerializer
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.EncodedSignature
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.serial.EncodedSignatureSerializer
+import org.knowledger.ledger.crypto.serial.PublicKeySerializer
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.serial.TransactionSerializer
 import org.knowledger.ledger.storage.Transaction
@@ -27,7 +28,7 @@ internal object TransactionByteSerializer : KSerializer<Transaction> {
         with(decoder.beginStructure(descriptor)) {
             lateinit var publicKey: PublicKey
             lateinit var data: PhysicalData
-            lateinit var signature: ByteArray
+            lateinit var signature: EncodedSignature
             lateinit var hash: Hash
             loop@ while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
@@ -39,7 +40,7 @@ internal object TransactionByteSerializer : KSerializer<Transaction> {
                         descriptor, i, PhysicalData.serializer()
                     )
                     2 -> signature = decodeSerializableElement(
-                        descriptor, i, ByteArraySerializer
+                        descriptor, i, EncodedSignatureSerializer
                     )
                     3 -> hash = decodeSerializableElement(
                         descriptor, i, HashSerializer
@@ -68,7 +69,7 @@ internal object TransactionByteSerializer : KSerializer<Transaction> {
                 obj.data
             )
             encodeSerializableElement(
-                descriptor, 2, ByteArraySerializer, obj.signature
+                descriptor, 2, EncodedSignatureSerializer, obj.signature
             )
             encodeSerializableElement(
                 descriptor, 3, HashSerializer, obj.hash

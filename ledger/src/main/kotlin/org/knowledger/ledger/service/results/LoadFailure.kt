@@ -1,9 +1,9 @@
 package org.knowledger.ledger.service.results
 
+import org.knowledger.ledger.core.base.storage.LedgerContract
 import org.knowledger.ledger.core.results.Failable
 import org.knowledger.ledger.core.results.Failure
-import org.knowledger.ledger.core.storage.LedgerContract
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.hash.Hash
 
 /**
  * Result class representing loading of [LedgerContract] classes

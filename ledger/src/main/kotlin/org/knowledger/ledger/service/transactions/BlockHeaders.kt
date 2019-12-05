@@ -1,8 +1,8 @@
 package org.knowledger.ledger.service.transactions
 
-import org.knowledger.ledger.core.database.query.UnspecificQuery
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.database.query.UnspecificQuery
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter

@@ -3,8 +3,8 @@ package org.knowledger.ledger.serial.internal
 import kotlinx.serialization.*
 import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.core.serial.PayoutSerializer
-import org.knowledger.ledger.core.serial.PublicKeySerializer
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.serial.PublicKeySerializer
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.serial.TransactionOutputSerializer
 import org.knowledger.ledger.storage.TransactionOutput

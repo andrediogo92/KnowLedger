@@ -1,47 +1,16 @@
 package org.knowledger.ledger.test
 
-import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.UnstableDefault
-import kotlinx.serialization.UpdateMode
-import kotlinx.serialization.cbor.Cbor
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
-import kotlinx.serialization.modules.SerialModule
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.chainid.ChainIdImpl
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
-import org.knowledger.ledger.core.data.DataFormula
-import org.knowledger.ledger.core.data.DefaultDiff
-import org.knowledger.ledger.core.data.Difficulty
-import org.knowledger.ledger.core.data.GeoCoords
-import org.knowledger.ledger.core.data.Payout
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.database.StorageResult
-import org.knowledger.ledger.core.database.StorageResults
-import org.knowledger.ledger.core.database.query.GenericQuery
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
-import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.results.Failure
-import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.results.peekFailure
-import org.knowledger.ledger.core.results.unwrap
-import org.knowledger.ledger.core.test.randomByteArray
-import org.knowledger.ledger.core.test.randomDouble
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hasher
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
-import org.knowledger.ledger.data.PhysicalData
-import org.knowledger.ledger.data.TemperatureData
-import org.knowledger.ledger.data.TemperatureUnit
-import org.knowledger.ledger.data.TrafficFlowData
-import org.knowledger.ledger.serial.baseModule
-import org.knowledger.ledger.serial.withDataFormulas
-import org.knowledger.ledger.serial.withLedger
+import org.knowledger.ledger.data.*
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.Transaction
@@ -51,42 +20,19 @@ import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
-import org.tinylog.kotlin.Logger
+import org.knowledger.testing.core.random
+import org.knowledger.testing.ledger.encoder
+import org.knowledger.testing.ledger.testHasher
 import java.math.BigDecimal
 
-val testHasher: Hashers = DEFAULT_HASHER
-
-
-val serialModule: SerialModule by lazy {
-    baseModule.withLedger {
-        TemperatureData::class with TemperatureData.serializer()
-        TrafficFlowData::class with TrafficFlowData.serializer()
-    }.withDataFormulas {}
-}
-
-val encoder: BinaryFormat by lazy {
-    Cbor(
-        UpdateMode.OVERWRITE, true,
-        serialModule
-    )
-}
-
-
-@UnstableDefault
-val json: Json = Json(
-    configuration = JsonConfiguration.Default.copy(prettyPrint = true),
-    context = serialModule
-)
-
-
 fun generateChainId(
-    hasher: Hasher = DEFAULT_HASHER
+    hasher: Hasher = Hashers.DEFAULT_HASHER
 ): ChainId =
     StorageAwareChainId(
         ChainIdImpl(
             hasher, encoder,
-            Hash(randomByteArray(32)),
-            Hash(randomByteArray(32))
+            Hash(random.randomByteArray(32)),
+            Hash(random.randomByteArray(32))
         )
     )
 
@@ -108,7 +54,7 @@ fun generateBlock(
         HashedBlockHeaderImpl(
             generateChainId(hasher),
             hasher, encoder,
-            Hash(randomByteArray(32)),
+            Hash(random.randomByteArray(32)),
             blockParams
         ),
         MerkleTreeImpl(
@@ -135,7 +81,7 @@ fun transactionGenerator(
                 ),
                 TemperatureData(
                     BigDecimal(
-                        randomDouble() * 100
+                        random.randomDouble() * 100
                     ), TemperatureUnit.Celsius
                 )
             ), hasher, encoder
@@ -181,7 +127,7 @@ fun generateBlockWithChain(
         ts.toSortedSet(), coinbase,
         HashedBlockHeaderImpl(
             chainId, hasher, encoder,
-            Hash(randomByteArray(32)),
+            Hash(random.randomByteArray(32)),
             blockParams
         ),
         MerkleTreeImpl(hasher, coinbase, ts.toTypedArray()),
@@ -203,7 +149,7 @@ fun generateBlockWithChain(
         sortedSetOf(), coinbase,
         HashedBlockHeaderImpl(
             chainId, hasher, encoder,
-            Hash(randomByteArray(32)),
+            Hash(random.randomByteArray(32)),
             blockParams
         ), MerkleTreeImpl(hasher, coinbase, emptyArray()),
         encoder, hasher
@@ -219,15 +165,15 @@ fun generateCoinbase(
 ): Coinbase {
     val sets = listOf(
         HashedTransactionOutputImpl(
-            id[0].publicKey, emptyHash,
+            id[0].publicKey, Hash.emptyHash,
             Payout(BigDecimal.ONE),
-            ts[0].hash, emptyHash,
+            ts[0].hash, Hash.emptyHash,
             hasher, encoder
         ),
         HashedTransactionOutputImpl(
-            id[1].publicKey, emptyHash,
+            id[1].publicKey, Hash.emptyHash,
             Payout(BigDecimal.ONE),
-            ts[1].hash, emptyHash,
+            ts[1].hash, Hash.emptyHash,
             hasher, encoder
         )
     )
@@ -267,65 +213,9 @@ fun generateCoinbase(
         formula = formula, hasher = hasher, encoder = encoder
     )
 
-private fun StorageResults.toList(): List<StorageElement> =
-    asSequence().map(StorageResult::element).toList()
 
-internal fun Iterable<Transaction>.asTransactions(): List<Transaction> =
-    this.map { (it as StorageAwareTransaction).transaction }.toList()
-
-internal fun Sequence<Transaction>.asTransactions(): List<Transaction> =
+fun Sequence<Transaction>.asTransactions(): List<Transaction> =
     asIterable().asTransactions()
 
-
-internal fun ManagedSession.queryToList(
-    query: String
-): List<StorageElement> =
-    query(query).toList()
-
-internal fun ManagedSession.queryToList(
-    query: GenericQuery
-): List<StorageElement> =
-    query(query).toList()
-
-
-internal fun logActualToExpectedLists(
-    explanationActual: String,
-    actualList: List<Any>,
-    explanationExpected: String,
-    expectedList: List<Any>
-) {
-    Logger.info {
-        """
-            |
-            |$explanationActual
-            |${actualList.joinToString(
-            """,
-                |
-            """.trimMargin()
-        ) { it.toString() }}
-            |
-            |$explanationExpected
-            |${expectedList.joinToString(
-            """,
-                |
-            """.trimMargin()
-        ) { it.toString() }}
-        """.trimMargin()
-    }
-}
-
-internal fun StringBuilder.appendByLine(toPrint: Collection<String>): StringBuilder =
-    apply {
-        toPrint.forEach { thing ->
-            append(System.lineSeparator())
-            append('\t')
-            append(thing)
-            append(',')
-        }
-    }
-
-fun <T> Outcome<T, Failure>.failOnError() {
-    peekFailure {
-        it.unwrap()
-    }
-}
+internal fun Iterable<Transaction>.asTransactions(): List<Transaction> =
+    map { (it as StorageAwareTransaction).transaction }.toList()

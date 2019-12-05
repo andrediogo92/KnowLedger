@@ -1,12 +1,12 @@
 package org.knowledger.ledger.storage.block
 
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.database.StorageType
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.allValues
 import org.knowledger.ledger.core.results.zip
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter

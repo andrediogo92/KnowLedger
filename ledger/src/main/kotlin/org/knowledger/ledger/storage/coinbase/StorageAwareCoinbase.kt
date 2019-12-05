@@ -2,13 +2,13 @@ package org.knowledger.ledger.storage.coinbase
 
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageID
 import org.knowledger.ledger.core.results.Outcome
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.Difficulty
-import org.knowledger.ledger.data.Hashers
-import org.knowledger.ledger.service.LedgerContainer
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageID
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.StoragePairs
@@ -27,25 +27,15 @@ internal data class StorageAwareCoinbase(
 
     override var id: StorageID? = null
 
-    override fun newNonce() {
-        coinbase.newNonce()
-        invalidated.replace(0, extraNonce)
-        invalidated.replace(1, hash)
-    }
-
-    override fun update(
-        session: ManagedSession
-    ): Outcome<StorageID, UpdateFailure> =
-        simpleUpdate(invalidated)
-
     internal constructor(
         difficulty: Difficulty,
         blockheight: Long,
-        container: LedgerContainer
+        info: LedgerInfo
     ) : this(
         coinbase = HashedCoinbaseImpl(
-            difficulty = difficulty, blockheight = blockheight,
-            container = container
+            difficulty = difficulty,
+            blockheight = blockheight,
+            info = info
         )
     )
 
@@ -61,4 +51,22 @@ internal data class StorageAwareCoinbase(
             hasher = hasher, encoder = encoder
         )
     )
+
+
+    override fun newNonce() {
+        coinbase.newNonce()
+        invalidated.replace(0, extraNonce)
+        invalidated.replace(1, hash)
+    }
+
+    override fun update(
+        session: ManagedSession
+    ): Outcome<StorageID, UpdateFailure> =
+        simpleUpdate(invalidated)
+
+    override fun equals(other: Any?): Boolean =
+        coinbase == other
+
+    override fun hashCode(): Int =
+        coinbase.hashCode()
 }

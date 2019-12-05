@@ -13,22 +13,22 @@ import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.Sizeable
-import org.knowledger.ledger.core.storage.LedgerContract
+import org.knowledger.ledger.core.base.Sizeable
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.Difficulty
-import org.knowledger.ledger.data.Hash
-import org.knowledger.ledger.data.Hashers
 import org.knowledger.ledger.serial.SortedSetSerializer
 import org.knowledger.ledger.serial.internal.BlockHeaderByteSerializer
 import org.knowledger.ledger.serial.internal.CoinbaseByteSerializer
 import org.knowledger.ledger.serial.internal.MerkleTreeByteSerializer
 import org.knowledger.ledger.serial.internal.TransactionByteSerializer
-import org.knowledger.ledger.service.LedgerContainer
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
+import org.knowledger.ledger.storage.LedgerContract
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.blockheader.StorageAwareBlockHeader
@@ -58,21 +58,21 @@ internal data class BlockImpl(
     internal constructor(
         chainId: ChainId, previousHash: Hash,
         difficulty: Difficulty, blockheight: Long,
-        params: BlockParams, ledgerContainer: LedgerContainer
+        params: BlockParams, ledgerInfo: LedgerInfo
     ) : this(
         sortedSetOf(),
         StorageAwareCoinbase(
             difficulty, blockheight,
-            ledgerContainer
+            ledgerInfo
         ),
         StorageAwareBlockHeader(
             chainId,
-            ledgerContainer.hasher,
-            ledgerContainer.encoder,
+            ledgerInfo.hasher,
+            ledgerInfo.encoder,
             previousHash,
             params
         ),
-        StorageAwareMerkleTree(ledgerContainer.hasher)
+        StorageAwareMerkleTree(ledgerInfo.hasher)
     )
 
     internal constructor(
@@ -187,7 +187,7 @@ internal data class BlockImpl(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is BlockImpl) return false
+        if (other !is Block) return false
 
         if (transactions != other.transactions) return false
         if (coinbase != other.coinbase) return false

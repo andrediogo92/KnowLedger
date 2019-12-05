@@ -1,22 +1,22 @@
 package org.knowledger.ledger.data.adapters
 
-import kotlinx.serialization.DeserializationStrategy
-import org.knowledger.ledger.core.database.NewInstanceSession
-import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.database.StorageType
+import kotlinx.serialization.KSerializer
 import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
-import org.knowledger.ledger.core.storage.results.DataFailure
 import org.knowledger.ledger.crypto.hash.Hashers.SHA3512Hasher
 import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.NoiseData
 import org.knowledger.ledger.data.NoiseUnit
+import org.knowledger.ledger.database.NewInstanceSession
+import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.database.StorageType
+import org.knowledger.ledger.database.adapters.AbstractStorageAdapter
+import org.knowledger.ledger.database.results.DataFailure
 
 object NoiseDataStorageAdapter : AbstractStorageAdapter<NoiseData>(
     NoiseData::class.java,
     SHA3512Hasher
 ) {
-    override val serializer: DeserializationStrategy<NoiseData>
+    override val serializer: KSerializer<NoiseData>
         get() = NoiseData.serializer()
 
     override val properties: Map<String, StorageType>

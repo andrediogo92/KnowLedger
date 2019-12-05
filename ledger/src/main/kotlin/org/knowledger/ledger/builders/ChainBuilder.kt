@@ -1,12 +1,12 @@
 package org.knowledger.ledger.builders
 
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.data.Difficulty
-import org.knowledger.ledger.core.data.Payout
-import org.knowledger.ledger.core.data.PhysicalData
-import org.knowledger.ledger.core.data.Tag
-import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.LedgerData
+import org.knowledger.ledger.data.Payout
+import org.knowledger.ledger.data.PhysicalData
+import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase

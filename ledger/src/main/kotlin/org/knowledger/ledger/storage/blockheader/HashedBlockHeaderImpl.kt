@@ -4,10 +4,10 @@ import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.hash.Hasher
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hasher
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
-import org.knowledger.ledger.data.Hash
-import org.knowledger.ledger.data.Hashers
 import org.knowledger.ledger.storage.HashUpdateable
 
 internal data class HashedBlockHeaderImpl(
@@ -96,10 +96,10 @@ internal data class HashedBlockHeaderImpl(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is HashedBlockHeaderImpl) return false
+        if (other !is HashedBlockHeader) return false
 
-        if (blockHeader != other.blockHeader) return false
-        if (_hash != other._hash) return false
+        if (blockHeader != other) return false
+        if (_hash != other.hash) return false
 
         return true
     }

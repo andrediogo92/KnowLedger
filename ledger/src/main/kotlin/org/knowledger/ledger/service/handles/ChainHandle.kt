@@ -4,32 +4,33 @@ import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
+import org.knowledger.ledger.config.GlobalLedgerConfiguration
+import org.knowledger.ledger.config.GlobalLedgerConfiguration.CACHE_SIZE
+import org.knowledger.ledger.config.GlobalLedgerConfiguration.RECALC_DIV
+import org.knowledger.ledger.config.GlobalLedgerConfiguration.RECALC_MULT
 import org.knowledger.ledger.config.LedgerParams
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
-import org.knowledger.ledger.core.config.GlobalLedgerConfiguration
-import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.CACHE_SIZE
-import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.RECALC_DIV
-import org.knowledger.ledger.core.config.GlobalLedgerConfiguration.RECALC_MULT
-import org.knowledger.ledger.core.data.Difficulty.Companion.INIT_DIFFICULTY
-import org.knowledger.ledger.core.data.Difficulty.Companion.MAX_DIFFICULTY
-import org.knowledger.ledger.core.data.Difficulty.Companion.MIN_DIFFICULTY
-import org.knowledger.ledger.core.hash.Hash.Companion.emptyHash
-import org.knowledger.ledger.core.hash.Hasher
-import org.knowledger.ledger.core.misc.toBytes
+import org.knowledger.ledger.core.base.data.Difficulty.Companion.INIT_DIFFICULTY
+import org.knowledger.ledger.core.base.data.Difficulty.Companion.MAX_DIFFICULTY
+import org.knowledger.ledger.core.base.data.Difficulty.Companion.MIN_DIFFICULTY
+import org.knowledger.ledger.core.base.hash.Hash.Companion.emptyHash
+import org.knowledger.ledger.core.base.hash.toHexString
 import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.core.results.flatMapSuccess
 import org.knowledger.ledger.core.results.fold
 import org.knowledger.ledger.core.results.mapSuccess
 import org.knowledger.ledger.core.results.unwrap
-import org.knowledger.ledger.core.storage.results.QueryFailure
+import org.knowledger.ledger.core.toBytes
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hasher
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.data.Difficulty
-import org.knowledger.ledger.data.Hash
 import org.knowledger.ledger.data.Tag
+import org.knowledger.ledger.database.results.QueryFailure
 import org.knowledger.ledger.mining.BlockState
 import org.knowledger.ledger.results.intoQuery
 import org.knowledger.ledger.service.Identity
-import org.knowledger.ledger.service.LedgerContainer
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.ServiceClass
 import org.knowledger.ledger.service.handles.LedgerHandle.Companion.getContainer
 import org.knowledger.ledger.service.pools.block.BlockPool
@@ -202,9 +203,9 @@ data class ChainHandle internal constructor(
                 Logger.debug {
                     """
                     |Current Hashes not equal:
-                    |   ${curHeader.hash.print}
+                    |   ${curHeader.hash.toHexString()}
                     |   -- and --
-                    |   ${cmpHash.print}
+                    |   ${cmpHash.toHexString()}
                     """.trimMargin()
                 }
                 return false
@@ -215,19 +216,19 @@ data class ChainHandle internal constructor(
                 Logger.debug {
                     """
                     |Previous Hashes not equal:
-                    |   ${prevHeader.hash.print}
+                    |   ${prevHeader.hash.toHexString()}
                     |   -- and --
-                    |   ${curHeader.previousHash.print}
+                    |   ${curHeader.previousHash.toHexString()}
                     """.trimMargin()
                 }
                 return false
             }
 
             val hashTarget = currentBlock.coinbase.difficulty
-            val curDiff = curHeader.hash.difficulty
+            val curDiff = curHeader.hash.toDifficulty()
             if (curDiff > hashTarget) {
                 Logger.debug {
-                    "Unmined block: ${curHeader.hash.print}"
+                    "Unmined block: ${curHeader.hash.toHexString()}"
                 }
                 return false
             }
@@ -389,7 +390,7 @@ data class ChainHandle internal constructor(
         block: Block
     ): Boolean {
         if (block.header.previousHash == hash) {
-            if (block.header.hash.difficulty <=
+            if (block.header.hash.toDifficulty() <=
                 block.coinbase.difficulty
             ) {
                 return block.verifyTransactions()
@@ -491,7 +492,7 @@ data class ChainHandle internal constructor(
     }
 
     fun checkAgainstTarget(hashId: Hash): Boolean =
-        hashId.difficulty <= currentDifficulty
+        hashId.toDifficulty() <= currentDifficulty
 
     fun refreshHeader(merkleRoot: Hash): BlockState =
         blockPool[merkleRoot]?.newNonce()?.let {
@@ -509,12 +510,12 @@ data class ChainHandle internal constructor(
 
         private fun originHeader(
             chainId: ChainId,
-            container: LedgerContainer
+            info: LedgerInfo
         ): BlockHeader =
             HashedBlockHeaderImpl(
                 chainId,
-                container.hasher,
-                container.encoder,
+                info.hasher,
+                info.encoder,
                 emptyHash,
                 BlockParams(),
                 emptyHash,
@@ -545,7 +546,7 @@ data class ChainHandle internal constructor(
 
         private fun containerOrThrow(
             chainId: ChainId
-        ): LedgerContainer =
+        ): LedgerInfo =
             getContainer(
                 chainId.ledgerHash
             ) ?: LoadFailure.NoMatchingContainer(

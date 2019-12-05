@@ -1,4 +1,4 @@
-@file:UseSerializers(ByteArraySerializer::class)
+@file:UseSerializers(ByteArraySerializer::class, EncodedSignatureSerializer::class)
 
 package org.knowledger.ledger.storage.transaction
 
@@ -6,8 +6,10 @@ import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.internal.ByteArraySerializer
-import org.knowledger.ledger.core.misc.generateSignature
-import org.knowledger.ledger.core.misc.verifyECDSASig
+import org.knowledger.ledger.core.generateSignature
+import org.knowledger.ledger.core.verifyECDSASig
+import org.knowledger.ledger.crypto.EncodedSignature
+import org.knowledger.ledger.crypto.serial.EncodedSignatureSerializer
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.service.Identity
 import java.security.PrivateKey
@@ -17,10 +19,10 @@ import java.security.PublicKey
 internal data class SignedTransactionImpl(
     val transaction: TransactionImpl,
     // This is to identify unequivocally an agent.
-    internal var _signature: ByteArray
+    internal var _signature: EncodedSignature
 ) : SignedTransaction,
     Transaction by transaction {
-    override val signature: ByteArray
+    override val signature: EncodedSignature
         get() = _signature
 
     internal constructor(
@@ -28,11 +30,10 @@ internal data class SignedTransactionImpl(
         privateKey: PrivateKey, encoder: BinaryFormat
     ) : this(
         transaction = transaction,
-        _signature = ByteArray(0)
+        _signature = EncodedSignature(ByteArray(0))
     ) {
-        _signature = generateSignature(
-            privateKey, transaction,
-            encoder
+        _signature = privateKey.generateSignature(
+            transaction, encoder
         )
     }
 
@@ -63,6 +64,15 @@ internal data class SignedTransactionImpl(
         publicKey: PublicKey, data: PhysicalData,
         signature: ByteArray
     ) : this(
+        publicKey, data,
+        EncodedSignature(signature)
+    )
+
+    internal constructor(
+        publicKey: PublicKey,
+        data: PhysicalData,
+        signature: EncodedSignature
+    ) : this(
         transaction = TransactionImpl(
             publicKey = publicKey,
             data = data
@@ -82,14 +92,13 @@ internal data class SignedTransactionImpl(
     override fun clone(): SignedTransactionImpl =
         copy(
             transaction = transaction.clone(),
-            _signature = _signature.clone()
+            _signature = _signature
         )
 
     override fun verifySignature(encoder: BinaryFormat): Boolean {
-        return verifyECDSASig(
+        return signature.verifyECDSASig(
             transaction.publicKey,
-            transaction.serialize(encoder),
-            signature
+            transaction.serialize(encoder)
         )
     }
 
@@ -100,17 +109,17 @@ internal data class SignedTransactionImpl(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is SignedTransactionImpl) return false
+        if (other !is SignedTransaction) return false
 
-        if (transaction != other.transaction) return false
-        if (!signature.contentEquals(other.signature)) return false
+        if (transaction != other) return false
+        if (signature != other.signature) return false
 
         return true
     }
 
     override fun hashCode(): Int {
         var result = transaction.hashCode()
-        result = 31 * result + signature.contentHashCode()
+        result = 31 * result + signature.hashCode()
         return result
     }
 }

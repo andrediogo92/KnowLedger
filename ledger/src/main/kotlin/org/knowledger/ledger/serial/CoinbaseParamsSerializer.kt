@@ -9,8 +9,9 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.misc.hashFromHexString
+import org.knowledger.ledger.core.base.hash.hashFromHexString
+import org.knowledger.ledger.core.base.hash.toHexString
+import org.knowledger.ledger.crypto.hash.Hash
 import kotlin.properties.Delegates
 
 @Serializer(forClass = CoinbaseParams::class)
@@ -79,7 +80,7 @@ object CoinbaseParamsSerializer : KSerializer<CoinbaseParams> {
                 descriptor, 3, obj.dividingThreshold
             )
             encodeStringElement(
-                descriptor, 4, obj.formula.print
+                descriptor, 4, obj.formula.toHexString()
             )
             endStructure(descriptor)
         }

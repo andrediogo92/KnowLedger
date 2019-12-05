@@ -1,12 +1,12 @@
 package org.knowledger.ledger.storage.block
 
 import kotlinx.serialization.Serializable
-import org.knowledger.ledger.core.serial.HashSerializable
-import org.knowledger.ledger.core.storage.LedgerContract
 import org.knowledger.ledger.serial.BlockSerializer
+import org.knowledger.ledger.serial.HashSerializable
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
+import org.knowledger.ledger.storage.LedgerContract
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
 import java.util.*
