@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.hash
+package org.knowledger.ledger.core.base.hash
 
 import kotlinx.serialization.BinaryFormat
 

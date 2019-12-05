@@ -1,8 +1,4 @@
-package org.knowledger.ledger.core.misc
-
-import org.knowledger.ledger.core.data.Tag
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hasher
+package org.knowledger.ledger.core.base.hash
 
 private val hexCode = "0123456789ABCDEF".toCharArray()
 
@@ -50,12 +46,12 @@ fun ByteArray.toHexString(): String =
         }
     )
 
-fun <T : Any> T.classDigest(hasher: Hasher): Tag =
-    hasher.applyHash(
-        this::class.java.toGenericString()
-    )
+fun Hash.toHexString(): String =
+    bytes.toHexString()
 
-fun <T> Class<T>.classDigest(hasher: Hasher): Tag =
-    hasher.applyHash(
-        toGenericString()
-    )
+fun Hash.truncatedHexString(cutoffSize: Int = Hash.TRUNC): String =
+    if (bytes.size > cutoffSize) {
+        bytes.sliceArray(0..cutoffSize).toHexString()
+    } else {
+        bytes.toHexString()
+    }

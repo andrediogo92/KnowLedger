@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.storage
+package org.knowledger.ledger.core.base.storage
 
 /**
  * [LedgerContract] applies to top-level

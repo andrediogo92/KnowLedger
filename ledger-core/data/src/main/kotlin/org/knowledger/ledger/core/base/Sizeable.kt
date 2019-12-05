@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core
+package org.knowledger.ledger.core.base
 
 /**
  * Report an approximate size in bytes

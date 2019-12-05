@@ -1,6 +1,6 @@
-package org.knowledger.ledger.core.data
+package org.knowledger.ledger.core.base.data
 
-import org.knowledger.ledger.core.serial.HashSerializable
+import org.knowledger.ledger.core.base.serial.HashSerializable
 
 interface LedgerData : Cloneable,
                        SelfInterval,

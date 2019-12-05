@@ -1,7 +1,5 @@
-package org.knowledger.ledger.core.data
+package org.knowledger.ledger.core.base.data
 
-import kotlinx.serialization.Serializable
-import org.knowledger.ledger.core.serial.DifficultySerializer
 import java.math.BigInteger
 
 /**
@@ -9,7 +7,6 @@ import java.math.BigInteger
  * A block is mined against a difficulty, which directly
  * correlates with the speed to mining completion.
  */
-@Serializable(with = DifficultySerializer::class)
 data class Difficulty(
     val difficulty: BigInteger
 ) {
