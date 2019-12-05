@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.misc
+package org.knowledger.ledger.core
 
 inline fun <T, U, V> Pair<T, U>.mapSecond(
     map: (U) -> V

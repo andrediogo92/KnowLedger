@@ -1,14 +1,17 @@
-@file:UseSerializers(InstantSerializer::class)
-
+@file:UseSerializers(InstantSerializer::class, GeoCoordinatesSerializer::class)
 package org.knowledger.ledger.core.data
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import org.knowledger.ledger.core.serial.HashSerializable
+import org.knowledger.ledger.core.base.data.DataCategory
+import org.knowledger.ledger.core.base.data.GeoCoords
+import org.knowledger.ledger.core.base.data.LedgerData
+import org.knowledger.ledger.core.base.data.SelfInterval
+import org.knowledger.ledger.core.base.serial.HashSerializable
+import org.knowledger.ledger.core.base.storage.LedgerContract
+import org.knowledger.ledger.core.serial.GeoCoordinatesSerializer
 import org.knowledger.ledger.core.serial.InstantSerializer
-import org.knowledger.ledger.core.storage.LedgerContract
 import java.math.BigDecimal
 import java.time.Instant
 
@@ -19,7 +22,6 @@ import java.time.Instant
  * geo coordinates for where it was recorded.
  */
 @Serializable
-@SerialName("PhysicalData")
 data class PhysicalData(
     val instant: Instant,
     val coords: GeoCoords,

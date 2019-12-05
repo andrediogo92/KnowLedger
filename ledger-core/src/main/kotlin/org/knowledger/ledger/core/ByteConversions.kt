@@ -1,7 +1,7 @@
-package org.knowledger.ledger.core.misc
+package org.knowledger.ledger.core
 
-import org.knowledger.ledger.core.data.Difficulty
-import org.knowledger.ledger.core.data.Payout
+import org.knowledger.ledger.core.base.data.Difficulty
+import org.knowledger.ledger.core.base.data.Payout
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*

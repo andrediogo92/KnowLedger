@@ -3,10 +3,10 @@ package org.knowledger.ledger.core.test
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.misc.base64Decoded
-import org.knowledger.ledger.core.misc.base64DecodedToUTF8
-import org.knowledger.ledger.core.misc.base64Encoded
-import org.knowledger.ledger.core.misc.decodedUTF8String
+import org.knowledger.base64.base64Decoded
+import org.knowledger.base64.base64DecodedToUTF8
+import org.knowledger.base64.base64Encoded
+import org.knowledger.base64.decodedUTF8String
 import org.tinylog.kotlin.Logger
 
 class TestBase64Operations {

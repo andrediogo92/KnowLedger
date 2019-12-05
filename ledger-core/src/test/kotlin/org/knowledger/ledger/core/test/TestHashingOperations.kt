@@ -4,16 +4,17 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.misc.flattenBytes
-import org.knowledger.ledger.core.misc.toHexString
+import org.knowledger.ledger.core.base.hash.toHexString
+import org.knowledger.ledger.core.flattenBytes
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.testing.core.random
 import org.tinylog.kotlin.Logger
 
 class TestHashingOperations {
     val hashSize = 16
     val minBound = 12
-    val randomHashes = Array(randomInt(minBound) + 8) {
-        Hash(randomByteArray(hashSize))
+    val randomHashes = Array(random.randomInt(minBound) + 8) {
+        Hash(random.randomByteArray(hashSize))
     }
 
     @Test
@@ -63,7 +64,7 @@ class TestHashingOperations {
             """
                 |
                 |Expected:
-                |   ${expected.print}
+                |   ${expected.toHexString()}
                 |Flatten via vararg byte arrays:
                 |   ${test.toHexString()}
             """.trimMargin()
@@ -83,7 +84,7 @@ class TestHashingOperations {
             """
                 |
                 |Expected:
-                |   ${expected.print}
+                |   ${expected.toHexString()}
                 |Flatten via direct AoA:
                 |   ${test3.toHexString()}
             """.trimMargin()

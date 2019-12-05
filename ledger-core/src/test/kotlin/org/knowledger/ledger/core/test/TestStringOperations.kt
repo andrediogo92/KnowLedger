@@ -3,8 +3,10 @@ package org.knowledger.ledger.core.test
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.misc.hashFromHexString
+import org.knowledger.ledger.core.base.hash.hashFromHexString
+import org.knowledger.ledger.core.base.hash.toHexString
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.testing.core.random
 
 class TestStringOperations {
     val canonicHex: (ByteArray) -> String = {
@@ -28,13 +30,13 @@ class TestStringOperations {
     @Test
     fun `hex string printing and parsing`() {
         repeat(200) {
-            val testHash = Hash(randomByteArray(256))
+            val testHash = Hash(random.randomByteArray(256))
             val expectedString = canonicHex(testHash.bytes)
 
-            assertThat(testHash.print)
+            assertThat(testHash.toHexString())
                 .isEqualTo(expectedString)
 
-            assertThat(testHash.print.hashFromHexString().bytes)
+            assertThat(testHash.toHexString().hashFromHexString().bytes)
                 .isEqualTo(canonicParse(expectedString))
         }
     }

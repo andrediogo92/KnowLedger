@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.misc
+package org.knowledger.ledger.core
 
 import java.time.Instant
 import java.time.temporal.ChronoUnit

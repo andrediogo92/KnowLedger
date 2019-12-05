@@ -5,7 +5,7 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
-import org.knowledger.ledger.core.misc.toBytes
+import org.knowledger.ledger.core.toBytes
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 import java.time.Instant

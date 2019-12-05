@@ -1,18 +1,18 @@
-package org.knowledger.ledger.core.config
+package org.knowledger.ledger.config
 
+import kotlinx.serialization.cbor.Cbor
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
 import java.math.RoundingMode
 
 object GlobalLedgerConfiguration {
+    const val CACHE_SIZE = 40L
     val GLOBALCONTEXT =
         MathContext(15, RoundingMode.HALF_EVEN)
-    const val CACHE_SIZE = 40L
     val RECALC_DIV =
         BigInteger("10000000000000")
     val RECALC_MULT =
         BigDecimal("10000000000000")
-    const val OTHER_BASE = 40L
-    const val DATA_BASE = 5L
+    val DEFAULT_ENCODER = Cbor.plain
 }
