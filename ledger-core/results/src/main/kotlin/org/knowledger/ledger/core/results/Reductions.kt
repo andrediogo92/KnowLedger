@@ -43,7 +43,9 @@ inline fun <T, U : Failure, V : Failure> Outcome<T, U>.flatMapFailure(
     onError: (U) -> Outcome<T, V>
 ): Outcome<T, V> =
     when (this) {
-        is Outcome.Ok -> Outcome.Ok(this.value)
+        is Outcome.Ok -> Outcome.Ok(
+            this.value
+        )
         is Outcome.Error -> this.flatMap(onError)
     }
 
