@@ -1,12 +1,15 @@
+@file:UseSerializers(HashSerializer::class)
 package org.knowledger.ledger.crypto.storage
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.Serializable
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hashing
-import org.knowledger.ledger.core.misc.mapAndAdd
-import org.knowledger.ledger.core.misc.mapToArray
+import kotlinx.serialization.UseSerializers
+import org.knowledger.collections.mapAndAdd
+import org.knowledger.collections.mapToArray
+import org.knowledger.ledger.core.serial.HashSerializer
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.ledger.crypto.hash.Hashing
 
 @Serializable
 data class MerkleTreeImpl(
@@ -378,7 +381,7 @@ data class MerkleTreeImpl(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is MerkleTreeImpl) return false
+        if (other !is MerkleTree) return false
         if (collapsedTree != other.collapsedTree) return false
         if (levelIndex != other.levelIndex) return false
 

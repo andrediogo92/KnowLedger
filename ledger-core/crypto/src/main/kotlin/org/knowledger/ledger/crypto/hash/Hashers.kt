@@ -3,8 +3,6 @@ package org.knowledger.ledger.crypto.hash
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.cbor.Cbor
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.hash.Hasher
 import org.knowledger.ledger.crypto.serial.HashAlgorithmSerializer
 import java.security.MessageDigest
 import java.security.Security
@@ -33,23 +31,60 @@ sealed class Hashers(algorithmTag: String) : Hasher {
     private fun checkAlgorithm(
         digestLength: Int, algorithm: String,
         providerName: String, providerVersion: Double
-    ): Boolean = digestLength == digester.digestLength &&
+    ): Boolean = digestLength == hashSize &&
             algorithm == digester.algorithm &&
             providerName == digester.provider.name &&
             providerVersion == digester.provider.version
 
 
-    object SHA3256Hasher : Hashers("SHA3-256")
-    object SHA3512Hasher : Hashers("SHA3-512")
-    object Blake2b256Hasher : Hashers("BLAKE2B-256")
-    object Blake2b512Hasher : Hashers("BLAKE2B-512")
-    object Blake2s256Hasher : Hashers("BLAKE2S-256")
-    object SHA256Hasher : Hashers("SHA-256")
-    object SHA512Hasher : Hashers("SHA-512")
-    object Keccak256Hasher : Hashers("KECCAK-256")
-    object Keccak512Hasher : Hashers("KECCAK-512")
+    object SHA3256Hasher : Hashers("SHA3-256") {
+        override val hashSize: Int = BYTE_SIZE_256
+    }
+
+    object SHA3512Hasher : Hashers("SHA3-512") {
+        override val hashSize: Int = BYTE_SIZE_512
+    }
+
+    object Haraka256Hasher : Hashers("HARAKA-256") {
+        override val hashSize: Int = BYTE_SIZE_256
+    }
+
+    object Haraka512Hasher : Hashers("HARAKA-512") {
+        override val hashSize: Int = BYTE_SIZE_512
+    }
+
+    object Blake2b256Hasher : Hashers("BLAKE2B-256") {
+        override val hashSize: Int = BYTE_SIZE_256
+    }
+
+    object Blake2b512Hasher : Hashers("BLAKE2B-512") {
+        override val hashSize: Int = BYTE_SIZE_512
+    }
+
+    object Blake2s256Hasher : Hashers("BLAKE2S-256") {
+        override val hashSize: Int = BYTE_SIZE_256
+    }
+
+    object SHA256Hasher : Hashers("SHA-256") {
+        override val hashSize: Int = BYTE_SIZE_256
+    }
+
+    object SHA512Hasher : Hashers("SHA-512") {
+        override val hashSize: Int = BYTE_SIZE_512
+    }
+
+    object Keccak256Hasher : Hashers("KECCAK-256") {
+        override val hashSize: Int = BYTE_SIZE_256
+    }
+
+    object Keccak512Hasher : Hashers("KECCAK-512") {
+        override val hashSize: Int = BYTE_SIZE_512
+    }
+
 
     companion object {
+        private const val BYTE_SIZE_512 = 64
+        private const val BYTE_SIZE_256 = 32
         val DEFAULT_HASHER = Blake2b256Hasher
 
         init {
@@ -65,6 +100,8 @@ sealed class Hashers(algorithmTag: String) : Hasher {
             when {
                 SHA3256Hasher.checkForCrypter(hash) -> SHA3256Hasher
                 SHA3512Hasher.checkForCrypter(hash) -> SHA3512Hasher
+                Haraka256Hasher.checkForCrypter(hash) -> Haraka256Hasher
+                Haraka512Hasher.checkForCrypter(hash) -> Haraka512Hasher
                 Blake2b256Hasher.checkForCrypter(hash) -> Blake2b256Hasher
                 Blake2b512Hasher.checkForCrypter(hash) -> Blake2b512Hasher
                 Blake2s256Hasher.checkForCrypter(hash) -> Blake2s256Hasher
@@ -82,6 +119,7 @@ sealed class Hashers(algorithmTag: String) : Hasher {
             arrayOf(
                 SHA256Hasher, SHA512Hasher,
                 SHA3256Hasher, SHA3512Hasher,
+                Haraka256Hasher, Haraka512Hasher,
                 Blake2b256Hasher, Blake2b512Hasher,
                 Blake2s256Hasher, Keccak256Hasher,
                 Keccak512Hasher

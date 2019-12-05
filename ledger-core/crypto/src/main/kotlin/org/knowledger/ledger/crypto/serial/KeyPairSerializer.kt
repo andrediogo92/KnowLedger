@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.serial
+package org.knowledger.ledger.crypto.serial
 
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.SerialClassDescImpl

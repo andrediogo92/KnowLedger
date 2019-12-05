@@ -5,9 +5,9 @@ package org.knowledger.ledger.crypto.service
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.knowledger.ledger.core.serial.PrivateKeySerializer
-import org.knowledger.ledger.core.serial.PublicKeySerializer
-import org.knowledger.ledger.core.storage.LedgerContract
+import org.knowledger.ledger.core.base.storage.LedgerContract
+import org.knowledger.ledger.crypto.serial.PrivateKeySerializer
+import org.knowledger.ledger.crypto.serial.PublicKeySerializer
 import java.security.KeyPair
 import java.security.KeyPairGenerator
 import java.security.PrivateKey
