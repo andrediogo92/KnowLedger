@@ -8,7 +8,7 @@ import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.ByteArraySerializer
 import kotlinx.serialization.internal.StringDescriptor
 import kotlinx.serialization.withName
-import org.knowledger.ledger.core.hash.Hash
+import org.knowledger.ledger.core.base.hash.Hash
 
 @Serializer(forClass = Hash::class)
 object HashSerializer : KSerializer<Hash> {

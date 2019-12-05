@@ -7,7 +7,7 @@ import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.StringDescriptor
 import kotlinx.serialization.withName
-import org.knowledger.ledger.core.data.Difficulty
+import org.knowledger.ledger.core.base.data.Difficulty
 
 @Serializer(forClass = Difficulty::class)
 object DifficultySerializer : KSerializer<Difficulty> {

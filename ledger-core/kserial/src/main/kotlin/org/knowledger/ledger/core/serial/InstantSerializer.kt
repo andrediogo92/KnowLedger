@@ -17,22 +17,24 @@ object InstantSerializer : KSerializer<Instant> {
     override fun deserialize(
         decoder: Decoder
     ): Instant {
-        val dec: CompositeDecoder = decoder.beginStructure(descriptor)
         var seconds: Long? = null
         var nanos: Int? = null
-        loop@ while (true) {
-            when (val i = dec.decodeElementIndex(descriptor)) {
-                CompositeDecoder.READ_DONE -> break@loop
-                0 -> seconds = dec.decodeLongElement(
-                    descriptor, i
-                )
-                1 -> nanos = dec.decodeIntElement(
-                    descriptor, i
-                )
-                else -> throw SerializationException("Unknown index $i")
+        with(decoder.beginStructure(descriptor)) {
+
+            loop@ while (true) {
+                when (val i = decodeElementIndex(descriptor)) {
+                    CompositeDecoder.READ_DONE -> break@loop
+                    0 -> seconds = decodeLongElement(
+                        descriptor, i
+                    )
+                    1 -> nanos = decodeIntElement(
+                        descriptor, i
+                    )
+                    else -> throw SerializationException("Unknown index $i")
+                }
             }
+            endStructure(descriptor)
         }
-        dec.endStructure(descriptor)
         return Instant.ofEpochSecond(
             seconds ?: throw MissingFieldException("seconds"),
             nanos?.toLong() ?: throw MissingFieldException("nanos")
@@ -42,14 +44,14 @@ object InstantSerializer : KSerializer<Instant> {
     override fun serialize(
         encoder: Encoder, obj: Instant
     ) {
-        val enc: CompositeEncoder =
-            encoder.beginStructure(descriptor)
-        enc.encodeLongElement(
-            descriptor, 0, obj.epochSecond
-        )
-        enc.encodeIntElement(
-            descriptor, 1, obj.nano
-        )
-        enc.endStructure(descriptor)
+        with(encoder.beginStructure(descriptor)) {
+            encodeLongElement(
+                descriptor, 0, obj.epochSecond
+            )
+            encodeIntElement(
+                descriptor, 1, obj.nano
+            )
+            endStructure(descriptor)
+        }
     }
 }

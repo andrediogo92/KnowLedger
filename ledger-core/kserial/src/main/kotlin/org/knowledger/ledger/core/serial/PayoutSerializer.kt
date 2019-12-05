@@ -7,7 +7,7 @@ import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.StringDescriptor
 import kotlinx.serialization.withName
-import org.knowledger.ledger.core.data.Payout
+import org.knowledger.ledger.core.base.data.Payout
 
 @Serializer(forClass = Payout::class)
 object PayoutSerializer : KSerializer<Payout> {
