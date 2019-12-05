@@ -1,7 +1,10 @@
 package org.knowledger.agent.agents
 
-import com.squareup.moshi.Moshi
 import jade.core.Agent
+import kotlinx.serialization.UnstableDefault
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.modules.SerialModule
 import org.eclipse.paho.client.mqttv3.IMqttActionListener
 import org.eclipse.paho.client.mqttv3.IMqttToken
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient
@@ -9,29 +12,35 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions
 import org.eclipse.paho.client.mqttv3.MqttException
 import org.eclipse.paho.client.mqttv3.MqttMessage
 import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence
-import org.knowledger.agent.data.feed.AdafruitPublish
-import org.knowledger.agent.data.feed.Reduxer
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.misc.base64Encode
+import org.knowledger.agent.feed.AdafruitPublish
+import org.knowledger.agent.feed.Reduxer
+import org.knowledger.base64.base64Encoded
+import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.results.reduce
 import org.knowledger.ledger.core.results.unwrap
-import org.knowledger.ledger.data.PhysicalData
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.Block
-import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.storage.block.Block
+import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.tinylog.kotlin.Logger
 import java.util.*
 import java.util.concurrent.atomic.AtomicLong
 
+@UnstableDefault
 data class MonitorAgent(
     val id: Hash,
+    val serialModule: SerialModule,
     private val reduxers: Map<String, Reduxer>,
-    private val ledgerHandle: LedgerHandle
+    private val ledgerHandle: LedgerHandle,
+    private val window: Long = 30
 ) : Agent() {
-    private var json: AdafruitPublish = AdafruitPublish()
-    private var moshi = Moshi.Builder().build()
+    private var publish: AdafruitPublish = AdafruitPublish()
+    private var json = Json(
+        JsonConfiguration.Default,
+        serialModule
+    )
     private val mqttClient: MqttAsyncClient = MqttAsyncClient(
         broker,
         "MASBlockchain",
@@ -46,13 +55,13 @@ data class MonitorAgent(
         connOpts.password = "312758ce04d64a6c80fa169860489b6d".toCharArray()
         connOpts.sslProperties = Properties()
         Logger.info("Connecting to broker: $broker")
-        mqttClient.connect(connOpts, guardCounter, MonitorCallback())
+        mqttClient.connect(connOpts)
         Logger.info("Connected")
         for (cl in ledgerHandle.knownChains.unwrap()) {
             val i = 0L
             var fail = false
             while (!fail) {
-                fail = tryLoad(cl.id.tag.base64Encode(), cl, i)
+                fail = tryLoad(cl.id.tag.base64Encoded(), cl, i)
             }
         }
         mqttClient.disconnect()
@@ -79,7 +88,7 @@ data class MonitorAgent(
                         }
                         else -> {
                             Logger.warn {
-                                it.cause
+                                it.failable.cause
                             }
                         }
                     }
@@ -96,27 +105,27 @@ data class MonitorAgent(
     private fun publishToFeed(cl: String, bl: Block) {
         if (reduxers.containsKey(cl)) {
             val redux = reduxers.getValue(cl)
-            for (dt in bl.data) {
+            for (dt in bl.transactions) {
                 publishTransaction(redux, dt)
             }
         }
     }
 
-    private fun publishTransaction(rx: Reduxer, dt: Transaction) {
+    private fun publishTransaction(rx: Reduxer, dt: HashedTransaction) {
         val topic = "MASBlockchain/feeds/${rx.type()}/json"
         setData(rx, dt.data)
-        val adapter = moshi.adapter(AdafruitPublish::class.java)
-        val content = adapter.toJson(json)
+        val content = json.stringify(AdafruitPublish.serializer(), publish)
         val qos = 2
 
-        while (guardCounter.get() >= 20) {
-            this.doWait()
+        while (guardCounter.get() >= window) {
+            doWait()
         }
         try {
             Logger.info("Publishing message: $content")
             val message = MqttMessage(content.toByteArray())
             message.qos = qos
-            mqttClient.publish(topic, message)
+            mqttClient.publish(topic, message, null, MonitorCallback())
+            guardCounter.incrementAndGet()
         } catch (me: MqttException) {
             Logger.error(me)
         }
@@ -129,16 +138,15 @@ data class MonitorAgent(
      * @param t The sensor store to fill in
      */
     private fun setData(rx: Reduxer, t: PhysicalData) {
-        json.created_at = t.instant.toString()
-        json.lat = t.geoCoords?.latitude.toString()
-        json.lon = t.geoCoords?.longitude.toString()
-        json.alt = t.geoCoords?.altitude.toString()
-        json.value = rx.reduce(t.data)
+        publish.created_at = t.instant.toString()
+        publish.lat = t.coords.latitude.toString()
+        publish.lon = t.coords.longitude.toString()
+        publish.alt = t.coords.altitude.toString()
+        publish.value = rx.reduce(t.data)
     }
 
     private inner class MonitorCallback : IMqttActionListener {
         override fun onSuccess(token: IMqttToken) {
-            val guardCounter = token.userContext as AtomicLong
             guardCounter.decrementAndGet()
             Logger.info { "Message ${token.messageId} sent." }
             this@MonitorAgent.doWake()
@@ -148,7 +156,6 @@ data class MonitorAgent(
             token: IMqttToken,
             exception: Throwable
         ) {
-            val guardCounter = token.userContext as AtomicLong
             guardCounter.decrementAndGet()
             Logger.error(exception) { "Message ${token.messageId} excepted." }
             this@MonitorAgent.doWake()

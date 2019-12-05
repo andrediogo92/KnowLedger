@@ -1,6 +1,6 @@
-package org.knowledger.agent.data.feed
+package org.knowledger.agent.feed
 
-import org.knowledger.ledger.core.data.LedgerData
+import org.knowledger.ledger.data.LedgerData
 
 
 interface Reduxer {

@@ -1,4 +1,4 @@
-package org.knowledger.agent.data.feed
+package org.knowledger.agent.feed
 
 import kotlinx.serialization.Serializable
 
