@@ -7,18 +7,17 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.getValue
 import org.gradle.kotlin.dsl.kotlin
-import org.gradle.kotlin.dsl.provideDelegate
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.knowledger.plugin.docs.DocsOnlyPluginExtension
 import java.io.File
 
 
-internal fun Project.addBarebonesTasks() {
+internal fun Project.addBarebonesTasks(key: String) {
     val extension: DocsOnlyPluginExtension =
-        extensions["docs"] as DocsOnlyPluginExtension
+        extensions[key] as DocsOnlyPluginExtension
     addDokkaTask(extension)
     addKotlinTask(extension)
 }

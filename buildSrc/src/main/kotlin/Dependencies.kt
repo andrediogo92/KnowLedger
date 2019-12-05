@@ -1,30 +1,30 @@
 object Versions {
-    const val arrowK = "0.9"
+    const val arrowK = "0.10.3"
     const val assertK = "0.20"
     const val autoService = "1.0-rc5"
-    const val bouncyCastle = "1.63"
+    const val bouncyCastle = "1.64"
     const val commons = "1.2"
     const val coroutines = "1.3.2"
-    const val dokka = "0.9.18"
+    const val dokka = "0.10.0"
     const val eclipsePaho = "1.2.0"
     const val jade = "4.5.0"
     const val jadeMisc = "2.8.0"
     const val jdk = "1.8"
     const val jdkV = 8
     const val jmh = "1.21"
-    const val jmhPlugin = "0.5.0-rc-2"
+    const val jmhPlugin = "0.5.0"
     const val jol = "0.9"
     const val jUnit = "5.5.2"
     const val jUnitRunner = "1.5.2"
-    const val kotlin = "1.3.50"
+    const val kotlin = "1.3.61"
     const val koin = "2.0.1"
-    const val ktor = "1.3.0-beta-1"
-    const val moshi = "1.8.0"
-    const val kotlinPoet = "1.4.0"
-    const val okHTTP = "4.1.0"
+    const val ktor = "1.2.6"
+    const val moshi = "1.9.2"
+    const val kotlinPoet = "1.4.4"
+    const val okHTTP = "4.2.2"
     const val orientDB = "3.0.14"
     const val retrofit = "2.6.1"
-    const val serial = "0.13.0"
+    const val serial = "0.14.0"
     const val tinylog = "2.0.0"
 
     /*
@@ -96,7 +96,6 @@ object Libs {
     const val kotlinPoet =
         "com.squareup:kotlinpoet:${Versions.kotlinPoet}"
 
-
     val moshi = listOf(
         "com.squareup.moshi:moshi:${Versions.moshi}",
         "com.squareup.moshi:moshi-adapters:${Versions.moshi}"//,
@@ -141,8 +140,11 @@ object Libs {
 }
 
 object Plugins {
-    const val serialization = "org.jetbrains.kotlin.plugin.serialization"
-    const val noarg = "org.jetbrains.kotlin.plugin.noarg"
+    const val base = "org.knowledger.plugin.base"
+    const val docs = "org.knowledger.plugin.docs"
+    const val serial = "org.knowledger.plugin.serial"
     const val dokka = "org.jetbrains.dokka"
     const val jmh = "me.champeau.gradle.jmh"
+    const val noarg = "org.jetbrains.kotlin.plugin.noarg"
+    const val serialization = "org.jetbrains.kotlin.plugin.serialization"
 }

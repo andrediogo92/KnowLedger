@@ -3,21 +3,20 @@
 package org.knowledger.plugin
 
 import Libs
-import Plugins
 import org.gradle.api.Project
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
 import org.gradle.kotlin.dsl.withType
+import org.knowledger.plugin.base.BaseJVMPluginExtension
 
 internal fun Project.addCommonPlugins() {
     addDocsPlugin()
-    plugins.apply(Plugins.serialization)
 }
 
-internal fun Project.addCommonTasks() {
+internal fun Project.addCommonTasks(key: String) {
     val extension: BaseJVMPluginExtension =
-        extensions["baseJVM"] as BaseJVMPluginExtension
+        extensions[key] as BaseJVMPluginExtension
     addDokkaTask(extension)
     addKotlinTask(extension)
     with(tasks) {
@@ -33,8 +32,6 @@ internal fun Project.addCommonTasks() {
 internal fun Project.addCommonDependencies() {
     addBarebonesDependencies()
     dependencies {
-        implementation(Libs.serialization)
-
         Libs.tinylog.forEach(::implementation)
 
         testImplementation(Libs.assertK)
