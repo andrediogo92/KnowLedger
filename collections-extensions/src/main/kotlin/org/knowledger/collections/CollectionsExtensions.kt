@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.misc
+package org.knowledger.collections
 
 import java.util.*
 import kotlin.collections.ArrayList
