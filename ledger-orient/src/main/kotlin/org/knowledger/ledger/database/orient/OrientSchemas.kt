@@ -1,10 +1,11 @@
-package org.knowledger.ledger.core.database.orient
+package org.knowledger.ledger.database.orient
 
 import com.orientechnologies.orient.core.metadata.schema.OSchema
-import org.knowledger.ledger.core.database.ManagedSchema
-import org.knowledger.ledger.core.database.ManagedSchemas
+import org.knowledger.ledger.database.ManagedSchema
+import org.knowledger.ledger.database.ManagedSchemas
 
-class OrientSchemas(internal val schemas: OSchema) : ManagedSchemas {
+@Suppress("EXPERIMENTAL_FEATURE_WARNING")
+inline class OrientSchemas(private val schemas: OSchema) : ManagedSchemas {
     override fun hasSchema(clazz: String): Boolean =
         schemas.existsClass(clazz)
 

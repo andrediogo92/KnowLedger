@@ -1,8 +1,8 @@
-package org.knowledger.ledger.core.database.orient
+package org.knowledger.ledger.database.orient
 
 import com.orientechnologies.orient.core.db.OrientDBConfig
-import org.knowledger.ledger.core.database.DatabaseMode
-import org.knowledger.ledger.core.database.DatabaseType
+import org.knowledger.ledger.database.DatabaseMode
+import org.knowledger.ledger.database.DatabaseType
 
 
 data class OrientDatabaseInfo(

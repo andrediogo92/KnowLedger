@@ -1,10 +1,10 @@
-package org.knowledger.ledger.core.database.orient
+package org.knowledger.ledger.database.orient
 
 import com.orientechnologies.orient.core.metadata.schema.OClass
 import com.orientechnologies.orient.core.metadata.schema.OProperty
-import org.knowledger.ledger.core.database.ManagedSchema
-import org.knowledger.ledger.core.database.SchemaProperty
-import org.knowledger.ledger.core.database.StorageType
+import org.knowledger.ledger.database.ManagedSchema
+import org.knowledger.ledger.database.SchemaProperty
+import org.knowledger.ledger.database.StorageType
 
 data class DocumentSchema internal constructor(
     internal val clazz: OClass

@@ -1,7 +1,7 @@
-package org.knowledger.ledger.core.database.orient
+package org.knowledger.ledger.database.orient
 
 import com.orientechnologies.orient.core.record.impl.OBlob
-import org.knowledger.ledger.core.database.StorageBytes
+import org.knowledger.ledger.database.StorageBytes
 import java.io.ByteArrayOutputStream
 
 data class DocumentBytes internal constructor(

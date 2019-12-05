@@ -1,8 +1,8 @@
-package org.knowledger.ledger.core.database.orient
+package org.knowledger.ledger.database.orient
 
 import com.orientechnologies.orient.core.db.OrientDB
-import org.knowledger.ledger.core.database.ManagedDatabase
-import org.knowledger.ledger.core.database.ManagedSession
+import org.knowledger.ledger.database.ManagedDatabase
+import org.knowledger.ledger.database.ManagedSession
 
 class OrientDatabase(
     val dbInfo: OrientDatabaseInfo

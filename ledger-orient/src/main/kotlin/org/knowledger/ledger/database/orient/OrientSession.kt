@@ -1,15 +1,15 @@
-package org.knowledger.ledger.core.database.orient
+package org.knowledger.ledger.database.orient
 
 import com.orientechnologies.orient.core.db.OrientDB
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument
 import com.orientechnologies.orient.core.record.OElement
-import org.knowledger.ledger.core.database.ManagedSchemas
-import org.knowledger.ledger.core.database.ManagedSession
-import org.knowledger.ledger.core.database.StorageBytes
-import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.database.StorageID
-import org.knowledger.ledger.core.database.StorageResults
-import org.knowledger.ledger.core.database.query.GenericQuery
+import org.knowledger.ledger.database.ManagedSchemas
+import org.knowledger.ledger.database.ManagedSession
+import org.knowledger.ledger.database.StorageBytes
+import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.database.StorageID
+import org.knowledger.ledger.database.StorageResults
+import org.knowledger.ledger.database.query.GenericQuery
 
 data class OrientSession(
     internal val db: OrientDB,

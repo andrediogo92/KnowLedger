@@ -1,9 +1,9 @@
-package org.knowledger.ledger.core.database.orient
+package org.knowledger.ledger.database.orient
 
 import com.orientechnologies.orient.core.id.ORID
-import org.knowledger.ledger.core.database.StorageBytes
-import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.database.StorageID
+import org.knowledger.ledger.database.StorageBytes
+import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.database.StorageID
 
 data class DocumentID internal constructor(
     internal val id: ORID

@@ -1,12 +1,13 @@
-package org.knowledger.ledger.core.database.orient
+package org.knowledger.ledger.database.orient
 
 import com.orientechnologies.orient.core.sql.executor.OResultSet
-import org.knowledger.ledger.core.database.StorageResult
-import org.knowledger.ledger.core.database.StorageResults
+import org.knowledger.ledger.database.StorageResult
+import org.knowledger.ledger.database.StorageResults
 import java.util.*
 import java.util.function.Consumer
 
-internal inline class DocumentResults constructor(
+@Suppress("EXPERIMENTAL_FEATURE_WARNING")
+internal inline class DocumentResults(
     internal val results: OResultSet
 ) : StorageResults {
     override fun close() {

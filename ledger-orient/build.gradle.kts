@@ -1,16 +1,19 @@
 plugins {
     kotlin("jvm")
-    id("org.knowledger.plugin.docs")
+    id(Plugins.docs)
 }
 
 version = "0.1"
 
-docs {
+docsPlugin {
     inlineClasses = true
     module = "ledger-orient"
 }
 
 dependencies {
-    implementation(project(":ledger-core"))
+    implementation(project(":collections-extensions"))
+    implementation(project(":ledger-core:db"))
+    implementation(project(":ledger-core:data"))
+
     Libs.orientDB.forEach(::implementation)
 }

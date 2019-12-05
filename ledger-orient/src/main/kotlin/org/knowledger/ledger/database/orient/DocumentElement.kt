@@ -1,20 +1,20 @@
-package org.knowledger.ledger.core.database.orient
+package org.knowledger.ledger.database.orient
 
 import com.orientechnologies.orient.core.id.ORID
 import com.orientechnologies.orient.core.record.OElement
 import com.orientechnologies.orient.core.record.impl.OBlob
-import org.knowledger.ledger.core.data.Difficulty
-import org.knowledger.ledger.core.data.Payout
-import org.knowledger.ledger.core.database.NewInstanceSession
-import org.knowledger.ledger.core.database.StorageBytes
-import org.knowledger.ledger.core.database.StorageElement
-import org.knowledger.ledger.core.database.StorageID
-import org.knowledger.ledger.core.hash.Hash
-import org.knowledger.ledger.core.misc.mapMutable
-import org.knowledger.ledger.core.misc.mapMutableList
-import org.knowledger.ledger.core.misc.mapMutableSet
-import org.knowledger.ledger.core.misc.mapToSet
-import org.knowledger.ledger.core.storage.adapters.Storable
+import org.knowledger.collections.mapMutable
+import org.knowledger.collections.mapMutableList
+import org.knowledger.collections.mapMutableSet
+import org.knowledger.collections.mapToSet
+import org.knowledger.ledger.core.base.data.Difficulty
+import org.knowledger.ledger.core.base.data.Payout
+import org.knowledger.ledger.core.base.hash.Hash
+import org.knowledger.ledger.database.NewInstanceSession
+import org.knowledger.ledger.database.StorageBytes
+import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.database.StorageID
+import org.knowledger.ledger.database.adapters.Storable
 import java.math.BigInteger
 
 data class DocumentElement internal constructor(
