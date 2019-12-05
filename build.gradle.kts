@@ -31,6 +31,7 @@ allprojects {
         mavenCentral()
         jcenter()
         maven("https://kotlin.bintray.com/kotlinx")
+        maven("https://jade.tilab.com/maven")
     }
 
 }
