@@ -1,14 +1,10 @@
 plugins {
     kotlin("jvm")
-    id("org.knowledger.plugin.base")
+    id(Plugins.base)
     application
 }
 
-repositories {
-    maven("https://jade.tilab.com/maven")
-}
-
-baseJVM {
+basePlugin {
     packageName = "org.knowledger.example"
     module = "example"
 }
@@ -18,6 +14,7 @@ dependencies {
     implementation(project(":ledger"))
     implementation(project(":ledger-core"))
     implementation(project(":agent"))
+    implementation(project(":agent-core"))
 
     Libs.jade.forEach(::implementation)
 

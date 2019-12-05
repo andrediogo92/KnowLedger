@@ -1,15 +1,11 @@
 plugins {
     kotlin("jvm")
-    id("org.knowledger.plugin.docs")
+    id(Plugins.docs)
 }
 
 version = "0.1"
 
-repositories {
-    maven("https://jade.tilab.com/maven")
-}
-
-docs {
+docsPlugin {
     module = "agent-core"
 }
 

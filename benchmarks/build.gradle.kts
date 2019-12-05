@@ -1,16 +1,12 @@
 plugins {
     kotlin("jvm")
-    id("org.knowledger.plugin.base")
+    id(Plugins.base)
     id(Plugins.jmh)
 }
 
 version = "0.1"
 
-repositories {
-    maven("https://jade.tilab.com/maven")
-}
-
-baseJVM {
+basePlugin {
     packageName = "org.knowledger.benchmarks"
     module = "benchmarks"
 }
