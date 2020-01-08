@@ -1,7 +1,5 @@
 package org.knowledger.ledger.core
 
-import org.knowledger.ledger.core.base.data.Difficulty
-import org.knowledger.ledger.core.base.data.Payout
 import java.math.BigDecimal
 import java.time.Instant
 import java.util.*
@@ -36,46 +34,43 @@ private fun loopShifts(
 }
 
 
-fun Long.toBytes(): ByteArray = loopShifts(
-    Long.SIZE_BYTES / Byte.SIZE_BYTES,
-    Byte.SIZE_BITS, this
-)
+val Long.bytes: ByteArray
+    get() = loopShifts(
+        Long.SIZE_BYTES / Byte.SIZE_BYTES,
+        Byte.SIZE_BITS, this
+    )
 
-fun Int.toBytes(): ByteArray = loopShifts(
-    Int.SIZE_BYTES / Byte.SIZE_BYTES,
-    Byte.SIZE_BITS, this
-)
+val Int.bytes: ByteArray
+    get() = loopShifts(
+        Int.SIZE_BYTES / Byte.SIZE_BYTES,
+        Byte.SIZE_BITS, this
+    )
 
-fun Double.toBytes(): ByteArray = loopShifts(
-    Long.SIZE_BYTES / Byte.SIZE_BYTES,
-    Byte.SIZE_BITS, toRawBits()
-)
+val Double.bytes: ByteArray
+    get() = loopShifts(
+        Long.SIZE_BYTES / Byte.SIZE_BYTES,
+        Byte.SIZE_BITS, toRawBits()
+    )
 
 /**
  * Byte concatenation of epoch seconds and leftover nanos.
  */
-fun Instant.toBytes(): ByteArray =
-    epochSecond.toBytes() + nano.toBytes()
+val Instant.bytes: ByteArray
+    get() = epochSecond.bytes + nano.bytes
 
 /**
  * Byte concatenation of [UUID] via [UUID.getMostSignificantBits] +
  * [UUID.getLeastSignificantBits] (big-endian order).
  */
-fun UUID.toBytes(): ByteArray =
-    mostSignificantBits.toBytes() + leastSignificantBits.toBytes()
+val UUID.bytes: ByteArray
+    get() = mostSignificantBits.bytes + leastSignificantBits.bytes
 
 /**
  * Extracts bytes from [BigDecimal.unscaledValue] directly
  * converted to [ByteArray].
  */
-fun BigDecimal.toBytes(): ByteArray =
-    unscaledValue().toByteArray()
-
-fun Payout.toBytes(): ByteArray =
-    payout.unscaledValue().toByteArray()
-
-fun Difficulty.toBytes(): ByteArray =
-    difficulty.toByteArray()
+val BigDecimal.bytes: ByteArray
+    get() = unscaledValue().toByteArray()
 
 
 fun flattenBytes(

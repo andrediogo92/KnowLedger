@@ -8,9 +8,15 @@ import java.math.BigDecimal
  */
 data class Payout(
     val payout: BigDecimal
-) {
+) : ByteEncodable {
+    override val bytes: ByteArray
+        get() = payout.unscaledValue().toByteArray()
+
     operator fun plus(
         payout: Payout
     ): Payout =
         Payout(payout.payout + this.payout)
+
+    override fun toString(): String =
+        payout.toString()
 }

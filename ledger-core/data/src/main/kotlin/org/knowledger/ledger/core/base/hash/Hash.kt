@@ -1,6 +1,7 @@
 package org.knowledger.ledger.core.base.hash
 
 import org.knowledger.ledger.core.base.data.Difficulty
+import org.knowledger.ledger.core.base.data.HexEncodable
 import java.math.BigInteger
 
 /**
@@ -8,7 +9,7 @@ import java.math.BigInteger
  * a value structure instance which subsumes its value
  * into a digest of it.
  */
-data class Hash(val bytes: ByteArray) {
+data class Hash(override val bytes: ByteArray) : HexEncodable {
     operator fun plus(tx: Hash): Hash =
         Hash(bytes + tx.bytes)
 
@@ -27,6 +28,9 @@ data class Hash(val bytes: ByteArray) {
 
     fun toDifficulty(): Difficulty =
         Difficulty(BigInteger(bytes))
+
+    override fun toHexString(): String =
+        bytes.toHexString()
 
 
     companion object {

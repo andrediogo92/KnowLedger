@@ -9,12 +9,12 @@ import java.math.BigInteger
  */
 data class Difficulty(
     val difficulty: BigInteger
-) {
+) : HexEncodable {
+    override val bytes: ByteArray
+        get() = difficulty.toByteArray()
+
     operator fun compareTo(hashTarget: Difficulty): Int =
         difficulty.compareTo(hashTarget.difficulty)
-
-    val print: String
-        get() = difficulty.toString(HEXR)
 
     companion object {
         const val HEXR = 16

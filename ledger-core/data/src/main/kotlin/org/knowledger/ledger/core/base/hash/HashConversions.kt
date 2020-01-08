@@ -45,13 +45,3 @@ fun ByteArray.toHexString(): String =
             }
         }
     )
-
-fun Hash.toHexString(): String =
-    bytes.toHexString()
-
-fun Hash.truncatedHexString(cutoffSize: Int = Hash.TRUNC): String =
-    if (bytes.size > cutoffSize) {
-        bytes.sliceArray(0..cutoffSize).toHexString()
-    } else {
-        bytes.toHexString()
-    }
