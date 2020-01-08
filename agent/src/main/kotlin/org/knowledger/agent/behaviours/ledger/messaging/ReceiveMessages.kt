@@ -1,43 +1,49 @@
-package org.knowledger.agent.behaviours.messaging
+package org.knowledger.agent.behaviours.ledger.messaging
 
 import jade.content.lang.Codec
 import jade.content.onto.OntologyException
+import jade.core.Agent
 import jade.core.behaviours.CyclicBehaviour
 import jade.core.behaviours.ParallelBehaviour
 import jade.lang.acl.ACLMessage
 import jade.lang.acl.MessageTemplate
-import org.knowledger.agent.agents.BaseAgent
+import org.knowledger.agent.agents.AgentManager
+import org.knowledger.agent.agents.ledger.ChainManager
+import org.knowledger.agent.agents.ledger.PeerManager
+import org.knowledger.agent.agents.ledger.TransactionManager
 import org.knowledger.agent.core.ontologies.BlockOntology
 import org.knowledger.agent.core.ontologies.TransactionOntology
 import org.knowledger.agent.core.ontologies.block.actions.RequestBlocksFrom
 import org.knowledger.agent.core.ontologies.transaction.predicates.DiffuseTransaction
-import org.knowledger.agent.data.AgentPeers
+import org.knowledger.agent.messaging.and
+import org.knowledger.agent.messaging.fromJadeHash
 import org.knowledger.agent.messaging.fromJadeTransaction
-import org.knowledger.agent.misc.and
-import org.knowledger.ledger.core.misc.base64DecodedToHash
 import org.tinylog.kotlin.Logger
 
 /**
  * Behaviour for handling incoming messages related to
  * Transactions, Blocks and Ledger notifications.
  */
-data class ReceiveMessages internal constructor(
-    private val agentPeers: AgentPeers,
-    private val lAgent: BaseAgent
-) : ParallelBehaviour(lAgent, WHEN_ALL) {
+class ReceiveMessages internal constructor(
+    agent: Agent,
+    private val agentManager: AgentManager,
+    private val peerManager: PeerManager,
+    private val chainManager: ChainManager,
+    private val transactionManager: TransactionManager
+) : ParallelBehaviour(agent, WHEN_ALL) {
     init {
         addSubBehaviour(HandleTransactionMessages())
         addSubBehaviour(HandleBlockMessages())
         addSubBehaviour(HandleLedgerMessages())
     }
 
-    inner class HandleTransactionMessages : CyclicBehaviour(lAgent) {
+    inner class HandleTransactionMessages : CyclicBehaviour(agent) {
         override fun action() {
             val mt =
                 MessageTemplate.MatchOntology(TransactionOntology.name) and
                         MessageTemplate.MatchPerformative(ACLMessage.INFORM)
 
-            val txmsg = lAgent.receive(mt)
+            val txmsg = agent.receive(mt)
             if (txmsg != null) {
                 try {
                     val txce = agent.contentManager.extractContent(txmsg)
@@ -48,10 +54,10 @@ data class ReceiveMessages internal constructor(
                         Logger.info {
                             "Agent ${agent.aid}: Transaction is from ${txce.transaction.ledgerId?.hash}"
                         }
-                        lAgent.chainBuilders.find {
-                            it.tag == txce.transaction.ledgerId?.tag?.base64DecodedToHash()
+                        chainManager.chainBuilders.find {
+                            it.tag == txce.transaction.ledgerId?.tag?.fromJadeHash()
                         }?.let { cb ->
-                            lAgent.chainHandles.find {
+                            chainManager.chainHandles.find {
                                 it.chainHash == cb.chainHash
                             }?.addTransaction(
                                 txce.transaction.fromJadeTransaction(cb)
@@ -73,7 +79,7 @@ data class ReceiveMessages internal constructor(
         }
     }
 
-    inner class HandleBlockMessages : CyclicBehaviour(lAgent) {
+    inner class HandleBlockMessages : CyclicBehaviour(agent) {
         override fun action() {
             val mt = MessageTemplate.MatchOntology(BlockOntology.name) and
                     MessageTemplate.MatchPerformative(ACLMessage.REQUEST)
@@ -103,7 +109,7 @@ data class ReceiveMessages internal constructor(
 
     }
 
-    inner class HandleLedgerMessages : CyclicBehaviour(lAgent) {
+    inner class HandleLedgerMessages : CyclicBehaviour(agent) {
         override fun action() {
 
         }
