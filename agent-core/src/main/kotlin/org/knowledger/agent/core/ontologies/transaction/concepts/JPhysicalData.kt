@@ -1,9 +1,11 @@
 package org.knowledger.agent.core.ontologies.transaction.concepts
 
 import jade.content.Concept
+import org.knowledger.base64.Base64String
 
 data class JPhysicalData(
-    var data: String,
+    var data: Base64String,
+    var tag: JHash,
     var seconds: Long,
     var nanos: Int,
     var latitude: String,
