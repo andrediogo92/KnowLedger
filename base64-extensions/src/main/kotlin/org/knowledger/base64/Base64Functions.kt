@@ -15,23 +15,25 @@ inline fun String.encodedStringInUTF8(): ByteArray = encodeToByteArray()
 @UseExperimental(ExperimentalStdlibApi::class)
 inline fun ByteArray.decodedUTF8String(): String = decodeToString()
 
-fun Key.base64Encoded(): String =
+fun Key.base64Encoded(): Base64String =
     encoded.base64Encoded()
 
-fun Hash.base64Encoded(): String =
-    bytes.base64Encoded()
+fun Hash.base64Encoded(): Base64String =
+    this.bytes.base64Encoded()
 
-fun String.base64Encoded(): String =
+fun String.base64Encoded(): Base64String =
     encodedStringInUTF8().base64Encoded()
 
-fun ByteArray.base64Encoded(): String =
+fun ByteArray.base64Encoded(): Base64String =
     b64Encoder.encodeToString(this)
 
-fun String.base64Decoded(): ByteArray =
+fun Base64String.base64Decoded(): ByteArray =
     b64Decoder.decode(this)
 
-fun String.base64DecodedToHash(): Hash =
+fun Base64String.base64DecodedToHash(): Hash =
     Hash(base64Decoded())
 
-fun String.base64DecodedToUTF8(): String =
+fun Base64String.base64DecodedToUTF8(): String =
     base64Decoded().decodedUTF8String()
+
+typealias Base64String = String
