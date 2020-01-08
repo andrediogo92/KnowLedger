@@ -5,8 +5,8 @@ import jade.core.ProfileImpl
 import jade.core.Runtime
 import jade.wrapper.AgentController
 import jade.wrapper.ContainerController
-import org.knowledger.ledger.core.data.LedgerData
-import org.knowledger.ledger.core.storage.adapters.AbstractStorageAdapter
+import org.knowledger.ledger.data.LedgerData
+import org.knowledger.ledger.database.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.service.handles.LedgerHandle
 
 /**
@@ -57,7 +57,10 @@ class AgentContainer(
         knownTypes: Set<AbstractStorageAdapter<out LedgerData>>,
         arguments: Array<Any>
     ) {
-        runAgent(name, ledgerAgent, arrayOf(handle, knownTypes, *arguments))
+        runAgent(
+            name, ledgerAgent,
+            arrayOf(handle, knownTypes, *arguments)
+        )
     }
 
 
@@ -70,6 +73,17 @@ class AgentContainer(
         synchronized(iAgents) {
             iAgents.removeAt(index)
         }
+    }
+
+    fun runSlaveAgent(
+        name: String, classpath: String,
+        knownTypes: Set<AbstractStorageAdapter<out LedgerData>>,
+        arguments: Array<Any>
+    ) {
+        runAgent(
+            name, classpath,
+            arrayOf(knownTypes, arguments)
+        )
     }
 
     companion object {
