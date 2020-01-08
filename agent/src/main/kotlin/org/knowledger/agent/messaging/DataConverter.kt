@@ -1,5 +1,7 @@
 package org.knowledger.agent.messaging
 
+import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.SerializationStrategy
 import org.knowledger.agent.core.ontologies.block.concepts.JBlock
 import org.knowledger.agent.core.ontologies.block.concepts.JBlockHeader
 import org.knowledger.agent.core.ontologies.block.concepts.JCoinbase
@@ -8,24 +10,27 @@ import org.knowledger.agent.core.ontologies.block.concepts.JTransactionOutput
 import org.knowledger.agent.core.ontologies.ledger.concepts.JBlockParams
 import org.knowledger.agent.core.ontologies.ledger.concepts.JChainId
 import org.knowledger.agent.core.ontologies.ledger.concepts.JLedgerId
+import org.knowledger.agent.core.ontologies.transaction.concepts.JHash
 import org.knowledger.agent.core.ontologies.transaction.concepts.JPhysicalData
 import org.knowledger.agent.core.ontologies.transaction.concepts.JTransaction
+import org.knowledger.base64.base64Decoded
+import org.knowledger.base64.base64DecodedToHash
+import org.knowledger.base64.base64Encoded
+import org.knowledger.collections.mapToSet
+import org.knowledger.collections.mapToSortedSet
 import org.knowledger.ledger.builders.ChainBuilder
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.LedgerId
-import org.knowledger.ledger.core.misc.base64Decoded
-import org.knowledger.ledger.core.misc.base64DecodedToHash
-import org.knowledger.ledger.core.misc.base64Encoded
-import org.knowledger.ledger.core.misc.mapToSet
-import org.knowledger.ledger.core.misc.mapToSortedSet
-import org.knowledger.ledger.core.misc.toBytes
-import org.knowledger.ledger.core.misc.toPublicKey
+import org.knowledger.ledger.crypto.EncodedPublicKey
+import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.toPublicKey
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.GeoCoords
-import org.knowledger.ledger.data.Hash
+import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.data.PhysicalData
+import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
@@ -49,16 +54,16 @@ fun Block.toJadeBlock(chainBuilder: ChainBuilder): JBlock =
 
 fun MerkleTree.toJadeMerkleTree(): JMerkleTree =
     JMerkleTree(
-        hashes = collapsedTree.map(Hash::base64Encoded),
+        hashes = collapsedTree.map(Hash::toJadeHash),
         levelIndex = levelIndex
     )
 
 fun BlockHeader.toJadeBlockHeader(): JBlockHeader =
     JBlockHeader(
         chainId = chainId.toJadeChainId(),
-        hash = hash.base64Encoded(),
-        merkleRoot = merkleRoot.base64Encoded(),
-        previousHash = previousHash.base64Encoded(),
+        hash = hash.toJadeHash(),
+        merkleRoot = merkleRoot.toJadeHash(),
+        previousHash = previousHash.toJadeHash(),
         params = params.toJadeBlockParams(),
         seconds = seconds,
         nonce = nonce
@@ -66,9 +71,9 @@ fun BlockHeader.toJadeBlockHeader(): JBlockHeader =
 
 fun ChainId.toJadeChainId(): JChainId =
     JChainId(
-        tag = tag.base64Encoded(),
-        hash = hash.base64Encoded(),
-        ledger = ledgerHash.base64Encoded()
+        tag = tag.toJadeHash(),
+        hash = hash.toJadeHash(),
+        ledger = ledgerHash.toJadeHash()
     )
 
 fun BlockParams.toJadeBlockParams(): JBlockParams =
@@ -80,7 +85,7 @@ fun BlockParams.toJadeBlockParams(): JBlockParams =
 fun LedgerId.toJadeLedgerId(): JLedgerId =
     JLedgerId(
         id = tag,
-        hash = hash.base64Encoded()
+        hash = hash.toJadeHash()
     )
 
 
@@ -89,34 +94,32 @@ fun Coinbase.toJadeCoinbase(): JCoinbase =
         payoutTXO = transactionOutputs
             .mapToSet(TransactionOutput::toJadeTransactionOutput),
         payout = payout.toString(),
-        hashId = hash.base64Encoded(),
+        hashId = hash.toJadeHash(),
         formula = null,
-        difficulty = difficulty.toBytes().base64Encoded(),
+        difficulty = JHash(difficulty.bytes.base64Encoded()),
         blockheight = blockheight
     )
 
 fun Coinbase.toJadeCoinbase(
-    formula: String
+    formula: Hash
 ): JCoinbase =
     JCoinbase(
         payoutTXO = transactionOutputs
             .mapToSet(TransactionOutput::toJadeTransactionOutput),
         payout = payout.toString(),
-        hashId = hash.base64Encoded(),
-        formula = formula,
-        difficulty = difficulty.toBytes().base64Encoded(),
+        hashId = hash.toJadeHash(),
+        formula = formula.toJadeHash(),
+        difficulty = JHash(difficulty.bytes.base64Encoded()),
         blockheight = blockheight
     )
 
 private fun TransactionOutput.toJadeTransactionOutput(): JTransactionOutput =
     JTransactionOutput(
         pubkey = publicKey.base64Encoded(),
-        hashId = hash.base64Encoded(),
-        prevCoinbase = previousCoinbase.base64Encoded(),
+        hashId = hash.toJadeHash(),
+        prevCoinbase = previousCoinbase.toJadeHash(),
         payout = payout.toString(),
-        tx = transactionHashes.map {
-            it.base64Encoded()
-        }.toSet()
+        tx = transactionHashes.mapToSet(Hash::toJadeHash)
     )
 
 
@@ -125,16 +128,17 @@ fun Transaction.toJadeTransaction(
     withChainId: Boolean = false
 ): JTransaction =
     JTransaction(
-        transactionId = hash.base64Encoded(),
+        transactionId = hash.toJadeHash(),
         publicKey = publicKey.base64Encoded(),
         data = data.toJadePhysicalData(builder),
-        signature = signature.base64Encoded(),
+        signature = signature.encoded.base64Encoded(),
         ledgerId = if (withChainId) builder.chainId.toJadeChainId() else null
     )
 
 fun PhysicalData.toJadePhysicalData(builder: ChainBuilder): JPhysicalData {
     return JPhysicalData(
         data = builder.toBytes(data).base64Encoded(),
+        tag = builder.tag.toJadeHash(),
         seconds = instant.epochSecond,
         nanos = instant.nano,
         latitude = coords.latitude.toString(),
@@ -142,6 +146,26 @@ fun PhysicalData.toJadePhysicalData(builder: ChainBuilder): JPhysicalData {
         altitude = coords.altitude.toString()
     )
 }
+
+@Suppress("UNCHECKED_CAST")
+fun <T : LedgerData> PhysicalData.toJadePhysicalData(
+    serializer: SerializationStrategy<T>,
+    encoder: BinaryFormat,
+    tag: Tag
+): JPhysicalData {
+    return JPhysicalData(
+        data = encoder.dump(serializer, data as T).base64Encoded(),
+        tag = tag.toJadeHash(),
+        seconds = instant.epochSecond,
+        nanos = instant.nano,
+        latitude = coords.latitude.toString(),
+        longitude = coords.longitude.toString(),
+        altitude = coords.altitude.toString()
+    )
+}
+
+fun Hash.toJadeHash(): JHash =
+    JHash(base64Encoded())
 
 
 //Conversions from Jade Types
@@ -163,8 +187,7 @@ fun JMerkleTree.fromJadeMerkleTree(
     builder: ChainBuilder
 ): MerkleTree =
     builder.merkletree(
-        collapsedTree = hashes
-            .map(String::base64DecodedToHash),
+        collapsedTree = hashes.map(JHash::fromJadeHash),
         levelIndex = levelIndex
     )
 
@@ -172,9 +195,9 @@ fun JBlockHeader.fromJadeBlockHeader(
     builder: ChainBuilder
 ): BlockHeader =
     builder.blockheader(
-        previousHash = previousHash.base64DecodedToHash(),
-        hash = hash.base64DecodedToHash(),
-        merkleRoot = merkleRoot.base64DecodedToHash(),
+        previousHash = previousHash.fromJadeHash(),
+        hash = hash.fromJadeHash(),
+        merkleRoot = merkleRoot.fromJadeHash(),
         seconds = seconds,
         nonce = nonce
     )
@@ -182,7 +205,7 @@ fun JBlockHeader.fromJadeBlockHeader(
 fun JLedgerId.fromJadeLedgerId(): LedgerId =
     LedgerId(
         id,
-        hash.base64DecodedToHash()
+        hash.fromJadeHash()
     )
 
 
@@ -194,8 +217,8 @@ fun JCoinbase.fromJadeCoinbase(
             it.fromJadeTransactionOutput(builder)
         },
         payout = Payout(BigDecimal(payout)),
-        hash = hashId.base64DecodedToHash(),
-        difficulty = Difficulty(BigInteger(difficulty.base64Decoded())),
+        hash = hashId.fromJadeHash(),
+        difficulty = Difficulty(BigInteger(difficulty.hash.base64Decoded())),
         blockheight = blockheight
     )
 
@@ -203,11 +226,11 @@ private fun JTransactionOutput.fromJadeTransactionOutput(
     builder: ChainBuilder
 ): TransactionOutput =
     builder.transactionOutput(
-        publicKey = pubkey.toPublicKey(),
-        prevCoinbase = prevCoinbase.base64DecodedToHash(),
-        hash = hashId.base64DecodedToHash(),
+        publicKey = EncodedPublicKey(pubkey.base64Decoded()).toPublicKey(),
+        prevCoinbase = prevCoinbase.fromJadeHash(),
+        hash = hashId.fromJadeHash(),
         payout = Payout(BigDecimal(payout)),
-        transactionSet = tx.mapToSet(String::base64DecodedToHash)
+        transactionSet = tx.mapToSet(JHash::fromJadeHash)
     )
 
 
@@ -215,10 +238,10 @@ fun JTransaction.fromJadeTransaction(
     builder: ChainBuilder
 ): Transaction =
     builder.transaction(
-        publicKey.toPublicKey(),
+        EncodedPublicKey(publicKey.base64Decoded()).toPublicKey(),
         data.fromJadePhysicalData(builder),
         signature.base64Decoded(),
-        transactionId.base64DecodedToHash()
+        transactionId.fromJadeHash()
     )
 
 fun JPhysicalData.fromJadePhysicalData(
@@ -234,5 +257,6 @@ fun JPhysicalData.fromJadePhysicalData(
         builder.data(data.base64Decoded())
     )
 
-
+fun JHash.fromJadeHash(): Hash =
+    hash.base64DecodedToHash()
 

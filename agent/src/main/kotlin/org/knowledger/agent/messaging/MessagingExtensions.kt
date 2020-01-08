@@ -1,4 +1,4 @@
-package org.knowledger.agent.misc
+package org.knowledger.agent.messaging
 
 import jade.lang.acl.MessageTemplate
 
