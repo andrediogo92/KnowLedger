@@ -17,10 +17,14 @@ import org.tinylog.kotlin.Logger
 abstract class SlaveAgent : BaseAgent() {
     private val codec = SLCodec()
 
-    protected val typeAdapter: AbstractStorageAdapter<out LedgerData> =
-        arguments[0] as AbstractStorageAdapter<out LedgerData>
+    @Suppress("UNCHECKED_CAST")
+    protected val typeAdapters: Set<AbstractStorageAdapter<out LedgerData>> =
+        arguments[0] as Set<AbstractStorageAdapter<out LedgerData>>
+
     protected val encoder = Cbor(context = SerializersModule {
-        typeAdapter.clazz to typeAdapter.serializer
+        typeAdapters.forEach { adapter ->
+            adapter.clazz to adapter.serializer
+        }
     })
     private val peerBook: PeerBook = PeerBook(aid)
     protected val dataManager: DataManager =
@@ -35,7 +39,7 @@ abstract class SlaveAgent : BaseAgent() {
 
     private fun registerSlaveOnlyBehaviours() {
         addBehaviour(
-            PropagateData(this, peerBook, agentManager, dataManager, typeAdapter, encoder)
+            PropagateData(this, peerBook, agentManager, dataManager, typeAdapters, encoder)
         )
         addBehaviour(
             AcceptConnections(this, peerBook)
