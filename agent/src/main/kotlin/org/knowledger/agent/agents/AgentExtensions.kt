@@ -127,3 +127,28 @@ inline fun Agent.searchService(
 
     return emptyArray()
 }
+
+
+private fun Agent.slaveLog(): String =
+    "Slave Agent $name :>"
+
+private fun Agent.chainLog(): String =
+    "Chain Agent $name :>"
+
+internal inline fun Agent.slaveDebug(crossinline log: () -> String) =
+    Logger.debug { "${slaveLog()} ${log()}" }
+
+internal inline fun Agent.slaveError(crossinline log: () -> String) =
+    Logger.error { "${slaveLog()} ${log()}" }
+
+internal inline fun Agent.slaveInfo(crossinline log: () -> String) =
+    Logger.info { "${slaveLog()} ${log()}" }
+
+internal inline fun Agent.chainDebug(crossinline log: () -> String) =
+    Logger.debug { "${chainLog()} ${log()}" }
+
+internal inline fun Agent.chainError(crossinline log: () -> String) =
+    Logger.error { "${chainLog()} ${log()}" }
+
+internal inline fun Agent.chainInfo(crossinline log: () -> String) =
+    Logger.info { "${chainLog()} ${log()}" }
