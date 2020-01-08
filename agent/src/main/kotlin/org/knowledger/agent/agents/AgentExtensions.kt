@@ -1,4 +1,4 @@
-package org.knowledger.agent.misc
+package org.knowledger.agent.agents
 
 import jade.content.AgentAction
 import jade.content.onto.basic.Action
@@ -9,16 +9,20 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription
 import jade.domain.FIPAAgentManagement.SearchConstraints
 import jade.domain.FIPAAgentManagement.ServiceDescription
 import jade.domain.FIPAException
-import org.knowledger.agent.agents.BaseAgent
 import org.tinylog.Logger
 
+const val ledgerAgentType = "KnowLedger"
+const val slaveAgentType = "KnowLedgerSlave"
 
 fun AgentAction.wrap(aid: AID) =
     Action(aid, this)
 
-internal fun BaseAgent.registerLedger() {
+internal operator fun <E> Set<E>?.get(rnd: Int): E? =
+    this?.withIndex()?.elementAt(rnd)?.value
+
+fun Agent.registerLedger() {
     register {
-        type = "KnowLedger"
+        type = ledgerAgentType
         name = localName
         addOntologies("Transaction")
         addOntologies("Block")
@@ -26,14 +30,42 @@ internal fun BaseAgent.registerLedger() {
     }
 }
 
-internal fun BaseAgent.searchLedger() {
+fun Agent.registerSlave() {
+    register {
+        type = slaveAgentType
+        name = localName
+        addOntologies("Transaction")
+    }
+}
+
+fun Agent.searchLedger(): Array<AID> =
     searchService {
-        type = "KnowLedger"
+        type = ledgerAgentType
         addOntologies("Transaction")
         addOntologies("Block")
         addOntologies("Ledger")
     }
-}
+
+fun Agent.searchFirstLedger(): AID? =
+    searchServiceSingle {
+        type = ledgerAgentType
+        addOntologies("Transaction")
+        addOntologies("Block")
+        addOntologies("Ledger")
+    }
+
+fun Agent.searchSlave(): Array<AID> =
+    searchService {
+        type = slaveAgentType
+        addOntologies("Transaction")
+    }
+
+fun Agent.searchFirstSlave(): AID? =
+    searchServiceSingle {
+        type = slaveAgentType
+        addOntologies("Transaction")
+    }
+
 
 inline fun Agent.register(
     init: ServiceDescription.() -> Unit
@@ -54,7 +86,7 @@ inline fun Agent.register(
     }
 }
 
-fun Agent.searchServiceSingle(
+inline fun Agent.searchServiceSingle(
     init: ServiceDescription.() -> Unit
 ): AID? {
     val dfd = DFAgentDescription()
@@ -72,7 +104,7 @@ fun Agent.searchServiceSingle(
     return null
 }
 
-fun Agent.searchService(
+inline fun Agent.searchService(
     init: ServiceDescription.() -> Unit
 ): Array<AID> {
     val dfd = DFAgentDescription()
