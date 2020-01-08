@@ -58,9 +58,7 @@ import java.time.ZonedDateTime
 data class ChainHandle internal constructor(
     val id: ChainId,
     internal val transactionPool: TransactionPool =
-        StorageAwareTransactionPool(
-            id
-        )
+        StorageAwareTransactionPool(id)
 ) : ServiceClass {
     val chainHash = id.hash
     private val hasher: Hasher

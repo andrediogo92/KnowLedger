@@ -13,6 +13,8 @@ import org.knowledger.agent.core.ontologies.ledger.concepts.JLedgerId
 import org.knowledger.agent.core.ontologies.transaction.concepts.JHash
 import org.knowledger.agent.core.ontologies.transaction.concepts.JPhysicalData
 import org.knowledger.agent.core.ontologies.transaction.concepts.JTransaction
+import org.knowledger.agent.data.CheckedData
+import org.knowledger.agent.data.CheckedTransaction
 import org.knowledger.base64.base64Decoded
 import org.knowledger.base64.base64DecodedToHash
 import org.knowledger.base64.base64Encoded
@@ -260,3 +262,9 @@ fun JPhysicalData.fromJadePhysicalData(
 fun JHash.fromJadeHash(): Hash =
     hash.base64DecodedToHash()
 
+
+fun Transaction.checked(tag: Tag): CheckedTransaction =
+    CheckedTransaction(tag, this)
+
+fun PhysicalData.checked(tag: Tag): CheckedData =
+    CheckedData(tag, this)
