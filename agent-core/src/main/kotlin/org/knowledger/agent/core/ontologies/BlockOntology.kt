@@ -3,7 +3,7 @@ package org.knowledger.agent.core.ontologies
 import jade.content.onto.BeanOntology
 
 object BlockOntology : BeanOntology(
-    "JBlockOntology", LedgerOntology
+    "JBlockOntology", TransactionOntology
 ) {
 
     const val ONTOLOGY_NAME = "JBlockOntology"
