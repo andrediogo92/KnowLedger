@@ -16,9 +16,9 @@ import org.knowledger.agent.feed.AdafruitPublish
 import org.knowledger.agent.feed.Reduxer
 import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.core.data.PhysicalData
-import org.knowledger.ledger.core.results.reduce
-import org.knowledger.ledger.core.results.unwrap
 import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.results.reduce
+import org.knowledger.ledger.results.unwrap
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure

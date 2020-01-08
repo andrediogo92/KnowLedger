@@ -1,11 +1,11 @@
 plugins {
     kotlin("jvm")
-    id(Plugins.base)
+    id(Plugins.serial)
 }
 
 version = "0.1"
 
-basePlugin {
+serialPlugin {
     packageName = "org.knowledger.agent"
     module = "agent"
 }
