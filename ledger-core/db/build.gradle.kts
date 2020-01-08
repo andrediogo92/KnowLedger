@@ -11,8 +11,8 @@ serialPlugin {
 
 dependencies {
     implementation(project(":ledger-core:data"))
-    implementation(project(":ledger-core:results"))
     implementation(project(":base64-extensions"))
+    implementation(project(":results"))
 }
 
 version = "0.1"

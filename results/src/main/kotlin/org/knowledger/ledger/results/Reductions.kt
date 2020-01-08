@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.results
+package org.knowledger.ledger.results
 
 /**
  * Call [block] and wrap the result in an [Outcome], catching any

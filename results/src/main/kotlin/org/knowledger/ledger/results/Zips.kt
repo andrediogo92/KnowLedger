@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.results
+package org.knowledger.ledger.results
 
 inline fun <T1, T2, R, U : Failure> zip(
     r1: Outcome<T1, U>,

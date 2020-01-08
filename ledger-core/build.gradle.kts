@@ -18,7 +18,7 @@ dependencies {
     api(project(":ledger-core:data"))
     api(project(":ledger-core:db"))
     api(project(":ledger-core:kserial"))
-    api(project(":ledger-core:results"))
+    api(project(":results"))
 
     testImplementation(project(":testing"))
 }

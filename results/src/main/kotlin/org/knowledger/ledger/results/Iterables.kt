@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.results
+package org.knowledger.ledger.results
 
 /**
  * Attempts to extract all values or short circuits on first failure.

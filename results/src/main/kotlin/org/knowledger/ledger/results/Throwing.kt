@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.results
+package org.knowledger.ledger.results
 
 private fun Failable.HardFailure.hardUnwrap(): Exception =
     if (exception != null) {

@@ -5,9 +5,9 @@ import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.core.base.data.LedgerData
 import org.knowledger.ledger.core.base.hash.Hasher
 import org.knowledger.ledger.core.base.hash.classDigest
-import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.results.DataFailure
+import org.knowledger.ledger.results.Outcome
 
 /**
  * An abstract storage adapter automatically provides a unique hashed

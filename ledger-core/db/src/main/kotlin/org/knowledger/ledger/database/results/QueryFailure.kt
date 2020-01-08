@@ -1,7 +1,7 @@
 package org.knowledger.ledger.database.results
 
-import org.knowledger.ledger.core.results.Failable
-import org.knowledger.ledger.core.results.Failure
+import org.knowledger.ledger.results.Failable
+import org.knowledger.ledger.results.Failure
 
 
 sealed class QueryFailure : Failure {

@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.results
+package org.knowledger.ledger.results
 
 sealed class Outcome<out T, out U : Failure> {
     data class Ok<out T>(
