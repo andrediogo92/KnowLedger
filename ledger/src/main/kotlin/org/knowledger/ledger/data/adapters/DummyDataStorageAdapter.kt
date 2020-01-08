@@ -1,7 +1,6 @@
 package org.knowledger.ledger.data.adapters
 
 import kotlinx.serialization.KSerializer
-import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.crypto.hash.Hashers.SHA3512Hasher
 import org.knowledger.ledger.data.DummyData
 import org.knowledger.ledger.data.LedgerData
@@ -10,6 +9,7 @@ import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.database.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.database.results.DataFailure
+import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.serial.DummyDataSerializer
 
 internal object DummyDataStorageAdapter : AbstractStorageAdapter<DummyData>(

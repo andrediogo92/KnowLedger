@@ -3,14 +3,14 @@ package org.knowledger.ledger.storage.blockheader
 import org.knowledger.ledger.config.adapters.loadBlockParams
 import org.knowledger.ledger.config.adapters.loadChainId
 import org.knowledger.ledger.config.adapters.persist
-import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.results.flatZip
-import org.knowledger.ledger.core.results.mapFailure
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.flatZip
 import org.knowledger.ledger.results.intoLoad
+import org.knowledger.ledger.results.mapFailure
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.handles.LedgerHandle

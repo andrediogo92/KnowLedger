@@ -23,5 +23,5 @@ dependencies {
     implementation(Libs.jmh)
 
     testImplementation(Libs.commonsRNG)
-    testImplementation(project(":testing"))
+    testApi(project(":testing"))
 }

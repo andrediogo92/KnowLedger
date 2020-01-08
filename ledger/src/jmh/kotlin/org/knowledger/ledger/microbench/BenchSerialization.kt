@@ -6,9 +6,9 @@ import org.knowledger.ledger.serial.internal.BlockByteSerializer
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.test.encoder
 import org.knowledger.ledger.test.generateBlock
 import org.knowledger.ledger.test.generateXTransactions
+import org.knowledger.testing.ledger.encoder
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 import java.util.concurrent.TimeUnit

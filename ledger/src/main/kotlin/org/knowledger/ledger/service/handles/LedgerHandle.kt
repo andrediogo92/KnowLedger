@@ -6,9 +6,6 @@ import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.config.LedgerId
 import org.knowledger.ledger.core.base.data.DefaultDiff
 import org.knowledger.ledger.core.base.hash.classDigest
-import org.knowledger.ledger.core.results.Failable
-import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.results.fold
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.DataFormula
@@ -18,6 +15,9 @@ import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
 import org.knowledger.ledger.database.StorageID
 import org.knowledger.ledger.database.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.database.results.QueryFailure
+import org.knowledger.ledger.results.Failable
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.fold
 import org.knowledger.ledger.results.intoLedger
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.LedgerInfo
@@ -33,7 +33,7 @@ import org.knowledger.ledger.service.transactions.getKnownChainHandleIDs
 import org.knowledger.ledger.service.transactions.getKnownChainHandleTypes
 import org.knowledger.ledger.service.transactions.getKnownChainHandles
 import org.knowledger.ledger.service.transactions.tryAddChainHandle
-import org.knowledger.ledger.core.results.Failure as CoreFailure
+import org.knowledger.ledger.results.Failure as CoreFailure
 
 
 /**
@@ -266,7 +266,7 @@ class LedgerHandle internal constructor(
             formula: Hash, hasher: Hashers
         ): DataFormula? =
             knownFormulas.find {
-                it.classDigest(hasher) == (formula)
+                it::class.java.classDigest(hasher) == (formula)
             }
     }
 }

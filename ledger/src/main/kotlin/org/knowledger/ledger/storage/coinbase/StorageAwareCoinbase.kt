@@ -2,12 +2,12 @@ package org.knowledger.ledger.storage.coinbase
 
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageID
+import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.storage.StorageAware

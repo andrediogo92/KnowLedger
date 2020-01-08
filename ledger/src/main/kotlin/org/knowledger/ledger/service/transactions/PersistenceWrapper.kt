@@ -5,10 +5,6 @@ import org.knowledger.ledger.config.adapters.BlockParamsStorageAdapter
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerIdStorageAdapter
 import org.knowledger.ledger.config.adapters.LedgerParamsStorageAdapter
-import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.results.allValues
-import org.knowledger.ledger.core.results.peekFailure
-import org.knowledger.ledger.core.results.peekSuccess
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
@@ -23,12 +19,7 @@ import org.knowledger.ledger.database.query.GenericQuery
 import org.knowledger.ledger.database.query.UnspecificQuery
 import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.database.results.QueryFailure
-import org.knowledger.ledger.results.tryOrDataUnknownFailure
-import org.knowledger.ledger.results.tryOrLedgerUnknownFailure
-import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.results.tryOrQueryUnknownFailure
-import org.knowledger.ledger.results.tryOrUpdateUnknownFailure
-import org.knowledger.ledger.results.use
+import org.knowledger.ledger.results.*
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.ServiceClass
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter

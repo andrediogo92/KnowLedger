@@ -1,15 +1,14 @@
 package org.knowledger.ledger.builders
 
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.results.BuilderFailure
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.handles.LedgerHandle
 
-fun chainBuilder(
-    ledgerHash: Hash,
-    chainId: ChainId,
+
+fun ChainId.chainBuilder(
     identity: Identity
 ): Outcome<ChainBuilder, BuilderFailure> {
     val container = LedgerHandle.getContainer(
@@ -23,10 +22,15 @@ fun chainBuilder(
                 )
             )
         else -> {
-            Outcome.Ok(WorkingChainBuilder(container, chainId, identity))
+            Outcome.Ok(WorkingChainBuilder(container, this, identity))
         }
     }
 }
+
+fun ChainHandle.chainBuilder(
+    identity: Identity
+): Outcome<ChainBuilder, BuilderFailure> =
+    id.chainBuilder(identity)
 
 internal fun <T : Builder<*, *>> T.uninitialized(
     parameter: String

@@ -1,12 +1,12 @@
 package org.knowledger.ledger.storage.coinbase
 
-import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.results.allValues
-import org.knowledger.ledger.core.results.flatMapSuccess
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.allValues
+import org.knowledger.ledger.results.flatMapSuccess
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure

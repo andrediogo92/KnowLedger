@@ -1,10 +1,10 @@
 package org.knowledger.ledger.adapters
 
-import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.results.mapSuccess
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.service.ServiceClass
 import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
 import org.knowledger.ledger.service.results.LedgerFailure

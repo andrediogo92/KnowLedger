@@ -16,7 +16,7 @@ data class CoinbaseParams(
     val valueIncentive: Long = 2,
     val baseIncentive: Long = 3,
     val dividingThreshold: Long = 100000,
-    val formula: Hash = DefaultDiff.classDigest(SHA3512Hasher)
+    val formula: Hash = classDigest<DefaultDiff>(SHA3512Hasher)
 ) : HashSerializable, ServiceClass {
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)

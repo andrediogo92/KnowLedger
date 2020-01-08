@@ -4,7 +4,6 @@ import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.modules.SerialModule
 import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.core.base.data.DefaultDiff
-import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
@@ -14,6 +13,7 @@ import org.knowledger.ledger.database.ManagedDatabase
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.orient.OrientDatabase
 import org.knowledger.ledger.database.orient.OrientDatabaseInfo
+import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.serial.baseModule
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.handles.LedgerHandle

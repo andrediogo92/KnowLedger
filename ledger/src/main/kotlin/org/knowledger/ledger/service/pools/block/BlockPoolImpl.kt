@@ -1,8 +1,8 @@
 package org.knowledger.ledger.service.pools.block
 
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.BlockFailure
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader

@@ -14,13 +14,6 @@ import org.knowledger.ledger.core.base.data.Difficulty.Companion.INIT_DIFFICULTY
 import org.knowledger.ledger.core.base.data.Difficulty.Companion.MAX_DIFFICULTY
 import org.knowledger.ledger.core.base.data.Difficulty.Companion.MIN_DIFFICULTY
 import org.knowledger.ledger.core.base.hash.Hash.Companion.emptyHash
-import org.knowledger.ledger.core.base.hash.toHexString
-import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.results.flatMapSuccess
-import org.knowledger.ledger.core.results.fold
-import org.knowledger.ledger.core.results.mapSuccess
-import org.knowledger.ledger.core.results.unwrap
-import org.knowledger.ledger.core.toBytes
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hasher
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
@@ -28,7 +21,12 @@ import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.database.results.QueryFailure
 import org.knowledger.ledger.mining.BlockState
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.flatMapSuccess
+import org.knowledger.ledger.results.fold
 import org.knowledger.ledger.results.intoQuery
+import org.knowledger.ledger.results.mapSuccess
+import org.knowledger.ledger.results.unwrap
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.ServiceClass
@@ -163,7 +161,7 @@ data class ChainHandle internal constructor(
                 Outcome.Ok(true)
             }
         }
-        var lowIndex = -cacheSize + 2
+        var lowIndex = -cacheSize + 2L
         var highIndex = 2L
         while (highIndex - cacheSize <= blockheight && valid) {
             lowIndex += cacheSize
@@ -460,7 +458,7 @@ data class ChainHandle internal constructor(
         val deltadiv = (deltax * recalcMult)
             .divideToIntegralValue(BigDecimal(ledgerParams.recalcTime))
             .toBigInteger()
-        val difficulty = BigInteger(difficultyTarget.toBytes())
+        val difficulty = BigInteger(difficultyTarget.bytes)
         val newDiff = difficulty + (difficulty * deltadiv)
         return padOrMax(Difficulty(newDiff / recalcDiv))
     }

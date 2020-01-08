@@ -1,10 +1,10 @@
 package org.knowledger.ledger.storage
 
-import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.results.reduce
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageID
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.reduce
 import org.knowledger.ledger.service.results.UpdateFailure
 
 internal inline fun <T> StorageAware<T>.commonUpdate(

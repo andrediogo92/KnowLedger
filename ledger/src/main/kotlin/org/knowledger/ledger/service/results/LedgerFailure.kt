@@ -1,8 +1,8 @@
 package org.knowledger.ledger.service.results
 
-import org.knowledger.ledger.core.results.Failable
-import org.knowledger.ledger.core.results.Failure
 import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.results.Failable
+import org.knowledger.ledger.results.Failure
 
 
 sealed class LedgerFailure : Failure {

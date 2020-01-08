@@ -1,8 +1,5 @@
 package org.knowledger.ledger.data.adapters
 
-import org.knowledger.ledger.core.results.Outcome
-import org.knowledger.ledger.core.results.mapFailure
-import org.knowledger.ledger.core.results.mapSuccess
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.GeoCoords
 import org.knowledger.ledger.data.PhysicalData
@@ -10,7 +7,10 @@ import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.database.adapters.StorageAdapterNotRegistered
+import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.intoLoad
+import org.knowledger.ledger.results.mapFailure
+import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure

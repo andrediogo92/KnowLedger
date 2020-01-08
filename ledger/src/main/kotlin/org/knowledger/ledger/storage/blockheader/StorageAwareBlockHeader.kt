@@ -3,11 +3,11 @@ package org.knowledger.ledger.storage.blockheader
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.core.results.Outcome
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageID
+import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.StoragePairs
