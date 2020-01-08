@@ -1,8 +1,8 @@
 package org.knowledger.example
 
 import org.knowledger.agent.agents.AgentContainer
-import org.knowledger.ledger.core.results.unwrap
 import org.knowledger.ledger.data.adapters.NoiseDataStorageAdapter
+import org.knowledger.ledger.results.unwrap
 import org.knowledger.ledger.service.handles.LedgerHandle
 
 class ExampleAgentApp {
@@ -17,19 +17,26 @@ class ExampleAgentApp {
                 hasGUI = true
             )
             val handle =
-                LedgerHandle.Builder()
+                LedgerHandle
+                    .Builder()
                     .withLedgerIdentity("test")
                     .unwrap()
                     .build()
                     .unwrap()
 
             container.runLedgerAgent(
-                "MinerAgent",
-                handle,
-                setOf(NoiseDataStorageAdapter),
-                emptyArray()
+                name = "MinerAgent",
+                handle = handle,
+                knownTypes = setOf(NoiseDataStorageAdapter),
+                arguments = emptyArray()
             )
 
+            container.runSlaveAgent(
+                name = "NoiseSlave",
+                classpath = "org.knowledger.example.slave.NoiseAgent",
+                knownTypes = setOf(NoiseDataStorageAdapter),
+                arguments = emptyArray()
+            )
         }
     }
 }
