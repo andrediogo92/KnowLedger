@@ -22,7 +22,7 @@ object DefaultDataFormulaSerializer : KSerializer<DefaultDiff> {
     ): DefaultDiff =
         decoder.decodeSerializableValue(HashSerializer).let {
             assert(
-                it == DefaultDiff.classDigest(Hashers.SHA3512Hasher)
+                it == classDigest<DefaultDiff>(Hashers.SHA3512Hasher)
             )
             DefaultDiff
         }
@@ -32,7 +32,7 @@ object DefaultDataFormulaSerializer : KSerializer<DefaultDiff> {
     ) {
         encoder.encodeSerializableValue(
             HashSerializer,
-            DefaultDiff.classDigest(Hashers.SHA3512Hasher)
+            classDigest<DefaultDiff>(Hashers.SHA3512Hasher)
         )
     }
 }
