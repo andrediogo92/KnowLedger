@@ -6,4 +6,4 @@ import org.knowledger.ledger.service.handles.builder.LedgerConfig
 
 internal interface HandleStorageAdapter : HandleLoadable,
                                           EagerStorable<LedgerConfig>,
-                                          SchemaProvider<LedgerConfig>
+                                          SchemaProvider

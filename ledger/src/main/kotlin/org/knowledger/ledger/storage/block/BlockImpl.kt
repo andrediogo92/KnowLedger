@@ -25,7 +25,6 @@ import org.knowledger.ledger.serial.internal.CoinbaseByteSerializer
 import org.knowledger.ledger.serial.internal.MerkleTreeByteSerializer
 import org.knowledger.ledger.serial.internal.TransactionByteSerializer
 import org.knowledger.ledger.service.LedgerInfo
-import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.LedgerContract
@@ -73,18 +72,6 @@ internal data class BlockImpl(
             params
         ),
         StorageAwareMerkleTree(ledgerInfo.hasher)
-    )
-
-    internal constructor(
-        chainId: ChainId,
-        previousHash: Hash,
-        difficulty: Difficulty,
-        blockheight: Long,
-        params: BlockParams
-    ) : this(
-        chainId, previousHash, difficulty,
-        blockheight, params,
-        LedgerHandle.getContainer(chainId.ledgerHash)!!
     )
 
     internal constructor(

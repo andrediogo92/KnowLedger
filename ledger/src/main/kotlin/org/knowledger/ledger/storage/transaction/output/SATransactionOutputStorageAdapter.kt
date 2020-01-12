@@ -5,30 +5,30 @@ import org.knowledger.ledger.adapters.cachedLoad
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
-import org.knowledger.ledger.database.StorageType
+import org.knowledger.ledger.database.adapters.SchemaProvider
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 
-internal object SATransactionOutputStorageAdapter : LedgerStorageAdapter<StorageAwareTransactionOutput> {
-    override val id: String
-        get() = TransactionOutputStorageAdapter.id
-
-    override val properties: Map<String, StorageType>
-        get() = TransactionOutputStorageAdapter.properties
-
+internal class SATransactionOutputStorageAdapter(
+    private val suTransactionStorageAdapter: SUTransactionOutputStorageAdapter
+) : LedgerStorageAdapter<StorageAwareTransactionOutput>,
+    SchemaProvider by suTransactionStorageAdapter {
     override fun store(
-        toStore: StorageAwareTransactionOutput, session: ManagedSession
+        toStore: StorageAwareTransactionOutput,
+        session: ManagedSession
     ): StorageElement =
         session.cacheStore(
-            SUTransactionOutputStorageAdapter, toStore, toStore.transactionOutput
+            suTransactionStorageAdapter, toStore,
+            toStore.transactionOutput
         )
 
     override fun load(
-        ledgerHash: Hash, element: StorageElement
+        ledgerHash: Hash,
+        element: StorageElement
     ): Outcome<StorageAwareTransactionOutput, LoadFailure> =
         element.cachedLoad(
-            ledgerHash, SUTransactionOutputStorageAdapter, ::StorageAwareTransactionOutput
+            ledgerHash, suTransactionStorageAdapter,
+            ::StorageAwareTransactionOutput
         )
 }

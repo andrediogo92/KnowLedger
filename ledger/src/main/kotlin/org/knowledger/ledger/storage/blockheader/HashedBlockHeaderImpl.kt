@@ -5,7 +5,6 @@ import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.Hasher
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.storage.HashUpdateable
@@ -61,21 +60,21 @@ internal data class HashedBlockHeaderImpl(
     }
 
     override fun recalculateSize(
-        hasher: Hasher, encoder: BinaryFormat
+        hasher: Hashers, encoder: BinaryFormat
     ): Long {
         updateHash(hasher, encoder)
         return cachedSize as Long
     }
 
     override fun recalculateHash(
-        hasher: Hasher, encoder: BinaryFormat
+        hasher: Hashers, encoder: BinaryFormat
     ): Hash {
         updateHash(hasher, encoder)
         return _hash as Hash
     }
 
     override fun updateHash(
-        hasher: Hasher, encoder: BinaryFormat
+        hasher: Hashers, encoder: BinaryFormat
     ) {
         val bytes = blockHeader.serialize(encoder)
         _hash = hasher.applyHash(bytes)

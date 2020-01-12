@@ -3,6 +3,7 @@ package org.knowledger.ledger.storage.block
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageID
 import org.knowledger.ledger.results.Outcome
@@ -11,30 +12,35 @@ import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.StoragePairs
 import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
-import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
-import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
 import org.knowledger.ledger.storage.replace
 import org.knowledger.ledger.storage.updateLinked
 
 @Serializable
 @SerialName("StorageBlockWrapper")
-internal data class StorageAwareBlock(
+internal class StorageAwareBlock private constructor(
     internal val block: BlockImpl
 ) : Block by block,
     StorageAware<Block> {
-    @Transient
-    override val invalidated: Array<StoragePairs<*>> =
-        arrayOf(
-            StoragePairs.Linked("header", BlockHeaderStorageAdapter),
-            StoragePairs.Linked("coinbase", CoinbaseStorageAdapter),
-            StoragePairs.Linked("merkleTree", MerkleTreeStorageAdapter),
-            StoragePairs.LinkedSet("data", TransactionStorageAdapter)
+    internal constructor(
+        adapterManager: AdapterManager,
+        block: BlockImpl
+    ) : this(block) {
+        pInvalidated = arrayOf(
+            StoragePairs.Linked("header", adapterManager.blockHeaderStorageAdapter),
+            StoragePairs.Linked("coinbase", adapterManager.coinbaseStorageAdapter),
+            StoragePairs.Linked("merkleTree", adapterManager.merkleTreeStorageAdapter),
+            StoragePairs.LinkedSet("data", adapterManager.transactionStorageAdapter)
         )
+    }
 
     @Transient
     override var id: StorageID? = null
+
+    @Transient
+    private var pInvalidated: Array<StoragePairs<*>> = emptyArray()
+
+    override val invalidated: Array<StoragePairs<*>>
+        get() = pInvalidated
 
     override fun newNonce(): BlockHeader {
         block.newNonce()

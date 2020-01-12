@@ -5,8 +5,6 @@ import org.knowledger.ledger.database.query.UnspecificQuery
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.BlockHeader
-import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
-import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 
 
 // ------------------------------
@@ -19,7 +17,7 @@ internal fun PersistenceWrapper.getBlockHeaderByHash(
     chainHash: Hash,
     hash: Hash
 ): Outcome<BlockHeader, LoadFailure> =
-    BlockHeaderStorageAdapter.let {
+    blockHeaderStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
                 """
@@ -46,7 +44,7 @@ internal fun PersistenceWrapper.getBlockHeaderByBlockHeight(
         UnspecificQuery(
             """
                 SELECT header
-                FROM ${BlockStorageAdapter.id} 
+                FROM ${blockStorageAdapter.id} 
                 WHERE coinbase.blockheight = :blockheight 
                     AND chainId.hash = :chainHash
             """.trimIndent(),
@@ -55,7 +53,7 @@ internal fun PersistenceWrapper.getBlockHeaderByBlockHeight(
                 "chainHash" to chainHash.bytes
             )
         ),
-        BlockHeaderStorageAdapter
+        blockHeaderStorageAdapter
     )
 
 
@@ -63,7 +61,7 @@ internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
     chainHash: Hash,
     hash: Hash
 ): Outcome<BlockHeader, LoadFailure> =
-    BlockHeaderStorageAdapter.let {
+    blockHeaderStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
                 """
@@ -89,7 +87,7 @@ internal fun PersistenceWrapper.getLatestBlockHeader(
         UnspecificQuery(
             """
                 SELECT 
-                FROM ${BlockStorageAdapter.id} 
+                FROM ${blockStorageAdapter.id} 
                 WHERE coinbase.blockheight = max(coinbase.blockheight) 
                     AND chainId.hash = :chainHash
             """.trimIndent(),
@@ -97,5 +95,5 @@ internal fun PersistenceWrapper.getLatestBlockHeader(
                 "chainHash" to chainHash.bytes
             )
         ),
-        BlockHeaderStorageAdapter
+        blockHeaderStorageAdapter
     )

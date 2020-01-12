@@ -3,6 +3,7 @@ package org.knowledger.ledger.storage.transaction
 import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.toPublicKey
+import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
@@ -11,28 +12,34 @@ import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
-import org.knowledger.ledger.storage.adapters.loadPhysicalData
-import org.knowledger.ledger.storage.adapters.persist
 import java.security.PublicKey
 
-internal object SUTransactionStorageAdapter : LedgerStorageAdapter<HashedTransactionImpl> {
+internal class SUTransactionStorageAdapter(
+    private val physicalDataStorageAdapter: PhysicalDataStorageAdapter
+) : LedgerStorageAdapter<HashedTransactionImpl> {
     override val id: String
-        get() = TransactionStorageAdapter.id
+        get() = "Transaction"
 
     override val properties: Map<String, StorageType>
-        get() = TransactionStorageAdapter.properties
+        get() = mapOf(
+            "publicKey" to StorageType.BYTES,
+            "value" to StorageType.LINK,
+            "signature" to StorageType.LINK,
+            "hash" to StorageType.HASH
+        )
 
     override fun store(
         toStore: HashedTransactionImpl, session: ManagedSession
     ): StorageElement =
         session
-            .newInstance(TransactionStorageAdapter.id)
+            .newInstance(id)
             .setStorageProperty(
                 "publicKey", toStore.publicKey.encoded
             ).setLinked(
                 "value",
-                toStore.data.persist(session)
+                physicalDataStorageAdapter.persist(
+                    toStore.data, session
+                )
             ).setStorageBytes(
                 "signature",
                 session.newInstance(
@@ -46,8 +53,9 @@ internal object SUTransactionStorageAdapter : LedgerStorageAdapter<HashedTransac
         tryOrLoadUnknownFailure {
             val physicalData = element.getLinked("value")
 
-            physicalData.loadPhysicalData(
-                ledgerHash
+            physicalDataStorageAdapter.load(
+                ledgerHash,
+                physicalData
             ).mapSuccess { data ->
                 val publicKey: PublicKey = EncodedPublicKey(
                     element.getStorageProperty("publicKey")

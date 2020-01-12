@@ -4,32 +4,37 @@ package org.knowledger.ledger.storage.adapters
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
-import org.knowledger.ledger.database.StorageType
+import org.knowledger.ledger.database.adapters.SchemaProvider
 import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.deadCode
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.storage.transaction.loadTransactionByImpl
-import org.knowledger.ledger.storage.transaction.store
+import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
+import org.knowledger.ledger.storage.transaction.SATransactionStorageAdapter
+import org.knowledger.ledger.storage.transaction.SUTransactionStorageAdapter
+import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 
-internal object TransactionStorageAdapter : LedgerStorageAdapter<Transaction> {
-    override val id: String
-        get() = "Transaction"
-
-    override val properties: Map<String, StorageType>
-        get() = mapOf(
-            "publicKey" to StorageType.BYTES,
-            "value" to StorageType.LINK,
-            "signature" to StorageType.LINK,
-            "hash" to StorageType.HASH
-        )
-
+internal class TransactionStorageAdapter(
+    private val suTransactionStorageAdapter: SUTransactionStorageAdapter,
+    private val saTransactionStorageAdapter: SATransactionStorageAdapter
+) : LedgerStorageAdapter<Transaction>,
+    SchemaProvider by suTransactionStorageAdapter {
     override fun store(
-        toStore: Transaction, session: ManagedSession
+        toStore: Transaction,
+        session: ManagedSession
     ): StorageElement =
-        toStore.store(session)
+        when (toStore) {
+            is StorageAwareTransaction ->
+                saTransactionStorageAdapter.store(toStore, session)
+            is HashedTransactionImpl ->
+                suTransactionStorageAdapter.store(toStore, session)
+            else -> deadCode()
+        }
 
     override fun load(
-        ledgerHash: Hash, element: StorageElement
+        ledgerHash: Hash,
+        element: StorageElement
     ): Outcome<Transaction, LoadFailure> =
-        element.loadTransactionByImpl(ledgerHash)
+        saTransactionStorageAdapter.load(ledgerHash, element)
+
 }

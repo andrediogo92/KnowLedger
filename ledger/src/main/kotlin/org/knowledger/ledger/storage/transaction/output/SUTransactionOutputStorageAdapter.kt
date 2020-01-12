@@ -8,18 +8,26 @@ import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.service.handles.LedgerHandle
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 import java.security.PublicKey
 
-internal object SUTransactionOutputStorageAdapter : LedgerStorageAdapter<HashedTransactionOutputImpl> {
+internal class SUTransactionOutputStorageAdapter(
+    private val container: LedgerInfo
+) : LedgerStorageAdapter<HashedTransactionOutputImpl> {
     override val id: String
-        get() = TransactionOutputStorageAdapter.id
+        get() = "TransactionOutput"
 
     override val properties: Map<String, StorageType>
-        get() = TransactionOutputStorageAdapter.properties
+        get() = mapOf(
+            "publicKey" to StorageType.BYTES,
+            "prevCoinbase" to StorageType.HASH,
+            "hash" to StorageType.HASH,
+            "payout" to StorageType.PAYOUT,
+            "txSet" to StorageType.SET
+        )
+
 
     override fun store(
         toStore: HashedTransactionOutputImpl, session: ManagedSession
@@ -48,18 +56,12 @@ internal object SUTransactionOutputStorageAdapter : LedgerStorageAdapter<HashedT
             val payout =
                 element.getPayoutProperty("payout")
             val txSet = element.getMutableHashSet("txSet")
-            val container = LedgerHandle.getContainer(ledgerHash)
 
-            container?.let {
-                Outcome.Ok(
-                    HashedTransactionOutputImpl(
-                        publicKey, prevCoinbase, payout,
-                        txSet, hash, it.hasher, it.encoder
-                    )
+            Outcome.Ok(
+                HashedTransactionOutputImpl(
+                    publicKey, prevCoinbase, payout,
+                    txSet, hash, container.hasher, container.encoder
                 )
-            } ?: Outcome.Error(
-                LoadFailure.NoMatchingContainer(ledgerHash)
             )
-
         }
 }

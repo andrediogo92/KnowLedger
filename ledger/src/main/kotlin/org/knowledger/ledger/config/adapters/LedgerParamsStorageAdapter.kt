@@ -35,7 +35,9 @@ internal object LedgerParamsStorageAdapter : ServiceStorageAdapter<LedgerParams>
                 "recalcTrigger", toStore.recalcTrigger
             ).setLinked(
                 "blockParams",
-                toStore.blockParams.persist(session)
+                BlockParamsStorageAdapter.persist(
+                    toStore.blockParams, session
+                )
             )
 
 
@@ -45,7 +47,9 @@ internal object LedgerParamsStorageAdapter : ServiceStorageAdapter<LedgerParams>
         tryOrLedgerUnknownFailure {
             val blockParams = element.getLinked("blockParams")
 
-            blockParams.loadBlockParams(ledgerHash).mapSuccess {
+            BlockParamsStorageAdapter.load(
+                ledgerHash, blockParams
+            ).mapSuccess {
                 LedgerParams(
                     element.getHashProperty("crypter"),
                     element.getStorageProperty("recalcTime"),

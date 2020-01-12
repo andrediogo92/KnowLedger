@@ -1,37 +1,39 @@
 package org.knowledger.ledger.storage.block
 
+import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.adapters.cacheStore
 import org.knowledger.ledger.adapters.cachedLoad
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
-import org.knowledger.ledger.database.StorageType
+import org.knowledger.ledger.database.adapters.SchemaProvider
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 
-internal object SABlockStorageAdapter : LedgerStorageAdapter<StorageAwareBlock> {
-    override val id: String
-        get() = BlockStorageAdapter.id
-
-    override val properties: Map<String, StorageType>
-        get() = BlockStorageAdapter.properties
+internal class SABlockStorageAdapter(
+    private val adapterManager: AdapterManager,
+    private val suBlockStorageAdapter: SUBlockStorageAdapter
+) : LedgerStorageAdapter<StorageAwareBlock>,
+    SchemaProvider by suBlockStorageAdapter {
 
     override fun store(
         toStore: StorageAwareBlock,
         session: ManagedSession
     ): StorageElement =
         session.cacheStore(
-            SUBlockStorageAdapter,
-            toStore,
-            toStore.block
+            suBlockStorageAdapter,
+            toStore, toStore.block
         )
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<StorageAwareBlock, LoadFailure> =
         element.cachedLoad(
-            ledgerHash, SUBlockStorageAdapter, ::StorageAwareBlock
-        )
+            ledgerHash, suBlockStorageAdapter
+        ) { block ->
+            StorageAwareBlock(
+                adapterManager, block
+            )
+        }
 }

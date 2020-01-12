@@ -1,20 +1,20 @@
 package org.knowledger.ledger.data.adapters
 
 import kotlinx.serialization.KSerializer
-import org.knowledger.ledger.crypto.hash.Hashers.SHA3512Hasher
+import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.LuminosityData
 import org.knowledger.ledger.data.LuminosityUnit
 import org.knowledger.ledger.database.NewInstanceSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
-import org.knowledger.ledger.database.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.results.Outcome
 
-object LuminosityDataAdapter : AbstractStorageAdapter<LuminosityData>(
+class LuminosityDataAdapter(hasher: Hashers) : AbstractStorageAdapter<LuminosityData>(
     LuminosityData::class.java,
-    SHA3512Hasher
+    hasher
 ) {
     override val serializer: KSerializer<LuminosityData>
         get() = LuminosityData.serializer()

@@ -5,23 +5,20 @@ import org.knowledger.ledger.adapters.cachedLoad
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
-import org.knowledger.ledger.database.StorageType
+import org.knowledger.ledger.database.adapters.SchemaProvider
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 
-internal object SAMerkleTreeStorageAdapter : LedgerStorageAdapter<StorageAwareMerkleTree> {
-    override val id: String
-        get() = MerkleTreeStorageAdapter.id
-    override val properties: Map<String, StorageType>
-        get() = MerkleTreeStorageAdapter.properties
-
+internal class SAMerkleTreeStorageAdapter(
+    private val suMerkleTreeStorageAdapter: SUMerkleTreeStorageAdapter
+) : LedgerStorageAdapter<StorageAwareMerkleTree>,
+    SchemaProvider by suMerkleTreeStorageAdapter {
     override fun store(
         toStore: StorageAwareMerkleTree, session: ManagedSession
     ): StorageElement =
         session.cacheStore(
-            SUMerkleTreeStorageAdapter,
+            suMerkleTreeStorageAdapter,
             toStore, toStore.merkleTree
         )
 
@@ -29,6 +26,6 @@ internal object SAMerkleTreeStorageAdapter : LedgerStorageAdapter<StorageAwareMe
         ledgerHash: Hash, element: StorageElement
     ): Outcome<StorageAwareMerkleTree, LoadFailure> =
         element.cachedLoad(
-            ledgerHash, SUMerkleTreeStorageAdapter, ::StorageAwareMerkleTree
+            ledgerHash, suMerkleTreeStorageAdapter, ::StorageAwareMerkleTree
         )
 }

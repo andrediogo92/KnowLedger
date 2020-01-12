@@ -8,30 +8,41 @@ import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.allValues
 import org.knowledger.ledger.results.flatMapSuccess
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.service.handles.LedgerHandle
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.loadTransactionOutput
-import org.knowledger.ledger.storage.adapters.persist
+import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 
-internal object SUCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseImpl> {
+internal class SUCoinbaseStorageAdapter(
+    private val container: LedgerInfo,
+    private val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
+) : LedgerStorageAdapter<HashedCoinbaseImpl> {
     override val id: String
-        get() = CoinbaseStorageAdapter.id
+        get() = "Coinbase"
+
     override val properties: Map<String, StorageType>
-        get() = CoinbaseStorageAdapter.properties
+        get() = mapOf(
+            "payoutTXOs" to StorageType.SET,
+            "payout" to StorageType.PAYOUT,
+            "hash" to StorageType.HASH,
+            "difficulty" to StorageType.DIFFICULTY,
+            "blockheight" to StorageType.LONG,
+            "extraNonce" to StorageType.LONG
+        )
 
     override fun store(
         toStore: HashedCoinbaseImpl, session: ManagedSession
     ): StorageElement =
         session
-            .newInstance(CoinbaseStorageAdapter.id)
+            .newInstance(id)
             .setElementSet(
                 "payoutTXOs",
                 toStore
                     .transactionOutputs
                     .map {
-                        it.persist(session)
+                        transactionOutputStorageAdapter.persist(
+                            it, session
+                        )
                     }.toSet()
             ).setDifficultyProperty(
                 "difficulty", toStore.difficulty, session
@@ -56,24 +67,22 @@ internal object SUCoinbaseStorageAdapter : LedgerStorageAdapter<HashedCoinbaseIm
             element
                 .getElementSet("payoutTXOs")
                 .map {
-                    it.loadTransactionOutput(ledgerHash)
+                    transactionOutputStorageAdapter.load(
+                        ledgerHash, it
+                    )
                 }.allValues()
                 .flatMapSuccess { txos ->
-                    val container = LedgerHandle.getContainer(ledgerHash)
-                    container?.let {
-                        Outcome.Ok(
-                            HashedCoinbaseImpl(
-                                txos.toMutableSet(),
-                                element.getPayoutProperty("payout"),
-                                difficulty, blockheight, extraNonce,
-                                it.coinbaseParams, it.formula,
-                                element.getHashProperty("hash"),
-                                it.hasher, it.encoder
-                            )
+                    Outcome.Ok(
+                        HashedCoinbaseImpl(
+                            txos.toMutableSet(),
+                            element.getPayoutProperty("payout"),
+                            difficulty, blockheight, extraNonce,
+                            container.coinbaseParams, container.formula,
+                            element.getHashProperty("hash"),
+                            container.hasher, container.encoder
                         )
-                    } ?: Outcome.Error(
-                        LoadFailure.NoMatchingContainer(ledgerHash)
                     )
                 }
         }
+
 }

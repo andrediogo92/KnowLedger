@@ -7,4 +7,4 @@ import org.knowledger.ledger.storage.LedgerContract
 
 internal interface LedgerStorageAdapter<T : LedgerContract> : StorageLoadable<T>,
                                                               EagerStorable<T>,
-                                                              SchemaProvider<T>
+                                                              SchemaProvider

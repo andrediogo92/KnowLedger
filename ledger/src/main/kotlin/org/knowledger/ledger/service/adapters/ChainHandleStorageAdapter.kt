@@ -1,7 +1,7 @@
 package org.knowledger.ledger.service.adapters
 
-import org.knowledger.ledger.config.adapters.loadChainId
-import org.knowledger.ledger.config.adapters.persist
+import org.knowledger.ledger.adapters.AdapterManager
+import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
@@ -9,10 +9,15 @@ import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.tryOrLedgerUnknownFailure
 import org.knowledger.ledger.results.zip
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.results.LedgerFailure
 
-internal object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
+internal class ChainHandleStorageAdapter(
+    private val adapterManager: AdapterManager,
+    private val container: LedgerInfo,
+    private val transactionPoolStorageAdapter: TransactionPoolStorageAdapter
+) : ServiceStorageAdapter<ChainHandle> {
     override val id: String
         get() = "ChainHandle"
 
@@ -31,10 +36,16 @@ internal object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
     ): StorageElement =
         session
             .newInstance(id)
-            .setLinked("id", toStore.id.persist(session))
+            .setLinked(
+                "id", ChainIdStorageAdapter.persist(
+                    toStore.id, session
+                )
+            )
             .setLinked(
                 "transactionPool",
-                toStore.transactionPool.persist(session)
+                transactionPoolStorageAdapter.persist(
+                    toStore.transactionPool, session
+                )
             ).setDifficultyProperty(
                 "difficultyTarget",
                 toStore.currentDifficulty,
@@ -60,8 +71,13 @@ internal object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
                 element.getLinked("transactionPool")
 
             zip(
-                id.loadChainId(ledgerHash),
-                transactionPool.loadTransactionPool(ledgerHash)
+                ChainIdStorageAdapter.load(
+                    ledgerHash, id
+                ),
+                transactionPoolStorageAdapter.load(
+                    ledgerHash,
+                    transactionPool
+                )
             ) { id, transactionPool ->
                 val difficulty =
                     element.getDifficultyProperty("difficultyTarget")
@@ -74,6 +90,7 @@ internal object ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
 
 
                 ChainHandle(
+                    container,
                     id,
                     transactionPool,
                     difficulty,

@@ -1,28 +1,33 @@
 package org.knowledger.ledger.storage.merkletree
 
 import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 
-internal object SUMerkleTreeStorageAdapter : LedgerStorageAdapter<MerkleTreeImpl> {
+internal class SUMerkleTreeStorageAdapter(
+    private val hasher: Hashers
+) : LedgerStorageAdapter<MerkleTreeImpl> {
     override val id: String
-        get() = MerkleTreeStorageAdapter.id
+        get() = "MerkleTree"
+
     override val properties: Map<String, StorageType>
-        get() = MerkleTreeStorageAdapter.properties
+        get() = mapOf(
+            "nakedTree" to StorageType.LISTEMBEDDED,
+            "levelIndexes" to StorageType.LISTEMBEDDED
+        )
 
     override fun store(
         toStore: MerkleTreeImpl, session: ManagedSession
     ): StorageElement =
         session
-            .newInstance(MerkleTreeStorageAdapter.id)
+            .newInstance(id)
             .setHashList(
                 "nakedTree", toStore.collapsedTree
             ).setStorageProperty(
@@ -37,16 +42,13 @@ internal object SUMerkleTreeStorageAdapter : LedgerStorageAdapter<MerkleTreeImpl
                 element.getMutableHashList("nakedTree")
             val levelIndex: MutableList<Int> =
                 element.getStorageProperty("levelIndexes")
-            LedgerHandle.getHasher(ledgerHash)?.let {
-                Outcome.Ok(
-                    MerkleTreeImpl(
-                        collapsedTree,
-                        levelIndex,
-                        it
-                    )
+
+            Outcome.Ok(
+                MerkleTreeImpl(
+                    collapsedTree,
+                    levelIndex,
+                    hasher
                 )
-            } ?: Outcome.Error(
-                LoadFailure.NonMatchingHasher(ledgerHash)
             )
         }
 }

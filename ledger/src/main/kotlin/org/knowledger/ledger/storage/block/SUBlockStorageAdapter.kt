@@ -9,20 +9,28 @@ import org.knowledger.ledger.results.allValues
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.results.zip
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
+import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
+import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.loadBlockHeader
-import org.knowledger.ledger.storage.adapters.loadCoinbase
-import org.knowledger.ledger.storage.adapters.loadMerkleTree
-import org.knowledger.ledger.storage.adapters.loadTransaction
-import org.knowledger.ledger.storage.adapters.persist
+import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
+import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
 
-internal object SUBlockStorageAdapter : LedgerStorageAdapter<BlockImpl> {
+internal class SUBlockStorageAdapter(
+    private val transactionStorageAdapter: TransactionStorageAdapter,
+    private val coinbaseStorageAdapter: CoinbaseStorageAdapter,
+    private val blockHeaderStorageAdapter: BlockHeaderStorageAdapter,
+    private val merkleTreeStorageAdapter: MerkleTreeStorageAdapter
+) : LedgerStorageAdapter<BlockImpl> {
     override val id: String
-        get() = BlockStorageAdapter.id
+        get() = "Block"
 
     override val properties: Map<String, StorageType>
-        get() = BlockStorageAdapter.properties
+        get() = mapOf(
+            "data" to StorageType.SET,
+            "payout" to StorageType.LINK,
+            "header" to StorageType.LINK,
+            "merkleTree" to StorageType.LINK
+        )
 
     override fun store(
         toStore: BlockImpl,
@@ -31,15 +39,27 @@ internal object SUBlockStorageAdapter : LedgerStorageAdapter<BlockImpl> {
         session
             .newInstance(id)
             .setElementSet(
-                "data", toStore.transactions.map {
-                    it.persist(session)
+                "data",
+                toStore.transactions.map {
+                    transactionStorageAdapter.persist(
+                        it, session
+                    )
                 }.toSet()
             ).setLinked(
-                "payout", toStore.coinbase.persist(session)
+                "payout",
+                coinbaseStorageAdapter.persist(
+                    toStore.coinbase, session
+                )
             ).setLinked(
-                "header", toStore.header.persist(session)
+                "header",
+                blockHeaderStorageAdapter.persist(
+                    toStore.header, session
+                )
             ).setLinked(
-                "merkleTree", toStore.merkleTree.persist(session)
+                "merkleTree",
+                merkleTreeStorageAdapter.persist(
+                    toStore.merkleTree, session
+                )
             )
 
 
@@ -56,16 +76,21 @@ internal object SUBlockStorageAdapter : LedgerStorageAdapter<BlockImpl> {
                     .getElementSet("data")
                     .asSequence()
                     .map {
-                        it.loadTransaction(ledgerHash)
+                        transactionStorageAdapter.load(
+                            ledgerHash, it
+                        )
                     }.allValues(),
-                payout.loadCoinbase(
-                    ledgerHash
+                coinbaseStorageAdapter.load(
+                    ledgerHash,
+                    payout
                 ),
-                header.loadBlockHeader(
-                    ledgerHash
+                blockHeaderStorageAdapter.load(
+                    ledgerHash,
+                    header
                 ),
-                merkleTree.loadMerkleTree(
-                    ledgerHash
+                merkleTreeStorageAdapter.load(
+                    ledgerHash,
+                    merkleTree
                 )
             )
             { data, coinbase, header, merkleTree ->

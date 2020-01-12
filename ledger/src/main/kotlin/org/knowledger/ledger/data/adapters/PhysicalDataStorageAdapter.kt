@@ -1,5 +1,6 @@
 package org.knowledger.ledger.data.adapters
 
+import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.GeoCoords
 import org.knowledger.ledger.data.PhysicalData
@@ -12,12 +13,13 @@ import org.knowledger.ledger.results.intoLoad
 import org.knowledger.ledger.results.mapFailure
 import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import java.time.Instant
 
-object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
+internal class PhysicalDataStorageAdapter(
+    private val adapterManager: AdapterManager
+) : LedgerStorageAdapter<PhysicalData> {
     override val id: String
         get() = "PhysicalData"
 
@@ -34,7 +36,7 @@ object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
     override fun store(
         toStore: PhysicalData, session: ManagedSession
     ): StorageElement =
-        LedgerHandle.getStorageAdapter(
+        adapterManager.findAdapter(
             toStore.data.javaClass
         )?.let {
             session
@@ -58,7 +60,7 @@ object PhysicalDataStorageAdapter : LedgerStorageAdapter<PhysicalData> {
             val dataElem = element.getLinked("value")
             val dataName = dataElem.schema
             val loader = dataName?.let {
-                LedgerHandle.getStorageAdapter(dataName)
+                adapterManager.findAdapter(dataName)
             }
             if (dataName != null && loader != null) {
                 loader

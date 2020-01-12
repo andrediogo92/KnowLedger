@@ -1,5 +1,6 @@
 package org.knowledger.ledger.service.adapters
 
+import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
@@ -11,13 +12,16 @@ import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.results.tryOrLedgerUnknownFailure
 import org.knowledger.ledger.service.pools.transaction.PoolTransaction
 import org.knowledger.ledger.service.results.LedgerFailure
-import org.knowledger.ledger.storage.adapters.loadTransaction
-import org.knowledger.ledger.storage.adapters.persist
+import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
 
-internal object PoolTransactionStorageAdapter : ServiceStorageAdapter<PoolTransaction> {
-    override val id: String = "PoolTransaction"
-    override val properties: Map<String, StorageType> =
-        mapOf(
+internal class PoolTransactionStorageAdapter(
+    private val adapterManager: AdapterManager,
+    private val transactionStorageAdapter: TransactionStorageAdapter
+) : ServiceStorageAdapter<PoolTransaction> {
+    override val id: String
+        get() = "PoolTransaction"
+    override val properties: Map<String, StorageType>
+        get() = mapOf(
             "transaction" to StorageType.LINK,
             "confirmed" to StorageType.BOOLEAN
         )
@@ -28,8 +32,12 @@ internal object PoolTransactionStorageAdapter : ServiceStorageAdapter<PoolTransa
     ): StorageElement =
         session
             .newInstance(id)
-            .setLinked("transaction", toStore.transaction.persist(session))
-            .setStorageProperty("confirmed", toStore.confirmed)
+            .setLinked(
+                "transaction",
+                transactionStorageAdapter.persist(
+                    toStore.transaction, session
+                )
+            ).setStorageProperty("confirmed", toStore.confirmed)
 
     override fun load(
         ledgerHash: Hash,
@@ -39,8 +47,11 @@ internal object PoolTransactionStorageAdapter : ServiceStorageAdapter<PoolTransa
             val transaction = element.getLinked("transaction")
             val confirmed: Boolean = element.getStorageProperty("confirmed")
 
-            transaction.loadTransaction(ledgerHash).mapSuccess {
+            transactionStorageAdapter.load(
+                ledgerHash, transaction
+            ).mapSuccess {
                 PoolTransaction(
+                    adapterManager,
                     it,
                     confirmed
                 )

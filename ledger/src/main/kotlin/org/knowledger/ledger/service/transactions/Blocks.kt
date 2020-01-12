@@ -5,7 +5,6 @@ import org.knowledger.ledger.database.query.UnspecificQuery
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.Block
-import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 
 // ------------------------------
 // Block transactions.
@@ -17,7 +16,7 @@ internal fun PersistenceWrapper.getBlockByBlockHeight(
     chainHash: Hash,
     height: Long
 ): Outcome<Block, LoadFailure> =
-    BlockStorageAdapter.let {
+    blockStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
                 """
@@ -41,7 +40,7 @@ internal fun PersistenceWrapper.getBlockByHeaderHash(
     chainHash: Hash,
     hash: Hash
 ): Outcome<Block, LoadFailure> =
-    BlockStorageAdapter.let {
+    blockStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
                 """
@@ -65,7 +64,7 @@ internal fun PersistenceWrapper.getBlockByPrevHeaderHash(
     chainHash: Hash,
     hash: Hash
 ): Outcome<Block, LoadFailure> =
-    BlockStorageAdapter.let {
+    blockStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
                 """
@@ -88,7 +87,7 @@ internal fun PersistenceWrapper.getBlockByPrevHeaderHash(
 internal fun PersistenceWrapper.getLatestBlock(
     chainHash: Hash
 ): Outcome<Block, LoadFailure> =
-    BlockStorageAdapter.let {
+    blockStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
                 """
@@ -110,7 +109,7 @@ internal fun PersistenceWrapper.getBlockListByBlockHeightInterval(
     startInclusive: Long,
     endInclusive: Long
 ): Outcome<Sequence<Block>, LoadFailure> =
-    BlockStorageAdapter.let {
+    blockStorageAdapter.let {
         queryResults(
             UnspecificQuery(
                 """
@@ -133,7 +132,7 @@ internal fun PersistenceWrapper.getBlockListByHash(
     chainHash: Hash, start: Hash,
     chunkSize: Long
 ): Outcome<Sequence<Block>, LoadFailure> =
-    BlockStorageAdapter.let {
+    blockStorageAdapter.let {
         queryResults(
             UnspecificQuery(
                 """

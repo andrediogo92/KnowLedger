@@ -1,6 +1,5 @@
 package org.knowledger.ledger.config.chainid
 
-import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
@@ -12,10 +11,15 @@ import org.knowledger.ledger.service.results.LedgerFailure
 
 internal object SUChainIdStorageAdapter : ServiceStorageAdapter<ChainIdImpl> {
     override val id: String
-        get() = ChainIdStorageAdapter.id
+        get() = "ChainId"
 
     override val properties: Map<String, StorageType>
-        get() = ChainIdStorageAdapter.properties
+        get() = mapOf(
+            "tag" to StorageType.HASH,
+            "ledgerHash" to StorageType.HASH,
+            "hash" to StorageType.HASH
+        )
+
 
     override fun store(
         toStore: ChainIdImpl, session: ManagedSession

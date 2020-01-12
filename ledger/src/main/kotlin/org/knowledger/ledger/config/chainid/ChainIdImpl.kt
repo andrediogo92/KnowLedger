@@ -7,7 +7,7 @@ import kotlinx.serialization.UseSerializers
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.Hasher
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.serial.HashSerializable
 
@@ -17,7 +17,7 @@ internal data class ChainIdImpl internal constructor(
     override val hash: Hash
 ) : ChainId {
     internal constructor(
-        hasher: Hasher, encoder: BinaryFormat,
+        hasher: Hashers, encoder: BinaryFormat,
         tag: Tag, ledgerHash: Hash
     ) : this(
         tag, ledgerHash,
@@ -59,7 +59,7 @@ internal data class ChainIdImpl internal constructor(
 
     companion object {
         private fun generateChainHandleHash(
-            hasher: Hasher, encoder: BinaryFormat,
+            hasher: Hashers, encoder: BinaryFormat,
             tag: Tag, ledgerHash: Hash
         ): Hash =
             ChainIdBuilder(tag, ledgerHash).digest(

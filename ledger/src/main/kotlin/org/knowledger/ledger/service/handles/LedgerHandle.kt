@@ -2,18 +2,15 @@ package org.knowledger.ledger.service.handles
 
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.base64.base64DecodedToHash
-import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.config.LedgerId
+import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.base.data.DefaultDiff
 import org.knowledger.ledger.core.base.hash.classDigest
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.LedgerData
-import org.knowledger.ledger.data.Tag
-import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
 import org.knowledger.ledger.database.StorageID
-import org.knowledger.ledger.database.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.database.results.QueryFailure
 import org.knowledger.ledger.results.Failable
 import org.knowledger.ledger.results.Outcome
@@ -43,7 +40,7 @@ class LedgerHandle internal constructor(
     builder: AbstractLedgerBuilder
 ) : ServiceClass {
     private val pw: PersistenceWrapper = builder.persistenceWrapper
-    val ledgerInfo: LedgerInfo = builder.ledgerInfo
+    internal val container: LedgerInfo = builder.ledgerInfo
     val id: LedgerId = builder.ledgerInfo.ledgerId
     val ledgerHash = id.hash
     val hasher: Hashers = builder.hasher
@@ -53,7 +50,6 @@ class LedgerHandle internal constructor(
 
     fun close() {
         pw.closeCurrentSession()
-        containers.remove(ledgerHash)
     }
 
     val knownChainTypes: Outcome<Sequence<String>, QueryFailure>
@@ -78,7 +74,7 @@ class LedgerHandle internal constructor(
     fun addStorageAdapter(
         adapter: AbstractStorageAdapter<out LedgerData>
     ): Boolean =
-        dataAdapters.add(adapter).also {
+        pw.adapterManager.addAdapter(adapter).also {
             if (it) {
                 pw.registerSchema(adapter)
             }
@@ -88,7 +84,7 @@ class LedgerHandle internal constructor(
     fun <T : LedgerData> getChainHandleOf(
         clazz: Class<in T>
     ): Outcome<ChainHandle, LedgerFailure> =
-        if (dataAdapters.any { it.clazz == clazz }) {
+        if (pw.adapterManager.hasAdapter(clazz)) {
             pw.getChainHandle(clazz.classDigest(hasher))
         } else {
             Outcome.Error(
@@ -101,7 +97,7 @@ class LedgerHandle internal constructor(
     fun <T : LedgerData> getChainHandleOf(
         adapter: AbstractStorageAdapter<out T>
     ): Outcome<ChainHandle, LedgerFailure> =
-        if (dataAdapters.any { it.id == adapter.id }) {
+        if (pw.adapterManager.hasAdapter(adapter.id)) {
             pw.getChainHandle(
                 adapter.id
             )
@@ -118,9 +114,8 @@ class LedgerHandle internal constructor(
         adapter: AbstractStorageAdapter<out T>
     ): Outcome<ChainHandle, LedgerFailure> =
         ChainHandle(
-            adapter.id.base64DecodedToHash(),
-            ledgerHash,
-            hasher, encoder
+            container,
+            adapter.id.base64DecodedToHash()
         ).let { ch ->
             addStorageAdapter(adapter)
             pw.tryAddChainHandle(ch).fold(
@@ -210,51 +205,6 @@ class LedgerHandle internal constructor(
     companion object {
         private val knownFormulas =
             mutableSetOf<DataFormula>(DefaultDiff)
-
-        private val dataAdapters =
-            mutableSetOf<AbstractStorageAdapter<out LedgerData>>(
-                DummyDataStorageAdapter
-            )
-
-        internal val containers =
-            mutableMapOf<Hash, LedgerInfo>()
-
-        fun getStorageAdapter(
-            dataName: Tag
-        ): AbstractStorageAdapter<out LedgerData>? =
-            dataAdapters.find {
-                it.id == dataName.base64Encoded()
-            }
-
-        fun getStorageAdapter(
-            dataName: String
-        ): AbstractStorageAdapter<out LedgerData>? =
-            dataAdapters.find {
-                it.id == dataName
-            }
-
-        fun getStorageAdapter(
-            clazz: Class<out LedgerData>
-        ): AbstractStorageAdapter<out LedgerData>? =
-            dataAdapters.find {
-                it.clazz == clazz
-            }
-
-        internal fun getContainer(
-            ledgerHash: Hash
-        ): LedgerInfo? =
-            containers[ledgerHash]
-
-
-        internal fun getHasher(
-            ledgerHash: Hash
-        ): Hashers? =
-            containers[ledgerHash]?.hasher
-
-        internal fun getFormula(
-            ledgerHash: Hash
-        ): DataFormula? =
-            containers[ledgerHash]?.formula
 
         fun registerFormula(
             formula: DataFormula

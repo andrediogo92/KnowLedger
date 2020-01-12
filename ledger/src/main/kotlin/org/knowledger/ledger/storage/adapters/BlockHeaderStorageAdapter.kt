@@ -3,37 +3,36 @@ package org.knowledger.ledger.storage.adapters
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
-import org.knowledger.ledger.database.StorageType
+import org.knowledger.ledger.database.adapters.SchemaProvider
 import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.deadCode
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.BlockHeader
-import org.knowledger.ledger.storage.blockheader.loadBlockHeaderByImpl
-import org.knowledger.ledger.storage.blockheader.store
+import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
+import org.knowledger.ledger.storage.blockheader.SABlockHeaderStorageAdapter
+import org.knowledger.ledger.storage.blockheader.SUBlockHeaderStorageAdapter
+import org.knowledger.ledger.storage.blockheader.StorageAwareBlockHeader
 
-internal object BlockHeaderStorageAdapter : LedgerStorageAdapter<BlockHeader> {
-    override val id: String
-        get() = "BlockHeader"
-
-    override val properties: Map<String, StorageType>
-        get() = mapOf(
-            "chainId" to StorageType.LINK,
-            "hash" to StorageType.HASH,
-            "merkleRoot" to StorageType.HASH,
-            "previousHash" to StorageType.HASH,
-            "blockParams" to StorageType.LINK,
-            "seconds" to StorageType.LONG,
-            "nonce" to StorageType.LONG
-        )
-
+internal class BlockHeaderStorageAdapter(
+    private val suBlockHeaderStorageAdapter: SUBlockHeaderStorageAdapter,
+    private val saBlockHeaderStorageAdapter: SABlockHeaderStorageAdapter
+) : LedgerStorageAdapter<BlockHeader>,
+    SchemaProvider by suBlockHeaderStorageAdapter {
     override fun store(
         toStore: BlockHeader,
         session: ManagedSession
     ): StorageElement =
-        toStore.store(session)
+        when (toStore) {
+            is StorageAwareBlockHeader ->
+                saBlockHeaderStorageAdapter.store(toStore, session)
+            is HashedBlockHeaderImpl ->
+                suBlockHeaderStorageAdapter.store(toStore, session)
+            else -> deadCode()
+        }
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<BlockHeader, LoadFailure> =
-        element.loadBlockHeaderByImpl(ledgerHash)
+        saBlockHeaderStorageAdapter.load(ledgerHash, element)
 
 }

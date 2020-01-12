@@ -1,13 +1,11 @@
 package org.knowledger.ledger.service.transactions
 
+import org.knowledger.ledger.adapters.AdapterCollection
+import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.adapters.EagerStorable
-import org.knowledger.ledger.config.adapters.BlockParamsStorageAdapter
-import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
-import org.knowledger.ledger.config.adapters.LedgerIdStorageAdapter
-import org.knowledger.ledger.config.adapters.LedgerParamsStorageAdapter
+import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.LedgerData
-import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
 import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.database.ManagedSchemas
 import org.knowledger.ledger.database.ManagedSession
@@ -21,15 +19,13 @@ import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.database.results.QueryFailure
 import org.knowledger.ledger.results.*
 import org.knowledger.ledger.service.Identity
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.ServiceClass
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
-import org.knowledger.ledger.service.adapters.LedgerConfigStorageAdapter
 import org.knowledger.ledger.service.adapters.PoolTransactionStorageAdapter
 import org.knowledger.ledger.service.adapters.ServiceLoadable
 import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
-import org.knowledger.ledger.service.handles.LedgerHandle
-import org.knowledger.ledger.service.handles.builder.LedgerConfig
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.service.results.UpdateFailure
@@ -42,41 +38,25 @@ import org.knowledger.ledger.storage.adapters.*
  * A Thread-safe wrapper into a DB context
  * for a ledger.
  */
-internal data class PersistenceWrapper(
+internal class PersistenceWrapper(
     private val ledgerHash: Hash,
     private val session: ManagedSession
-) : EntityStore, ServiceClass {
+) : EntityStore, ServiceClass, AdapterCollection {
+    internal lateinit var adapterManager: AdapterManager
+
     private val schemas = session.managedSchemas
     internal val isClosed
         get() = session.isClosed
 
+    internal fun initializeAdapters(container: LedgerInfo) {
+        adapterManager = AdapterManager(container)
+    }
+
     internal fun registerDefaultSchemas(
     ) {
-        val schemas: Set<SchemaProvider<out Any>> =
-            setOf(
-                //Configuration Adapters
-                BlockParamsStorageAdapter,
-                ChainIdStorageAdapter,
-                CoinbaseStorageAdapter,
-                LedgerConfigStorageAdapter,
-                LedgerIdStorageAdapter,
-                LedgerParamsStorageAdapter,
-                //ServiceAdapters
-                ChainHandleStorageAdapter,
-                IdentityStorageAdapter,
-                TransactionPoolStorageAdapter,
-                PoolTransactionStorageAdapter,
-                //StorageAdapters
-                BlockHeaderStorageAdapter,
-                BlockStorageAdapter,
-                CoinbaseStorageAdapter,
-                MerkleTreeStorageAdapter,
-                PhysicalDataStorageAdapter,
-                TransactionOutputStorageAdapter,
-                TransactionStorageAdapter,
-                //DataAdapters
-                DummyDataStorageAdapter
-            )
+        val schemas = defaultAdapters.also {
+            it.addAll(dataAdapters)
+        }
         schemas.forEach {
             registerSchema(
                 it
@@ -85,7 +65,7 @@ internal data class PersistenceWrapper(
     }
 
     internal fun registerSchema(
-        schemaProvider: SchemaProvider<out Any>
+        schemaProvider: SchemaProvider
     ): PersistenceWrapper =
         apply {
             if (!schemas.hasSchema(schemaProvider.id)) {
@@ -103,7 +83,7 @@ internal data class PersistenceWrapper(
 
     private fun createSchema(
         schema: ManagedSchemas,
-        provider: SchemaProvider<out Any>
+        provider: SchemaProvider
     ) {
         val cl = schema.createSchema(provider.id)
         cl?.let {
@@ -116,7 +96,7 @@ internal data class PersistenceWrapper(
 
     private fun replaceSchema(
         schema: ManagedSchemas,
-        provider: SchemaProvider<out Any>
+        provider: SchemaProvider
     ) {
         val cl = schema.getSchema(provider.id)
         cl?.let {
@@ -494,49 +474,72 @@ internal data class PersistenceWrapper(
     //
     // ------------------------------
 
-
     internal fun getLedgerIdentityByTag(
         id: String
     ): Outcome<Identity, LoadFailure> =
         IdentityStorageAdapter.let {
-            queryUniqueResult(
-                UnspecificQuery(
-                    """
-                        SELECT 
-                        FROM ${it.id}
-                        WHERE id = :id
-                    """.trimIndent(),
-                    mapOf(
-                        "id" to id
-                    )
-                ),
-                it
-            )
-        }
-
-    internal fun getLedgerHandleByHash(
-        hash: Hash
-    ): Outcome<LedgerConfig, LedgerHandle.Failure> =
-        session.query(
-            UnspecificQuery(
+            val query = UnspecificQuery(
                 """
                     SELECT 
-                    FROM ${LedgerConfigStorageAdapter.id}
-                    WHERE hashId = :hashId
+                    FROM ${it.id}
+                    WHERE id = :id
                 """.trimIndent(),
                 mapOf(
-                    "hashId" to hash.bytes
+                    "id" to id
                 )
             )
-        ).let {
-            if (it.hasNext()) {
-                LedgerConfigStorageAdapter.load(
-                    hash, it.next().element
-                )
-            } else {
-                Outcome.Error(
-                    LedgerHandle.Failure.NonExistentLedger
-                )
+            tryOrLoadUnknownFailure {
+                session.query(query).use {
+                    if (hasNext()) {
+                        it.load(
+                            ledgerHash,
+                            next().element
+                        )
+                    } else {
+                        Outcome.Error<LoadFailure>(
+                            LoadFailure.NonExistentData(
+                                "Empty ResultSet for ${query.query}"
+                            )
+                        )
+                    }
+                }
             }
         }
+
+
+    override val blockStorageAdapter: BlockStorageAdapter
+        get() = adapterManager.blockStorageAdapter
+
+    override val blockHeaderStorageAdapter: BlockHeaderStorageAdapter
+        get() = adapterManager.blockHeaderStorageAdapter
+
+    override val coinbaseStorageAdapter: CoinbaseStorageAdapter
+        get() = adapterManager.coinbaseStorageAdapter
+
+    override val merkleTreeStorageAdapter: MerkleTreeStorageAdapter
+        get() = adapterManager.merkleTreeStorageAdapter
+
+    override val physicalDataStorageAdapter: PhysicalDataStorageAdapter
+        get() = adapterManager.physicalDataStorageAdapter
+
+    override val transactionStorageAdapter: TransactionStorageAdapter
+        get() = adapterManager.transactionStorageAdapter
+
+    override val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
+        get() = adapterManager.transactionOutputStorageAdapter
+
+    override val poolTransactionStorageAdapter: PoolTransactionStorageAdapter
+        get() = adapterManager.poolTransactionStorageAdapter
+
+    override val transactionPoolStorageAdapter: TransactionPoolStorageAdapter
+        get() = adapterManager.transactionPoolStorageAdapter
+
+    override val chainHandleStorageAdapter: ChainHandleStorageAdapter
+        get() = adapterManager.chainHandleStorageAdapter
+
+    override val dataAdapters: Set<AbstractStorageAdapter<out LedgerData>>
+        get() = adapterManager.dataAdapters
+
+    override val defaultAdapters: MutableSet<SchemaProvider>
+        get() = adapterManager.defaultAdapters
 }

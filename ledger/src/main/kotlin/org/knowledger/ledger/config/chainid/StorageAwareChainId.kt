@@ -3,7 +3,7 @@ package org.knowledger.ledger.config.chainid
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.Hasher
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageID
@@ -30,7 +30,7 @@ internal data class StorageAwareChainId(
 
     internal constructor(
         tag: Tag, ledgerHash: Hash,
-        hasher: Hasher, encoder: BinaryFormat
+        hasher: Hashers, encoder: BinaryFormat
     ) : this(
         ChainIdImpl(
             hasher, encoder,

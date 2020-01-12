@@ -8,45 +8,26 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.knowledger.collections.mapToSet
-import org.knowledger.ledger.config.adapters.BlockParamsStorageAdapter
-import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
-import org.knowledger.ledger.config.adapters.LedgerIdStorageAdapter
-import org.knowledger.ledger.config.adapters.LedgerParamsStorageAdapter
 import org.knowledger.ledger.core.data.PhysicalData
-import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.data.TemperatureData
 import org.knowledger.ledger.data.TrafficFlowData
-import org.knowledger.ledger.data.adapters.DummyDataStorageAdapter
-import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.data.adapters.TemperatureDataStorageAdapter
 import org.knowledger.ledger.data.adapters.TrafficFlowDataStorageAdapter
 import org.knowledger.ledger.database.DatabaseMode
 import org.knowledger.ledger.database.DatabaseType
-import org.knowledger.ledger.database.adapters.SchemaProvider
 import org.knowledger.ledger.database.orient.OrientDatabase
 import org.knowledger.ledger.database.orient.OrientDatabaseInfo
 import org.knowledger.ledger.database.orient.OrientSession
 import org.knowledger.ledger.database.query.UnspecificQuery
 import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.results.unwrap
-import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
-import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
-import org.knowledger.ledger.service.adapters.LedgerConfigStorageAdapter
-import org.knowledger.ledger.service.adapters.PoolTransactionStorageAdapter
-import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.transactions.getTransactionByHash
 import org.knowledger.ledger.service.transactions.getTransactionsByClass
 import org.knowledger.ledger.service.transactions.getTransactionsFromAgent
 import org.knowledger.ledger.service.transactions.getTransactionsOrderedByTimestamp
-import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
-import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
-import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
-import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.knowledger.testing.ledger.appendByLine
@@ -81,55 +62,38 @@ class TestOrientDatabase {
         .unwrap()
 
     val hash = ledger.ledgerHash
+    val hasher = ledger.hasher
+    val temperatureDataStorageAdapter = TemperatureDataStorageAdapter(hasher)
 
-    val temperatureChain: ChainHandle = ledger.registerNewChainHandleOf(
-        TemperatureDataStorageAdapter
-    ).unwrap()
+    val temperatureChain: ChainHandle =
+        ledger.registerNewChainHandleOf(
+            temperatureDataStorageAdapter
+        ).unwrap()
 
     val chainId = temperatureChain.id
     val chainHash = temperatureChain.id.hash
-    internal val pw = LedgerHandle.getContainer(hash)!!.persistenceWrapper
+    private val pw = ledger.container.persistenceWrapper
+    private val transactionStorageAdapter = pw.transactionStorageAdapter
     val transactions = generateXTransactions(id, 20).toSortedSet()
 
 
     @BeforeAll
     fun `initialize DB`() {
         transactions.forEach {
-            pw.persistEntity(it, TransactionStorageAdapter)
+            pw.persistEntity(it, transactionStorageAdapter)
         }
     }
 
     @Nested
     inner class Session {
-        val tid = TransactionStorageAdapter.id
+        val tid = pw.transactionStorageAdapter.id
 
 
         @Nested
         inner class Clusters {
-            val adapters: List<SchemaProvider<out Any>> = listOf(
-                //Configuration Adapters
-                BlockParamsStorageAdapter,
-                ChainIdStorageAdapter,
-                CoinbaseStorageAdapter,
-                LedgerConfigStorageAdapter,
-                LedgerIdStorageAdapter,
-                LedgerParamsStorageAdapter,
-                //ServiceAdapters
-                ChainHandleStorageAdapter,
-                IdentityStorageAdapter,
-                TransactionPoolStorageAdapter,
-                PoolTransactionStorageAdapter,
-                //StorageAdapters
-                BlockHeaderStorageAdapter,
-                BlockStorageAdapter,
-                CoinbaseStorageAdapter,
-                MerkleTreeStorageAdapter,
-                PhysicalDataStorageAdapter,
-                TransactionOutputStorageAdapter,
-                TransactionStorageAdapter,
-                //DataAdapters
-                DummyDataStorageAdapter
-            )
+            val adapters = pw.defaultAdapters.also {
+                it.addAll(pw.dataAdapters)
+            }
 
             @Test
             fun `created clusters`() {
@@ -194,7 +158,7 @@ class TestOrientDatabase {
             ).toList()
             assertThat(present.size).isEqualTo(transactions.size)
             val schemaProps =
-                TransactionStorageAdapter.properties.keys.toTypedArray()
+                transactionStorageAdapter.properties.keys.toTypedArray()
             assertAll {
                 present.forEach {
                     assertThat(
@@ -259,10 +223,10 @@ class TestOrientDatabase {
 
     @Nested
     inner class Handles {
-        val hasher: Hashers = LedgerHandle.getHasher(hash)!!
+        val trafficFlowDataStorageAdapter = TrafficFlowDataStorageAdapter(hasher)
 
         val trafficChain: ChainHandle = ledger.registerNewChainHandleOf(
-            TrafficFlowDataStorageAdapter
+            trafficFlowDataStorageAdapter
         ).unwrap()
 
         @Nested

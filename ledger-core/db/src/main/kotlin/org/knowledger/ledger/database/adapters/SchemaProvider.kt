@@ -7,7 +7,7 @@ import org.knowledger.ledger.database.StorageType
  * persisent storage. It's properties must abide by possible
  * types defined by [StorageType].
  */
-interface SchemaProvider<T> {
+interface SchemaProvider {
     val id: String
     val properties: Map<String, StorageType>
 }

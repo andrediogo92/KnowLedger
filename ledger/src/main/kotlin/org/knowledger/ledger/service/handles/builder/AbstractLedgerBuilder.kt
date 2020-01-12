@@ -3,7 +3,6 @@ package org.knowledger.ledger.service.handles.builder
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.modules.SerialModule
 import org.knowledger.base64.base64Encoded
-import org.knowledger.ledger.core.base.data.DefaultDiff
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
@@ -80,8 +79,6 @@ abstract class AbstractLedgerBuilder {
             session = db?.newManagedSession(hash.base64Encoded())
         }
         persistenceWrapper = PersistenceWrapper(hash, session!!)
-        persistenceWrapper.registerDefaultSchemas()
-
     }
 
     internal fun setCustomDB(
@@ -90,21 +87,6 @@ abstract class AbstractLedgerBuilder {
     ) {
         this.db = db
         this.session = session
-    }
-
-    protected fun addToContainers() {
-        ledgerInfo = LedgerInfo(
-            ledgerId = ledgerConfig.ledgerId,
-            hasher = hasher,
-            ledgerParams = ledgerConfig.ledgerParams,
-            coinbaseParams = ledgerConfig.coinbaseParams,
-            serialModule = serialModule,
-            persistenceWrapper = persistenceWrapper,
-            formula = DefaultDiff,
-            encoder = encoder
-        )
-        val hash = ledgerConfig.ledgerId.hash
-        LedgerHandle.containers[hash] = ledgerInfo
     }
 
     @PublishedApi

@@ -1,6 +1,7 @@
 package org.knowledger.ledger.service.handles
 
 import kotlinx.serialization.BinaryFormat
+import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
@@ -15,7 +16,7 @@ import org.knowledger.ledger.core.base.data.Difficulty.Companion.MAX_DIFFICULTY
 import org.knowledger.ledger.core.base.data.Difficulty.Companion.MIN_DIFFICULTY
 import org.knowledger.ledger.core.base.hash.Hash.Companion.emptyHash
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.Hasher
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Tag
@@ -26,11 +27,9 @@ import org.knowledger.ledger.results.flatMapSuccess
 import org.knowledger.ledger.results.fold
 import org.knowledger.ledger.results.intoQuery
 import org.knowledger.ledger.results.mapSuccess
-import org.knowledger.ledger.results.unwrap
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.ServiceClass
-import org.knowledger.ledger.service.handles.LedgerHandle.Companion.getContainer
 import org.knowledger.ledger.service.pools.block.BlockPool
 import org.knowledger.ledger.service.pools.block.BlockPoolImpl
 import org.knowledger.ledger.service.pools.transaction.StorageAwareTransactionPool
@@ -41,7 +40,6 @@ import org.knowledger.ledger.service.transactions.*
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 import org.knowledger.ledger.storage.block.BlockImpl
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
@@ -55,28 +53,20 @@ import java.time.ZonedDateTime
  * A facade into useful methods for managing a
  * unique chain in the ledger represented by the [id].
  */
-data class ChainHandle internal constructor(
+class ChainHandle internal constructor(
+    val container: LedgerInfo,
     val id: ChainId,
     internal val transactionPool: TransactionPool =
-        StorageAwareTransactionPool(id)
+        StorageAwareTransactionPool(container.persistenceWrapper.adapterManager, id)
 ) : ServiceClass {
     val chainHash = id.hash
-    private val hasher: Hasher
-    private val encoder: BinaryFormat
-    private val pw: PersistenceWrapper
+    private val hasher: Hashers = container.hasher
+    private val encoder: BinaryFormat = container.encoder
+    private val pw: PersistenceWrapper = container.persistenceWrapper
+    internal val adapterManager: AdapterManager = container.persistenceWrapper.adapterManager
     private val blockPool: BlockPool = BlockPoolImpl(id)
-    val ledgerParams: LedgerParams
-    val coinbaseParams: CoinbaseParams
-
-
-    init {
-        val container = containerOrThrow(id)
-        hasher = container.hasher
-        pw = container.persistenceWrapper
-        ledgerParams = container.ledgerParams
-        encoder = container.encoder
-        coinbaseParams = container.coinbaseParams
-    }
+    val ledgerParams: LedgerParams = container.ledgerParams
+    val coinbaseParams: CoinbaseParams = container.coinbaseParams
 
 
     private var difficultyTarget =
@@ -113,22 +103,22 @@ data class ChainHandle internal constructor(
 
 
     internal constructor(
-        tag: Tag,
-        ledgerHash: Hash,
-        hasher: Hasher,
-        encoder: BinaryFormat
+        container: LedgerInfo,
+        tag: Tag
     ) : this(
-        StorageAwareChainId(tag, ledgerHash, hasher, encoder)
+        container,
+        StorageAwareChainId(tag, container.ledgerId.hash, container.hasher, container.encoder)
     )
 
 
     internal constructor(
+        container: LedgerInfo,
         id: ChainId,
         transactionPool: TransactionPool,
         difficulty: Difficulty,
         lastRecalc: Long,
         currentBlockheight: Long
-    ) : this(id, transactionPool) {
+    ) : this(container, id, transactionPool) {
         this.difficultyTarget = difficulty
         this.lastRecalc = lastRecalc
         this.blockheight = currentBlockheight
@@ -362,7 +352,7 @@ data class ChainHandle internal constructor(
                 if (it) {
                     pw.persistEntity(
                         block,
-                        BlockStorageAdapter
+                        adapterManager.blockStorageAdapter
                     ).mapSuccess {
                         true
                     }
@@ -500,18 +490,19 @@ data class ChainHandle internal constructor(
         val identity = Identity("")
 
         fun getOriginHeader(
+            container: LedgerInfo,
             chainId: ChainId
         ): BlockHeader =
-            originHeader(chainId, containerOrThrow(chainId))
+            originHeader(container, chainId)
 
         private fun originHeader(
-            chainId: ChainId,
-            info: LedgerInfo
+            container: LedgerInfo,
+            chainId: ChainId
         ): BlockHeader =
             HashedBlockHeaderImpl(
                 chainId,
-                info.hasher,
-                info.encoder,
+                container.hasher,
+                container.encoder,
                 emptyHash,
                 BlockParams(),
                 emptyHash,
@@ -525,9 +516,9 @@ data class ChainHandle internal constructor(
 
 
         fun getOriginBlock(
+            container: LedgerInfo,
             chainId: ChainId
         ): Block {
-            val container = containerOrThrow(chainId)
             return BlockImpl(
                 sortedSetOf(),
                 HashedCoinbaseImpl(
@@ -535,19 +526,10 @@ data class ChainHandle internal constructor(
                     0,
                     container
                 ),
-                originHeader(chainId, container),
+                originHeader(container, chainId),
                 MerkleTreeImpl(hasher = container.hasher)
             )
         }
-
-        private fun containerOrThrow(
-            chainId: ChainId
-        ): LedgerInfo =
-            getContainer(
-                chainId.ledgerHash
-            ) ?: LoadFailure.NoMatchingContainer(
-                chainId.ledgerHash
-            ).unwrap()
     }
 }
 

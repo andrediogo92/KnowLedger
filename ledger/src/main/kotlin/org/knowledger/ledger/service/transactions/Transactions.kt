@@ -6,7 +6,6 @@ import org.knowledger.ledger.database.query.UnspecificQuery
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
 import java.security.PublicKey
 
 
@@ -20,7 +19,7 @@ internal fun PersistenceWrapper.getTransactionsFromAgent(
     tag: String,
     publicKey: PublicKey
 ): Outcome<Sequence<Transaction>, LoadFailure> =
-    TransactionStorageAdapter.let {
+    transactionStorageAdapter.let {
         queryResults(
             UnspecificQuery(
                 """
@@ -51,7 +50,7 @@ internal fun PersistenceWrapper.getTransactionByHash(
     tag: String,
     hash: Hash
 ): Outcome<Transaction, LoadFailure> =
-    TransactionStorageAdapter.let {
+    transactionStorageAdapter.let {
         queryUniqueResult(
             UnspecificQuery(
                 """
@@ -80,7 +79,7 @@ internal fun PersistenceWrapper.getTransactionByHash(
 internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
     tag: String
 ): Outcome<Sequence<Transaction>, LoadFailure> =
-    TransactionStorageAdapter.let {
+    transactionStorageAdapter.let {
         queryResults(
             UnspecificQuery(
                 """
@@ -108,7 +107,7 @@ internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
 internal fun PersistenceWrapper.getTransactionsByClass(
     tag: String
 ): Outcome<Sequence<Transaction>, LoadFailure> =
-    TransactionStorageAdapter.let {
+    transactionStorageAdapter.let {
         queryResults(
             UnspecificQuery(
                 """

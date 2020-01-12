@@ -1,6 +1,7 @@
 package org.knowledger.ledger.builders
 
 import kotlinx.serialization.PolymorphicSerializer
+import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.crypto.hash.Hash
@@ -11,7 +12,6 @@ import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.service.LedgerInfo
-import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
@@ -27,6 +27,7 @@ import java.security.PublicKey
 import java.util.*
 
 internal data class WorkingChainBuilder(
+    internal val adapterManager: AdapterManager,
     internal val ledgerInfo: LedgerInfo,
     override val chainId: ChainId,
     internal val identity: Identity
@@ -128,7 +129,7 @@ internal data class WorkingChainBuilder(
 
     override fun data(bytes: ByteArray): LedgerData =
         ledgerInfo.encoder.load(
-            LedgerHandle.getStorageAdapter(tag)!!.serializer,
+            adapterManager.findAdapter(tag)!!.serializer,
             bytes
         )
 
