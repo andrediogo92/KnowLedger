@@ -7,9 +7,9 @@ import org.knowledger.agent.behaviours.ledger.InitializePeering
 import org.knowledger.agent.behaviours.ledger.ManagePeers
 import org.knowledger.agent.core.ontologies.BlockOntology
 import org.knowledger.agent.core.ontologies.LedgerOntology
+import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.data.LedgerData
-import org.knowledger.ledger.database.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.results.flatMapFailure
 import org.knowledger.ledger.results.peekFailure
 import org.knowledger.ledger.results.peekSuccess

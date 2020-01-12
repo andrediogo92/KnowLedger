@@ -1,13 +1,13 @@
 package org.knowledger.testing.core
 
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.Hasher
+import org.knowledger.ledger.crypto.hash.Hashers
 
 
 val random: TestRandom = TestRandom()
 
 fun applyHashInPairs(
-    crypter: Hasher,
+    crypter: Hashers,
     hashes: Array<Hash>
 ): Hash {
     var previousHashes = hashes

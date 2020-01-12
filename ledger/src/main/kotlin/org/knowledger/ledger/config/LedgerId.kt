@@ -10,6 +10,7 @@ import org.knowledger.ledger.core.serial.InstantSerializer
 import org.knowledger.ledger.core.serial.UUIDSerializer
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hasher
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashing
 import org.knowledger.ledger.serial.HashSerializable
 import org.knowledger.ledger.service.ServiceClass
@@ -22,7 +23,7 @@ data class LedgerId(
 ) : Hashing, ServiceClass {
 
     internal constructor(
-        tag: String, hasher: Hasher,
+        tag: String, hasher: Hashers,
         encoder: BinaryFormat
     ) : this(
         tag,

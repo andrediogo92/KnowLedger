@@ -1,10 +1,10 @@
-package org.knowledger.ledger.database.adapters
+package org.knowledger.ledger.core.adapters
 
 import kotlinx.serialization.KSerializer
 import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.core.base.data.LedgerData
-import org.knowledger.ledger.core.base.hash.Hasher
 import org.knowledger.ledger.core.base.hash.classDigest
+import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.results.Outcome
@@ -17,7 +17,7 @@ import org.knowledger.ledger.results.Outcome
  */
 abstract class AbstractStorageAdapter<T : LedgerData>(
     val clazz: Class<out T>,
-    hasher: Hasher
+    hasher: Hashers
 ) : StorageAdapter<T> {
     override val id: String by lazy {
         clazz.classDigest(hasher).base64Encoded()

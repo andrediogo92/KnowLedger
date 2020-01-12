@@ -2,7 +2,6 @@ package org.knowledger.ledger.storage.transaction
 
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.Hasher
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.service.Identity
@@ -63,21 +62,21 @@ internal data class HashedTransactionImpl(
         )
 
     override fun recalculateSize(
-        hasher: Hasher, encoder: BinaryFormat
+        hasher: Hashers, encoder: BinaryFormat
     ): Long {
         updateHash(hasher, encoder)
         return cachedSize as Long
     }
 
     override fun recalculateHash(
-        hasher: Hasher, encoder: BinaryFormat
+        hasher: Hashers, encoder: BinaryFormat
     ): Hash {
         updateHash(hasher, encoder)
         return _hash as Hash
     }
 
     override fun updateHash(
-        hasher: Hasher, encoder: BinaryFormat
+        hasher: Hashers, encoder: BinaryFormat
     ) {
         val bytes = signedTransaction.serialize(encoder)
         _hash = hasher.applyHash(bytes)

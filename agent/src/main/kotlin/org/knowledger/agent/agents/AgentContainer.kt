@@ -5,8 +5,8 @@ import jade.core.ProfileImpl
 import jade.core.Runtime
 import jade.wrapper.AgentController
 import jade.wrapper.ContainerController
+import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.data.LedgerData
-import org.knowledger.ledger.database.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.service.handles.LedgerHandle
 
 /**

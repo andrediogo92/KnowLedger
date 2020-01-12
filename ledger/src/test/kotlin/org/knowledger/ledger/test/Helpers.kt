@@ -6,7 +6,6 @@ import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.chainid.ChainIdImpl
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.Hasher
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
@@ -26,7 +25,7 @@ import org.knowledger.testing.ledger.testHasher
 import java.math.BigDecimal
 
 fun generateChainId(
-    hasher: Hasher = Hashers.DEFAULT_HASHER
+    hasher: Hashers = Hashers.DEFAULT_HASHER
 ): ChainId =
     StorageAwareChainId(
         ChainIdImpl(

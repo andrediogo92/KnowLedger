@@ -10,8 +10,8 @@ import org.knowledger.agent.agents.registerSlave
 import org.knowledger.agent.behaviours.slave.AcceptConnections
 import org.knowledger.agent.behaviours.slave.PropagateData
 import org.knowledger.agent.data.PeerBook
+import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.base.data.LedgerData
-import org.knowledger.ledger.database.adapters.AbstractStorageAdapter
 import org.tinylog.kotlin.Logger
 
 abstract class SlaveAgent : BaseAgent() {

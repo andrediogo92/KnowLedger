@@ -4,7 +4,6 @@ import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.Transient
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.Hasher
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.data.Payout
@@ -68,7 +67,7 @@ internal data class HashedTransactionOutputImpl(
         )
 
     override fun updateHash(
-        hasher: Hasher, encoder: BinaryFormat
+        hasher: Hashers, encoder: BinaryFormat
     ) {
         val bytes = transactionOutput.serialize(encoder)
         _hash = hasher.applyHash(bytes)
@@ -77,14 +76,14 @@ internal data class HashedTransactionOutputImpl(
     }
 
     override fun recalculateSize(
-        hasher: Hasher, encoder: BinaryFormat
+        hasher: Hashers, encoder: BinaryFormat
     ): Long {
         updateHash(hasher, encoder)
         return cachedSize as Long
     }
 
     override fun recalculateHash(
-        hasher: Hasher, encoder: BinaryFormat
+        hasher: Hashers, encoder: BinaryFormat
     ): Hash {
         updateHash(hasher, encoder)
         return _hash as Hash
