@@ -57,6 +57,7 @@ private data class DigestState(
     }
 
     internal fun markCycle() {
+        state = State.Cycle
         type = digestCycle()
     }
 
