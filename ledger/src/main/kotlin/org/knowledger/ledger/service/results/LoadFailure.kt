@@ -1,7 +1,6 @@
 package org.knowledger.ledger.service.results
 
 import org.knowledger.ledger.core.base.storage.LedgerContract
-import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.results.Failable
 import org.knowledger.ledger.results.Failure
 
@@ -19,30 +18,12 @@ sealed class LoadFailure : Failure {
             )
     }
 
-    data class NonMatchingHasher(
-        val ledgerHash: Hash
-    ) : LoadFailure() {
-        override val failable: Failable.LightFailure =
-            Failable.LightFailure(
-                "No matching hasher present for $ledgerHash"
-            )
-    }
-
     class UnrecognizedDataType(
         cause: String
     ) : LoadFailure() {
         override val failable: Failable.LightFailure =
             Failable.LightFailure(
                 cause
-            )
-    }
-
-    class NoMatchingContainer(
-        ledgerHash: Hash
-    ) : LoadFailure() {
-        override val failable: Failable.LightFailure =
-            Failable.LightFailure(
-                "No container present for $ledgerHash"
             )
     }
 

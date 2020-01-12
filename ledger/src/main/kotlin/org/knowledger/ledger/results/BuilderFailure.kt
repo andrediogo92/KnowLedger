@@ -5,18 +5,14 @@ sealed class BuilderFailure : Failure {
         cause: String
     ) : BuilderFailure() {
         override val failable: Failable.LightFailure =
-            Failable.LightFailure(
-                cause
-            )
+            Failable.LightFailure(cause)
     }
 
     class ParameterNotRegistered(
         cause: String
     ) : BuilderFailure() {
         override val failable: Failable.LightFailure =
-            Failable.LightFailure(
-                cause
-            )
+            Failable.LightFailure(cause)
     }
 
     class UnknownFailure(

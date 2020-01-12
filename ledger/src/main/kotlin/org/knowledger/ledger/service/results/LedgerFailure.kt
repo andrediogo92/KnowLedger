@@ -1,6 +1,5 @@
 package org.knowledger.ledger.service.results
 
-import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.results.Failable
 import org.knowledger.ledger.results.Failure
 
@@ -13,15 +12,6 @@ sealed class LedgerFailure : Failure {
         override val failable: Failable.LightFailure =
             Failable.LightFailure(
                 "Empty result set for $pointOfFailure"
-            )
-    }
-
-    data class NonMatchingHasher(
-        val ledgerHash: Hash
-    ) : LedgerFailure() {
-        override val failable: Failable.LightFailure =
-            Failable.LightFailure(
-                "No matching hasher present for $ledgerHash"
             )
     }
 
