@@ -1,0 +1,20 @@
+on: 
+  push:
+    branches:
+      - master
+    paths:
+      - 'site/*'
+name: Build and deploy static site on push
+jobs:
+  build:
+    name: shalzz/zola-deploy-action
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: shalzz/zola-deploy-action
+      uses: shalzz/zola-deploy-action@master
+      env:
+        PAGES_BRANCH: gh-pages
+        BUILD_DIR: site
+        BUILD_FLAGS: --drafts
+        TOKEN: ${{ secrets.AUTOTOKEN }}
