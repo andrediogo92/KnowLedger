@@ -7,7 +7,9 @@ import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.modules.SerialModule
+import kotlinx.serialization.modules.SerializersModule
 import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.TemperatureData
 import org.knowledger.ledger.data.TrafficFlowData
 import org.knowledger.ledger.database.ManagedSession
@@ -19,19 +21,18 @@ import org.knowledger.ledger.results.Failure
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.peekFailure
 import org.knowledger.ledger.results.unwrap
-import org.knowledger.ledger.serial.baseModule
-import org.knowledger.ledger.serial.withDataFormulas
-import org.knowledger.ledger.serial.withLedger
 import org.tinylog.kotlin.Logger
 
 val testHasher: Hashers = Hashers.DEFAULT_HASHER
 
 
 val serialModule: SerialModule by lazy {
-    baseModule.withLedger {
-        TemperatureData::class with TemperatureData.serializer()
-        TrafficFlowData::class with TrafficFlowData.serializer()
-    }.withDataFormulas {}
+    SerializersModule {
+        polymorphic(LedgerData::class) {
+            TemperatureData::class with TemperatureData.serializer()
+            TrafficFlowData::class with TrafficFlowData.serializer()
+        }
+    }
 }
 
 val encoder: BinaryFormat by lazy {
