@@ -7,5 +7,5 @@ package org.knowledger.ledger.core.base
  * @property approximateSize The approximate size of the instance in bytes.
  */
 interface Sizeable {
-    val approximateSize: Long?
+    val approximateSize: Long
 }
