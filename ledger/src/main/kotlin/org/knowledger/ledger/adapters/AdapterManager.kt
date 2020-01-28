@@ -20,6 +20,7 @@ import org.knowledger.ledger.service.adapters.PoolTransactionStorageAdapter
 import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
 import org.knowledger.ledger.service.pools.transaction.SATransactionPoolStorageAdapter
 import org.knowledger.ledger.service.pools.transaction.SUTransactionPoolStorageAdapter
+import org.knowledger.ledger.service.transactions.PersistenceWrapper
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
@@ -128,13 +129,12 @@ internal class AdapterManager(
         )
     }
 
-    override val chainHandleStorageAdapter: ChainHandleStorageAdapter =
-        ChainHandleStorageAdapter(this, container, transactionPoolStorageAdapter)
+    override lateinit var chainHandleStorageAdapter: ChainHandleStorageAdapter
 
     override val dataAdapters: Set<AbstractStorageAdapter<out LedgerData>>
         get() = adapters
 
-    override val defaultAdapters: MutableSet<SchemaProvider>
+    override val defaultSchemas: MutableSet<SchemaProvider>
         get() = mutableSetOf(
             //Storage Adapters
             blockStorageAdapter,
@@ -158,15 +158,15 @@ internal class AdapterManager(
         )
 
 
-    fun findAdapter(tag: Tag): AbstractStorageAdapter<out LedgerData>? =
+    internal fun findAdapter(tag: Tag): AbstractStorageAdapter<out LedgerData>? =
         findAdapter(tag.base64Encoded())
 
-    fun findAdapter(tag: Base64String): AbstractStorageAdapter<out LedgerData>? =
+    internal fun findAdapter(tag: Base64String): AbstractStorageAdapter<out LedgerData>? =
         adapters.find {
             it.id == tag
         }
 
-    fun findAdapter(clazz: Class<*>): AbstractStorageAdapter<out LedgerData>? =
+    internal fun findAdapter(clazz: Class<*>): AbstractStorageAdapter<out LedgerData>? =
         adapters.find {
             it.clazz == clazz
         }
@@ -176,17 +176,30 @@ internal class AdapterManager(
     ): Boolean =
         adapters.add(adapter)
 
-    fun hasAdapter(tag: String): Boolean =
+    internal fun hasAdapter(tag: String): Boolean =
         adapters.any {
             it.id == tag
         }
 
-    fun hasAdapter(tag: Tag): Boolean =
+    internal fun hasAdapter(tag: Tag): Boolean =
         hasAdapter(tag.base64Encoded())
 
-    fun hasAdapter(clazz: Class<*>): Boolean =
+    internal fun hasAdapter(clazz: Class<*>): Boolean =
         adapters.any {
             it.clazz == clazz
         }
+
+    internal fun addAdapters(types: Iterable<AbstractStorageAdapter<*>>) {
+        adapters.addAll(types)
+    }
+
+    fun initChainHandle(info: LedgerInfo, persistenceWrapper: PersistenceWrapper) {
+        chainHandleStorageAdapter =
+            ChainHandleStorageAdapter(
+                this, info,
+                persistenceWrapper,
+                transactionPoolStorageAdapter
+            )
+    }
 
 }

@@ -3,10 +3,8 @@ package org.knowledger.ledger.service.transactions
 import org.knowledger.ledger.adapters.AdapterCollection
 import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.adapters.EagerStorable
-import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.LedgerData
-import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.database.ManagedSchemas
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.NewInstanceSession
@@ -19,19 +17,16 @@ import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.database.results.QueryFailure
 import org.knowledger.ledger.results.*
 import org.knowledger.ledger.service.Identity
-import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.ServiceClass
-import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
-import org.knowledger.ledger.service.adapters.PoolTransactionStorageAdapter
 import org.knowledger.ledger.service.adapters.ServiceLoadable
-import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.storage.LedgerContract
 import org.knowledger.ledger.storage.StorageAware
-import org.knowledger.ledger.storage.adapters.*
+import org.knowledger.ledger.storage.adapters.QueryLoadable
+import org.knowledger.ledger.storage.adapters.StorageLoadable
 
 
 /**
@@ -40,24 +35,17 @@ import org.knowledger.ledger.storage.adapters.*
  */
 internal class PersistenceWrapper(
     private val ledgerHash: Hash,
-    private val session: ManagedSession
-) : EntityStore, ServiceClass, AdapterCollection {
-    internal lateinit var adapterManager: AdapterManager
+    private val session: ManagedSession,
+    internal val adapterManager: AdapterManager
+) : EntityStore, ServiceClass, AdapterCollection by adapterManager {
 
     private val schemas = session.managedSchemas
     internal val isClosed
         get() = session.isClosed
 
-    internal fun initializeAdapters(container: LedgerInfo) {
-        adapterManager = AdapterManager(container)
-    }
-
     internal fun registerDefaultSchemas(
     ) {
-        val schemas = defaultAdapters.also {
-            it.addAll(dataAdapters)
-        }
-        schemas.forEach {
+        allSchemaProviders.forEach {
             registerSchema(
                 it
             )
@@ -506,40 +494,4 @@ internal class PersistenceWrapper(
             }
         }
 
-
-    override val blockStorageAdapter: BlockStorageAdapter
-        get() = adapterManager.blockStorageAdapter
-
-    override val blockHeaderStorageAdapter: BlockHeaderStorageAdapter
-        get() = adapterManager.blockHeaderStorageAdapter
-
-    override val coinbaseStorageAdapter: CoinbaseStorageAdapter
-        get() = adapterManager.coinbaseStorageAdapter
-
-    override val merkleTreeStorageAdapter: MerkleTreeStorageAdapter
-        get() = adapterManager.merkleTreeStorageAdapter
-
-    override val physicalDataStorageAdapter: PhysicalDataStorageAdapter
-        get() = adapterManager.physicalDataStorageAdapter
-
-    override val transactionStorageAdapter: TransactionStorageAdapter
-        get() = adapterManager.transactionStorageAdapter
-
-    override val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
-        get() = adapterManager.transactionOutputStorageAdapter
-
-    override val poolTransactionStorageAdapter: PoolTransactionStorageAdapter
-        get() = adapterManager.poolTransactionStorageAdapter
-
-    override val transactionPoolStorageAdapter: TransactionPoolStorageAdapter
-        get() = adapterManager.transactionPoolStorageAdapter
-
-    override val chainHandleStorageAdapter: ChainHandleStorageAdapter
-        get() = adapterManager.chainHandleStorageAdapter
-
-    override val dataAdapters: Set<AbstractStorageAdapter<out LedgerData>>
-        get() = adapterManager.dataAdapters
-
-    override val defaultAdapters: MutableSet<SchemaProvider>
-        get() = adapterManager.defaultAdapters
 }

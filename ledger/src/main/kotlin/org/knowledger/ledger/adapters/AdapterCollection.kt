@@ -32,5 +32,8 @@ internal interface AdapterCollection {
     //Data Adapters
     val dataAdapters: Set<AbstractStorageAdapter<out LedgerData>>
 
-    val defaultAdapters: MutableSet<SchemaProvider>
+    val defaultSchemas: MutableSet<SchemaProvider>
+
+    val allSchemaProviders: Set<SchemaProvider>
+        get() = defaultSchemas + dataAdapters
 }
