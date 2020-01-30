@@ -11,7 +11,6 @@ import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.chainid.ChainIdImpl
 import org.knowledger.ledger.core.base.hash.hashFromHexString
-import org.knowledger.ledger.core.base.hash.toHexString
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.Tag
 

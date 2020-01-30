@@ -7,7 +7,7 @@ import org.knowledger.ledger.service.handles.ChainHandle
 fun ChainHandle.chainBuilder(
     identity: Identity
 ): ChainBuilder =
-    WorkingChainBuilder(adapterManager, container, id, identity)
+    WorkingChainBuilder(adapterManager, ledgerInfo, id, identity)
 
 internal fun <T : Builder<*, *>> T.uninitialized(
     parameter: String

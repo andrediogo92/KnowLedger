@@ -6,7 +6,6 @@ import kotlinx.serialization.internal.SerialClassDescImpl
 import kotlinx.serialization.internal.StringSerializer
 import org.knowledger.collections.mapMutableList
 import org.knowledger.ledger.core.base.hash.hashFromHexString
-import org.knowledger.ledger.core.base.hash.toHexString
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl

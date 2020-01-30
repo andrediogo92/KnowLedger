@@ -9,7 +9,6 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.core.base.hash.hashFromHexString
-import org.knowledger.ledger.core.base.hash.toHexString
 import org.knowledger.ledger.crypto.EncodedSignature
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.toEncoded

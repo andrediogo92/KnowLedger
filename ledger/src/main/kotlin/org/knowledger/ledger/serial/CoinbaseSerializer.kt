@@ -4,7 +4,6 @@ import kotlinx.serialization.*
 import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.base.hash.hashFromHexString
-import org.knowledger.ledger.core.base.hash.toHexString
 import org.knowledger.ledger.core.serial.DifficultySerializer
 import org.knowledger.ledger.core.serial.PayoutSerializer
 import org.knowledger.ledger.crypto.hash.Hash
