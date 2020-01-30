@@ -18,8 +18,7 @@ import java.security.Key
 /**
  * Tests for encoding/decoding [Key]s.
  */
-class
-TestPubKeyCodec {
+class TestPubKeyCodec {
     val pair = Identity("test")
     val pr = pair.privateKey
     val pub = pair.publicKey

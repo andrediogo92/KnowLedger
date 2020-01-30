@@ -1,5 +1,7 @@
 package org.knowledger.ledger.test
 
+import kotlinx.serialization.BinaryFormat
+import org.knowledger.collections.toSizedArray
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
@@ -20,12 +22,13 @@ import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
 import org.knowledger.testing.core.random
-import org.knowledger.testing.ledger.encoder
+import org.knowledger.testing.ledger.testEncoder
 import org.knowledger.testing.ledger.testHasher
 import java.math.BigDecimal
 
 fun generateChainId(
-    hasher: Hashers = Hashers.DEFAULT_HASHER
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder
 ): ChainId =
     StorageAwareChainId(
         ChainIdImpl(
@@ -38,14 +41,15 @@ fun generateChainId(
 
 fun generateBlock(
     id: Array<Identity>,
-    ts: List<Transaction>,
+    ts: Array<Transaction>,
     hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams(),
     blockParams: BlockParams = BlockParams()
 ): Block {
     val coinbase = generateCoinbase(
-        id, ts, hasher,
+        id, ts, hasher, encoder,
         formula, coinbaseParams
     )
     return BlockImpl(
@@ -57,19 +61,18 @@ fun generateBlock(
             blockParams
         ),
         MerkleTreeImpl(
-            hasher, coinbase,
-            ts.toTypedArray()
+            hasher, coinbase, ts
         ), encoder, hasher
     )
 }
 
 fun transactionGenerator(
     id: Array<Identity>,
-    hasher: Hashers = testHasher
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder
 ): Sequence<Transaction> {
-    var i = 0
     return generateSequence {
-        val index = i % id.size
+        val index = random.randomInt(id.size)
         HashedTransactionImpl(
             id[index].privateKey,
             id[index].publicKey,
@@ -84,42 +87,62 @@ fun transactionGenerator(
                     ), TemperatureUnit.Celsius
                 )
             ), hasher, encoder
-        ).also {
-            i++
-        }
+        )
     }
 }
 
 fun generateXTransactions(
     id: Array<Identity>,
     size: Int,
-    hasher: Hashers = testHasher
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder
 ): List<Transaction> =
-    transactionGenerator(id, hasher)
+    transactionGenerator(id, hasher, encoder)
         .take(size)
         .toList()
 
 fun generateXTransactions(
     id: Identity,
     size: Int,
-    hasher: Hashers = testHasher
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat
 ): List<Transaction> =
     transactionGenerator(
-        arrayOf(id), hasher
+        arrayOf(id), hasher, encoder
     ).take(size).toList()
 
+fun generateXTransactionsArray(
+    id: Array<Identity>,
+    size: Int,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder
+): Array<Transaction> =
+    transactionGenerator(
+        id, hasher, encoder
+    ).toSizedArray(size)
+
+fun generateXTransactionsArray(
+    id: Identity,
+    size: Int,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat
+): Array<Transaction> =
+    transactionGenerator(
+        arrayOf(id), hasher, encoder
+    ).toSizedArray(size)
 
 fun generateBlockWithChain(
     chainId: ChainId,
     id: Array<Identity>,
-    ts: List<Transaction>,
+    ts: Array<Transaction>,
     hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams(),
     blockParams: BlockParams = BlockParams()
 ): Block {
     val coinbase = generateCoinbase(
-        id, ts, hasher,
+        id, ts, hasher, encoder,
         formula, coinbaseParams
     )
     return BlockImpl(
@@ -129,7 +152,7 @@ fun generateBlockWithChain(
             Hash(random.randomByteArray(32)),
             blockParams
         ),
-        MerkleTreeImpl(hasher, coinbase, ts.toTypedArray()),
+        MerkleTreeImpl(hasher, coinbase, ts),
         encoder, hasher
     )
 }
@@ -137,12 +160,13 @@ fun generateBlockWithChain(
 fun generateBlockWithChain(
     chainId: ChainId,
     hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams(),
     blockParams: BlockParams = BlockParams()
 ): Block {
     val coinbase = generateCoinbase(
-        hasher, formula, coinbaseParams
+        hasher, encoder, formula, coinbaseParams
     )
     return BlockImpl(
         sortedSetOf(), coinbase,
@@ -157,8 +181,9 @@ fun generateBlockWithChain(
 
 fun generateCoinbase(
     id: Array<Identity>,
-    ts: List<Transaction>,
+    ts: Array<Transaction>,
     hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams()
 ): Coinbase {
@@ -201,6 +226,7 @@ fun generateCoinbase(
 
 fun generateCoinbase(
     hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams()
 ): Coinbase =
