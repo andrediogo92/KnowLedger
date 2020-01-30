@@ -8,9 +8,11 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.knowledger.collections.mapToSet
+import org.knowledger.ledger.config.BlockParams
+import org.knowledger.ledger.config.LedgerParams
 import org.knowledger.ledger.core.data.PhysicalData
+import org.knowledger.ledger.core.truncatedHexString
 import org.knowledger.ledger.crypto.service.Identity
-import org.knowledger.ledger.data.TemperatureData
 import org.knowledger.ledger.data.TrafficFlowData
 import org.knowledger.ledger.data.adapters.TemperatureDataStorageAdapter
 import org.knowledger.ledger.data.adapters.TrafficFlowDataStorageAdapter
@@ -31,15 +33,16 @@ import org.knowledger.ledger.service.transactions.getTransactionsOrderedByTimest
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.knowledger.testing.ledger.appendByLine
-import org.knowledger.testing.ledger.encoder
 import org.knowledger.testing.ledger.failOnError
-import org.knowledger.testing.ledger.logActualToExpectedLists
+import org.knowledger.testing.ledger.logActualToExpectedHashes
+import org.knowledger.testing.ledger.logActualToExpectedHashing
 import org.knowledger.testing.ledger.queryToList
+import org.knowledger.testing.ledger.testHasher
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 
 class TestOrientDatabase {
-    val id = Identity("test")
+    val ids = arrayOf(Identity("test"), Identity("test2"))
 
     val db = OrientDatabase(
         OrientDatabaseInfo(
@@ -49,21 +52,34 @@ class TestOrientDatabase {
         )
     )
     val session = db.newManagedSession("test")
+    val hasher = testHasher
+    val trafficFlowDataStorageAdapter = TrafficFlowDataStorageAdapter(hasher)
+    val temperatureDataStorageAdapter = TemperatureDataStorageAdapter(hasher)
+
     val ledger = LedgerHandle
         .Builder()
         .withLedgerIdentity("test")
         .unwrap()
         .withCustomDB(db, session)
-        .withLedgerSerializationModule {
-            TemperatureData::class with TemperatureData.serializer()
-            TrafficFlowData::class with TrafficFlowData.serializer()
-        }
+        .withHasher(hasher)
+        .withCustomParams(
+            LedgerParams(
+                hasher.id,
+                blockParams = BlockParams(
+                    blockLength = 20,
+                    blockMemorySize = 500000
+                )
+            )
+        )
+        .withTypeStorageAdapters(
+            temperatureDataStorageAdapter,
+            trafficFlowDataStorageAdapter
+        )
         .build()
         .unwrap()
 
+    val encoder = ledger.encoder
     val hash = ledger.ledgerHash
-    val hasher = ledger.hasher
-    val temperatureDataStorageAdapter = TemperatureDataStorageAdapter(hasher)
 
     val temperatureChain: ChainHandle =
         ledger.registerNewChainHandleOf(
@@ -72,9 +88,12 @@ class TestOrientDatabase {
 
     val chainId = temperatureChain.id
     val chainHash = temperatureChain.id.hash
-    private val pw = ledger.container.persistenceWrapper
+    private val pw = ledger.pw
     private val transactionStorageAdapter = pw.transactionStorageAdapter
-    val transactions = generateXTransactions(id, 20).toSortedSet()
+    val transactions = generateXTransactionsArray(
+        id = ids, size = 20,
+        hasher = hasher, encoder = encoder
+    ).toSortedSet()
 
 
     @BeforeAll
@@ -91,7 +110,7 @@ class TestOrientDatabase {
 
         @Nested
         inner class Clusters {
-            val adapters = pw.defaultAdapters.also {
+            val adapters = pw.defaultSchemas.also {
                 it.addAll(pw.dataAdapters)
             }
 
@@ -173,13 +192,13 @@ class TestOrientDatabase {
                     .appendByLine(present[0].presentProperties)
                     .toString()
             }
-            logActualToExpectedLists(
+            logActualToExpectedHashes(
                 "Transactions' hashes from DB:",
                 present.map {
-                    it.getHashProperty("hash").toHexString()
+                    it.getHashProperty("hash")
                 },
                 "Transactions' hashes from test:",
-                transactions.map { it.hash.toHexString() }
+                transactions.map { it.hash }
             )
         }
 
@@ -223,8 +242,6 @@ class TestOrientDatabase {
 
     @Nested
     inner class Handles {
-        val trafficFlowDataStorageAdapter = TrafficFlowDataStorageAdapter(hasher)
-
         val trafficChain: ChainHandle = ledger.registerNewChainHandleOf(
             trafficFlowDataStorageAdapter
         ).unwrap()
@@ -236,7 +253,9 @@ class TestOrientDatabase {
             fun `Test simple insertion`() {
 
                 val block = generateBlockWithChain(
-                    temperatureChain.id
+                    temperatureChain.id, hasher, encoder, ledger.container.formula,
+                    ledger.container.coinbaseParams,
+                    ledger.container.ledgerParams.blockParams
                 )
                 assertThat(block + transactions.first())
                     .isTrue()
@@ -249,8 +268,8 @@ class TestOrientDatabase {
             @Test
             fun `Test traffic insertion`() {
                 val testTraffic = HashedTransactionImpl(
-                    id.privateKey,
-                    id.publicKey,
+                    ids[0].privateKey,
+                    ids[0].publicKey,
                     PhysicalData(
                         BigDecimal.ONE,
                         BigDecimal.ONE,
@@ -264,11 +283,13 @@ class TestOrientDatabase {
                             12.6
                         )
                     ),
-                    hasher, encoder
+                    hasher, ledger.encoder
                 )
 
                 val block = generateBlockWithChain(
-                    trafficChain.id
+                    trafficChain.id, hasher, encoder, ledger.container.formula,
+                    ledger.container.coinbaseParams,
+                    ledger.container.ledgerParams.blockParams
                 )
                 assertThat(block).isNotNull()
                 assertThat(block + testTraffic)
@@ -290,11 +311,11 @@ class TestOrientDatabase {
                 chainId.tag
             ).mapSuccess { seq ->
                 seq.asTransactions().apply {
-                    logActualToExpectedLists(
+                    logActualToExpectedHashing(
                         "Transactions' hashes from DB:",
-                        map { it.hash.toHexString() },
+                        this,
                         "Transactions' hashes from test:",
-                        transactions.map { it.hash.toHexString() }
+                        transactions
                     )
                     assertThat(size).isEqualTo(
                         transactions.size
@@ -312,11 +333,11 @@ class TestOrientDatabase {
                 chainId.tag
             ).mapSuccess { seq ->
                 seq.asTransactions().apply {
-                    logActualToExpectedLists(
+                    logActualToExpectedHashing(
                         "Transactions' hashes from DB:",
-                        map { it.hash.toHexString() },
+                        this,
                         "Transactions' hashes from test:",
-                        transactions.map { it.hash.toHexString() }
+                        transactions
                     )
                     assertThat(size).isEqualTo(
                         transactions.size
@@ -332,21 +353,23 @@ class TestOrientDatabase {
 
         @Test
         fun `loading transactions by Public Key`() {
+            val key = ids[0].publicKey
+            val expected = transactions.filter { it.publicKey == key }
             pw.getTransactionsFromAgent(
-                chainId.tag, id.publicKey
+                chainId.tag, key
             ).mapSuccess { seq ->
                 seq.asTransactions().apply {
-                    logActualToExpectedLists(
-                        "Transactions' hashes from DB:",
-                        map { it.hash.toHexString() },
-                        "Transactions' hashes from test:",
-                        transactions.map { it.hash.toHexString() }
+                    logActualToExpectedHashing(
+                        "Transactions' hashes from DB from ${key.truncatedHexString()}:",
+                        this,
+                        "Transactions' hashes from test from ${key.truncatedHexString()}:",
+                        expected
                     )
                     assertThat(size).isEqualTo(
-                        transactions.size
+                        expected.size
                     )
                     assertThat(this).containsOnly(
-                        *transactions.toTypedArray()
+                        *expected.toTypedArray()
                     )
                 }
             }.failOnError()
