@@ -3,16 +3,15 @@ package org.knowledger.ledger.crypto
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.base.hash.toHexString
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.testing.core.applyHashInPairs
 import org.knowledger.testing.core.random
+import org.knowledger.testing.ledger.testHasher
 import org.tinylog.kotlin.Logger
 
 
 class TestHashingPairs {
-    val crypter = DEFAULT_HASHER
+    val crypter = testHasher
     val hashSize = 16
     val minBound = 12
     val randomHashes = Array(random.randomInt(minBound) + 8) {

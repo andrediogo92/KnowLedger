@@ -7,12 +7,12 @@ interface HexEncodable : ByteEncodable {
     fun toHexString(): String =
         bytes.toHexString()
 
-    fun truncatedHexString(cutoffSize: Int = Hash.TRUNC): String {
-        val bytes = bytes
-        return if (bytes.size > cutoffSize) {
-            bytes.sliceArray(0..cutoffSize).toHexString()
-        } else {
-            bytes.toHexString()
+    fun truncatedHexString(cutoffSize: Int = Hash.TRUNC): String =
+        bytes.let {
+            if (it.size > cutoffSize) {
+                it.sliceArray(0 until cutoffSize).toHexString()
+            } else {
+                it.toHexString()
+            }
         }
-    }
 }

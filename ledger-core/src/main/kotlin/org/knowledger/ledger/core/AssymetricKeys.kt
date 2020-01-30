@@ -1,6 +1,7 @@
 package org.knowledger.ledger.core
 
 import kotlinx.serialization.BinaryFormat
+import org.knowledger.ledger.core.base.hash.Hash
 import org.knowledger.ledger.core.base.hash.toHexString
 import org.knowledger.ledger.core.base.serial.HashSerializable
 import org.knowledger.ledger.crypto.EncodedSignature
@@ -78,3 +79,10 @@ fun EncodedSignature.verifyECDSASig(
     }
 
 fun Key.toHexString(): String = encoded.toHexString()
+
+fun Key.truncatedHexString(size: Int = Hash.TRUNC): String =
+    if (encoded.size > size) {
+        encoded.sliceArray(0 until size).toHexString()
+    } else {
+        encoded.toHexString()
+    }
