@@ -10,8 +10,8 @@ import org.knowledger.ledger.service.ServiceClass
 @Serializable
 data class BlockParams(
     @SerialName("blockMemorySize")
-    val blockMemSize: Long = 2097152,
-    val blockLength: Long = 512
+    val blockMemorySize: Int = 2097152,
+    val blockLength: Int = 512
 ) : HashSerializable, ServiceClass {
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)

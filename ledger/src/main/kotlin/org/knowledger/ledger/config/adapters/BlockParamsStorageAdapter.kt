@@ -16,8 +16,8 @@ internal object BlockParamsStorageAdapter : ServiceStorageAdapter<BlockParams> {
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "blockMemSize" to StorageType.LONG,
-            "blockLength" to StorageType.LONG
+            "blockMemorySize" to StorageType.INTEGER,
+            "blockLength" to StorageType.INTEGER
         )
 
     override fun store(
@@ -26,7 +26,7 @@ internal object BlockParamsStorageAdapter : ServiceStorageAdapter<BlockParams> {
         session
             .newInstance(id)
             .setStorageProperty(
-                "blockMemSize", toStore.blockMemSize
+                "blockMemorySize", toStore.blockMemorySize
             ).setStorageProperty(
                 "blockLength", toStore.blockLength
             )
@@ -39,7 +39,7 @@ internal object BlockParamsStorageAdapter : ServiceStorageAdapter<BlockParams> {
         tryOrLedgerUnknownFailure {
             Outcome.Ok(
                 BlockParams(
-                    element.getStorageProperty("blockMemSize"),
+                    element.getStorageProperty("blockMemorySize"),
                     element.getStorageProperty("blockLength")
                 )
             )

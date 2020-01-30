@@ -18,8 +18,8 @@ internal object LedgerParamsStorageAdapter : ServiceStorageAdapter<LedgerParams>
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "crypter" to StorageType.HASH,
-            "recalcTime" to StorageType.LONG,
-            "recalcTrigger" to StorageType.LONG,
+            "recalculationTime" to StorageType.LONG,
+            "recalculationTrigger" to StorageType.INTEGER,
             "blockParams" to StorageType.LINK
         )
 
@@ -28,11 +28,11 @@ internal object LedgerParamsStorageAdapter : ServiceStorageAdapter<LedgerParams>
     ): StorageElement =
         session
             .newInstance(id)
-            .setHashProperty("crypter", toStore.crypter)
+            .setHashProperty("crypter", toStore.hasher)
             .setStorageProperty(
-                "recalcTime", toStore.recalcTime
+                "recalculationTime", toStore.recalculationTime
             ).setStorageProperty(
-                "recalcTrigger", toStore.recalcTrigger
+                "recalculationTrigger", toStore.recalculationTrigger
             ).setLinked(
                 "blockParams",
                 BlockParamsStorageAdapter.persist(
@@ -52,8 +52,8 @@ internal object LedgerParamsStorageAdapter : ServiceStorageAdapter<LedgerParams>
             ).mapSuccess {
                 LedgerParams(
                     element.getHashProperty("crypter"),
-                    element.getStorageProperty("recalcTime"),
-                    element.getStorageProperty("recalcTrigger"),
+                    element.getStorageProperty("recalculationTime"),
+                    element.getStorageProperty("recalculationTrigger"),
                     it
                 )
             }

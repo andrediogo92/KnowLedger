@@ -13,11 +13,11 @@ import org.knowledger.ledger.service.ServiceClass
 @Serializable
 @SerialName("LedgerParams")
 data class LedgerParams(
-    val crypter: Hash,
+    val hasher: Hash,
     @SerialName("recalculationTime")
-    val recalcTime: Long = 1228800000,
+    val recalculationTime: Long = 1228800000,
     @SerialName("recalculationTrigger")
-    val recalcTrigger: Long = 2048,
+    val recalculationTrigger: Int = 2048,
     val blockParams: BlockParams = BlockParams()
 ) : HashSerializable, ServiceClass {
     override fun serialize(encoder: BinaryFormat): ByteArray =
