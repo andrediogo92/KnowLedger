@@ -5,6 +5,28 @@ import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.LinkedHashSet
 
+inline fun <reified T> Sequence<T>.toSizedArray(i: Int): Array<T> {
+    val iter = iterator()
+    return Array(i) {
+        iter.next()
+    }
+}
+
+inline fun <reified T> Iterable<T>.toSizedArray(i: Int): Array<T> {
+    val iter = iterator()
+    return Array(i) {
+        iter.next()
+    }
+}
+
+inline fun <T, reified R> List<T>.mapToArray(
+    transform: (T) -> R
+): Array<R> =
+    Array(size) {
+        transform(this[it])
+    }
+
+
 inline fun <T, reified R> Array<out T>.mapToArray(
     transform: (T) -> R
 ): Array<R> =
