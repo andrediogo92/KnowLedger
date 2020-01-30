@@ -27,14 +27,14 @@ class ExampleAgentApp {
             container.runLedgerAgent(
                 name = "MinerAgent",
                 handle = handle,
-                knownTypes = setOf(NoiseDataStorageAdapter),
+                knownTypes = setOf(NoiseDataStorageAdapter(handle.hasher)),
                 arguments = emptyArray()
             )
 
             container.runSlaveAgent(
                 name = "NoiseSlave",
                 classpath = "org.knowledger.example.slave.NoiseAgent",
-                knownTypes = setOf(NoiseDataStorageAdapter),
+                knownTypes = setOf(NoiseDataStorageAdapter(handle.hasher)),
                 arguments = emptyArray()
             )
         }
