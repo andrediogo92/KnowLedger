@@ -5,7 +5,7 @@ import org.knowledger.base64.Base64String
 
 data class JLedgerParams(
     var hasher: Base64String,
-    var recalcTime: Long,
-    var recalcTrigger: Long,
+    var recalculationTime: Long,
+    var recalculationTrigger: Int,
     var blockParams: JBlockParams
 ) : Concept

@@ -3,7 +3,6 @@ package org.knowledger.agent.agents.ledger
 import org.knowledger.ledger.builders.ChainBuilder
 import org.knowledger.ledger.builders.chainBuilder
 import org.knowledger.ledger.data.Tag
-import org.knowledger.ledger.results.peekSuccess
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.handles.ChainHandle
 
@@ -27,13 +26,9 @@ data class ChainManager(val identity: Identity) : ChainResolver {
         }
 
     fun addHandle(handle: ChainHandle): Boolean {
-        var res = false
-        handle.chainBuilder(identity).peekSuccess {
-            res = true
-            mChainHandles.add(handle)
-            mChainBuilders.add(it)
-        }
-        return res
+        mChainHandles.add(handle)
+        mChainBuilders.add(handle.chainBuilder(identity))
+        return true
     }
 
 }

@@ -80,7 +80,7 @@ fun ChainId.toJadeChainId(): JChainId =
 
 fun BlockParams.toJadeBlockParams(): JBlockParams =
     JBlockParams(
-        blockMemSize = blockMemSize,
+        blockMemSize = blockMemorySize,
         blockLength = blockLength
     )
 
