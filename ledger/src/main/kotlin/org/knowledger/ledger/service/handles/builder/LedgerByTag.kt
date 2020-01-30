@@ -1,22 +1,19 @@
 package org.knowledger.ledger.service.handles.builder
 
-import kotlinx.serialization.UpdateMode
-import kotlinx.serialization.cbor.Cbor
-import kotlinx.serialization.modules.PolymorphicModuleBuilder
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.LedgerId
 import org.knowledger.ledger.config.LedgerParams
-import org.knowledger.ledger.core.base.data.DefaultDiff
+import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.DataFormula
+import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.database.DatabaseMode
 import org.knowledger.ledger.database.DatabaseType
 import org.knowledger.ledger.database.ManagedDatabase
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.mapSuccess
-import org.knowledger.ledger.serial.withLedger
-import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.handles.LedgerHandle
 import java.io.File
 
@@ -25,6 +22,14 @@ class LedgerByTag(
 ) : AbstractLedgerBuilder(), LedgerBuilder<LedgerByTag> {
     private var ledgerParams: LedgerParams? = null
     private var coinbaseParams: CoinbaseParams? = null
+    override lateinit var hash: Hash
+
+    override fun withTypeStorageAdapters(
+        types: Iterable<AbstractStorageAdapter<out LedgerData>>
+    ): LedgerByTag =
+        apply {
+            registerAdapters(types)
+        }
 
     override fun withDBPath(
         path: File
@@ -37,14 +42,6 @@ class LedgerByTag(
         apply {
             this.path = path
         }
-
-    inline fun withLedgerSerializationModule(
-        crossinline with: PolymorphicModuleBuilder<Any>.() -> Unit
-    ): LedgerByTag =
-        apply {
-            iSerialModule = iSerialModule.withLedger(with)
-        }
-
 
     fun withHasher(hasher: Hashers): LedgerByTag =
         apply {
@@ -99,31 +96,13 @@ class LedgerByTag(
         }
     }
 
-    private fun attemptToResolveId() {
-        ledgerConfig = LedgerConfig(
-            LedgerId(identity, hasher, encoder), ledgerParams!!,
-            coinbaseParams!!
-        )
-    }
-
-    override fun build(): Outcome<LedgerHandle, LedgerHandle.Failure> {
-        encoder = Cbor(UpdateMode.UPDATE, true, serialModule)
+    override fun attemptToResolveId(): Outcome<LedgerConfig, LedgerHandle.Failure> {
         generateLedgerParams()
-        attemptToResolveId()
-        buildDB(ledgerConfig.ledgerId.hash)
-        ledgerInfo = LedgerInfo(
-            ledgerId = ledgerConfig.ledgerId,
-            hasher = hasher,
-            ledgerParams = ledgerConfig.ledgerParams,
-            coinbaseParams = ledgerConfig.coinbaseParams,
-            serialModule = serialModule,
-            formula = DefaultDiff,
-            encoder = encoder,
-            persistenceWrapper = persistenceWrapper
+        val config = LedgerConfig(
+            LedgerId(identity, hasher, encoder),
+            ledgerParams!!, coinbaseParams!!
         )
-        persistenceWrapper.initializeAdapters(ledgerInfo)
-        persistenceWrapper.registerDefaultSchemas()
-        return Outcome.Ok(LedgerHandle(this))
+        hash = config.ledgerId.hash
+        return Outcome.Ok(config)
     }
-
 }

@@ -1,11 +1,18 @@
 package org.knowledger.ledger.service.handles.builder
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.UpdateMode
+import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.modules.SerialModule
 import org.knowledger.base64.base64Encoded
+import org.knowledger.ledger.adapters.AdapterManager
+import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
+import org.knowledger.ledger.core.base.data.DefaultDiff
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
+import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.database.DatabaseMode
 import org.knowledger.ledger.database.DatabaseType
 import org.knowledger.ledger.database.ManagedDatabase
@@ -13,20 +20,26 @@ import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.orient.OrientDatabase
 import org.knowledger.ledger.database.orient.OrientDatabaseInfo
 import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.serial.baseModule
+import org.knowledger.ledger.serial.with
+import org.knowledger.ledger.serial.withLedger
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.transactions.PersistenceWrapper
 import java.io.File
 
 abstract class AbstractLedgerBuilder {
+    protected abstract var hash: Hash
     protected var db: ManagedDatabase? = null
     protected var session: ManagedSession? = null
     protected var path: String = "./db"
-    protected var dbMode: DatabaseMode = DatabaseMode.EMBEDDED
-    protected var dbType: DatabaseType = DatabaseType.LOCAL
-    protected var dbUser: String = "admin"
-    protected var dbPassword: String = "admin"
+    private var dbMode: DatabaseMode = DatabaseMode.EMBEDDED
+    private var dbType: DatabaseType = DatabaseType.LOCAL
+    private var dbUser: String = "admin"
+    private var dbPassword: String = "admin"
+    protected val registeredAdapters: MutableSet<AbstractStorageAdapter<*>> =
+        mutableSetOf()
     protected var serialModule: SerialModule = baseModule
     lateinit var encoder: BinaryFormat
 
@@ -66,7 +79,9 @@ abstract class AbstractLedgerBuilder {
         }
     }
 
-    internal fun buildDB(hash: Hash) {
+    internal abstract fun attemptToResolveId(): Outcome<LedgerConfig, LedgerHandle.Failure>
+
+    private fun buildDB(hash: Hash) {
         if (db == null) {
             db = OrientDatabase(
                 OrientDatabaseInfo(
@@ -76,12 +91,15 @@ abstract class AbstractLedgerBuilder {
             )
         }
         if (session == null) {
-            session = db?.newManagedSession(hash.base64Encoded())
+            session = db!!.newManagedSession(hash.base64Encoded())
         }
-        persistenceWrapper = PersistenceWrapper(hash, session!!)
+        persistenceWrapper = PersistenceWrapper(
+            hash, session!!,
+            AdapterManager(ledgerInfo, registeredAdapters)
+        )
     }
 
-    internal fun setCustomDB(
+    protected fun setCustomDB(
         db: ManagedDatabase,
         session: ManagedSession
     ) {
@@ -89,11 +107,45 @@ abstract class AbstractLedgerBuilder {
         this.session = session
     }
 
-    @PublishedApi
-    internal var iSerialModule: SerialModule
-        get() = serialModule
-        set(value) {
-            serialModule = value
-        }
+    protected fun registerAdapters(
+        types: Iterable<AbstractStorageAdapter<out LedgerData>>
+    ) {
+        registeredAdapters.addAll(types)
+    }
 
+
+    private fun registerSerializers() {
+        val serial = registeredAdapters.map {
+            //this is a valid cast because serializer pair classes force
+            //construction of properties with correct LedgerData upper
+            //type bound.
+            @Suppress("UNCHECKED_CAST")
+            it.clazz as Class<LedgerData> with it.serializer as KSerializer<LedgerData>
+        }.toTypedArray()
+        serialModule = serialModule.withLedger(serial)
+    }
+
+    private fun buildInfo(): LedgerInfo =
+        LedgerInfo(
+            ledgerId = ledgerConfig.ledgerId,
+            hasher = hasher,
+            ledgerParams = ledgerConfig.ledgerParams,
+            coinbaseParams = ledgerConfig.coinbaseParams,
+            serialModule = serialModule,
+            formula = DefaultDiff,
+            encoder = encoder
+        )
+
+    fun build(): Outcome<LedgerHandle, LedgerHandle.Failure> {
+        registerSerializers()
+        encoder = Cbor(UpdateMode.UPDATE, true, serialModule)
+        return attemptToResolveId().mapSuccess {
+            ledgerConfig = it
+            ledgerInfo = buildInfo()
+            buildDB(hash)
+            persistenceWrapper.adapterManager.initChainHandle(ledgerInfo, persistenceWrapper)
+            persistenceWrapper.registerDefaultSchemas()
+            LedgerHandle(this)
+        }
+    }
 }
