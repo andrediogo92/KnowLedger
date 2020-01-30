@@ -13,7 +13,6 @@ import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.base.Sizeable
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
@@ -47,7 +46,7 @@ internal data class BlockImpl(
     internal var encoder: BinaryFormat = Cbor.plain,
     @Transient
     internal var hasher: Hashers = DEFAULT_HASHER
-) : Block, Sizeable, LedgerContract {
+) : Block, LedgerContract {
     @Transient
     internal var cachedSize: Long? = null
 
@@ -126,7 +125,7 @@ internal data class BlockImpl(
         val transactionSize =
             transaction.approximateSize(encoder)
         val cumSize = approximateSize + transactionSize
-        if (cumSize < header.params.blockMemSize) {
+        if (cumSize < header.params.blockMemorySize) {
             if (transactions.size < header.params.blockLength) {
                 if (transaction.processTransaction(encoder)) {
                     transactions.add(transaction)

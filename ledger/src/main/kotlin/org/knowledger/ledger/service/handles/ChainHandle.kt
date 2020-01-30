@@ -27,6 +27,7 @@ import org.knowledger.ledger.results.flatMapSuccess
 import org.knowledger.ledger.results.fold
 import org.knowledger.ledger.results.intoQuery
 import org.knowledger.ledger.results.mapSuccess
+import org.knowledger.ledger.results.reduce
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.ServiceClass
@@ -34,13 +35,13 @@ import org.knowledger.ledger.service.pools.block.BlockPool
 import org.knowledger.ledger.service.pools.block.BlockPoolImpl
 import org.knowledger.ledger.service.pools.transaction.StorageAwareTransactionPool
 import org.knowledger.ledger.service.pools.transaction.TransactionPool
-import org.knowledger.ledger.service.results.BlockFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.service.transactions.*
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.block.BlockImpl
+import org.knowledger.ledger.storage.block.StorageAwareBlock
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
 import org.tinylog.kotlin.Logger
@@ -54,19 +55,20 @@ import java.time.ZonedDateTime
  * unique chain in the ledger represented by the [id].
  */
 class ChainHandle internal constructor(
-    val container: LedgerInfo,
+    val ledgerInfo: LedgerInfo,
+    private val pw: PersistenceWrapper,
     val id: ChainId,
     internal val transactionPool: TransactionPool =
-        StorageAwareTransactionPool(container.persistenceWrapper.adapterManager, id)
+        StorageAwareTransactionPool(pw.adapterManager, id)
 ) : ServiceClass {
     val chainHash = id.hash
-    private val hasher: Hashers = container.hasher
-    private val encoder: BinaryFormat = container.encoder
-    private val pw: PersistenceWrapper = container.persistenceWrapper
-    internal val adapterManager: AdapterManager = container.persistenceWrapper.adapterManager
+    private val hasher: Hashers = ledgerInfo.hasher
+    private val encoder: BinaryFormat = ledgerInfo.encoder
+    internal val adapterManager: AdapterManager = pw.adapterManager
     private val blockPool: BlockPool = BlockPoolImpl(id)
-    val ledgerParams: LedgerParams = container.ledgerParams
-    val coinbaseParams: CoinbaseParams = container.coinbaseParams
+    val ledgerParams: LedgerParams = ledgerInfo.ledgerParams
+    val blockParams: BlockParams = ledgerParams.blockParams
+    val coinbaseParams: CoinbaseParams = ledgerInfo.coinbaseParams
 
 
     private var difficultyTarget =
@@ -75,7 +77,7 @@ class ChainHandle internal constructor(
     val currentDifficulty
         get() = difficultyTarget
 
-    private var lastRecalc = 0L
+    private var lastRecalc = 0
 
     val lastRecalculation
         get() = lastRecalc
@@ -104,21 +106,24 @@ class ChainHandle internal constructor(
 
     internal constructor(
         container: LedgerInfo,
+        pw: PersistenceWrapper,
         tag: Tag
     ) : this(
         container,
+        pw,
         StorageAwareChainId(tag, container.ledgerId.hash, container.hasher, container.encoder)
     )
 
 
     internal constructor(
         container: LedgerInfo,
+        pw: PersistenceWrapper,
         id: ChainId,
         transactionPool: TransactionPool,
         difficulty: Difficulty,
-        lastRecalc: Long,
+        lastRecalc: Int,
         currentBlockheight: Long
-    ) : this(container, id, transactionPool) {
+    ) : this(container, pw, id, transactionPool) {
         this.difficultyTarget = difficulty
         this.lastRecalc = lastRecalc
         this.blockheight = currentBlockheight
@@ -290,7 +295,9 @@ class ChainHandle internal constructor(
      * Returns an [Outcome] over the requested [Sequence] of [Block]
      * for the specified blockheight [range].
      */
-    fun getBlockChunk(range: LongRange) =
+    fun getBlockChunk(
+        range: LongRange
+    ): Outcome<Sequence<Block>, LoadFailure> =
         getBlockChunk(range.first, range.last)
 
 
@@ -330,7 +337,7 @@ class ChainHandle internal constructor(
      */
     fun addBlock(block: Block): Outcome<Boolean, QueryFailure> =
         lastBlockHeader.flatMapSuccess {
-            val recalcTrigger = ledgerParams.recalcTrigger
+            val recalcTrigger = ledgerParams.recalculationTrigger
             if (validateBlock(it.hash, block)) {
                 if (lastRecalc == recalcTrigger) {
                     recalculateDifficulty(block)
@@ -402,7 +409,7 @@ class ChainHandle internal constructor(
     ): Difficulty {
         val cmp = triggerBlock.coinbase.blockheight
         val cstamp = triggerBlock.header.seconds
-        val fromHeight = cmp - ledgerParams.recalcTrigger
+        val fromHeight = cmp - ledgerParams.recalculationTrigger
         val recalcBlock =
             pw.getBlockByBlockHeight(chainHash, fromHeight)
         return when (recalcBlock) {
@@ -442,9 +449,9 @@ class ChainHandle internal constructor(
     ): Difficulty {
         val recalcMult = RECALC_MULT
         val recalcDiv = RECALC_DIV
-        val deltax = BigDecimal(ledgerParams.recalcTime - deltaStamp)
+        val deltax = BigDecimal(ledgerParams.recalculationTime - deltaStamp)
         val deltadiv = (deltax * recalcMult)
-            .divideToIntegralValue(BigDecimal(ledgerParams.recalcTime))
+            .divideToIntegralValue(BigDecimal(ledgerParams.recalculationTime))
             .toBigInteger()
         val difficulty = BigInteger(difficultyTarget.bytes)
         val newDiff = difficulty + (difficulty * deltadiv)
@@ -473,16 +480,41 @@ class ChainHandle internal constructor(
      */
     fun addTransaction(
         t: Transaction
-    ): Outcome<BlockState, BlockFailure> {
-        TODO()
+    ): BlockState {
+        transactionPool += t
+        val block = blockPool.firstUnconfirmedNotFull ?: newBlock()
+        block + t
+        return if (block.miningReady) {
+            BlockState.BlockReady(block.full, block.header)
+        } else {
+            BlockState.BlockNotReady
+        }
+    }
+
+    private fun newBlock(): Block {
+        val previousHash: Hash = blockPool.current?.header?.hash
+            ?: lastBlock.reduce<Hash, Block, LoadFailure>(
+                { block ->
+                    block.header.hash
+                }, { failure ->
+                    originHeader(ledgerInfo, id).hash
+                }
+            )
+        return StorageAwareBlock(
+            adapterManager, BlockImpl(
+                id, previousHash,
+                difficultyTarget, blockheight,
+                ledgerParams.blockParams, ledgerInfo
+            )
+        )
     }
 
     fun checkAgainstTarget(hashId: Hash): Boolean =
         hashId.toDifficulty() <= currentDifficulty
 
     fun refreshHeader(merkleRoot: Hash): BlockState =
-        blockPool[merkleRoot]?.newNonce()?.let {
-            BlockState.BlockReady(it)
+        blockPool[merkleRoot]?.let {
+            BlockState.BlockReady(it.full, it.newNonce())
         } ?: BlockState.BlockFailure
 
 

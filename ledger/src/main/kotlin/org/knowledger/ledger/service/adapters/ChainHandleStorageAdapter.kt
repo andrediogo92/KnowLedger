@@ -12,10 +12,12 @@ import org.knowledger.ledger.results.zip
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.results.LedgerFailure
+import org.knowledger.ledger.service.transactions.PersistenceWrapper
 
 internal class ChainHandleStorageAdapter(
     private val adapterManager: AdapterManager,
     private val container: LedgerInfo,
+    private val persistenceWrapper: PersistenceWrapper,
     private val transactionPoolStorageAdapter: TransactionPoolStorageAdapter
 ) : ServiceStorageAdapter<ChainHandle> {
     override val id: String
@@ -82,7 +84,7 @@ internal class ChainHandleStorageAdapter(
                 val difficulty =
                     element.getDifficultyProperty("difficultyTarget")
 
-                val lastRecalc: Long =
+                val lastRecalc: Int =
                     element.getStorageProperty("lastRecalc")
 
                 val currentBlockheight: Long =
@@ -90,11 +92,9 @@ internal class ChainHandleStorageAdapter(
 
 
                 ChainHandle(
-                    container,
-                    id,
-                    transactionPool,
-                    difficulty,
-                    lastRecalc,
+                    container, persistenceWrapper,
+                    id, transactionPool,
+                    difficulty, lastRecalc,
                     currentBlockheight
                 )
             }

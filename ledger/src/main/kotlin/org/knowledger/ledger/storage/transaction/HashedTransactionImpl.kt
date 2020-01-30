@@ -17,8 +17,8 @@ internal data class HashedTransactionImpl(
     SignedTransaction by signedTransaction {
     private var cachedSize: Long? = null
 
-    override val approximateSize: Long?
-        get() = cachedSize
+    override val approximateSize: Long
+        get() = cachedSize ?: throw UninitializedPropertyAccessException("Approximate size never calculated")
 
     override val hash: Hash
         get() = _hash ?: throw UninitializedPropertyAccessException("Hash was not initialized")

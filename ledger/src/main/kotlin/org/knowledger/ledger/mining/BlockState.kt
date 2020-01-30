@@ -4,6 +4,7 @@ import org.knowledger.ledger.storage.BlockHeader
 
 sealed class BlockState {
     data class BlockReady(
+        val full: Boolean,
         internal val header: BlockHeader
     ) : BlockState() {
         val hashId

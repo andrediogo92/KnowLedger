@@ -13,6 +13,15 @@ internal interface BlockPool : ServiceClass {
     val firstUnconfirmed: Block?
         get() = blocks.firstOrNull()
 
+    val firstUnconfirmedNotFull: Block?
+        get() = blocks.firstOrNull {
+            !it.full
+        }
+
+    val current: Block?
+        get() = blocks.lastOrNull()
+
+
     operator fun get(hash: Hash): Block? =
         blocks.firstOrNull {
             it.header.hash == hash

@@ -39,8 +39,8 @@ import org.knowledger.ledger.results.Failure as CoreFailure
 class LedgerHandle internal constructor(
     builder: AbstractLedgerBuilder
 ) : ServiceClass {
-    private val pw: PersistenceWrapper = builder.persistenceWrapper
-    internal val container: LedgerInfo = builder.ledgerInfo
+    internal val pw: PersistenceWrapper = builder.persistenceWrapper
+    val container: LedgerInfo = builder.ledgerInfo
     val id: LedgerId = builder.ledgerInfo.ledgerId
     val ledgerHash = id.hash
     val hasher: Hashers = builder.hasher
@@ -115,6 +115,7 @@ class LedgerHandle internal constructor(
     ): Outcome<ChainHandle, LedgerFailure> =
         ChainHandle(
             container,
+            pw,
             adapter.id.base64DecodedToHash()
         ).let { ch ->
             addStorageAdapter(adapter)

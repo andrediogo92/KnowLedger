@@ -1,6 +1,7 @@
 package org.knowledger.ledger.storage.block
 
 import kotlinx.serialization.Serializable
+import org.knowledger.ledger.core.base.Sizeable
 import org.knowledger.ledger.serial.BlockSerializer
 import org.knowledger.ledger.serial.HashSerializable
 import org.knowledger.ledger.storage.Block
@@ -12,7 +13,22 @@ import org.knowledger.ledger.storage.Transaction
 import java.util.*
 
 @Serializable(with = BlockSerializer::class)
-interface Block : HashSerializable, Cloneable, LedgerContract {
+interface Block : HashSerializable, Cloneable, Sizeable, LedgerContract {
+    val miningReady: Boolean
+        get() {
+            val blockParams = header.params
+            return transactions.size >= blockParams.blockLength / 4 ||
+                    approximateSize >= blockParams.blockMemorySize / 2
+        }
+
+    val full: Boolean
+        get() {
+            val blockParams = header.params
+            return transactions.size == blockParams.blockLength ||
+                    approximateSize >= blockParams.blockMemorySize
+        }
+
+
     val transactions: SortedSet<Transaction>
     val coinbase: Coinbase
     val header: BlockHeader
