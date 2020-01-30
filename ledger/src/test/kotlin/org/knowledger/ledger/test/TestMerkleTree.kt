@@ -7,13 +7,15 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.base.hash.toHexString
+import org.knowledger.ledger.config.CoinbaseParams
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbase
 import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.knowledger.testing.core.applyHashInPairs
+import org.knowledger.testing.core.random
 import org.knowledger.testing.ledger.testHasher
 import org.tinylog.kotlin.Logger
 
@@ -26,48 +28,63 @@ class TestMerkleTree {
         Identity("test2")
     )
 
-    private val ts7 = generateXTransactions(id, 7)
+    private val size = 24
+    private val base = generateXTransactionsArray(id, size)
+    private var begin = random.randomInt(size - 7)
+    private val ts7 = base.sliceArray(begin..begin + 6)
+
+    //Cache coinbase params to avoid repeated digest of formula calculations.
+    private val coinbaseParams = CoinbaseParams()
 
 
     private fun logMerkle(
-        ts: List<HashedTransaction>,
+        ts: Array<HashedTransaction>,
         tree: MerkleTree
     ) {
+        val builder = StringBuilder(
+            tree.collapsedTree.size * 2 * Hash.TRUNC
+        )
         tree.collapsedTree.forEachIndexed { i, it ->
-            Logger.debug {
-                "Naked tree @$i -> ${it.toHexString()}"
-            }
+            builder.append("Naked tree @").append(i).append(" -> ")
+                .appendln(it.truncatedHexString())
         }
+        Logger.debug { builder.toString() }
 
+        builder.setLength(0)
         tree.levelIndex.forEachIndexed { i, it ->
-            Logger.debug {
-                "Level @$i -> Starts from $it"
-            }
+            builder.append("Level @").append(i)
+                .append(" -> Starts from ").appendln(it)
         }
+        Logger.debug { builder.toString() }
 
+        builder.setLength(0)
         ts.forEachIndexed { i, it ->
-            Logger.debug {
-                "Transactions @$i -> ${it.hash.toHexString()}"
-            }
+            builder.append("Transactions @").append(i).append(" -> ")
+                .appendln(it.hash.truncatedHexString())
         }
+        Logger.debug { builder.toString() }
     }
 
     private fun logMerkle(
         coinbase: HashedCoinbase,
-        ts: List<HashedTransaction>,
+        ts: Array<HashedTransaction>,
         tree: MerkleTree
     ) {
         logMerkle(ts, tree)
         Logger.debug {
-            "Coinbase is ${coinbase.hash.toHexString()}"
+            "Coinbase is ${coinbase.hash.truncatedHexString()}"
         }
     }
 
 
     @Nested
     inner class BalancedMerkleTree {
-        private val ts8 = generateXTransactions(id, 8, testHasher)
-        private val tree8 = MerkleTreeImpl(testHasher, ts8.toTypedArray())
+        init {
+            begin = random.randomInt(size - 8)
+        }
+
+        private val ts8 = base.sliceArray(begin until begin + 8)
+        private val tree8 = MerkleTreeImpl(testHasher, ts8)
 
         @Test
         fun `merkle tree creation`() {
@@ -179,9 +196,11 @@ class TestMerkleTree {
 
         @Test
         fun `all transaction verification`() {
-            val coinbase7 = generateCoinbase(id, ts7)
+            val coinbase7 = generateCoinbase(
+                id = id, ts = ts7, coinbaseParams = coinbaseParams
+            )
             val tree7WithCoinbase =
-                MerkleTreeImpl(testHasher, coinbase7, ts7.toTypedArray())
+                MerkleTreeImpl(testHasher, coinbase7, ts7)
 
 
             //Log constructed merkle
@@ -189,7 +208,7 @@ class TestMerkleTree {
 
             assertThat(tree7WithCoinbase.hash).isNotNull()
             assertThat(
-                tree7WithCoinbase.verifyBlockTransactions(coinbase7, ts7.toTypedArray())
+                tree7WithCoinbase.verifyBlockTransactions(coinbase7, ts7)
             ).isTrue()
 
             Logger.debug {
@@ -202,12 +221,23 @@ class TestMerkleTree {
 
     @Nested
     inner class UnbalancedMerkleTree {
-        private val ts5 = generateXTransactions(id, 5)
-        private val coinbase5 = generateCoinbase(id, ts5)
+        init {
+            begin = random.randomInt(size - 5)
+        }
+
+        private val ts5 = base.sliceArray(begin until begin + 5)
+
+        init {
+            begin = random.randomInt(size - 6)
+        }
+
+        private val ts6 = base.sliceArray(begin until begin + 6)
+        private val coinbase5 = generateCoinbase(
+            id = id, ts = ts5, coinbaseParams = coinbaseParams
+        )
         private val tree5WithCoinbase =
-            MerkleTreeImpl(testHasher, coinbase5, ts5.toTypedArray())
-        private val ts6 = generateXTransactions(id, 6)
-        private val tree6 = MerkleTreeImpl(testHasher, ts6.toTypedArray())
+            MerkleTreeImpl(testHasher, coinbase5, ts5)
+        private val tree6 = MerkleTreeImpl(testHasher, ts6)
 
 
         @Test
@@ -374,7 +404,7 @@ class TestMerkleTree {
                 "Unbalanced 5-transaction tree is correct"
             }
 
-            val tree7 = MerkleTreeImpl(testHasher, ts7.toTypedArray())
+            val tree7 = MerkleTreeImpl(testHasher, ts7)
 
             //Log constructed merkle
             logMerkle(ts7, tree7)
@@ -411,16 +441,18 @@ class TestMerkleTree {
         @Test
         fun `all transaction verification`() {
 
-            val coinbase6 = generateCoinbase(id, ts6)
+            val coinbase6 = generateCoinbase(
+                id = id, ts = ts6, coinbaseParams = coinbaseParams
+            )
             val tree6WithCoinbase =
-                MerkleTreeImpl(testHasher, coinbase6, ts6.toTypedArray())
+                MerkleTreeImpl(testHasher, coinbase6, ts6)
 
             //Log constructed merkle
             logMerkle(coinbase6, ts6, tree6WithCoinbase)
 
             assertThat(tree6WithCoinbase.hash).isNotNull()
             assertThat(
-                tree6WithCoinbase.verifyBlockTransactions(coinbase6, ts6.toTypedArray())
+                tree6WithCoinbase.verifyBlockTransactions(coinbase6, ts6)
             ).isTrue()
 
             Logger.debug {
@@ -433,7 +465,7 @@ class TestMerkleTree {
 
             assertThat(tree5WithCoinbase.hash).isNotNull()
             assertThat(
-                tree5WithCoinbase.verifyBlockTransactions(coinbase5, ts5.toTypedArray())
+                tree5WithCoinbase.verifyBlockTransactions(coinbase5, ts5)
             ).isTrue()
 
             Logger.debug {
@@ -447,8 +479,10 @@ class TestMerkleTree {
 
     @Test
     fun `merkle tree creation with just root`() {
-        val ts = generateXTransactions(id, 1, testHasher)
-        val tree = MerkleTreeImpl(testHasher, ts.toTypedArray())
+        begin = random.randomInt(size - 1)
+
+        val ts = base.sliceArray(begin..begin)
+        val tree = MerkleTreeImpl(testHasher, ts)
 
         //Log constructed merkle
         logMerkle(ts, tree)

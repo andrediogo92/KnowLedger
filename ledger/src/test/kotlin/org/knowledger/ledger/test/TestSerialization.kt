@@ -7,12 +7,13 @@ import kotlinx.serialization.UnstableDefault
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.serial.BlockSerializer
 import org.knowledger.ledger.serial.internal.BlockByteSerializer
 import org.knowledger.ledger.storage.Block
-import org.knowledger.testing.ledger.encoder
-import org.knowledger.testing.ledger.json
+import org.knowledger.testing.ledger.testEncoder
+import org.knowledger.testing.ledger.testJson
 import org.tinylog.kotlin.Logger
 
 @UnstableDefault
@@ -22,9 +23,12 @@ class TestSerialization {
         Identity("test2")
     )
 
-    val chainId = generateChainId()
+    private val chainId = generateChainId()
 
-    val testTransactions =
+    //Cache coinbase params to avoid repeated digest of formula calculations.
+    private val coinbaseParams = CoinbaseParams()
+
+    private val testTransactions =
         generateXTransactions(id, 10).toSortedSet()
 
 
@@ -35,7 +39,7 @@ class TestSerialization {
         @BeforeEach
         fun startup() {
             block = generateBlockWithChain(
-                chainId
+                chainId = chainId, coinbaseParams = coinbaseParams
             )
         }
 
@@ -47,11 +51,11 @@ class TestSerialization {
 
             assertThat(block.transactions.size).isEqualTo(testTransactions.size)
 
-            val resultingBlock = json.stringify(BlockSerializer, block)
+            val resultingBlock = testJson.stringify(BlockSerializer, block)
             Logger.debug {
                 resultingBlock
             }
-            val rebuiltBlock = json.parse(BlockSerializer, resultingBlock)
+            val rebuiltBlock = testJson.parse(BlockSerializer, resultingBlock)
             assertThat(rebuiltBlock.coinbase).isEqualTo(block.coinbase)
             assertThat(rebuiltBlock.transactions.toTypedArray()).containsExactly(*block.transactions.toTypedArray())
             assertThat(rebuiltBlock.header).isEqualTo(block.header)
@@ -66,8 +70,8 @@ class TestSerialization {
 
             assertThat(block.transactions.size).isEqualTo(testTransactions.size)
 
-            val resultingBlock = encoder.dump(BlockByteSerializer, block)
-            val rebuiltBlock = encoder.load(BlockByteSerializer, resultingBlock)
+            val resultingBlock = testEncoder.dump(BlockByteSerializer, block)
+            val rebuiltBlock = testEncoder.load(BlockByteSerializer, resultingBlock)
             //Even though everything seems absolutely fine
             //this blows up.
             //Deserialization is unnecessary though.
