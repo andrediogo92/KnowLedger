@@ -1,4 +1,6 @@
-on: 
+on:
+  repository_dispatch:
+    types: build-site
   push:
     branches:
       - master
