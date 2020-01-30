@@ -8,7 +8,10 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.SerializersModule
+import org.knowledger.collections.mapToArray
+import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.ledger.crypto.hash.Hashing
 import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.TemperatureData
 import org.knowledger.ledger.data.TrafficFlowData
@@ -22,11 +25,14 @@ import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.peekFailure
 import org.knowledger.ledger.results.unwrap
 import org.tinylog.kotlin.Logger
+import java.util.concurrent.atomic.AtomicInteger
+
+val testCounter: AtomicInteger = AtomicInteger(0)
 
 val testHasher: Hashers = Hashers.DEFAULT_HASHER
 
 
-val serialModule: SerialModule by lazy {
+val testSerialModule: SerialModule by lazy {
     SerializersModule {
         polymorphic(LedgerData::class) {
             TemperatureData::class with TemperatureData.serializer()
@@ -35,18 +41,18 @@ val serialModule: SerialModule by lazy {
     }
 }
 
-val encoder: BinaryFormat by lazy {
+val testEncoder: BinaryFormat by lazy {
     Cbor(
         UpdateMode.OVERWRITE, true,
-        serialModule
+        testSerialModule
     )
 }
 
 
 @UnstableDefault
-val json: Json = Json(
+val testJson: Json = Json(
     configuration = JsonConfiguration.Default.copy(prettyPrint = true),
-    context = serialModule
+    context = testSerialModule
 )
 
 
@@ -65,11 +71,96 @@ fun ManagedSession.queryToList(
     query(query).toList()
 
 
-fun logActualToExpectedLists(
+fun logActualToExpectedHashing(
     explanationActual: String,
-    actualList: List<Any>,
+    actualList: List<Hashing>,
     explanationExpected: String,
-    expectedList: List<Any>
+    expectedList: List<Hashing>
+) {
+    logActualToExpected(
+        explanationActual,
+        actualList.mapToArray { it.hash.truncatedHexString() },
+        explanationExpected,
+        expectedList.mapToArray { it.hash.truncatedHexString() }
+    )
+}
+
+fun logActualToExpectedHashing(
+    explanationActual: String,
+    actualList: Array<Hashing>,
+    explanationExpected: String,
+    expectedList: Array<Hashing>
+) {
+    logActualToExpected(
+        explanationActual,
+        actualList.mapToArray { it.hash.truncatedHexString() },
+        explanationExpected,
+        expectedList.mapToArray { it.hash.truncatedHexString() }
+    )
+}
+
+
+fun logActualToExpectedHashing(
+    explanationActual: String,
+    actualList: Iterable<Hashing>,
+    explanationExpected: String,
+    expectedList: Iterable<Hashing>
+) {
+    logActualToExpected(
+        explanationActual,
+        actualList.map { it.hash.truncatedHexString() },
+        explanationExpected,
+        expectedList.map { it.hash.truncatedHexString() }
+    )
+}
+
+fun logActualToExpectedHashes(
+    explanationActual: String,
+    actualList: Iterable<Hash>,
+    explanationExpected: String,
+    expectedList: Iterable<Hash>
+) {
+    logActualToExpected(
+        explanationActual,
+        actualList.map { it.truncatedHexString() },
+        explanationExpected,
+        expectedList.map { it.truncatedHexString() }
+    )
+}
+
+fun logActualToExpectedHashes(
+    explanationActual: String,
+    actualList: Array<Hash>,
+    explanationExpected: String,
+    expectedList: Array<Hash>
+) {
+    logActualToExpected(
+        explanationActual,
+        actualList.mapToArray { it.truncatedHexString() },
+        explanationExpected,
+        expectedList.mapToArray { it.truncatedHexString() }
+    )
+}
+
+fun logActualToExpectedHashes(
+    explanationActual: String,
+    actualList: List<Hash>,
+    explanationExpected: String,
+    expectedList: List<Hash>
+) {
+    logActualToExpected(
+        explanationActual,
+        actualList.mapToArray { it.truncatedHexString() },
+        explanationExpected,
+        expectedList.mapToArray { it.truncatedHexString() }
+    )
+}
+
+fun logActualToExpected(
+    explanationActual: String,
+    actualList: Iterable<String>,
+    explanationExpected: String,
+    expectedList: Iterable<String>
 ) {
     Logger.info {
         """
@@ -79,14 +170,40 @@ fun logActualToExpectedLists(
             """,
                 |
             """.trimMargin()
-        ) { it.toString() }}
+        ) { it }}
             |
             |$explanationExpected
             |${expectedList.joinToString(
             """,
                 |
             """.trimMargin()
-        ) { it.toString() }}
+        ) { it }}
+        """.trimMargin()
+    }
+}
+
+fun logActualToExpected(
+    explanationActual: String,
+    actualList: Array<String>,
+    explanationExpected: String,
+    expectedList: Array<String>
+) {
+    Logger.info {
+        """
+            |
+            |$explanationActual
+            |${actualList.joinToString(
+            """,
+                |
+            """.trimMargin()
+        ) { it }}
+            |
+            |$explanationExpected
+            |${expectedList.joinToString(
+            """,
+                |
+            """.trimMargin()
+        ) { it }}
         """.trimMargin()
     }
 }

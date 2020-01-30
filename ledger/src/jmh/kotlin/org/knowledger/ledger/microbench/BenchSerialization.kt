@@ -7,8 +7,8 @@ import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.test.generateBlock
-import org.knowledger.ledger.test.generateXTransactions
-import org.knowledger.testing.ledger.encoder
+import org.knowledger.ledger.test.generateXTransactionsArray
+import org.knowledger.testing.ledger.testEncoder
 import org.openjdk.jmh.annotations.*
 import org.openjdk.jmh.infra.Blackhole
 import java.util.concurrent.TimeUnit
@@ -31,9 +31,9 @@ open class BenchSerialization {
         state: SerializationState, blackhole: Blackhole
     ) {
         blackhole.consume(
-            encoder.load(
+            testEncoder.load(
                 BlockSerializer,
-                encoder.dump(BlockSerializer, state.block)
+                testEncoder.dump(BlockSerializer, state.block)
             )
         )
     }
@@ -43,9 +43,9 @@ open class BenchSerialization {
         state: SerializationState, blackhole: Blackhole
     ) {
         blackhole.consume(
-            encoder.load(
+            testEncoder.load(
                 BlockByteSerializer,
-                encoder.dump(BlockByteSerializer, state.block)
+                testEncoder.dump(BlockByteSerializer, state.block)
             )
         )
     }
@@ -57,8 +57,8 @@ open class SerializationState(
     val id: Array<Identity> = arrayOf(
         Identity("boy"), Identity("wonder")
     ),
-    val ts: List<Transaction> =
-        generateXTransactions(id, 100),
+    val ts: Array<Transaction> =
+        generateXTransactionsArray(id, 100),
     val block: Block =
         generateBlock(id, ts)
 )
