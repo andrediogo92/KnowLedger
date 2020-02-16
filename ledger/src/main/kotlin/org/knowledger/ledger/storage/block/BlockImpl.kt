@@ -19,10 +19,10 @@ import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.serial.SortedSetSerializer
-import org.knowledger.ledger.serial.internal.BlockHeaderByteSerializer
-import org.knowledger.ledger.serial.internal.CoinbaseByteSerializer
-import org.knowledger.ledger.serial.internal.MerkleTreeByteSerializer
-import org.knowledger.ledger.serial.internal.TransactionByteSerializer
+import org.knowledger.ledger.serial.binary.BlockHeaderByteSerializer
+import org.knowledger.ledger.serial.binary.CoinbaseByteSerializer
+import org.knowledger.ledger.serial.binary.MerkleTreeByteSerializer
+import org.knowledger.ledger.serial.binary.TransactionByteSerializer
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase

@@ -1,6 +1,12 @@
 package org.knowledger.ledger.core.serial
 
-import kotlinx.serialization.*
+import kotlinx.serialization.CompositeDecoder
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.core.base.data.GeoCoords
 import java.math.BigDecimal
@@ -17,10 +23,10 @@ object GeoCoordinatesSerializer : KSerializer<GeoCoords> {
         }
 
     override fun deserialize(decoder: Decoder): GeoCoords {
-        var latitude: BigDecimal? = null
-        var longitude: BigDecimal? = null
-        var altitude: BigDecimal? = null
-        with(decoder.beginStructure(descriptor)) {
+        return with(decoder.beginStructure(descriptor)) {
+            lateinit var latitude: BigDecimal
+            lateinit var longitude: BigDecimal
+            var altitude: BigDecimal? = null
             loop@ while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
@@ -37,18 +43,11 @@ object GeoCoordinatesSerializer : KSerializer<GeoCoords> {
                 }
             }
             endStructure(descriptor)
-        }
-        return if (altitude == null) {
-            GeoCoords(
-                latitude ?: throw MissingFieldException("latitude"),
-                longitude ?: throw MissingFieldException("longitude")
-            )
-        } else {
-            GeoCoords(
-                latitude ?: throw MissingFieldException("latitude"),
-                longitude ?: throw MissingFieldException("longitude"),
-                altitude as BigDecimal
-            )
+            if (altitude == null) {
+                GeoCoords(latitude, longitude)
+            } else {
+                GeoCoords(latitude, longitude, altitude)
+            }
         }
     }
 

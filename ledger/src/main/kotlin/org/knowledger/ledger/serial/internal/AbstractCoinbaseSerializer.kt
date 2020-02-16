@@ -1,26 +1,52 @@
 package org.knowledger.ledger.serial.internal
 
 import kotlinx.serialization.*
+import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.serial.DifficultySerializer
-import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.core.serial.PayoutSerializer
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Payout
-import org.knowledger.ledger.serial.CoinbaseSerializer
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.TransactionOutput
 import org.knowledger.ledger.storage.coinbase.CoinbaseImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
 import kotlin.properties.Delegates
 
-@Serializer(forClass = Coinbase::class)
-object CoinbaseByteSerializer : KSerializer<Coinbase> {
-    override val descriptor: SerialDescriptor =
-        CoinbaseSerializer.descriptor
+internal abstract class AbstractCoinbaseSerializer(
+    transactionOutputSerializer: KSerializer<TransactionOutput>
+) : KSerializer<Coinbase>, HashEncode {
+    private object CoinbaseSerialDescriptor : SerialClassDescImpl("Coinbase") {
+        init {
+            addElement("hash")
+            addElement("payout")
+            addElement("difficulty")
+            addElement("blockheight")
+            addElement("extraNonce")
+            addElement("coinbaseParams")
+            addElement("transactionOutputs")
+        }
+    }
 
-    val transactionOutputsSerializer = TransactionOutputByteSerializer.set
+    override val descriptor: SerialDescriptor = CoinbaseSerialDescriptor
+
+    private val transactionOutputsSerializer = transactionOutputSerializer.set
+
+    abstract fun CompositeEncoder.encodeDifficulty(
+        index: Int, difficulty: Difficulty
+    )
+
+    abstract fun CompositeDecoder.decodeDifficulty(
+        index: Int
+    ): Difficulty
+
+    abstract fun CompositeEncoder.encodeCoinbaseParams(
+        index: Int, params: CoinbaseParams
+    )
+
+    abstract fun CompositeDecoder.decodeCoinbaseParams(
+        index: Int
+    ): CoinbaseParams
 
     override fun deserialize(decoder: Decoder): Coinbase =
         with(decoder.beginStructure(descriptor)) {
@@ -34,27 +60,17 @@ object CoinbaseByteSerializer : KSerializer<Coinbase> {
             loop@ while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
-                    0 -> transactionOutputs = decodeSerializableElement(
-                        descriptor, i, transactionOutputsSerializer
-                    ) as MutableSet<TransactionOutput>
+                    0 -> hash = decodeHash(i)
                     1 -> payout = decodeSerializableElement(
                         descriptor, i, PayoutSerializer
                     )
-                    2 -> difficulty = decodeSerializableElement(
-                        descriptor, i, DifficultySerializer
-                    )
-                    3 -> blockheight = decodeLongElement(
-                        descriptor, i
-                    )
-                    4 -> extraNonce = decodeLongElement(
-                        descriptor, i
-                    )
-                    5 -> coinbaseParams = decodeSerializableElement(
-                        descriptor, i, CoinbaseParamsByteSerializer
-                    )
-                    6 -> hash = decodeSerializableElement(
-                        descriptor, i, HashSerializer
-                    )
+                    2 -> difficulty = decodeDifficulty(i)
+                    3 -> blockheight = decodeLongElement(descriptor, i)
+                    4 -> extraNonce = decodeLongElement(descriptor, i)
+                    5 -> coinbaseParams = decodeCoinbaseParams(i)
+                    6 -> transactionOutputs = decodeSerializableElement(
+                        descriptor, i, transactionOutputsSerializer
+                    ) as MutableSet<TransactionOutput>
                     else -> throw SerializationException("Unknown index $i")
                 }
             }
@@ -71,29 +87,20 @@ object CoinbaseByteSerializer : KSerializer<Coinbase> {
             )
         }
 
+
     override fun serialize(encoder: Encoder, obj: Coinbase) {
         with(encoder.beginStructure(descriptor)) {
-            encodeSerializableElement(
-                descriptor, 0, transactionOutputsSerializer,
-                obj.transactionOutputs
-            )
+            encodeHash(0, obj.hash)
             encodeSerializableElement(
                 descriptor, 1, PayoutSerializer, obj.payout
             )
+            encodeDifficulty(2, obj.difficulty)
+            encodeLongElement(descriptor, 3, obj.blockheight)
+            encodeLongElement(descriptor, 4, obj.extraNonce)
+            encodeCoinbaseParams(5, obj.coinbaseParams)
             encodeSerializableElement(
-                descriptor, 2, DifficultySerializer, obj.difficulty
-            )
-            encodeLongElement(
-                descriptor, 3, obj.blockheight
-            )
-            encodeLongElement(
-                descriptor, 4, obj.extraNonce
-            )
-            encodeSerializableElement(
-                descriptor, 5, CoinbaseParamsByteSerializer, obj.coinbaseParams
-            )
-            encodeSerializableElement(
-                descriptor, 6, HashSerializer, obj.hash
+                descriptor, 6, transactionOutputsSerializer,
+                obj.transactionOutputs
             )
             endStructure(descriptor)
         }

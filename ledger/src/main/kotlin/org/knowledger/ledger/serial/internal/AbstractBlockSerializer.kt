@@ -1,13 +1,14 @@
-package org.knowledger.ledger.serial
+package org.knowledger.ledger.serial.internal
 
 import kotlinx.serialization.CompositeDecoder
+import kotlinx.serialization.CompositeEncoder
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.SerialClassDescImpl
+import org.knowledger.ledger.serial.SortedSetSerializer
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
@@ -16,19 +17,46 @@ import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.block.BlockImpl
 import java.util.*
 
-@Serializer(forClass = Block::class)
-object BlockSerializer : KSerializer<Block> {
-    override val descriptor: SerialDescriptor =
-        object : SerialClassDescImpl("Block") {
-            init {
-                addElement("transactions")
-                addElement("coinbase")
-                addElement("header")
-                addElement("merkleTree")
-            }
+internal abstract class AbstractBlockSerializer(
+    transactionSerializer: KSerializer<Transaction>
+) : KSerializer<Block> {
+    private object BlockSerialDescriptor : SerialClassDescImpl("Block") {
+        init {
+            addElement("header")
+            addElement("coinbase")
+            addElement("merkleTree")
+            addElement("transactions")
         }
+    }
 
-    private val sortedSetSerializer = SortedSetSerializer(TransactionSerializer)
+    override val descriptor: SerialDescriptor = BlockSerialDescriptor
+
+    private val sortedSetSerializer = SortedSetSerializer(transactionSerializer)
+
+    abstract fun CompositeEncoder.encodeCoinbase(
+        index: Int, coinbase: Coinbase
+    )
+
+    abstract fun CompositeDecoder.decodeCoinbase(
+        index: Int
+    ): Coinbase
+
+    abstract fun CompositeEncoder.encodeBlockHeader(
+        index: Int, header: BlockHeader
+    )
+
+    abstract fun CompositeDecoder.decodeBlockHeader(
+        index: Int
+    ): BlockHeader
+
+    abstract fun CompositeEncoder.encodeMerkleTree(
+        index: Int, merkleTree: MerkleTree
+    )
+
+    abstract fun CompositeDecoder.decodeMerkleTree(
+        index: Int
+    ): MerkleTree
+
 
     override fun deserialize(decoder: Decoder): Block =
         with(decoder.beginStructure(descriptor)) {
@@ -39,17 +67,11 @@ object BlockSerializer : KSerializer<Block> {
             loop@ while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
-                    0 -> transactions = decodeSerializableElement(
+                    0 -> header = decodeBlockHeader(i)
+                    1 -> coinbase = decodeCoinbase(i)
+                    2 -> merkleTree = decodeMerkleTree(i)
+                    3 -> transactions = decodeSerializableElement(
                         descriptor, i, sortedSetSerializer
-                    )
-                    1 -> coinbase = decodeSerializableElement(
-                        descriptor, i, CoinbaseSerializer
-                    )
-                    2 -> header = decodeSerializableElement(
-                        descriptor, i, BlockHeaderSerializer
-                    )
-                    3 -> merkleTree = decodeSerializableElement(
-                        descriptor, i, MerkleTreeSerializer
                     )
                     else -> throw SerializationException("Unknown index $i")
                 }
@@ -65,18 +87,12 @@ object BlockSerializer : KSerializer<Block> {
 
     override fun serialize(encoder: Encoder, obj: Block) {
         with(encoder.beginStructure(descriptor)) {
+            encodeBlockHeader(0, obj.header)
+            encodeCoinbase(1, obj.coinbase)
+            encodeMerkleTree(2, obj.merkleTree)
             encodeSerializableElement(
-                descriptor, 0, sortedSetSerializer,
+                descriptor, 3, sortedSetSerializer,
                 obj.transactions
-            )
-            encodeSerializableElement(
-                descriptor, 1, CoinbaseSerializer, obj.coinbase
-            )
-            encodeSerializableElement(
-                descriptor, 2, BlockHeaderSerializer, obj.header
-            )
-            encodeSerializableElement(
-                descriptor, 3, MerkleTreeSerializer, obj.merkleTree
             )
             endStructure(descriptor)
         }

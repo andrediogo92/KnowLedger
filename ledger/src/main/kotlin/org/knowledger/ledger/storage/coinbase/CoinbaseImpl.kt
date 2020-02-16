@@ -20,8 +20,8 @@ import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.data.PhysicalData
-import org.knowledger.ledger.serial.internal.CoinbaseParamsByteSerializer
-import org.knowledger.ledger.serial.internal.TransactionOutputByteSerializer
+import org.knowledger.ledger.serial.binary.CoinbaseParamsByteSerializer
+import org.knowledger.ledger.serial.binary.TransactionOutputByteSerializer
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.storage.TransactionOutput
 import java.math.BigDecimal

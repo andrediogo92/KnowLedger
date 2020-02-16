@@ -1,6 +1,7 @@
 package org.knowledger.ledger.service.handles
 
 import kotlinx.serialization.BinaryFormat
+import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
@@ -194,9 +195,9 @@ class ChainHandle internal constructor(
                 Logger.debug {
                     """
                     |Current Hashes not equal:
-                    |   ${curHeader.hash.toHexString()}
+                    |   ${curHeader.hash.base64Encoded()}
                     |   -- and --
-                    |   ${cmpHash.toHexString()}
+                    |   ${cmpHash.base64Encoded()}
                     """.trimMargin()
                 }
                 return false
@@ -207,9 +208,9 @@ class ChainHandle internal constructor(
                 Logger.debug {
                     """
                     |Previous Hashes not equal:
-                    |   ${prevHeader.hash.toHexString()}
+                    |   ${prevHeader.hash.base64Encoded()}
                     |   -- and --
-                    |   ${curHeader.previousHash.toHexString()}
+                    |   ${curHeader.previousHash.base64Encoded()}
                     """.trimMargin()
                 }
                 return false
@@ -219,7 +220,7 @@ class ChainHandle internal constructor(
             val curDiff = curHeader.hash.toDifficulty()
             if (curDiff > hashTarget) {
                 Logger.debug {
-                    "Unmined block: ${curHeader.hash.toHexString()}"
+                    "Unmined block: ${curHeader.hash.base64Encoded()}"
                 }
                 return false
             }

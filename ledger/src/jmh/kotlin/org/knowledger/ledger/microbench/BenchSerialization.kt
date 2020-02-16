@@ -1,8 +1,9 @@
 package org.knowledger.ledger.microbench
 
 import kotlinx.serialization.UnstableDefault
-import org.knowledger.ledger.serial.BlockSerializer
-import org.knowledger.ledger.serial.internal.BlockByteSerializer
+import org.knowledger.ledger.results.unwrap
+import org.knowledger.ledger.serial.LedgerSerializer
+import org.knowledger.ledger.serial.ledgerBinarySerializer
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.Transaction
@@ -31,10 +32,7 @@ open class BenchSerialization {
         state: SerializationState, blackhole: Blackhole
     ) {
         blackhole.consume(
-            testEncoder.load(
-                BlockSerializer,
-                testEncoder.dump(BlockSerializer, state.block)
-            )
+            state.binarySerializer.encodeBlock(state.block)
         )
     }
 
@@ -43,10 +41,7 @@ open class BenchSerialization {
         state: SerializationState, blackhole: Blackhole
     ) {
         blackhole.consume(
-            testEncoder.load(
-                BlockByteSerializer,
-                testEncoder.dump(BlockByteSerializer, state.block)
-            )
+            state.binarySerializer.encodeCompactBlock(state.block)
         )
     }
 }
@@ -60,5 +55,7 @@ open class SerializationState(
     val ts: Array<Transaction> =
         generateXTransactionsArray(id, 100),
     val block: Block =
-        generateBlock(id, ts)
+        generateBlock(id, ts),
+    val binarySerializer: LedgerSerializer.LedgerBinarySerializer =
+        ledgerBinarySerializer { encoder = testEncoder }.unwrap()
 )

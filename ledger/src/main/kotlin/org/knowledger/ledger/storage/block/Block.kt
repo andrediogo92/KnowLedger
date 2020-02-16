@@ -2,8 +2,8 @@ package org.knowledger.ledger.storage.block
 
 import kotlinx.serialization.Serializable
 import org.knowledger.ledger.core.base.Sizeable
-import org.knowledger.ledger.serial.BlockSerializer
 import org.knowledger.ledger.serial.HashSerializable
+import org.knowledger.ledger.serial.display.BlockSerializer
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase

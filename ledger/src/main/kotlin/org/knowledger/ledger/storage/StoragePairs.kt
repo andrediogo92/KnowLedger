@@ -11,8 +11,7 @@ import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.crypto.hash.Hash as LedgerHash
 import org.knowledger.ledger.data.Payout as LedgerPayout
 
-internal sealed class StoragePairs<T>(
-) {
+internal sealed class StoragePairs<T> {
     abstract val key: String
     internal var wrapped: T? = null
     internal var dirty: Boolean = false

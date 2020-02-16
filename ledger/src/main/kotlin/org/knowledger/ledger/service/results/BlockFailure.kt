@@ -1,5 +1,6 @@
 package org.knowledger.ledger.service.results
 
+import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.results.Failable
 import org.knowledger.ledger.results.Failure
@@ -26,7 +27,7 @@ sealed class BlockFailure : Failure {
         val hash: Hash
     ) : BlockFailure() {
         override val failable: Failable =
-            Failable.LightFailure("No block with hash -> ${hash.toHexString()} in BlockPool")
+            Failable.LightFailure("No block with hash -> ${hash.base64Encoded()} in BlockPool")
     }
 
 }

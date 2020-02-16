@@ -1,4 +1,4 @@
-@file:UseSerializers(ByteArraySerializer::class, EncodedSignatureSerializer::class)
+@file:UseSerializers(ByteArraySerializer::class, EncodedSignatureByteSerializer::class)
 
 package org.knowledger.ledger.storage.transaction
 
@@ -9,7 +9,7 @@ import kotlinx.serialization.internal.ByteArraySerializer
 import org.knowledger.ledger.core.generateSignature
 import org.knowledger.ledger.core.verifyECDSASig
 import org.knowledger.ledger.crypto.EncodedSignature
-import org.knowledger.ledger.crypto.serial.EncodedSignatureSerializer
+import org.knowledger.ledger.crypto.serial.EncodedSignatureByteSerializer
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.service.Identity
 import java.security.PrivateKey

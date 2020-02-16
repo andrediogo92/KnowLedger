@@ -1,37 +1,44 @@
-package org.knowledger.ledger.serial
+package org.knowledger.ledger.serial.internal
 
 import kotlinx.serialization.CompositeDecoder
+import kotlinx.serialization.CompositeEncoder
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.SerialClassDescImpl
-import org.knowledger.ledger.core.base.hash.hashFromHexString
 import org.knowledger.ledger.crypto.EncodedSignature
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.toEncoded
-import org.knowledger.ledger.crypto.serial.EncodedPublicKeySerializer
-import org.knowledger.ledger.crypto.serial.EncodedSignatureSerializer
-import org.knowledger.ledger.crypto.toPublicKey
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.SignedTransactionImpl
 import java.security.PublicKey
 
-@Serializer(forClass = Transaction::class)
-object TransactionSerializer : KSerializer<Transaction> {
-    override val descriptor: SerialDescriptor =
-        object : SerialClassDescImpl("Transaction") {
-            init {
-                addElement("publicKey")
-                addElement("data")
-                addElement("signature")
-                addElement("hash")
-            }
+internal abstract class AbstractTransactionSerializer : KSerializer<Transaction>, HashEncode {
+    private object TransactionSerialDescriptor : SerialClassDescImpl("Transaction") {
+        init {
+            addElement("publicKey")
+            addElement("signature")
+            addElement("hash")
+            addElement("data")
         }
+    }
+
+    override val descriptor: SerialDescriptor = TransactionSerialDescriptor
+
+    abstract fun CompositeEncoder.encodePublicKey(
+        index: Int, publicKey: PublicKey
+    )
+
+    abstract fun CompositeDecoder.decodePublicKey(index: Int): PublicKey
+
+    abstract fun CompositeEncoder.encodeSignature(
+        index: Int, encodedSignature: EncodedSignature
+    )
+
+    abstract fun CompositeDecoder.decodeSignature(index: Int): EncodedSignature
 
     override fun deserialize(decoder: Decoder): Transaction =
         with(decoder.beginStructure(descriptor)) {
@@ -42,18 +49,12 @@ object TransactionSerializer : KSerializer<Transaction> {
             loop@ while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
-                    0 -> publicKey = decodeSerializableElement(
-                        descriptor, i, EncodedPublicKeySerializer
-                    ).toPublicKey()
-                    1 -> data = decodeSerializableElement(
+                    0 -> publicKey = decodePublicKey(i)
+                    1 -> signature = decodeSignature(i)
+                    2 -> hash = decodeHash(i)
+                    3 -> data = decodeSerializableElement(
                         descriptor, i, PhysicalData.serializer()
                     )
-                    2 -> signature = decodeSerializableElement(
-                        descriptor, i, EncodedSignatureSerializer
-                    )
-                    3 -> hash = decodeStringElement(
-                        descriptor, i
-                    ).hashFromHexString()
                     else -> throw SerializationException("Unknown index $i")
                 }
             }
@@ -70,19 +71,12 @@ object TransactionSerializer : KSerializer<Transaction> {
 
     override fun serialize(encoder: Encoder, obj: Transaction) {
         with(encoder.beginStructure(descriptor)) {
+            encodePublicKey(0, obj.publicKey)
+            encodeSignature(1, obj.signature)
+            encodeHash(2, obj.hash)
             encodeSerializableElement(
-                descriptor, 0, EncodedPublicKeySerializer,
-                obj.publicKey.toEncoded()
-            )
-            encodeSerializableElement(
-                descriptor, 1, PhysicalData.serializer(),
+                descriptor, 3, PhysicalData.serializer(),
                 obj.data
-            )
-            encodeSerializableElement(
-                descriptor, 2, EncodedSignatureSerializer, obj.signature
-            )
-            encodeStringElement(
-                descriptor, 3, obj.hash.toHexString()
             )
             endStructure(descriptor)
         }

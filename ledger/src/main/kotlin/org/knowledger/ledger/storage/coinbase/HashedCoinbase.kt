@@ -5,7 +5,7 @@ import org.knowledger.ledger.core.base.Sizeable
 import org.knowledger.ledger.crypto.hash.Hashing
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.data.Payout
-import org.knowledger.ledger.serial.CoinbaseSerializer
+import org.knowledger.ledger.serial.display.CoinbaseSerializer
 import org.knowledger.ledger.storage.transaction.HashedTransaction
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
 

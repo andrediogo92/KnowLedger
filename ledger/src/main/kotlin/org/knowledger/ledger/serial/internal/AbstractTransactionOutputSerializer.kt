@@ -1,23 +1,39 @@
 package org.knowledger.ledger.serial.internal
 
 import kotlinx.serialization.*
-import org.knowledger.ledger.core.serial.HashSerializer
+import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.core.serial.PayoutSerializer
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.serial.PublicKeySerializer
 import org.knowledger.ledger.data.Payout
-import org.knowledger.ledger.serial.TransactionOutputSerializer
 import org.knowledger.ledger.storage.TransactionOutput
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
 import org.knowledger.ledger.storage.transaction.output.TransactionOutputImpl
 import java.security.PublicKey
 
-@Serializer(forClass = TransactionOutput::class)
-internal object TransactionOutputByteSerializer : KSerializer<TransactionOutput> {
-    override val descriptor: SerialDescriptor =
-        TransactionOutputSerializer.descriptor
+internal abstract class AbstractTransactionOutputSerializer(
+    hashSerializer: KSerializer<Hash>
+) : KSerializer<TransactionOutput>, HashEncode {
+    private object TransactionOutputSerialDescriptor : SerialClassDescImpl("TransactionOutput") {
+        init {
+            addElement("hash")
+            addElement("publicKey")
+            addElement("previousCoinbase")
+            addElement("payout")
+            addElement("transactionHashes")
+        }
+    }
 
-    val hashsSerializer = HashSerializer.set
+    override val descriptor: SerialDescriptor = TransactionOutputSerialDescriptor
+
+    abstract fun CompositeEncoder.encodePublicKey(
+        index: Int, publicKey: PublicKey
+    )
+
+    abstract fun CompositeDecoder.decodePublicKey(
+        index: Int
+    ): PublicKey
+
+    private val hashsSerializer = hashSerializer.set
 
     override fun deserialize(decoder: Decoder): TransactionOutput =
         with(decoder.beginStructure(descriptor)) {
@@ -29,21 +45,15 @@ internal object TransactionOutputByteSerializer : KSerializer<TransactionOutput>
             loop@ while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
-                    0 -> publicKey = decodeSerializableElement(
-                        descriptor, i, PublicKeySerializer
-                    )
-                    1 -> previousCoinbase = decodeSerializableElement(
-                        descriptor, i, HashSerializer
-                    )
-                    2 -> payout = decodeSerializableElement(
+                    0 -> hash = decodeHash(i)
+                    1 -> publicKey = decodePublicKey(i)
+                    2 -> previousCoinbase = decodeHash(i)
+                    3 -> payout = decodeSerializableElement(
                         descriptor, i, PayoutSerializer
                     )
-                    3 -> transactionHashes = decodeSerializableElement(
+                    4 -> transactionHashes = decodeSerializableElement(
                         descriptor, i, hashsSerializer
                     ) as MutableSet<Hash>
-                    4 -> hash = decodeSerializableElement(
-                        descriptor, i, HashSerializer
-                    )
                     else -> throw SerializationException("Unknown index $i")
                 }
             }
@@ -60,21 +70,15 @@ internal object TransactionOutputByteSerializer : KSerializer<TransactionOutput>
 
     override fun serialize(encoder: Encoder, obj: TransactionOutput) {
         with(encoder.beginStructure(descriptor)) {
+            encodeHash(0, obj.hash)
+            encodePublicKey(1, obj.publicKey)
+            encodeHash(2, obj.previousCoinbase)
             encodeSerializableElement(
-                descriptor, 0, PublicKeySerializer, obj.publicKey
+                descriptor, 3, PayoutSerializer, obj.payout
             )
             encodeSerializableElement(
-                descriptor, 1, HashSerializer, obj.previousCoinbase
-            )
-            encodeSerializableElement(
-                descriptor, 2, PayoutSerializer, obj.payout
-            )
-            encodeSerializableElement(
-                descriptor, 3, hashsSerializer,
+                descriptor, 4, hashsSerializer,
                 obj.transactionHashes
-            )
-            encodeSerializableElement(
-                descriptor, 4, HashSerializer, obj.hash
             )
             endStructure(descriptor)
         }

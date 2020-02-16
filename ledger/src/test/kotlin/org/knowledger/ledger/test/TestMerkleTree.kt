@@ -7,6 +7,7 @@ import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.service.Identity
@@ -46,7 +47,7 @@ class TestMerkleTree {
         )
         tree.collapsedTree.forEachIndexed { i, it ->
             builder.append("Naked tree @").append(i).append(" -> ")
-                .appendln(it.truncatedHexString())
+                .appendln(it.base64Encoded())
         }
         Logger.debug { builder.toString() }
 
@@ -60,7 +61,7 @@ class TestMerkleTree {
         builder.setLength(0)
         ts.forEachIndexed { i, it ->
             builder.append("Transactions @").append(i).append(" -> ")
-                .appendln(it.hash.truncatedHexString())
+                .appendln(it.hash.base64Encoded())
         }
         Logger.debug { builder.toString() }
     }
@@ -72,7 +73,7 @@ class TestMerkleTree {
     ) {
         logMerkle(ts, tree)
         Logger.debug {
-            "Coinbase is ${coinbase.hash.truncatedHexString()}"
+            "Coinbase is ${coinbase.hash.base64Encoded()}"
         }
     }
 

@@ -1,4 +1,4 @@
-package org.knowledger.ledger.serial
+package org.knowledger.ledger.serial.internal
 
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.Decoder
@@ -6,25 +6,24 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.core.base.hash.hashFromHexString
 import org.knowledger.ledger.crypto.hash.Hash
 import kotlin.properties.Delegates
 
-@Serializer(forClass = CoinbaseParams::class)
-object CoinbaseParamsSerializer : KSerializer<CoinbaseParams> {
-    override val descriptor: SerialDescriptor =
-        object : SerialClassDescImpl("CoinbaseParams") {
-            init {
-                addElement("timeIncentive")
-                addElement("valueIncentive")
-                addElement("baseIncentive")
-                addElement("dividingThreshold")
-                addElement("formula")
-            }
+internal abstract class AbstractCoinbaseParamsSerializer : KSerializer<CoinbaseParams>,
+                                                           HashEncode {
+    private object CoinbaseParamsSerialDescriptor : SerialClassDescImpl("CoinbaseParams") {
+        init {
+            addElement("timeIncentive")
+            addElement("valueIncentive")
+            addElement("baseIncentive")
+            addElement("dividingThreshold")
+            addElement("formula")
         }
+    }
+
+    override val descriptor: SerialDescriptor = CoinbaseParamsSerialDescriptor
 
     override fun deserialize(decoder: Decoder): CoinbaseParams =
         with(decoder.beginStructure(descriptor)) {
@@ -48,9 +47,7 @@ object CoinbaseParamsSerializer : KSerializer<CoinbaseParams> {
                     3 -> dividingThreshold = decodeLongElement(
                         descriptor, i
                     )
-                    4 -> formula = decodeStringElement(
-                        descriptor, i
-                    ).hashFromHexString()
+                    4 -> formula = decodeHash(i)
                     else -> throw SerializationException("Unknown index $i")
                 }
             }
@@ -78,9 +75,7 @@ object CoinbaseParamsSerializer : KSerializer<CoinbaseParams> {
             encodeLongElement(
                 descriptor, 3, obj.dividingThreshold
             )
-            encodeStringElement(
-                descriptor, 4, obj.formula.toHexString()
-            )
+            encodeHash(4, obj.formula)
             endStructure(descriptor)
         }
     }

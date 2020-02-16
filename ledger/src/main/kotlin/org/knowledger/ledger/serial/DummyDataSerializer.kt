@@ -4,13 +4,10 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.StringDescriptor
 import kotlinx.serialization.withName
 import org.knowledger.ledger.data.DummyData
 
-@Serializer(forClass = DummyData::class)
-@PublishedApi
 internal object DummyDataSerializer : KSerializer<DummyData> {
     override val descriptor: SerialDescriptor =
         StringDescriptor.withName("DummyData")

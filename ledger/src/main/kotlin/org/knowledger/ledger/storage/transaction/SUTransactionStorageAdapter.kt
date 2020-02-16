@@ -43,7 +43,7 @@ internal class SUTransactionStorageAdapter(
             ).setStorageBytes(
                 "signature",
                 session.newInstance(
-                    toStore.signature.encoded
+                    toStore.signature.bytes
                 )
             ).setHashProperty("hash", toStore.hash)
 

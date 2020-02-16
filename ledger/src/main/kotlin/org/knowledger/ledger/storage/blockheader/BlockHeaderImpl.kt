@@ -9,7 +9,7 @@ import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.serial.internal.ChainIdByteSerializer
+import org.knowledger.ledger.serial.binary.ChainIdByteSerializer
 import java.time.Instant
 
 @Serializable

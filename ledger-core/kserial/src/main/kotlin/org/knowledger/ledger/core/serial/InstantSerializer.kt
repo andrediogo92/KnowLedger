@@ -1,8 +1,15 @@
 package org.knowledger.ledger.core.serial
 
-import kotlinx.serialization.*
+import kotlinx.serialization.CompositeDecoder
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.Serializer
 import kotlinx.serialization.internal.SerialClassDescImpl
 import java.time.Instant
+import kotlin.properties.Delegates
 
 @Serializer(forClass = Instant::class)
 object InstantSerializer : KSerializer<Instant> {
@@ -17,10 +24,9 @@ object InstantSerializer : KSerializer<Instant> {
     override fun deserialize(
         decoder: Decoder
     ): Instant {
-        var seconds: Long? = null
-        var nanos: Int? = null
-        with(decoder.beginStructure(descriptor)) {
-
+        return with(decoder.beginStructure(descriptor)) {
+            var seconds: Long by Delegates.notNull()
+            var nanos: Int by Delegates.notNull()
             loop@ while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
@@ -34,11 +40,8 @@ object InstantSerializer : KSerializer<Instant> {
                 }
             }
             endStructure(descriptor)
+            Instant.ofEpochSecond(seconds, nanos.toLong())
         }
-        return Instant.ofEpochSecond(
-            seconds ?: throw MissingFieldException("seconds"),
-            nanos?.toLong() ?: throw MissingFieldException("nanos")
-        )
     }
 
     override fun serialize(

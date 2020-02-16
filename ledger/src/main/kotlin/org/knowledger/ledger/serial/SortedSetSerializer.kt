@@ -1,13 +1,18 @@
 package org.knowledger.ledger.serial
 
-import kotlinx.serialization.*
+import kotlinx.serialization.CompositeDecoder
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.SerialKind
+import kotlinx.serialization.StructureKind
 import java.util.*
 
 /**
  * TODO: Switch back to manually sorted sets.
  */
-@Serializer(forClass = SortedSet::class)
-class SortedSetSerializer<T>(
+internal class SortedSetSerializer<T>(
     private val valueSerializer: KSerializer<T>
 ) : KSerializer<SortedSet<T>> {
     override val descriptor = TreeSetDescriptor(valueSerializer.descriptor)
