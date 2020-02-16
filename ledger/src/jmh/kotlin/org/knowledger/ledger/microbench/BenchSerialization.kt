@@ -56,6 +56,6 @@ open class SerializationState(
         generateXTransactionsArray(id, 100),
     val block: Block =
         generateBlock(id, ts),
-    val binarySerializer: LedgerSerializer.LedgerBinarySerializer =
+    val binarySerializer: LedgerSerializer.Binary =
         ledgerBinarySerializer { encoder = testEncoder }.unwrap()
 )

@@ -1,7 +1,7 @@
 package org.knowledger.ledger.test
 
 import assertk.assertThat
-import assertk.assertions.containsExactly
+import assertk.assertions.containsOnly
 import assertk.assertions.isEqualTo
 import kotlinx.serialization.UnstableDefault
 import org.junit.jupiter.api.BeforeEach
@@ -9,10 +9,15 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.crypto.service.Identity
-import org.knowledger.ledger.serial.BlockSerializer
-import org.knowledger.ledger.serial.internal.BlockByteSerializer
+import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
+import org.knowledger.ledger.results.unwrap
+import org.knowledger.ledger.serial.ledgerBinarySerializer
+import org.knowledger.ledger.serial.ledgerTextSerializer
 import org.knowledger.ledger.storage.Block
+import org.knowledger.ledger.storage.Transaction
+import org.knowledger.testing.core.random
 import org.knowledger.testing.ledger.testEncoder
+import org.knowledger.testing.ledger.testHasher
 import org.knowledger.testing.ledger.testJson
 import org.tinylog.kotlin.Logger
 
@@ -28,9 +33,135 @@ class TestSerialization {
     //Cache coinbase params to avoid repeated digest of formula calculations.
     private val coinbaseParams = CoinbaseParams()
 
-    private val testTransactions =
-        generateXTransactions(id, 10).toSortedSet()
+    private val testSize = 10
 
+    private val testTransactions =
+        generateXTransactions(id, testSize).toSortedSet()
+
+    private val textSerializer = ledgerTextSerializer {
+        encoder = testJson
+    }.unwrap()
+
+    private val binarySerializer = ledgerBinarySerializer {
+        encoder = testEncoder
+    }.unwrap()
+
+    inline fun <T> encodeAndDecodeText(
+        data: T, encode: (T) -> String, decode: (String) -> T
+    ) {
+        val resultingTransaction = encode(data)
+
+        Logger.debug { resultingTransaction }
+        Logger.debug {
+            "Total Sequence Size -> ${resultingTransaction.length}"
+        }
+
+        val rebuiltTransaction = decode(resultingTransaction)
+
+        assertThat(rebuiltTransaction).isEqualTo(data)
+    }
+
+    inline fun <T> encodeAndDecodeBinary(
+        data: T, encode: (T) -> ByteArray, decode: (ByteArray) -> T
+    ) {
+        val resultingTransaction = encode(data)
+
+        Logger.debug {
+            "Total Byte Size -> ${resultingTransaction.size}"
+        }
+
+        val rebuiltTransaction = decode(resultingTransaction)
+
+        assertThat(rebuiltTransaction).isEqualTo(data)
+    }
+
+    @Nested
+    inner class Transactions {
+        @Nested
+        inner class Single {
+            private lateinit var transaction: Transaction
+
+            @BeforeEach
+            fun startup() {
+                transaction = testTransactions
+                    .drop(random.randomInt(testSize))
+                    .first()
+            }
+
+            @Test
+            fun `serialization and deserialization of transaction by pretty print`() {
+                encodeAndDecodeText(
+                    transaction,
+                    textSerializer::encodeTransaction,
+                    textSerializer::decodeTransaction
+                )
+            }
+
+            @Test
+            fun `serialization and deserialization of transaction by bytes`() {
+                encodeAndDecodeBinary(
+                    transaction,
+                    binarySerializer::encodeTransaction,
+                    binarySerializer::decodeTransaction
+                )
+            }
+        }
+
+        @Nested
+        inner class Set {
+            @Test
+            fun `serialization and deserialization of transaction set by pretty print`() {
+                val resultingTransaction =
+                    textSerializer.encodeTransactions(testTransactions)
+
+                Logger.debug { resultingTransaction }
+                Logger.debug {
+                    "Total Sequence Size -> ${resultingTransaction.length}"
+                }
+
+                val rebuiltTransaction =
+                    textSerializer.decodeTransactionsSet(resultingTransaction)
+                assertThat(rebuiltTransaction).containsOnly(*testTransactions.toTypedArray())
+            }
+
+            @Test
+            fun `serialization and deserialization of transaction set by bytes`() {
+                val resultingTransaction =
+                    binarySerializer.encodeTransactions(testTransactions)
+
+                Logger.debug {
+                    "Total Byte Size -> ${resultingTransaction.size}"
+                }
+
+                val rebuiltTransaction =
+                    binarySerializer.decodeTransactionsSet(resultingTransaction)
+                assertThat(rebuiltTransaction).containsOnly(*testTransactions.toTypedArray())
+            }
+        }
+    }
+
+    @Nested
+    inner class MerkleTree {
+        private val merkleTree = MerkleTreeImpl(testHasher, testTransactions.toTypedArray())
+
+        @Test
+        fun `serialization and deserialization of blocks by pretty print`() {
+            encodeAndDecodeText(
+                merkleTree,
+                textSerializer::encodeMerkleTree,
+                textSerializer::decodeMerkleTree
+            )
+        }
+
+        @Test
+        fun `serialization and deserialization of blocks by bytes`() {
+            encodeAndDecodeBinary(
+                merkleTree,
+                binarySerializer::encodeMerkleTree,
+                binarySerializer::decodeMerkleTree
+            )
+        }
+    }
 
     @Nested
     inner class Blocks {
@@ -41,44 +172,30 @@ class TestSerialization {
             block = generateBlockWithChain(
                 chainId = chainId, coinbaseParams = coinbaseParams
             )
+            testTransactions.forEach { t ->
+                block + t
+            }
         }
 
         @Test
         fun `serialization and deserialization of blocks by pretty print`() {
-            testTransactions.forEach { t ->
-                block + t
-            }
-
             assertThat(block.transactions.size).isEqualTo(testTransactions.size)
-
-            val resultingBlock = testJson.stringify(BlockSerializer, block)
-            Logger.debug {
-                resultingBlock
-            }
-            val rebuiltBlock = testJson.parse(BlockSerializer, resultingBlock)
-            assertThat(rebuiltBlock.coinbase).isEqualTo(block.coinbase)
-            assertThat(rebuiltBlock.transactions.toTypedArray()).containsExactly(*block.transactions.toTypedArray())
-            assertThat(rebuiltBlock.header).isEqualTo(block.header)
-            assertThat(rebuiltBlock.merkleTree).isEqualTo(block.merkleTree)
+            encodeAndDecodeText(
+                block,
+                textSerializer::encodeBlock,
+                textSerializer::decodeBlock
+            )
         }
 
         @Test
         fun `serialization and deserialization of blocks by bytes`() {
-            testTransactions.forEach { t ->
-                block + t
-            }
-
             assertThat(block.transactions.size).isEqualTo(testTransactions.size)
+            encodeAndDecodeBinary(
+                block,
+                binarySerializer::encodeBlock,
+                binarySerializer::decodeBlock
+            )
 
-            val resultingBlock = testEncoder.dump(BlockByteSerializer, block)
-            val rebuiltBlock = testEncoder.load(BlockByteSerializer, resultingBlock)
-            //Even though everything seems absolutely fine
-            //this blows up.
-            //Deserialization is unnecessary though.
-            assertThat(rebuiltBlock.coinbase).isEqualTo(block.coinbase)
-            assertThat(rebuiltBlock.transactions.toTypedArray()).containsExactly(*block.transactions.toTypedArray())
-            assertThat(rebuiltBlock.header).isEqualTo(block.header)
-            assertThat(rebuiltBlock.merkleTree).isEqualTo(block.merkleTree)
         }
 
     }
