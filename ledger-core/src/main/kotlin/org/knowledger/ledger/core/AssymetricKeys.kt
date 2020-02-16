@@ -75,7 +75,7 @@ fun EncodedSignature.verifyECDSASig(
     with(dsa) {
         initVerify(publicKey)
         update(data)
-        verify(encoded)
+        verify(bytes)
     }
 
 fun Key.toHexString(): String = encoded.toHexString()

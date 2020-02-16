@@ -1,6 +1,9 @@
 package org.knowledger.base64
 
+import org.knowledger.ledger.core.base.data.ByteEncodable
+import org.knowledger.ledger.core.base.data.Difficulty
 import org.knowledger.ledger.core.base.hash.Hash
+import java.math.BigInteger
 import java.security.Key
 import java.util.*
 
@@ -18,8 +21,8 @@ inline fun ByteArray.decodedUTF8String(): String = decodeToString()
 fun Key.base64Encoded(): Base64String =
     encoded.base64Encoded()
 
-fun Hash.base64Encoded(): Base64String =
-    this.bytes.base64Encoded()
+fun ByteEncodable.base64Encoded(): Base64String =
+    bytes.base64Encoded()
 
 fun String.base64Encoded(): Base64String =
     encodedStringInUTF8().base64Encoded()
@@ -32,6 +35,9 @@ fun Base64String.base64Decoded(): ByteArray =
 
 fun Base64String.base64DecodedToHash(): Hash =
     Hash(base64Decoded())
+
+fun Base64String.base64DecodedToDifficulty(): Difficulty =
+    Difficulty(BigInteger(base64Decoded()))
 
 fun Base64String.base64DecodedToUTF8(): String =
     base64Decoded().decodedUTF8String()
