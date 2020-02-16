@@ -1,4 +1,4 @@
-@file:UseSerializers(HashSerializer::class)
+@file:UseSerializers(HashSerializer::class, HashAlgorithmSerializer::class)
 package org.knowledger.ledger.crypto.storage
 
 import kotlinx.serialization.BinaryFormat
@@ -10,6 +10,7 @@ import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashing
+import org.knowledger.ledger.crypto.serial.HashAlgorithmSerializer
 
 @Serializable
 data class MerkleTreeImpl(

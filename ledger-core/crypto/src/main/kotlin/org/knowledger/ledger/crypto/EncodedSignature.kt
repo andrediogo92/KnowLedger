@@ -1,16 +1,23 @@
 package org.knowledger.ledger.crypto
 
-data class EncodedSignature(val encoded: ByteArray) {
+import kotlinx.serialization.Serializable
+import org.knowledger.ledger.core.base.data.ByteEncodable
+import org.knowledger.ledger.crypto.serial.EncodedSignatureByteSerializer
+
+@Serializable(with = EncodedSignatureByteSerializer::class)
+data class EncodedSignature(
+    override val bytes: ByteArray
+) : ByteEncodable {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is EncodedSignature) return false
 
-        if (!encoded.contentEquals(other.encoded)) return false
+        if (!bytes.contentEquals(other.bytes)) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return encoded.contentHashCode()
+        return bytes.contentHashCode()
     }
 }

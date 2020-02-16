@@ -8,6 +8,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.SerializersModule
+import org.knowledger.base64.base64Encoded
 import org.knowledger.collections.mapToArray
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
@@ -79,9 +80,9 @@ fun logActualToExpectedHashing(
 ) {
     logActualToExpected(
         explanationActual,
-        actualList.mapToArray { it.hash.truncatedHexString() },
+        actualList.mapToArray { it.hash.base64Encoded() },
         explanationExpected,
-        expectedList.mapToArray { it.hash.truncatedHexString() }
+        expectedList.mapToArray { it.hash.base64Encoded() }
     )
 }
 
@@ -93,9 +94,9 @@ fun logActualToExpectedHashing(
 ) {
     logActualToExpected(
         explanationActual,
-        actualList.mapToArray { it.hash.truncatedHexString() },
+        actualList.mapToArray { it.hash.base64Encoded() },
         explanationExpected,
-        expectedList.mapToArray { it.hash.truncatedHexString() }
+        expectedList.mapToArray { it.hash.base64Encoded() }
     )
 }
 
@@ -108,9 +109,9 @@ fun logActualToExpectedHashing(
 ) {
     logActualToExpected(
         explanationActual,
-        actualList.map { it.hash.truncatedHexString() },
+        actualList.map { it.hash.base64Encoded() },
         explanationExpected,
-        expectedList.map { it.hash.truncatedHexString() }
+        expectedList.map { it.hash.base64Encoded() }
     )
 }
 
@@ -122,9 +123,9 @@ fun logActualToExpectedHashes(
 ) {
     logActualToExpected(
         explanationActual,
-        actualList.map { it.truncatedHexString() },
+        actualList.map(Hash::base64Encoded),
         explanationExpected,
-        expectedList.map { it.truncatedHexString() }
+        expectedList.map(Hash::base64Encoded)
     )
 }
 
@@ -136,9 +137,9 @@ fun logActualToExpectedHashes(
 ) {
     logActualToExpected(
         explanationActual,
-        actualList.mapToArray { it.truncatedHexString() },
+        actualList.mapToArray(Hash::base64Encoded),
         explanationExpected,
-        expectedList.mapToArray { it.truncatedHexString() }
+        expectedList.mapToArray(Hash::base64Encoded)
     )
 }
 
@@ -150,9 +151,9 @@ fun logActualToExpectedHashes(
 ) {
     logActualToExpected(
         explanationActual,
-        actualList.mapToArray { it.truncatedHexString() },
+        actualList.mapToArray(Hash::base64Encoded),
         explanationExpected,
-        expectedList.mapToArray { it.truncatedHexString() }
+        expectedList.mapToArray(Hash::base64Encoded)
     )
 }
 
@@ -166,18 +167,10 @@ fun logActualToExpected(
         """
             |
             |$explanationActual
-            |${actualList.joinToString(
-            """,
-                |
-            """.trimMargin()
-        ) { it }}
+            |${actualList.joinToString(System.lineSeparator()) { it }}
             |
             |$explanationExpected
-            |${expectedList.joinToString(
-            """,
-                |
-            """.trimMargin()
-        ) { it }}
+            |${expectedList.joinToString(System.lineSeparator()) { it }}
         """.trimMargin()
     }
 }
@@ -188,30 +181,16 @@ fun logActualToExpected(
     explanationExpected: String,
     expectedList: Array<String>
 ) {
-    Logger.info {
-        """
-            |
-            |$explanationActual
-            |${actualList.joinToString(
-            """,
-                |
-            """.trimMargin()
-        ) { it }}
-            |
-            |$explanationExpected
-            |${expectedList.joinToString(
-            """,
-                |
-            """.trimMargin()
-        ) { it }}
-        """.trimMargin()
-    }
+    logActualToExpected(
+        explanationActual, actualList.asIterable(),
+        explanationExpected, expectedList.asIterable()
+    )
 }
 
 fun StringBuilder.appendByLine(toPrint: Collection<String>): StringBuilder =
     apply {
         toPrint.forEach { thing ->
-            append(System.lineSeparator())
+            appendln()
             append('\t')
             append(thing)
             append(',')

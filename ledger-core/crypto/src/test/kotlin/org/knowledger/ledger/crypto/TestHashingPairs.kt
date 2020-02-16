@@ -3,6 +3,7 @@ package org.knowledger.ledger.crypto
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import org.junit.jupiter.api.Test
+import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.testing.core.applyHashInPairs
 import org.knowledger.testing.core.random
@@ -54,8 +55,8 @@ class TestHashingPairs {
         Logger.debug {
             """
                 |
-                |Test: ${test.toHexString()}
-                |Expected: ${expected.toHexString()}
+                |Test: ${test.base64Encoded()}
+                |Expected: ${expected.base64Encoded()}
             """.trimMargin()
         }
 
@@ -96,8 +97,8 @@ class TestHashingPairs {
         Logger.info {
             """
                 |
-                |Test: ${test.toHexString()}
-                |Expected: ${expected.toHexString()}
+                |Test: ${test.base64Encoded()}
+                |Expected: ${expected.base64Encoded()}
             """.trimMargin()
         }
 

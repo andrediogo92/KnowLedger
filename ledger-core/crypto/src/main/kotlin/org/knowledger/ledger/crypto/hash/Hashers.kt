@@ -1,6 +1,5 @@
 package org.knowledger.ledger.crypto.hash
 
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.cbor.Cbor
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.knowledger.ledger.crypto.hash.Hashers.*
@@ -25,7 +24,6 @@ import java.security.Security
  * 11. 512-bit custom Keccak as per BouncyCastle's
  * custom Keccak parameters -> [Keccak512Hasher]
  */
-@Serializable(with = HashAlgorithmSerializer::class)
 sealed class Hashers(algorithmTag: String) : Hasher {
     val digester: MessageDigest by lazy {
         MessageDigest.getInstance(
@@ -34,7 +32,7 @@ sealed class Hashers(algorithmTag: String) : Hasher {
     }
 
     override val id: Hash by lazy {
-        applyHash(Cbor.plain.dump(serializer(), this))
+        applyHash(Cbor.plain.dump(HashAlgorithmSerializer, this))
     }
 
 

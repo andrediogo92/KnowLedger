@@ -1,12 +1,16 @@
 package org.knowledger.ledger.crypto.serial
 
-import kotlinx.serialization.*
+import kotlinx.serialization.CompositeDecoder
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.internal.SerialClassDescImpl
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.PublicKey
 
-@Serializer(forClass = KeyPair::class)
 object KeyPairSerializer : KSerializer<KeyPair> {
     override val descriptor: SerialDescriptor =
         object : SerialClassDescImpl("keyPair") {
@@ -17,41 +21,40 @@ object KeyPairSerializer : KSerializer<KeyPair> {
         }
 
     override fun deserialize(decoder: Decoder): KeyPair {
-        val dec: CompositeDecoder = decoder.beginStructure(descriptor)
-        var private: PrivateKey? = null
-        var public: PublicKey? = null
-        loop@ while (true) {
-            when (val i = dec.decodeElementIndex(descriptor)) {
-                CompositeDecoder.READ_DONE -> break@loop
-                0 -> private = dec.decodeSerializableElement(
-                    descriptor, i,
-                    PrivateKeySerializer
-                )
-                1 -> public = dec.decodeSerializableElement(
-                    descriptor, i,
-                    PublicKeySerializer
-                )
-                else -> throw SerializationException("Unknown index $i")
+        return with(decoder.beginStructure(descriptor)) {
+            lateinit var private: PrivateKey
+            lateinit var public: PublicKey
+            loop@ while (true) {
+                when (val i = decodeElementIndex(descriptor)) {
+                    CompositeDecoder.READ_DONE -> break@loop
+                    0 -> private = decodeSerializableElement(
+                        descriptor, i,
+                        PrivateKeySerializer
+                    )
+                    1 -> public = decodeSerializableElement(
+                        descriptor, i,
+                        PublicKeySerializer
+                    )
+                    else -> throw SerializationException("Unknown index $i")
+                }
             }
+            endStructure(descriptor)
+            KeyPair(public, private)
         }
-        dec.endStructure(descriptor)
-        return KeyPair(
-            public ?: throw MissingFieldException("private"),
-            private ?: throw MissingFieldException("public")
-        )
     }
 
 
     override fun serialize(encoder: Encoder, obj: KeyPair) {
-        val enc: CompositeEncoder = encoder.beginStructure(descriptor)
-        enc.encodeSerializableElement(
-            descriptor, 0,
-            PrivateKeySerializer, obj.private
-        )
-        enc.encodeSerializableElement(
-            descriptor, 0,
-            PublicKeySerializer, obj.public
-        )
-        enc.endStructure(descriptor)
+        with(encoder.beginStructure(descriptor)) {
+            encodeSerializableElement(
+                descriptor, 0,
+                PrivateKeySerializer, obj.private
+            )
+            encodeSerializableElement(
+                descriptor, 0,
+                PublicKeySerializer, obj.public
+            )
+            endStructure(descriptor)
+        }
     }
 }

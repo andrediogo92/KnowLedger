@@ -11,6 +11,7 @@ serialPlugin {
 }
 
 dependencies {
+    implementation(project(":base64-extensions"))
     implementation(project(":collections-extensions"))
     implementation(project(":ledger-core:kserial"))
     implementation(project(":ledger-core:data"))

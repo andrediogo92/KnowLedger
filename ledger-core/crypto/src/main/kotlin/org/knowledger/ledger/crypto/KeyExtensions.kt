@@ -26,16 +26,16 @@ internal fun ByteArray.toPrivateKey(): PrivateKey =
 /**
  * Accepts a byte encoded [EncodedPublicKey]
  * and returns the resulting ECDSA [PublicKey] via
- * an [X509EncodedKeySpec].
+ * a [X509EncodedKeySpec].
  */
 fun EncodedPublicKey.toPublicKey(): PublicKey =
-    encoded.toPublicKey()
+    bytes.toPublicKey()
 
 
 /**
  * Accepts a byte encoded [EncodedPrivateKey]
  * and returns the resulting ECDSA [PrivateKey]
- * via an [X509EncodedKeySpec].
+ * via a [PKCS8EncodedKeySpec].
  */
 fun EncodedPrivateKey.toPrivateKey(): PrivateKey =
-    encoded.toPrivateKey()
+    bytes.toPrivateKey()
