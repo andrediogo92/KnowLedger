@@ -1,6 +1,7 @@
 package org.knowledger.ledger.core.base.hash
 
 import org.knowledger.ledger.core.base.data.Tag
+import org.knowledger.ledger.core.base.data.toHexString
 import org.tinylog.kotlin.Logger
 import java.lang.reflect.ParameterizedType
 import java.math.BigDecimal

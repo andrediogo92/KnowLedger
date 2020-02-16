@@ -9,7 +9,7 @@ import java.math.BigInteger
  */
 data class Difficulty(
     val difficulty: BigInteger
-) : HexEncodable {
+) : ByteEncodable {
     override val bytes: ByteArray
         get() = difficulty.toByteArray()
 
