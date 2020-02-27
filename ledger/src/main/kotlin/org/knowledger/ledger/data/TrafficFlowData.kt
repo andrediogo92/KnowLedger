@@ -67,17 +67,4 @@ data class TrafficFlowData(
     ): BigDecimal {
         TODO()
     }
-
-    companion object {
-
-        //Functional Road Class Constants
-        const val MOTORWAY = 0
-        const val MAJOR_ROAD = 1
-        const val OTHER_MAJOR_ROAD = 2
-        const val SECONDARY_ROAD = 3
-        const val LOCAL_CONNECTING_ROAD = 4
-        const val LOCAL_HIGH_IMP_ROAD = 5
-        const val LOCAL_ROAD = 6
-    }
-
 }

@@ -6,6 +6,7 @@ import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.serial.HashSerializable
 import org.knowledger.ledger.storage.LedgerContract
+import org.knowledger.ledger.storage.Markable
 import org.knowledger.ledger.storage.TransactionOutput
 
 /**
@@ -16,18 +17,21 @@ import org.knowledger.ledger.storage.TransactionOutput
  * changes to the block.
  */
 interface Coinbase : Cloneable,
+                     Markable,
                      HashSerializable,
                      LedgerContract {
 
     val transactionOutputs: Set<TransactionOutput>
-    var payout: Payout
+    val payout: Payout
+    val coinbaseParams: CoinbaseParams
     // Difficulty is fixed at block generation time.
     val difficulty: Difficulty
-    var blockheight: Long
-    var extraNonce: Long
+    val blockheight: Long
+    val extraNonce: Long
     val formula: DataFormula
-    val coinbaseParams: CoinbaseParams
+
 
     public override fun clone(): Coinbase
+    fun newNonce()
 }
 

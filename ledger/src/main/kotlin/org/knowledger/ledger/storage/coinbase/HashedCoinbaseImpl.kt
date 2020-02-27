@@ -41,57 +41,30 @@ internal data class HashedCoinbaseImpl(
      * [HashedCoinbaseImpl] from inside ledger context.
      */
     internal constructor(
-        difficulty: Difficulty, blockheight: Long,
         info: LedgerInfo
     ) : this(
-        difficulty, blockheight,
-        info.coinbaseParams,
-        info.formula,
-        info.hasher, info.encoder
+        coinbase = CoinbaseImpl(info),
+        hasher = info.hasher,
+        encoder = info.encoder
     )
 
+    /**
+     * Direct Coinbase Constructor for storage.
+     */
     internal constructor(
         transactionOutputs: MutableSet<TransactionOutput>,
-        payout: Payout, difficulty: Difficulty,
-        blockheight: Long, extraNonce: Long,
-        coinbaseParams: CoinbaseParams, formula: DataFormula,
-        hash: Hash, hasher: Hashers, encoder: BinaryFormat
+        payout: Payout, difficulty: Difficulty, blockheight: Long,
+        ledgerInfo: LedgerInfo, extraNonce: Long, hash: Hash
     ) : this(
         CoinbaseImpl(
             _transactionOutputs = transactionOutputs,
-            payout = payout, difficulty = difficulty,
-            blockheight = blockheight, extraNonce = extraNonce,
-            coinbaseParams = coinbaseParams, formula = formula
-        ), _hash = hash, hasher = hasher, encoder = encoder
-    )
-
-    internal constructor(
-        transactionOutputs: MutableSet<TransactionOutput>,
-        payout: Payout, difficulty: Difficulty,
-        blockheight: Long, coinbaseParams: CoinbaseParams,
-        formula: DataFormula, hash: Hash,
-        hasher: Hashers, encoder: BinaryFormat
-    ) : this(
-        CoinbaseImpl(
-            _transactionOutputs = transactionOutputs,
-            payout = payout, difficulty = difficulty,
-            blockheight = blockheight,
-            coinbaseParams = coinbaseParams, formula = formula
-        ), _hash = hash, hasher = hasher, encoder = encoder
-    )
-
-    internal constructor(
-        transactionOutputs: MutableSet<TransactionOutput>,
-        payout: Payout, difficulty: Difficulty,
-        blockheight: Long, coinbaseParams: CoinbaseParams,
-        formula: DataFormula, hasher: Hashers, encoder: BinaryFormat
-    ) : this(
-        CoinbaseImpl(
-            _transactionOutputs = transactionOutputs,
-            payout = payout, difficulty = difficulty,
-            blockheight = blockheight,
-            coinbaseParams = coinbaseParams, formula = formula
-        ), hasher = hasher, encoder = encoder
+            _payout = payout, _difficulty = difficulty,
+            _blockheight = blockheight,
+            coinbaseParams = ledgerInfo.coinbaseParams,
+            _extraNonce = extraNonce, formula = ledgerInfo.formula
+        ),
+        _hash = hash, hasher = ledgerInfo.hasher,
+        encoder = ledgerInfo.encoder
     )
 
     /**
@@ -102,15 +75,18 @@ internal data class HashedCoinbaseImpl(
         coinbaseParams: CoinbaseParams, dataFormula: DataFormula,
         hasher: Hashers, encoder: BinaryFormat
     ) : this(
-        transactionOutputs = mutableSetOf(),
-        payout = Payout(BigDecimal.ZERO), difficulty = difficulty,
-        blockheight = blockheight, coinbaseParams = coinbaseParams,
-        formula = dataFormula, hasher = hasher, encoder = encoder
+        CoinbaseImpl(
+            _transactionOutputs = mutableSetOf(),
+            _payout = Payout(BigDecimal.ZERO), _difficulty = difficulty,
+            _blockheight = blockheight, coinbaseParams = coinbaseParams,
+            formula = dataFormula
+        ),
+        hasher = hasher, encoder = encoder
     )
 
 
     override fun newNonce() {
-        extraNonce++
+        coinbase.newNonce()
         updateHash(hasher, encoder)
     }
 
@@ -120,7 +96,7 @@ internal data class HashedCoinbaseImpl(
         val bytes = coinbase.serialize(encoder)
         _hash = hasher.applyHash(bytes)
         cachedSize = cachedSize ?: bytes.size.toLong() +
-                _hash!!.bytes.size.toLong()
+                hasher.digester.digestLength
     }
 
     override fun recalculateHash(
@@ -169,7 +145,7 @@ internal data class HashedCoinbaseImpl(
             )
             lkHash = latestKnown.hash
         }
-        this.payout += payout
+        coinbase.updatePayout(payout)
         addToOutputs(
             newTransaction.publicKey,
             lUTXOHash,
@@ -212,7 +188,7 @@ internal data class HashedCoinbaseImpl(
                 )
                 cachedSize = approximateSize + it.approximateSize(encoder)
             }
-            ?: coinbase._transactionOutputs.add(
+            ?: coinbase.newTXO(
                 HashedTransactionOutputImpl(
                     publicKey,
                     previousUTXO,

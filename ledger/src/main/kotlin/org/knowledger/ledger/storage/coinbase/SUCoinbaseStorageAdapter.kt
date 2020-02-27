@@ -14,7 +14,7 @@ import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 
 internal class SUCoinbaseStorageAdapter(
-    private val container: LedgerInfo,
+    private val ledgerInfo: LedgerInfo,
     private val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
 ) : LedgerStorageAdapter<HashedCoinbaseImpl> {
     override val id: String
@@ -74,12 +74,13 @@ internal class SUCoinbaseStorageAdapter(
                 .flatMapSuccess { txos ->
                     Outcome.Ok(
                         HashedCoinbaseImpl(
-                            txos.toMutableSet(),
-                            element.getPayoutProperty("payout"),
-                            difficulty, blockheight, extraNonce,
-                            container.coinbaseParams, container.formula,
-                            element.getHashProperty("hash"),
-                            container.hasher, container.encoder
+                            transactionOutputs = txos.toMutableSet(),
+                            payout = element.getPayoutProperty("payout"),
+                            difficulty = difficulty,
+                            blockheight = blockheight,
+                            extraNonce = extraNonce,
+                            ledgerInfo = ledgerInfo,
+                            hash = element.getHashProperty("hash")
                         )
                     )
                 }

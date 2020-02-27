@@ -72,16 +72,15 @@ internal data class WorkingChainBuilder(
     override fun coinbase(
         transactionOutputs: Set<TransactionOutput>,
         payout: Payout, difficulty: Difficulty,
-        blockheight: Long, hash: Hash
+        blockheight: Long, extraNonce: Long, hash: Hash
     ): Coinbase =
         HashedCoinbaseImpl(
             transactionOutputs = transactionOutputs.toMutableSet(),
             payout = payout, difficulty = difficulty,
             blockheight = blockheight,
-            coinbaseParams = ledgerInfo.coinbaseParams,
-            formula = ledgerInfo.formula, hash = hash,
-            hasher = ledgerInfo.hasher,
-            encoder = ledgerInfo.encoder
+            ledgerInfo = ledgerInfo,
+            extraNonce = extraNonce,
+            hash = hash
         )
 
     override fun merkletree(

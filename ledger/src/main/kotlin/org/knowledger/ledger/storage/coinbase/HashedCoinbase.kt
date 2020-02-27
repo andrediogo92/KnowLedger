@@ -36,7 +36,5 @@ interface HashedCoinbase : Hashing,
         latestUTXO: HashedTransactionOutput?
     )
 
-    fun newNonce()
-
     override fun clone(): HashedCoinbase
 }

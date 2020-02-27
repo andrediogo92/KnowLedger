@@ -4,16 +4,16 @@ import kotlinx.serialization.Serializable
 import org.knowledger.ledger.core.base.Sizeable
 import org.knowledger.ledger.serial.HashSerializable
 import org.knowledger.ledger.serial.display.BlockSerializer
-import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.LedgerContract
+import org.knowledger.ledger.storage.Markable
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
 import java.util.*
 
 @Serializable(with = BlockSerializer::class)
-interface Block : HashSerializable, Cloneable, Sizeable, LedgerContract {
+interface Block : HashSerializable, Cloneable, Markable, Sizeable, LedgerContract {
     val miningReady: Boolean
         get() {
             val blockParams = header.params
@@ -50,7 +50,7 @@ interface Block : HashSerializable, Cloneable, Sizeable, LedgerContract {
 
     fun verifyTransactions(): Boolean
 
-    fun newNonce(): BlockHeader
+    fun newExtraNonce(): Block
 
     public override fun clone(): Block
 

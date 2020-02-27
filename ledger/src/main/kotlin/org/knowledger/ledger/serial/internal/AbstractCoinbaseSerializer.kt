@@ -78,10 +78,10 @@ internal abstract class AbstractCoinbaseSerializer(
             HashedCoinbaseImpl(
                 CoinbaseImpl(
                     _transactionOutputs = transactionOutputs,
-                    payout = payout,
-                    difficulty = difficulty,
-                    blockheight = blockheight,
-                    extraNonce = extraNonce,
+                    _payout = payout,
+                    _difficulty = difficulty,
+                    _blockheight = blockheight,
+                    _extraNonce = extraNonce,
                     coinbaseParams = coinbaseParams
                 ), hash
             )

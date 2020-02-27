@@ -3,6 +3,7 @@ package org.knowledger.ledger.serial
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialFormat
 import kotlinx.serialization.StringFormat
+import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
@@ -388,11 +389,12 @@ sealed class LedgerSerializer {
     }
 }
 
-class LedgerTextSerializerBuilder() {
+class LedgerTextSerializerBuilder {
     var encoder: StringFormat? = null
     var prettyPrint: Boolean = false
     var module: SerialModule? = null
 
+    @UseExperimental(UnstableDefault::class)
     fun build(): Outcome<LedgerSerializer.Text, LedgerSerializer.Failure> =
         when {
             module != null && encoder == null -> {

@@ -8,7 +8,6 @@ import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageID
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.UpdateFailure
-import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.StoragePairs
 import org.knowledger.ledger.storage.Transaction
@@ -42,14 +41,14 @@ internal class StorageAwareBlock private constructor(
     override val invalidated: Array<StoragePairs<*>>
         get() = pInvalidated
 
-    override fun newNonce(): BlockHeader {
-        block.newNonce()
+    override fun newExtraNonce(): Block {
+        block.newExtraNonce()
         if (id != null) {
             invalidated.replace(0, header)
             invalidated.replace(1, coinbase)
             invalidated.replace(2, merkleTree)
         }
-        return header
+        return this
     }
 
     override fun update(

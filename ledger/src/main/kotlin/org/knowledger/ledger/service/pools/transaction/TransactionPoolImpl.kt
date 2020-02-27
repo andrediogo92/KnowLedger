@@ -7,7 +7,7 @@ import org.knowledger.ledger.storage.Transaction
 
 internal data class TransactionPoolImpl internal constructor(
     internal val adapterManager: AdapterManager,
-    internal val chainId: ChainId,
+    override val chainId: ChainId,
     internal val txs: MutableSet<PoolTransaction> = mutableSetOf()
 ) : TransactionPool {
     override val transactions: Set<PoolTransaction>

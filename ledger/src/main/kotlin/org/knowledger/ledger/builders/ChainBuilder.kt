@@ -35,7 +35,7 @@ interface ChainBuilder {
     fun coinbase(
         transactionOutputs: Set<TransactionOutput>,
         payout: Payout, difficulty: Difficulty,
-        blockheight: Long, hash: Hash
+        blockheight: Long, extraNonce: Long, hash: Hash
     ): Coinbase
 
     fun merkletree(

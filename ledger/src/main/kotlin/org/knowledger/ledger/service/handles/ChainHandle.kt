@@ -29,6 +29,7 @@ import org.knowledger.ledger.results.fold
 import org.knowledger.ledger.results.intoQuery
 import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.results.reduce
+import org.knowledger.ledger.service.ChainInfo
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.ServiceClass
@@ -59,6 +60,7 @@ class ChainHandle internal constructor(
     val ledgerInfo: LedgerInfo,
     private val pw: PersistenceWrapper,
     val id: ChainId,
+    val chainInfo: ChainInfo = ChainInfo(),
     internal val transactionPool: TransactionPool =
         StorageAwareTransactionPool(pw.adapterManager, id)
 ) : ServiceClass {
@@ -66,28 +68,19 @@ class ChainHandle internal constructor(
     private val hasher: Hashers = ledgerInfo.hasher
     private val encoder: BinaryFormat = ledgerInfo.encoder
     internal val adapterManager: AdapterManager = pw.adapterManager
-    private val blockPool: BlockPool = BlockPoolImpl(id)
+    private val blockPool: BlockPool = BlockPoolImpl(id, ledgerInfo, chainInfo)
     val ledgerParams: LedgerParams = ledgerInfo.ledgerParams
     val blockParams: BlockParams = ledgerParams.blockParams
     val coinbaseParams: CoinbaseParams = ledgerInfo.coinbaseParams
 
-
-    private var difficultyTarget =
-        INIT_DIFFICULTY
-
     val currentDifficulty
-        get() = difficultyTarget
-
-    private var lastRecalc = 0
+        get() = chainInfo.currentDifficulty
 
     val lastRecalculation
-        get() = lastRecalc
-
-    //Blockheight 1 is Origin which is immediately added.
-    private var blockheight = 1L
+        get() = chainInfo.lastRecalculation
 
     val currentBlockheight
-        get() = blockheight
+        get() = chainInfo.currentBlockheight
 
     /**
      * Returns a [LoadFailure] for the tail-end
@@ -124,11 +117,11 @@ class ChainHandle internal constructor(
         difficulty: Difficulty,
         lastRecalc: Int,
         currentBlockheight: Long
-    ) : this(container, pw, id, transactionPool) {
-        this.difficultyTarget = difficulty
-        this.lastRecalc = lastRecalc
-        this.blockheight = currentBlockheight
-    }
+    ) : this(
+        container, pw, id,
+        ChainInfo(difficulty, lastRecalc, currentBlockheight),
+        transactionPool
+    )
 
     /**
      * Checks integrity of the entire cached ledger.
@@ -157,7 +150,7 @@ class ChainHandle internal constructor(
         }
         var lowIndex = -cacheSize + 2L
         var highIndex = 2L
-        while (highIndex - cacheSize <= blockheight && valid) {
+        while (highIndex - cacheSize <= currentBlockheight && valid) {
             lowIndex += cacheSize
             highIndex += cacheSize
             val blocks =
@@ -340,11 +333,11 @@ class ChainHandle internal constructor(
         lastBlockHeader.flatMapSuccess {
             val recalcTrigger = ledgerParams.recalculationTrigger
             if (validateBlock(it.hash, block)) {
-                if (lastRecalc == recalcTrigger) {
+                if (lastRecalculation == recalcTrigger) {
                     recalculateDifficulty(block)
-                    lastRecalc = 0
+                    chainInfo.resetRecalculation()
                 } else {
-                    lastRecalc++
+                    chainInfo.incrementRecalculation()
                 }
                 Outcome.Ok(true)
             } else {
@@ -427,7 +420,7 @@ class ChainHandle internal constructor(
                     |   Cause: ${recalcBlock.failure.failable.cause}
                     """.trimMargin()
                 }
-                difficultyTarget
+                currentDifficulty
             }
         }
     }
@@ -454,7 +447,7 @@ class ChainHandle internal constructor(
         val deltadiv = (deltax * recalcMult)
             .divideToIntegralValue(BigDecimal(ledgerParams.recalculationTime))
             .toBigInteger()
-        val difficulty = BigInteger(difficultyTarget.bytes)
+        val difficulty = BigInteger(currentDifficulty.bytes)
         val newDiff = difficulty + (difficulty * deltadiv)
         return padOrMax(Difficulty(newDiff / recalcDiv))
     }
@@ -497,14 +490,13 @@ class ChainHandle internal constructor(
             ?: lastBlock.reduce<Hash, Block, LoadFailure>(
                 { block ->
                     block.header.hash
-                }, { failure ->
+                }, {
                     originHeader(ledgerInfo, id).hash
                 }
             )
         return StorageAwareBlock(
             adapterManager, BlockImpl(
                 id, previousHash,
-                difficultyTarget, blockheight,
                 ledgerParams.blockParams, ledgerInfo
             )
         )
@@ -515,7 +507,7 @@ class ChainHandle internal constructor(
 
     fun refreshHeader(merkleRoot: Hash): BlockState =
         blockPool[merkleRoot]?.let {
-            BlockState.BlockReady(it.full, it.newNonce())
+            BlockState.BlockReady(it.full, it.newExtraNonce().header)
         } ?: BlockState.BlockFailure
 
 
@@ -523,19 +515,19 @@ class ChainHandle internal constructor(
         val identity = Identity("")
 
         fun getOriginHeader(
-            container: LedgerInfo,
+            ledgerInfo: LedgerInfo,
             chainId: ChainId
         ): BlockHeader =
-            originHeader(container, chainId)
+            originHeader(ledgerInfo, chainId)
 
         private fun originHeader(
-            container: LedgerInfo,
+            ledgerInfo: LedgerInfo,
             chainId: ChainId
         ): BlockHeader =
             HashedBlockHeaderImpl(
                 chainId,
-                container.hasher,
-                container.encoder,
+                ledgerInfo.hasher,
+                ledgerInfo.encoder,
                 emptyHash,
                 BlockParams(),
                 emptyHash,
@@ -549,19 +541,19 @@ class ChainHandle internal constructor(
 
 
         fun getOriginBlock(
-            container: LedgerInfo,
+            ledgerInfo: LedgerInfo,
             chainId: ChainId
         ): Block {
             return BlockImpl(
                 sortedSetOf(),
                 HashedCoinbaseImpl(
-                    INIT_DIFFICULTY,
-                    0,
-                    container
+                    ledgerInfo
                 ),
-                originHeader(container, chainId),
-                MerkleTreeImpl(hasher = container.hasher)
-            )
+                originHeader(ledgerInfo, chainId),
+                MerkleTreeImpl(hasher = ledgerInfo.hasher)
+            ).also {
+                it.markMined(0, INIT_DIFFICULTY)
+            }
         }
     }
 }

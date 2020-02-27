@@ -35,6 +35,7 @@ internal fun SerialModule.withLedger(
                 //this is a valid cast because serializer pair classes force
                 //construction of properties with correct LedgerData upper
                 //type bound.
+                @Suppress("UNCHECKED_CAST")
                 (it.clazz as KClass<Any>) with (it.serializer as KSerializer<Any>)
             }
             DummyData::class with DummyDataSerializer

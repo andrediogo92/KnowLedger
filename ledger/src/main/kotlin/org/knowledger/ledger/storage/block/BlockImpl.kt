@@ -12,11 +12,9 @@ import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
-import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.serial.SortedSetSerializer
 import org.knowledger.ledger.serial.binary.BlockHeaderByteSerializer
@@ -55,12 +53,10 @@ internal data class BlockImpl(
 
     internal constructor(
         chainId: ChainId, previousHash: Hash,
-        difficulty: Difficulty, blockheight: Long,
         params: BlockParams, ledgerInfo: LedgerInfo
     ) : this(
         sortedSetOf(),
         StorageAwareCoinbase(
-            difficulty, blockheight,
             ledgerInfo
         ),
         StorageAwareBlockHeader(
@@ -73,32 +69,11 @@ internal data class BlockImpl(
         StorageAwareMerkleTree(ledgerInfo.hasher)
     )
 
-    internal constructor(
-        chainId: ChainId, difficulty: Difficulty,
-        previousHash: Hash, coinbaseParams: CoinbaseParams,
-        dataFormula: DataFormula, blockheight: Long,
-        blockParams: BlockParams, encoder: BinaryFormat, hasher: Hashers
-    ) : this(
-        sortedSetOf(),
-        StorageAwareCoinbase(
-            difficulty, blockheight, coinbaseParams,
-            dataFormula, encoder, hasher
-        ),
-        StorageAwareBlockHeader(
-            chainId,
-            hasher,
-            encoder,
-            previousHash,
-            blockParams
-        ),
-        StorageAwareMerkleTree(hasher)
-    )
-
-    override fun newNonce(): BlockHeader {
+    override fun newExtraNonce(): Block {
         coinbase.newNonce()
         merkleTree.buildFromCoinbase(coinbase)
         header.updateMerkleTree(merkleTree.hash)
-        return header
+        return this
     }
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
@@ -141,6 +116,11 @@ internal data class BlockImpl(
             "Transaction failed to process. Discarded."
         }
         return false
+    }
+
+
+    override fun markMined(blockheight: Long, difficulty: Difficulty) {
+        coinbase.markMined(blockheight, difficulty)
     }
 
 
