@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 version = "0.1"
 
@@ -13,6 +14,7 @@ serialPlugin {
 }
 
 jmh {
+    duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
     isIncludeTests = true
 }
 
@@ -24,4 +26,8 @@ dependencies {
 
     testImplementation(Libs.commonsRNG)
     testApi(project(":testing"))
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
 }

@@ -1,31 +1,26 @@
 package org.knowledger.ledger.microbench
 
-import kotlinx.serialization.UnstableDefault
-import org.knowledger.ledger.results.unwrap
-import org.knowledger.ledger.serial.LedgerSerializer
-import org.knowledger.ledger.serial.ledgerBinarySerializer
-import org.knowledger.ledger.service.Identity
-import org.knowledger.ledger.storage.Block
-import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.test.generateBlock
-import org.knowledger.ledger.test.generateXTransactionsArray
-import org.knowledger.testing.ledger.testEncoder
-import org.openjdk.jmh.annotations.*
+import org.openjdk.jmh.annotations.Benchmark
+import org.openjdk.jmh.annotations.BenchmarkMode
+import org.openjdk.jmh.annotations.Fork
+import org.openjdk.jmh.annotations.Measurement
+import org.openjdk.jmh.annotations.Mode
+import org.openjdk.jmh.annotations.OutputTimeUnit
+import org.openjdk.jmh.annotations.Warmup
 import org.openjdk.jmh.infra.Blackhole
 import java.util.concurrent.TimeUnit
 
-@UnstableDefault
 @Warmup(
-    iterations = 10, time = 500,
-    timeUnit = TimeUnit.MILLISECONDS, batchSize = 2
+    iterations = 25, time = 50,
+    timeUnit = TimeUnit.MILLISECONDS, batchSize = 4
 )
 @Measurement(
-    iterations = 75, time = 500,
-    timeUnit = TimeUnit.MILLISECONDS, batchSize = 5
+    iterations = 250, time = 30,
+    timeUnit = TimeUnit.MILLISECONDS, batchSize = 1
 )
-@BenchmarkMode(Mode.All)
-@OutputTimeUnit(TimeUnit.MILLISECONDS)
-@Fork(3)
+@BenchmarkMode(Mode.Throughput)
+@OutputTimeUnit(TimeUnit.SECONDS)
+@Fork(1)
 open class BenchSerialization {
     @Benchmark
     fun serializationByPrettySerializer(
@@ -47,15 +42,4 @@ open class BenchSerialization {
 }
 
 
-@State(Scope.Thread)
-open class SerializationState(
-    val id: Array<Identity> = arrayOf(
-        Identity("boy"), Identity("wonder")
-    ),
-    val ts: Array<Transaction> =
-        generateXTransactionsArray(id, 100),
-    val block: Block =
-        generateBlock(id, ts),
-    val binarySerializer: LedgerSerializer.Binary =
-        ledgerBinarySerializer { encoder = testEncoder }.unwrap()
-)
+
