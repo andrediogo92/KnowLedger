@@ -10,10 +10,8 @@ import org.junit.jupiter.api.Test
 import org.knowledger.collections.mapToSet
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.LedgerParams
-import org.knowledger.ledger.core.data.PhysicalData
 import org.knowledger.ledger.core.truncatedHexString
 import org.knowledger.ledger.crypto.service.Identity
-import org.knowledger.ledger.data.TrafficFlowData
 import org.knowledger.ledger.data.adapters.TemperatureDataStorageAdapter
 import org.knowledger.ledger.data.adapters.TrafficFlowDataStorageAdapter
 import org.knowledger.ledger.database.DatabaseMode
@@ -30,7 +28,6 @@ import org.knowledger.ledger.service.transactions.getTransactionByHash
 import org.knowledger.ledger.service.transactions.getTransactionsByClass
 import org.knowledger.ledger.service.transactions.getTransactionsFromAgent
 import org.knowledger.ledger.service.transactions.getTransactionsOrderedByTimestamp
-import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.knowledger.testing.ledger.appendByLine
 import org.knowledger.testing.ledger.failOnError
@@ -38,8 +35,8 @@ import org.knowledger.testing.ledger.logActualToExpectedHashes
 import org.knowledger.testing.ledger.logActualToExpectedHashing
 import org.knowledger.testing.ledger.queryToList
 import org.knowledger.testing.ledger.testHasher
+import org.knowledger.testing.ledger.trafficFlow
 import org.tinylog.kotlin.Logger
-import java.math.BigDecimal
 
 class TestOrientDatabase {
     val ids = arrayOf(Identity("test"), Identity("test2"))
@@ -267,24 +264,9 @@ class TestOrientDatabase {
 
             @Test
             fun `Test traffic insertion`() {
-                val testTraffic = HashedTransactionImpl(
-                    ids[0].privateKey,
-                    ids[0].publicKey,
-                    PhysicalData(
-                        BigDecimal.ONE,
-                        BigDecimal.ONE,
-                        TrafficFlowData(
-                            "FRC0",
-                            20,
-                            20,
-                            3000,
-                            3000,
-                            34.5,
-                            12.6
-                        )
-                    ),
-                    hasher, ledger.encoder
-                )
+                val testTraffic = generateXTransactions(
+                    id = ids, size = 1, generator = ::trafficFlow
+                )[0]
 
                 val block = generateBlockWithChain(
                     trafficChain.id, hasher, encoder, ledger.container.formula,

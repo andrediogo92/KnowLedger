@@ -11,17 +11,26 @@ import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
-import org.knowledger.ledger.data.*
+import org.knowledger.ledger.data.DataFormula
+import org.knowledger.ledger.data.DefaultDiff
+import org.knowledger.ledger.data.Difficulty
+import org.knowledger.ledger.data.GeoCoords
+import org.knowledger.ledger.data.Payout
+import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.storage.TransactionOutput
 import org.knowledger.ledger.storage.block.BlockImpl
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
+import org.knowledger.ledger.storage.coinbase.CoinbaseImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
 import org.knowledger.testing.core.random
+import org.knowledger.testing.ledger.DataGenerator
+import org.knowledger.testing.ledger.temperature
 import org.knowledger.testing.ledger.testEncoder
 import org.knowledger.testing.ledger.testHasher
 import java.math.BigDecimal
@@ -38,6 +47,69 @@ fun generateChainId(
         )
     )
 
+fun transactionGenerator(
+    id: Array<Identity>,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
+    generator: DataGenerator = ::temperature
+): Sequence<Transaction> {
+    return generateSequence {
+        val index = random.randomInt(id.size)
+        HashedTransactionImpl(
+            id[index].privateKey,
+            id[index].publicKey,
+            PhysicalData(
+                GeoCoords(
+                    BigDecimal.ZERO, BigDecimal.ZERO,
+                    BigDecimal.ZERO
+                ),
+                generator()
+            ), hasher, encoder
+        )
+    }
+}
+
+fun generateXTransactions(
+    id: Array<Identity>,
+    size: Int,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
+    generator: DataGenerator = ::temperature
+): List<Transaction> =
+    transactionGenerator(id, hasher, encoder, generator)
+        .take(size)
+        .toList()
+
+fun generateXTransactions(
+    id: Identity,
+    size: Int,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
+    generator: DataGenerator = ::temperature
+): List<Transaction> =
+    generateXTransactions(arrayOf(id), size, hasher, encoder, generator)
+
+fun generateXTransactionsArray(
+    id: Array<Identity>,
+    size: Int,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
+    generator: DataGenerator = ::temperature
+): Array<Transaction> =
+    transactionGenerator(
+        id, hasher, encoder, generator
+    ).toSizedArray(size)
+
+fun generateXTransactionsArray(
+    id: Identity,
+    size: Int,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
+    generator: DataGenerator = ::temperature
+): Array<Transaction> =
+    generateXTransactionsArray(
+        arrayOf(id), size, hasher, encoder, generator
+    )
 
 fun generateBlock(
     id: Array<Identity>,
@@ -65,71 +137,6 @@ fun generateBlock(
         ), encoder, hasher
     )
 }
-
-fun transactionGenerator(
-    id: Array<Identity>,
-    hasher: Hashers = testHasher,
-    encoder: BinaryFormat = testEncoder
-): Sequence<Transaction> {
-    return generateSequence {
-        val index = random.randomInt(id.size)
-        HashedTransactionImpl(
-            id[index].privateKey,
-            id[index].publicKey,
-            PhysicalData(
-                GeoCoords(
-                    BigDecimal.ZERO, BigDecimal.ZERO,
-                    BigDecimal.ZERO
-                ),
-                TemperatureData(
-                    BigDecimal(
-                        random.randomDouble() * 100
-                    ), TemperatureUnit.Celsius
-                )
-            ), hasher, encoder
-        )
-    }
-}
-
-fun generateXTransactions(
-    id: Array<Identity>,
-    size: Int,
-    hasher: Hashers = testHasher,
-    encoder: BinaryFormat = testEncoder
-): List<Transaction> =
-    transactionGenerator(id, hasher, encoder)
-        .take(size)
-        .toList()
-
-fun generateXTransactions(
-    id: Identity,
-    size: Int,
-    hasher: Hashers = testHasher,
-    encoder: BinaryFormat
-): List<Transaction> =
-    transactionGenerator(
-        arrayOf(id), hasher, encoder
-    ).take(size).toList()
-
-fun generateXTransactionsArray(
-    id: Array<Identity>,
-    size: Int,
-    hasher: Hashers = testHasher,
-    encoder: BinaryFormat = testEncoder
-): Array<Transaction> =
-    transactionGenerator(
-        id, hasher, encoder
-    ).toSizedArray(size)
-
-fun generateXTransactionsArray(
-    id: Identity,
-    size: Int,
-    hasher: Hashers = testHasher,
-    encoder: BinaryFormat
-): Array<Transaction> =
-    transactionGenerator(
-        arrayOf(id), hasher, encoder
-    ).toSizedArray(size)
 
 fun generateBlockWithChain(
     chainId: ChainId,
@@ -166,7 +173,8 @@ fun generateBlockWithChain(
     blockParams: BlockParams = BlockParams()
 ): Block {
     val coinbase = generateCoinbase(
-        hasher, encoder, formula, coinbaseParams
+        hasher = hasher, encoder = encoder,
+        formula = formula, coinbaseParams = coinbaseParams
     )
     return BlockImpl(
         sortedSetOf(), coinbase,
@@ -187,7 +195,7 @@ fun generateCoinbase(
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams()
 ): Coinbase {
-    val sets = listOf(
+    val sets: MutableSet<TransactionOutput> = mutableSetOf(
         HashedTransactionOutputImpl(
             id[0].publicKey, Hash.emptyHash,
             Payout(BigDecimal.ONE),
@@ -201,41 +209,45 @@ fun generateCoinbase(
             hasher, encoder
         )
     )
+    val first = sets.first()
     //First transaction output has
     //transaction 0.
     //Second is transaction 2
     //referencing transaction 0.
     //Third is transaction 4
     //referencing transaction 0.
-    sets[0].addToPayout(
+    first.addToPayout(
         Payout(BigDecimal.ONE),
         ts[2].hash, ts[0].hash
     )
-    sets[0].addToPayout(
+    first.addToPayout(
         Payout(BigDecimal.ONE),
         ts[4].hash, ts[0].hash
     )
-    return HashedCoinbaseImpl(
-        transactionOutputs = sets.toMutableSet(),
-        payout = Payout(BigDecimal("3")),
-        difficulty = Difficulty.INIT_DIFFICULTY,
-        blockheight = 2, coinbaseParams = coinbaseParams,
-        formula = formula, hasher = hasher, encoder = encoder
+    return generateCoinbase(
+        transactionOutputs = sets,
+        hasher = hasher,
+        encoder = encoder,
+        formula = formula,
+        coinbaseParams = coinbaseParams
     )
 }
 
 fun generateCoinbase(
+    transactionOutputs: MutableSet<TransactionOutput> = mutableSetOf(),
     hasher: Hashers = testHasher,
     encoder: BinaryFormat = testEncoder,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams()
 ): Coinbase =
     HashedCoinbaseImpl(
-        transactionOutputs = mutableSetOf(),
-        payout = Payout(BigDecimal("3")),
-        difficulty = Difficulty.INIT_DIFFICULTY,
-        blockheight = 2, coinbaseParams = coinbaseParams,
-        formula = formula, hasher = hasher, encoder = encoder
+        CoinbaseImpl(
+            _transactionOutputs = transactionOutputs,
+            _payout = Payout(BigDecimal("3")),
+            _difficulty = Difficulty.INIT_DIFFICULTY,
+            _blockheight = 2, coinbaseParams = coinbaseParams,
+            formula = formula
+        ), hasher = hasher, encoder = encoder
     )
 
 
