@@ -31,7 +31,17 @@ allprojects {
         mavenCentral()
         jcenter()
         maven("https://kotlin.bintray.com/kotlinx")
-        maven("https://jade.tilab.com/maven")
+
+        //Configure jade for agent projects with exclusive filter.
+        //Jade dependencies will only be searched in this repository.
+        exclusiveContent {
+            forRepository {
+                maven("https://jade.tilab.com/maven")
+            }
+            filter {
+                includeGroup("com.tilab.jade")
+            }
+        }
     }
 
 }
