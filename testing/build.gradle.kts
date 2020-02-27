@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     kotlin("jvm")
     id(Plugins.serial)
@@ -17,3 +19,6 @@ dependencies {
     implementation(Libs.commonsRNG)
 }
 
+tasks.withType<KotlinCompile> {
+    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
+}

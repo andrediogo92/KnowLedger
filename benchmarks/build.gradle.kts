@@ -22,8 +22,6 @@ dependencies {
     implementation(project(":agent"))
     implementation(Libs.jmh)
 
-    Libs.jade.forEach(::implementation)
-
     //Test dependencies
     testImplementation(Libs.commonsRNG)
 

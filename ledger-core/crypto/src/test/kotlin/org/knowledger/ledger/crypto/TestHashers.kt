@@ -4,7 +4,7 @@ import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.base.hash.toHexString
+import org.knowledger.ledger.core.base.data.toHexString
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.tinylog.Logger
 

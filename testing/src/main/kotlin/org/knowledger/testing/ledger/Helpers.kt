@@ -15,6 +15,7 @@ import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashing
 import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.TemperatureData
+import org.knowledger.ledger.data.TemperatureUnit
 import org.knowledger.ledger.data.TrafficFlowData
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
@@ -25,8 +26,12 @@ import org.knowledger.ledger.results.Failure
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.peekFailure
 import org.knowledger.ledger.results.unwrap
+import org.knowledger.testing.core.random
 import org.tinylog.kotlin.Logger
+import java.math.BigDecimal
 import java.util.concurrent.atomic.AtomicInteger
+
+typealias DataGenerator = () -> LedgerData
 
 val testCounter: AtomicInteger = AtomicInteger(0)
 
@@ -202,3 +207,19 @@ fun <T> Outcome<T, Failure>.failOnError() {
         it.unwrap()
     }
 }
+
+fun temperature(): LedgerData =
+    TemperatureData(
+        BigDecimal(
+            random.randomDouble() * 100
+        ), TemperatureUnit.Celsius
+    )
+
+fun trafficFlow(): LedgerData =
+    TrafficFlowData(
+        "FRC" + random.randomInt(6),
+        random.randomInt(125), random.randomInt(125),
+        random.randomInt(3000), random.randomInt(3000),
+        random.randomDouble() * 34,
+        random.randomDouble() * 12
+    )

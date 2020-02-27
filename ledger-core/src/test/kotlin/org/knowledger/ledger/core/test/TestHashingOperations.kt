@@ -4,7 +4,7 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
-import org.knowledger.ledger.core.base.hash.toHexString
+import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.core.flattenBytes
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.testing.core.random
@@ -30,7 +30,7 @@ class TestHashingOperations {
                     |
                 """.trimMargin()
             ) {
-                it.bytes.toHexString()
+                it.bytes.base64Encoded()
             }
             }""".trimMargin()
         }
@@ -64,9 +64,9 @@ class TestHashingOperations {
             """
                 |
                 |Expected:
-                |   ${expected.toHexString()}
+                |   ${expected.base64Encoded()}
                 |Flatten via vararg byte arrays:
-                |   ${test.toHexString()}
+                |   ${test.base64Encoded()}
             """.trimMargin()
         }
         assertThat(test).containsExactly(*expected.bytes)
@@ -74,9 +74,9 @@ class TestHashingOperations {
             """
                 |
                 |Expected:
-                |   ${expectedShort.toHexString()}
+                |   ${expectedShort.base64Encoded()}
                 |Flatten via collection + vararg byte arrays:
-                |   ${test2.toHexString()}
+                |   ${test2.base64Encoded()}
             """.trimMargin()
         }
         assertThat(test2).containsExactly(*expectedShort)
@@ -84,9 +84,9 @@ class TestHashingOperations {
             """
                 |
                 |Expected:
-                |   ${expected.toHexString()}
+                |   ${expected.base64Encoded()}
                 |Flatten via direct AoA:
-                |   ${test3.toHexString()}
+                |   ${test3.base64Encoded()}
             """.trimMargin()
         }
         assertThat(test3).containsExactly(*expected.bytes)
