@@ -2,6 +2,7 @@ package org.knowledger.agent.behaviours.ledger
 
 import jade.core.Agent
 import jade.core.behaviours.SimpleBehaviour
+import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.mining.BlockState
 import org.knowledger.ledger.mining.MiningState
 import org.knowledger.ledger.service.handles.ChainHandle
@@ -26,7 +27,7 @@ class Mining internal constructor(
                     }
                 } else {
                     Logger.debug {
-                        "Block under threshold: ${state.hashId.toHexString()} < ${sc.currentDifficulty.toHexString()}"
+                        "Block under threshold: ${state.hashId.base64Encoded()} < ${sc.currentDifficulty.base64Encoded()}"
                     }
                 }
             }

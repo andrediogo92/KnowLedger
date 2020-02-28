@@ -14,6 +14,7 @@ import org.knowledger.agent.data.PeerBook
 import org.knowledger.agent.messaging.state.ConversationIds
 import org.knowledger.agent.messaging.toJadePhysicalData
 import org.knowledger.base64.base64DecodedToHash
+import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.data.LedgerData
 
@@ -47,7 +48,7 @@ internal class PropagateData(
                     )
                 )
             } else {
-                agent.slaveError { "Data polled is not supported: ${data.tag.toHexString()}" }
+                agent.slaveError { "Data polled is not supported: ${data.tag.base64Encoded()}" }
             }
         } ?: block(500)
     }
