@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.test
+package org.knowledger.base64.test
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
@@ -37,7 +37,6 @@ class TestBase64Operations {
         }
     }
 
-    @ExperimentalStdlibApi
     @Test
     fun `base64 encoding decoding from UTF-8 bytes`() {
         val check = byteArrayOf(

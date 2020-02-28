@@ -5,10 +5,10 @@ version = "0.1"
 
 plugins {
     kotlin("jvm")
-    id(Plugins.docs)
+    id(Plugins.base)
 }
 
-docsPlugin {
+basePlugin {
     module = "base64-extensions"
 }
 
