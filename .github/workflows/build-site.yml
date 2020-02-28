@@ -11,7 +11,7 @@ on:
       - master
     paths:
       - 'site/**'
-name: Build and deploy static site on push
+name: Static Site Wiki
 jobs:
   build-site:
     name: shalzz/zola-deploy-action
