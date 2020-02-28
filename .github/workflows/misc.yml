@@ -1,6 +1,17 @@
+on:
+  repository_dispatch:
+    types: gradle-wrapper
+  push:
+    branches:
+      - master
+    paths:
+      - 'gradle/**'
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'gradle/**'
 name: Validated Gradlew
-on: [push, pull_request]
-
 jobs:
   validation:
     name: Validation
