@@ -20,5 +20,4 @@ dependencies {
 
     testImplementation(project(":testing"))
     testImplementation(project(":ledger-core"))
-    testImplementation(Libs.commonsRNG)
 }

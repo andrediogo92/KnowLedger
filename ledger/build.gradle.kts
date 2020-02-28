@@ -22,10 +22,10 @@ dependencies {
     //Project dependencies
     api(project(":ledger-core"))
     implementation(project(":ledger-orient"))
-    implementation(Libs.jmh)
 
-    testImplementation(Libs.commonsRNG)
-    testApi(project(":testing"))
+    jmhImplementation(Libs.jmh)
+
+    testImplementation(project(":testing"))
 }
 
 tasks.withType<KotlinCompile> {

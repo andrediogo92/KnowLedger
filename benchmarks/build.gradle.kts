@@ -16,13 +16,10 @@ jmh {
 }
 
 dependencies {
-    //Project dependencies
-    implementation(project(":ledger"))
-    implementation(project(":ledger-core"))
-    implementation(project(":agent"))
-    implementation(Libs.jmh)
-
-    //Test dependencies
-    testImplementation(Libs.commonsRNG)
+    //JMH dependencies
+    jmhImplementation(project(":ledger"))
+    jmhImplementation(project(":ledger-core"))
+    jmhImplementation(project(":agent"))
+    jmhImplementation(Libs.jmh)
 
 }

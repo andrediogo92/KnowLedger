@@ -10,7 +10,7 @@ import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.testing.core.random
 import org.tinylog.kotlin.Logger
 
-class TestHashingOperations {
+class TestManualHashingOperations {
     val hashSize = 16
     val minBound = 12
     val randomHashes = Array(random.randomInt(minBound) + 8) {
