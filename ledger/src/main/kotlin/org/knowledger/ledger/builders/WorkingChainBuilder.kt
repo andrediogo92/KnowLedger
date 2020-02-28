@@ -1,6 +1,7 @@
 package org.knowledger.ledger.builders
 
 import kotlinx.serialization.PolymorphicSerializer
+import org.knowledger.collections.SortedList
 import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.data.PhysicalData
@@ -24,7 +25,6 @@ import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
 import java.security.PublicKey
-import java.util.*
 
 internal data class WorkingChainBuilder(
     internal val adapterManager: AdapterManager,
@@ -38,13 +38,13 @@ internal data class WorkingChainBuilder(
         get() = chainId.tag
 
     override fun block(
-        transactions: SortedSet<Transaction>,
+        transactions: SortedList<Transaction>,
         coinbase: Coinbase,
         blockHeader: BlockHeader,
         merkleTree: MerkleTree
     ): Block =
         BlockImpl(
-            transactions = transactions.toSortedSet(),
+            transactions = transactions,
             coinbase = coinbase,
             header = blockHeader,
             merkleTree = merkleTree

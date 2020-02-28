@@ -10,13 +10,14 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.cbor.Cbor
+import org.knowledger.collections.SortedList
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.data.Difficulty
-import org.knowledger.ledger.serial.SortedSetSerializer
+import org.knowledger.ledger.serial.SortedListSerializer
 import org.knowledger.ledger.serial.binary.BlockHeaderByteSerializer
 import org.knowledger.ledger.serial.binary.CoinbaseByteSerializer
 import org.knowledger.ledger.serial.binary.MerkleTreeByteSerializer
@@ -31,12 +32,11 @@ import org.knowledger.ledger.storage.blockheader.StorageAwareBlockHeader
 import org.knowledger.ledger.storage.coinbase.StorageAwareCoinbase
 import org.knowledger.ledger.storage.merkletree.StorageAwareMerkleTree
 import org.tinylog.kotlin.Logger
-import java.util.*
 
 @Serializable
 internal data class BlockImpl(
-    @Serializable(SortedSetSerializer::class)
-    override val transactions: SortedSet<Transaction>,
+    @Serializable(with = SortedListSerializer::class)
+    override val transactions: SortedList<Transaction>,
     override val coinbase: Coinbase,
     override val header: BlockHeader,
     override var merkleTree: MerkleTree,
@@ -55,7 +55,7 @@ internal data class BlockImpl(
         chainId: ChainId, previousHash: Hash,
         params: BlockParams, ledgerInfo: LedgerInfo
     ) : this(
-        sortedSetOf(),
+        SortedList(),
         StorageAwareCoinbase(
             ledgerInfo
         ),

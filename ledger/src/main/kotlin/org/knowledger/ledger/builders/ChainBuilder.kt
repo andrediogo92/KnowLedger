@@ -1,5 +1,6 @@
 package org.knowledger.ledger.builders
 
+import org.knowledger.collections.SortedList
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.data.Difficulty
@@ -14,7 +15,6 @@ import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.TransactionOutput
 import java.security.PublicKey
-import java.util.*
 
 interface ChainBuilder {
     val chainHash: Hash
@@ -22,7 +22,7 @@ interface ChainBuilder {
     val chainId: ChainId
 
     fun block(
-        transactions: SortedSet<Transaction>,
+        transactions: SortedList<Transaction>,
         coinbase: Coinbase, blockHeader: BlockHeader,
         merkleTree: MerkleTree
     ): Block

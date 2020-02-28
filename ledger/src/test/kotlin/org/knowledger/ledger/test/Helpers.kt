@@ -1,7 +1,9 @@
 package org.knowledger.ledger.test
 
 import kotlinx.serialization.BinaryFormat
+import org.knowledger.collections.sortedListOf
 import org.knowledger.collections.toSizedArray
+import org.knowledger.collections.toSortedList
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
@@ -125,7 +127,7 @@ fun generateBlock(
         formula, coinbaseParams
     )
     return BlockImpl(
-        ts.toSortedSet(), coinbase,
+        ts.toSortedList(), coinbase,
         HashedBlockHeaderImpl(
             generateChainId(hasher),
             hasher, encoder,
@@ -153,7 +155,7 @@ fun generateBlockWithChain(
         formula, coinbaseParams
     )
     return BlockImpl(
-        ts.toSortedSet(), coinbase,
+        ts.toSortedList(), coinbase,
         HashedBlockHeaderImpl(
             chainId, hasher, encoder,
             Hash(random.randomByteArray(32)),
@@ -177,7 +179,7 @@ fun generateBlockWithChain(
         formula = formula, coinbaseParams = coinbaseParams
     )
     return BlockImpl(
-        sortedSetOf(), coinbase,
+        sortedListOf(), coinbase,
         HashedBlockHeaderImpl(
             chainId, hasher, encoder,
             Hash(random.randomByteArray(32)),

@@ -1,6 +1,7 @@
 package org.knowledger.ledger.storage.block
 
 import kotlinx.serialization.Serializable
+import org.knowledger.collections.SortedList
 import org.knowledger.ledger.core.base.Sizeable
 import org.knowledger.ledger.serial.HashSerializable
 import org.knowledger.ledger.serial.display.BlockSerializer
@@ -10,7 +11,6 @@ import org.knowledger.ledger.storage.LedgerContract
 import org.knowledger.ledger.storage.Markable
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
-import java.util.*
 
 @Serializable(with = BlockSerializer::class)
 interface Block : HashSerializable, Cloneable, Markable, Sizeable, LedgerContract {
@@ -29,7 +29,7 @@ interface Block : HashSerializable, Cloneable, Markable, Sizeable, LedgerContrac
         }
 
 
-    val transactions: SortedSet<Transaction>
+    val transactions: SortedList<Transaction>
     val coinbase: Coinbase
     val header: BlockHeader
     var merkleTree: MerkleTree

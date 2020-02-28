@@ -1,5 +1,6 @@
 package org.knowledger.ledger.storage.block
 
+import org.knowledger.collections.toSortedListFromPreSorted
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
@@ -26,7 +27,7 @@ internal class SUBlockStorageAdapter(
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "data" to StorageType.SET,
+            "data" to StorageType.LIST,
             "payout" to StorageType.LINK,
             "header" to StorageType.LINK,
             "merkleTree" to StorageType.LINK
@@ -38,13 +39,13 @@ internal class SUBlockStorageAdapter(
     ): StorageElement =
         session
             .newInstance(id)
-            .setElementSet(
+            .setElementList(
                 "data",
                 toStore.transactions.map {
                     transactionStorageAdapter.persist(
                         it, session
                     )
-                }.toSet()
+                }
             ).setLinked(
                 "payout",
                 coinbaseStorageAdapter.persist(
@@ -73,7 +74,7 @@ internal class SUBlockStorageAdapter(
             val merkleTree = element.getLinked("merkleTree")
             zip(
                 element
-                    .getElementSet("data")
+                    .getElementList("data")
                     .asSequence()
                     .map {
                         transactionStorageAdapter.load(
@@ -95,7 +96,7 @@ internal class SUBlockStorageAdapter(
             )
             { data, coinbase, header, merkleTree ->
                 BlockImpl(
-                    data.toSortedSet(), coinbase,
+                    data.toSortedListFromPreSorted(), coinbase,
                     header, merkleTree
                 )
             }

@@ -3,6 +3,7 @@ package org.knowledger.ledger.storage.block
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import org.knowledger.collections.toSortedListFromPreSorted
 import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageID
@@ -74,7 +75,7 @@ internal class StorageAwareBlock private constructor(
 
     override fun clone(): Block {
         return BlockImpl(
-            transactions.toSortedSet(),
+            transactions.toSortedListFromPreSorted(),
             coinbase.clone(),
             header.clone(),
             merkleTree.clone()

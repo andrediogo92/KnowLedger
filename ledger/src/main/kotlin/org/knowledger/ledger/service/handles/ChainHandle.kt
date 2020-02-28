@@ -2,6 +2,7 @@ package org.knowledger.ledger.service.handles
 
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.base64.base64Encoded
+import org.knowledger.collections.sortedListOf
 import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
@@ -545,7 +546,7 @@ class ChainHandle internal constructor(
             chainId: ChainId
         ): Block {
             return BlockImpl(
-                sortedSetOf(),
+                sortedListOf(),
                 HashedCoinbaseImpl(
                     ledgerInfo
                 ),

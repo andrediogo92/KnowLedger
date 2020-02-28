@@ -8,14 +8,14 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.internal.SerialClassDescImpl
-import org.knowledger.ledger.serial.SortedSetSerializer
+import org.knowledger.collections.SortedList
+import org.knowledger.ledger.serial.SortedListSerializer
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.block.BlockImpl
-import java.util.*
 
 internal abstract class AbstractBlockSerializer(
     transactionSerializer: KSerializer<Transaction>
@@ -31,7 +31,7 @@ internal abstract class AbstractBlockSerializer(
 
     override val descriptor: SerialDescriptor = BlockSerialDescriptor
 
-    private val sortedSetSerializer = SortedSetSerializer(transactionSerializer)
+    private val sortedListSerializer = SortedListSerializer(transactionSerializer)
 
     abstract fun CompositeEncoder.encodeCoinbase(
         index: Int, coinbase: Coinbase
@@ -60,7 +60,7 @@ internal abstract class AbstractBlockSerializer(
 
     override fun deserialize(decoder: Decoder): Block =
         with(decoder.beginStructure(descriptor)) {
-            lateinit var transactions: SortedSet<Transaction>
+            lateinit var transactions: SortedList<Transaction>
             lateinit var coinbase: Coinbase
             lateinit var header: BlockHeader
             lateinit var merkleTree: MerkleTree
@@ -71,7 +71,7 @@ internal abstract class AbstractBlockSerializer(
                     1 -> coinbase = decodeCoinbase(i)
                     2 -> merkleTree = decodeMerkleTree(i)
                     3 -> transactions = decodeSerializableElement(
-                        descriptor, i, sortedSetSerializer
+                        descriptor, i, sortedListSerializer
                     )
                     else -> throw SerializationException("Unknown index $i")
                 }
@@ -91,7 +91,7 @@ internal abstract class AbstractBlockSerializer(
             encodeCoinbase(1, obj.coinbase)
             encodeMerkleTree(2, obj.merkleTree)
             encodeSerializableElement(
-                descriptor, 3, sortedSetSerializer,
+                descriptor, 3, sortedListSerializer,
                 obj.transactions
             )
             endStructure(descriptor)
