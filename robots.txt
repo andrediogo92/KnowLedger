@@ -1,0 +1,2 @@
+User-agent: *
+Sitemap: https://seriyin.github.io/KnowLedger/sitemap.xml

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta http-equiv="content-type" content="text/html; charset=utf-8">
+
+      <!-- Enable responsiveness on mobile devices-->
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+
+      <title>KnowLedger</title>
+
+      
+      
+
+      <!-- CSS -->
+      
+      <link rel="stylesheet" href="https://seriyin.github.io/KnowLedger/book.css">
+      
+
+      
+      
+    </head>
+
+    <body>
+        <div class="menu">
+            
+            
+            <nav role="navigation">
+                <ul>
+                    
+                        
+                        
+                            
+                            <li class="active">
+                                
+                                <a href="https:&#x2F;&#x2F;seriyin.github.io&#x2F;KnowLedger&#x2F;introduction&#x2F;">
+                                    <strong>1.</strong>
+                                    Introduction
+                                </a>
+                                
+                            </li>
+                        
+                            
+                            <li >
+                                
+                                <a href="https:&#x2F;&#x2F;seriyin.github.io&#x2F;KnowLedger&#x2F;architecture&#x2F;">
+                                    <strong>2.</strong>
+                                    Architecture
+                                </a>
+                                
+                            </li>
+                        
+                    
+                </ul>
+            </nav>
+            
+            
+        </div>
+
+        <div class="page">
+            <div class="page__header">
+                <div class="menu-icon">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                
+                <span class="search-icon">🔎</span>
+                
+            </div>
+
+            <div class="page__content">
+                
+                <div class="search-container">
+                    <input id="search" type="search" placeholder="Search..">
+                    <div class="search-results">
+                        <div class="search-results__header"></div>
+                        <ul class="search-results__items"></ul>
+                    </div>
+                </div>
+                
+                <div class="book-content">
+                    
+    <h1>Introduction</h1>
+    <p>KnowLedger is a minimal framework for creating and running distributed ledgers that model physical data for use in Smart Cities.
+It is comprised of three major components:</p>
+<ol>
+<li>A ledger library facilitating the generation of any number of independent chains that a ledger reference. Each chain deals with a single type of structured data.</li>
+<li>An agent library facilitating the creation of ledger agents that advertise and execute a ledger maintenance protocol and slave agents that periodically supply them data.</li>
+<li>A core agent library containing only the essential types needed for building ledger compatible data for slave agents.</li>
+</ol>
+<pre style="background-color:#0f1419;">
+<span style="color:#bfbab0;">class </span><span style="color:#59c2ff;">ExampleAgentApp</span><span style="color:#bfbab0;"> {
+
+    </span><span style="color:#ff7733;">companion </span><span style="color:#bfbab0;">object {
+        @JvmStatic
+        </span><span style="color:#ff7733;">fun </span><span style="color:#ffb454;">main</span><span style="color:#bfbab0;">() {
+
+            </span><span style="color:#ff7733;">val </span><span style="color:#59c2ff;">container </span><span style="color:#f29668;">=</span><span style="color:#bfbab0;"> AgentContainer(
+                host </span><span style="color:#f29668;">= </span><span style="color:#c2d94c;">&quot;localhost&quot;</span><span style="color:#bfbab0;">, port </span><span style="color:#f29668;">= </span><span style="color:#f29718;">9888</span><span style="color:#bfbab0;">,
+                containerName </span><span style="color:#f29668;">= </span><span style="color:#c2d94c;">&quot;LedgerMain&quot;</span><span style="color:#bfbab0;">, isMainContainer </span><span style="color:#f29668;">= </span><span style="color:#f29718;">true</span><span style="color:#bfbab0;">,
+                hasGUI </span><span style="color:#f29668;">= </span><span style="color:#f29718;">true</span><span style="color:#bfbab0;">
+            )
+            </span><span style="color:#ff7733;">val </span><span style="color:#59c2ff;">handle </span><span style="color:#f29668;">=</span><span style="color:#bfbab0;">
+                LedgerHandle
+                    </span><span style="color:#f29668;">.</span><span style="color:#bfbab0;">Builder()
+                    </span><span style="color:#f29668;">.</span><span style="color:#bfbab0;">withLedgerIdentity(</span><span style="color:#c2d94c;">&quot;test&quot;</span><span style="color:#bfbab0;">)
+                    </span><span style="color:#f29668;">.</span><span style="color:#bfbab0;">unwrap()
+                    </span><span style="color:#f29668;">.</span><span style="color:#bfbab0;">build()
+                    </span><span style="color:#f29668;">.</span><span style="color:#bfbab0;">unwrap()
+
+            container</span><span style="color:#f29668;">.</span><span style="color:#bfbab0;">runLedgerAgent(
+                name </span><span style="color:#f29668;">= </span><span style="color:#c2d94c;">&quot;MinerAgent&quot;</span><span style="color:#bfbab0;">,
+                handle </span><span style="color:#f29668;">=</span><span style="color:#bfbab0;"> handle,
+                knownTypes </span><span style="color:#f29668;">=</span><span style="color:#bfbab0;"> setOf(NoiseDataStorageAdapter(handle</span><span style="color:#f29668;">.</span><span style="color:#bfbab0;">hasher)),
+                arguments </span><span style="color:#f29668;">=</span><span style="color:#bfbab0;"> emptyArray()
+            )
+
+            container</span><span style="color:#f29668;">.</span><span style="color:#bfbab0;">runSlaveAgent(
+                name </span><span style="color:#f29668;">= </span><span style="color:#c2d94c;">&quot;NoiseSlave&quot;</span><span style="color:#bfbab0;">,
+                classpath </span><span style="color:#f29668;">= </span><span style="color:#c2d94c;">&quot;org.knowledger.example.slave.NoiseAgent&quot;</span><span style="color:#bfbab0;">,
+                knownTypes </span><span style="color:#f29668;">=</span><span style="color:#bfbab0;"> setOf(NoiseDataStorageAdapter(handle</span><span style="color:#f29668;">.</span><span style="color:#bfbab0;">hasher)),
+                arguments </span><span style="color:#f29668;">=</span><span style="color:#bfbab0;"> emptyArray()
+            )
+        }
+    }
+}
+</span></pre>
+
+                </div>
+            </div>
+
+            <div class="prev-link">
+                
+    
+    
+    
+    
+        
+        
+            
+        
+    
+        
+        
+            
+        
+    
+
+            </div>
+
+            <div class="next-link">
+                
+    
+        
+        
+        
+        
+            
+            
+            
+                
+            
+        
+            
+            
+                <a class="next" href="https:&#x2F;&#x2F;seriyin.github.io&#x2F;KnowLedger&#x2F;architecture&#x2F;">></a>
+                
+                
+            
+            
+        
+    
+
+            </div>
+        </div>
+
+        
+            
+            <script type="text/javascript" src="https://seriyin.github.io/KnowLedger/elasticlunr.min.js"></script>
+            <script type="text/javascript" src="https://seriyin.github.io/KnowLedger/search_index.en.js"></script>
+            
+            <script type="text/javascript" src="https://seriyin.github.io/KnowLedger/book.js"></script>
+        
+    </body>
+
+</html>
