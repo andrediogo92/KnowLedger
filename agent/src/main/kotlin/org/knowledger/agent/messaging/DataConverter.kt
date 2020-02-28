@@ -96,10 +96,11 @@ fun Coinbase.toJadeCoinbase(): JCoinbase =
         payoutTXO = transactionOutputs
             .mapToSet(TransactionOutput::toJadeTransactionOutput),
         payout = payout.toString(),
-        hashId = hash.toJadeHash(),
-        formula = null,
         difficulty = JHash(difficulty.bytes.base64Encoded()),
-        blockheight = blockheight
+        extraNonce = extraNonce,
+        blockheight = blockheight,
+        hashId = hash.toJadeHash(),
+        formula = null
     )
 
 fun Coinbase.toJadeCoinbase(
@@ -109,10 +110,11 @@ fun Coinbase.toJadeCoinbase(
         payoutTXO = transactionOutputs
             .mapToSet(TransactionOutput::toJadeTransactionOutput),
         payout = payout.toString(),
-        hashId = hash.toJadeHash(),
-        formula = formula.toJadeHash(),
         difficulty = JHash(difficulty.bytes.base64Encoded()),
-        blockheight = blockheight
+        extraNonce = extraNonce,
+        blockheight = blockheight,
+        hashId = hash.toJadeHash(),
+        formula = formula.toJadeHash()
     )
 
 private fun TransactionOutput.toJadeTransactionOutput(): JTransactionOutput =
@@ -133,7 +135,7 @@ fun Transaction.toJadeTransaction(
         transactionId = hash.toJadeHash(),
         publicKey = publicKey.base64Encoded(),
         data = data.toJadePhysicalData(builder),
-        signature = signature.encoded.base64Encoded(),
+        signature = signature.bytes.base64Encoded(),
         ledgerId = if (withChainId) builder.chainId.toJadeChainId() else null
     )
 
@@ -219,9 +221,10 @@ fun JCoinbase.fromJadeCoinbase(
             it.fromJadeTransactionOutput(builder)
         },
         payout = Payout(BigDecimal(payout)),
-        hash = hashId.fromJadeHash(),
         difficulty = Difficulty(BigInteger(difficulty.hash.base64Decoded())),
-        blockheight = blockheight
+        blockheight = blockheight,
+        extraNonce = extraNonce,
+        hash = hashId.fromJadeHash()
     )
 
 private fun JTransactionOutput.fromJadeTransactionOutput(
