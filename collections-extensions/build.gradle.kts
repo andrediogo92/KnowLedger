@@ -1,10 +1,23 @@
 plugins {
     kotlin("jvm")
-    id(Plugins.docs)
+    id(Plugins.base)
+    id(Plugins.jmh)
 }
 
-docsPlugin {
+basePlugin {
     module = "collections-extensions"
 }
+
+jmh {
+    duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
+    isIncludeTests = true
+}
+
+dependencies {
+    jmhImplementation(Libs.jmh)
+
+    testImplementation(project(":testing"))
+}
+
 
 version = "0.1"
