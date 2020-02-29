@@ -24,7 +24,6 @@ dependencies {
     implementation(project(":ledger-orient"))
 
     jmhImplementation(Libs.jmh)
-
     testImplementation(project(":testing"))
 }
 

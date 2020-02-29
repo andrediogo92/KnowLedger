@@ -16,9 +16,7 @@ import org.knowledger.ledger.serial.ledgerTextSerializer
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.testing.core.random
-import org.knowledger.testing.ledger.testEncoder
 import org.knowledger.testing.ledger.testHasher
-import org.knowledger.testing.ledger.testJson
 import org.tinylog.kotlin.Logger
 
 @UnstableDefault

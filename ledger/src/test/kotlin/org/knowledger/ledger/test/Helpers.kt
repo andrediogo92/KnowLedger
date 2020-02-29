@@ -1,6 +1,13 @@
 package org.knowledger.ledger.test
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.UnstableDefault
+import kotlinx.serialization.UpdateMode
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonConfiguration
+import kotlinx.serialization.modules.SerialModule
+import kotlinx.serialization.modules.SerializersModule
 import org.knowledger.collections.sortedListOf
 import org.knowledger.collections.toSizedArray
 import org.knowledger.collections.toSortedList
@@ -9,16 +16,12 @@ import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.chainid.ChainIdImpl
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
+import org.knowledger.ledger.core.base.data.LedgerData
 import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
-import org.knowledger.ledger.data.DataFormula
-import org.knowledger.ledger.data.DefaultDiff
-import org.knowledger.ledger.data.Difficulty
-import org.knowledger.ledger.data.GeoCoords
-import org.knowledger.ledger.data.Payout
-import org.knowledger.ledger.data.PhysicalData
+import org.knowledger.ledger.data.*
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.Transaction
@@ -32,10 +35,50 @@ import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
 import org.knowledger.testing.core.random
 import org.knowledger.testing.ledger.DataGenerator
-import org.knowledger.testing.ledger.temperature
-import org.knowledger.testing.ledger.testEncoder
 import org.knowledger.testing.ledger.testHasher
 import java.math.BigDecimal
+
+
+val testSerialModule: SerialModule by lazy {
+    SerializersModule {
+        polymorphic(LedgerData::class) {
+            TemperatureData::class with TemperatureData.serializer()
+            TrafficFlowData::class with TrafficFlowData.serializer()
+        }
+    }
+}
+
+val testEncoder: BinaryFormat by lazy {
+    Cbor(
+        UpdateMode.OVERWRITE, true,
+        testSerialModule
+    )
+}
+
+
+@UnstableDefault
+val testJson: Json = Json(
+    configuration = JsonConfiguration.Default.copy(prettyPrint = true),
+    context = testSerialModule
+)
+
+
+fun temperature(): LedgerData =
+    TemperatureData(
+        BigDecimal(
+            random.randomDouble() * 100
+        ), TemperatureUnit.Celsius
+    )
+
+fun trafficFlow(): LedgerData =
+    TrafficFlowData(
+        "FRC" + random.randomInt(6),
+        random.randomInt(125), random.randomInt(125),
+        random.randomInt(3000), random.randomInt(3000),
+        random.randomDouble() * 34,
+        random.randomDouble() * 12
+    )
+
 
 fun generateChainId(
     hasher: Hashers = testHasher,

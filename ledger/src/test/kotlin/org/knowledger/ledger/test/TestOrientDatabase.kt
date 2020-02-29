@@ -35,7 +35,6 @@ import org.knowledger.testing.ledger.logActualToExpectedHashes
 import org.knowledger.testing.ledger.logActualToExpectedHashing
 import org.knowledger.testing.ledger.queryToList
 import org.knowledger.testing.ledger.testHasher
-import org.knowledger.testing.ledger.trafficFlow
 import org.tinylog.kotlin.Logger
 
 class TestOrientDatabase {

@@ -32,7 +32,7 @@ class TestMerkleTree {
     private val size = 24
     private val base = generateXTransactionsArray(id, size)
     private var begin = random.randomInt(size - 7)
-    private val ts7 = base.sliceArray(begin..begin + 6)
+    private val ts7 = base.sliceArray(begin until begin + 7)
 
     //Cache coinbase params to avoid repeated digest of formula calculations.
     private val coinbaseParams = CoinbaseParams()
