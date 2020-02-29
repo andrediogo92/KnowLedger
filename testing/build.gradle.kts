@@ -15,7 +15,6 @@ version = "0.1"
 
 dependencies {
     implementation(project(":ledger-core"))
-    implementation(project(":ledger"))
     implementation(Libs.commonsRNG)
 }
 
