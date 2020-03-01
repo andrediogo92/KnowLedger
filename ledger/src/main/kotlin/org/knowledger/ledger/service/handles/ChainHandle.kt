@@ -57,18 +57,18 @@ import java.time.ZonedDateTime
  * A facade into useful methods for managing a
  * unique chain in the ledger represented by the [id].
  */
-class ChainHandle internal constructor(
+class ChainHandle private constructor(
     val ledgerInfo: LedgerInfo,
-    private val pw: PersistenceWrapper,
+    internal val adapterManager: AdapterManager,
     val id: ChainId,
     val chainInfo: ChainInfo = ChainInfo(),
     internal val transactionPool: TransactionPool =
-        StorageAwareTransactionPool(pw.adapterManager, id)
+        StorageAwareTransactionPool(adapterManager, id)
 ) : ServiceClass {
     val chainHash = id.hash
+    private lateinit var queryManager: QueryManager
     private val hasher: Hashers = ledgerInfo.hasher
     private val encoder: BinaryFormat = ledgerInfo.encoder
-    internal val adapterManager: AdapterManager = pw.adapterManager
     private val blockPool: BlockPool = BlockPoolImpl(id, ledgerInfo, chainInfo)
     val ledgerParams: LedgerParams = ledgerInfo.ledgerParams
     val blockParams: BlockParams = ledgerParams.blockParams
@@ -88,7 +88,7 @@ class ChainHandle internal constructor(
      * [Block] in the ledger.
      */
     val lastBlock: Outcome<Block, LoadFailure>
-        get() = pw.getLatestBlock(chainHash)
+        get() = queryManager.getLatestBlock(chainHash)
 
 
     /**
@@ -96,33 +96,40 @@ class ChainHandle internal constructor(
      * [BlockHeader] in the ledger.
      */
     val lastBlockHeader: Outcome<BlockHeader, LoadFailure>
-        get() = pw.getLatestBlockHeader(chainHash)
+        get() = queryManager.getLatestBlockHeader(chainHash)
 
 
     internal constructor(
-        container: LedgerInfo,
-        pw: PersistenceWrapper,
+        ledgerInfo: LedgerInfo,
+        adapterManager: AdapterManager,
         tag: Tag
     ) : this(
-        container,
-        pw,
-        StorageAwareChainId(tag, container.ledgerId.hash, container.hasher, container.encoder)
+        ledgerInfo,
+        adapterManager,
+        StorageAwareChainId(
+            tag, ledgerInfo.ledgerId.hash,
+            ledgerInfo.hasher, ledgerInfo.encoder
+        )
     )
 
 
     internal constructor(
         container: LedgerInfo,
-        pw: PersistenceWrapper,
+        adapterManager: AdapterManager,
         id: ChainId,
         transactionPool: TransactionPool,
         difficulty: Difficulty,
         lastRecalc: Int,
         currentBlockheight: Long
     ) : this(
-        container, pw, id,
+        container, adapterManager, id,
         ChainInfo(difficulty, lastRecalc, currentBlockheight),
         transactionPool
     )
+
+    internal fun addQueryManager(queryManager: QueryManager) {
+        this.queryManager = queryManager
+    }
 
     /**
      * Checks integrity of the entire cached ledger.
@@ -136,7 +143,7 @@ class ChainHandle internal constructor(
         val cacheSize = CACHE_SIZE
         var valid = true
         val blockResult =
-            pw.getBlockByBlockHeight(chainHash, 1)
+            queryManager.getBlockByBlockHeight(chainHash, 1)
         lateinit var previousLastBlock: Block
         var failure: Outcome<Boolean, QueryFailure>
         failure = when (blockResult) {
@@ -155,7 +162,7 @@ class ChainHandle internal constructor(
             lowIndex += cacheSize
             highIndex += cacheSize
             val blocks =
-                pw.getBlockListByBlockHeightInterval(
+                queryManager.getBlockListByBlockHeightInterval(
                     chainHash,
                     lowIndex,
                     highIndex
@@ -229,7 +236,7 @@ class ChainHandle internal constructor(
      * over a [Block] with the provided [hash].
      */
     fun getBlock(hash: Hash): Outcome<Block, LoadFailure> =
-        pw.getBlockByHeaderHash(
+        queryManager.getBlockByHeaderHash(
             chainHash, hash
         )
 
@@ -240,7 +247,7 @@ class ChainHandle internal constructor(
     fun getBlockByHeight(
         blockheight: Long
     ): Outcome<Block, LoadFailure> =
-        pw.getBlockByBlockHeight(
+        queryManager.getBlockByBlockHeight(
             chainHash, blockheight
         )
 
@@ -251,7 +258,7 @@ class ChainHandle internal constructor(
     fun getBlockHeaderByHash(
         hash: Hash
     ): Outcome<BlockHeader, LoadFailure> =
-        pw.getBlockHeaderByHash(
+        queryManager.getBlockHeaderByHash(
             chainHash, hash
         )
 
@@ -259,7 +266,7 @@ class ChainHandle internal constructor(
      * Returns whether the block with [hash] exists.
      */
     fun hasBlock(hash: Hash): Boolean =
-        (pw.getBlockByHeaderHash(
+        (queryManager.getBlockByHeaderHash(
             chainHash, hash
         ) is Outcome.Ok<*>)
 
@@ -270,7 +277,7 @@ class ChainHandle internal constructor(
     fun getPrevBlock(
         hash: Hash
     ): Outcome<Block, LoadFailure> =
-        pw.getBlockByPrevHeaderHash(
+        queryManager.getBlockByPrevHeaderHash(
             chainHash, hash
         )
 
@@ -281,7 +288,7 @@ class ChainHandle internal constructor(
     fun getPrevBlockHeaderByHash(
         hash: Hash
     ): Outcome<BlockHeader, LoadFailure> =
-        pw.getBlockHeaderByPrevHeaderHash(
+        queryManager.getBlockHeaderByPrevHeaderHash(
             chainHash, hash
         )
 
@@ -304,7 +311,7 @@ class ChainHandle internal constructor(
     fun getBlockChunk(
         startInclusive: Long, endInclusive: Long
     ): Outcome<Sequence<Block>, LoadFailure> =
-        pw.getBlockListByBlockHeightInterval(
+        queryManager.getBlockListByBlockHeightInterval(
             chainHash,
             startInclusive,
             endInclusive
@@ -313,7 +320,7 @@ class ChainHandle internal constructor(
     fun getBlockChunk(
         start: Hash, chunkSize: Long
     ): Outcome<Sequence<Block>, LoadFailure> =
-        pw.getBlockListByHash(
+        queryManager.getBlockListByHash(
             chainHash,
             start,
             chunkSize
@@ -352,7 +359,7 @@ class ChainHandle internal constructor(
             },
             {
                 if (it) {
-                    pw.persistEntity(
+                    queryManager.persistEntity(
                         block,
                         adapterManager.blockStorageAdapter
                     ).mapSuccess {
@@ -406,7 +413,7 @@ class ChainHandle internal constructor(
         val cstamp = triggerBlock.header.seconds
         val fromHeight = cmp - ledgerParams.recalculationTrigger
         val recalcBlock =
-            pw.getBlockByBlockHeight(chainHash, fromHeight)
+            queryManager.getBlockByBlockHeight(chainHash, fromHeight)
         return when (recalcBlock) {
             is Outcome.Ok<Block> -> {
                 val pstamp = recalcBlock.value.header.seconds

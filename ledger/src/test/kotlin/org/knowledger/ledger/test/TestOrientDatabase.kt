@@ -24,6 +24,7 @@ import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.results.unwrap
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.handles.LedgerHandle
+import org.knowledger.ledger.service.transactions.QueryManager
 import org.knowledger.ledger.service.transactions.getTransactionByHash
 import org.knowledger.ledger.service.transactions.getTransactionsByClass
 import org.knowledger.ledger.service.transactions.getTransactionsFromAgent
@@ -38,21 +39,21 @@ import org.knowledger.testing.ledger.testHasher
 import org.tinylog.kotlin.Logger
 
 class TestOrientDatabase {
-    val ids = arrayOf(Identity("test"), Identity("test2"))
+    private val ids = arrayOf(Identity("test"), Identity("test2"))
 
-    val db = OrientDatabase(
+    private val db = OrientDatabase(
         OrientDatabaseInfo(
             databaseMode = DatabaseMode.MEMORY,
             databaseType = DatabaseType.MEMORY,
             path = "test"
         )
     )
-    val session = db.newManagedSession("test")
-    val hasher = testHasher
-    val trafficFlowDataStorageAdapter = TrafficFlowDataStorageAdapter(hasher)
-    val temperatureDataStorageAdapter = TemperatureDataStorageAdapter(hasher)
+    private val session = db.newManagedSession("test")
+    private val hasher = testHasher
+    private val trafficFlowDataStorageAdapter = TrafficFlowDataStorageAdapter(hasher)
+    private val temperatureDataStorageAdapter = TemperatureDataStorageAdapter(hasher)
 
-    val ledger = LedgerHandle
+    private val ledger = LedgerHandle
         .Builder()
         .withLedgerIdentity("test")
         .unwrap()
@@ -74,19 +75,17 @@ class TestOrientDatabase {
         .build()
         .unwrap()
 
-    val encoder = ledger.encoder
-    val hash = ledger.ledgerHash
+    private val encoder = ledger.encoder
 
-    val temperatureChain: ChainHandle =
+    private val temperatureChain: ChainHandle =
         ledger.registerNewChainHandleOf(
             temperatureDataStorageAdapter
         ).unwrap()
 
-    val chainId = temperatureChain.id
-    val chainHash = temperatureChain.id.hash
+    private val chainId = temperatureChain.id
     private val pw = ledger.pw
     private val transactionStorageAdapter = pw.transactionStorageAdapter
-    val transactions = generateXTransactionsArray(
+    private val transactions = generateXTransactionsArray(
         id = ids, size = 20,
         hasher = hasher, encoder = encoder
     ).toSortedSet()
@@ -101,7 +100,7 @@ class TestOrientDatabase {
 
     @Nested
     inner class Session {
-        val tid = pw.transactionStorageAdapter.id
+        private val tid = pw.transactionStorageAdapter.id
 
 
         @Nested
@@ -238,7 +237,7 @@ class TestOrientDatabase {
 
     @Nested
     inner class Handles {
-        val trafficChain: ChainHandle = ledger.registerNewChainHandleOf(
+        private val trafficChain: ChainHandle = ledger.registerNewChainHandleOf(
             trafficFlowDataStorageAdapter
         ).unwrap()
 
@@ -249,9 +248,9 @@ class TestOrientDatabase {
             fun `Test simple insertion`() {
 
                 val block = generateBlockWithChain(
-                    temperatureChain.id, hasher, encoder, ledger.container.formula,
-                    ledger.container.coinbaseParams,
-                    ledger.container.ledgerParams.blockParams
+                    temperatureChain.id, hasher, encoder, ledger.ledgerInfo.formula,
+                    ledger.ledgerInfo.coinbaseParams,
+                    ledger.ledgerInfo.ledgerParams.blockParams
                 )
                 assertThat(block + transactions.first())
                     .isTrue()
@@ -268,9 +267,9 @@ class TestOrientDatabase {
                 )[0]
 
                 val block = generateBlockWithChain(
-                    trafficChain.id, hasher, encoder, ledger.container.formula,
-                    ledger.container.coinbaseParams,
-                    ledger.container.ledgerParams.blockParams
+                    trafficChain.id, hasher, encoder, ledger.ledgerInfo.formula,
+                    ledger.ledgerInfo.coinbaseParams,
+                    ledger.ledgerInfo.ledgerParams.blockParams
                 )
                 assertThat(block).isNotNull()
                 assertThat(block + testTraffic)
@@ -285,10 +284,12 @@ class TestOrientDatabase {
 
     @Nested
     inner class Persistence {
+        private val tempQueryManager: QueryManager =
+            pw.chainManager(temperatureChain.chainHash)
 
         @Test
         fun `loading transactions`() {
-            pw.getTransactionsByClass(
+            tempQueryManager.getTransactionsByClass(
                 chainId.tag
             ).mapSuccess { seq ->
                 seq.asTransactions().apply {
@@ -310,7 +311,7 @@ class TestOrientDatabase {
 
         @Test
         fun `loading transactions by timestamp`() {
-            pw.getTransactionsOrderedByTimestamp(
+            tempQueryManager.getTransactionsOrderedByTimestamp(
                 chainId.tag
             ).mapSuccess { seq ->
                 seq.asTransactions().apply {
@@ -336,7 +337,7 @@ class TestOrientDatabase {
         fun `loading transactions by Public Key`() {
             val key = ids[0].publicKey
             val expected = transactions.filter { it.publicKey == key }
-            pw.getTransactionsFromAgent(
+            tempQueryManager.getTransactionsFromAgent(
                 chainId.tag, key
             ).mapSuccess { seq ->
                 seq.asTransactions().apply {
@@ -358,7 +359,7 @@ class TestOrientDatabase {
 
         @Test
         fun `loading transaction by hash`() {
-            pw.getTransactionByHash(
+            tempQueryManager.getTransactionByHash(
                 chainId.tag,
                 transactions.elementAt(2).hash
             ).mapSuccess {

@@ -44,6 +44,7 @@ abstract class AbstractLedgerBuilder {
     lateinit var encoder: BinaryFormat
 
     internal lateinit var ledgerConfig: LedgerConfig
+    internal lateinit var adapterManager: AdapterManager
     internal lateinit var persistenceWrapper: PersistenceWrapper
     internal lateinit var ledgerInfo: LedgerInfo
     internal var hasher: Hashers = DEFAULT_HASHER
@@ -93,9 +94,9 @@ abstract class AbstractLedgerBuilder {
         if (session == null) {
             session = db!!.newManagedSession(hash.base64Encoded())
         }
+        adapterManager = AdapterManager(ledgerInfo, registeredAdapters)
         persistenceWrapper = PersistenceWrapper(
-            hash, session!!,
-            AdapterManager(ledgerInfo, registeredAdapters)
+            hash, session!!, adapterManager
         )
     }
 
@@ -143,7 +144,7 @@ abstract class AbstractLedgerBuilder {
             ledgerConfig = it
             ledgerInfo = buildInfo()
             buildDB(hash)
-            persistenceWrapper.adapterManager.initChainHandle(ledgerInfo, persistenceWrapper)
+            adapterManager.initChainHandle(ledgerInfo, persistenceWrapper)
             persistenceWrapper.registerDefaultSchemas()
             LedgerHandle(this)
         }

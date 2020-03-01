@@ -13,7 +13,7 @@ import org.knowledger.ledger.storage.BlockHeader
 // ------------------------------
 
 
-internal fun PersistenceWrapper.getBlockHeaderByHash(
+internal fun QueryManager.getBlockHeaderByHash(
     chainHash: Hash,
     hash: Hash
 ): Outcome<BlockHeader, LoadFailure> =
@@ -36,7 +36,7 @@ internal fun PersistenceWrapper.getBlockHeaderByHash(
     }
 
 
-internal fun PersistenceWrapper.getBlockHeaderByBlockHeight(
+internal fun QueryManager.getBlockHeaderByBlockHeight(
     chainHash: Hash,
     height: Long
 ): Outcome<BlockHeader, LoadFailure> =
@@ -57,7 +57,7 @@ internal fun PersistenceWrapper.getBlockHeaderByBlockHeight(
     )
 
 
-internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
+internal fun QueryManager.getBlockHeaderByPrevHeaderHash(
     chainHash: Hash,
     hash: Hash
 ): Outcome<BlockHeader, LoadFailure> =
@@ -80,7 +80,7 @@ internal fun PersistenceWrapper.getBlockHeaderByPrevHeaderHash(
 
     }
 
-internal fun PersistenceWrapper.getLatestBlockHeader(
+internal fun QueryManager.getLatestBlockHeader(
     chainHash: Hash
 ): Outcome<BlockHeader, LoadFailure> =
     queryUniqueResult(

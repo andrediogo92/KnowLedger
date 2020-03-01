@@ -15,7 +15,7 @@ import java.security.PublicKey
 //
 // Execution must be runtime determined.
 // ------------------------------
-internal fun PersistenceWrapper.getTransactionsFromAgent(
+internal fun QueryManager.getTransactionsFromAgent(
     tag: String,
     publicKey: PublicKey
 ): Outcome<Sequence<Transaction>, LoadFailure> =
@@ -37,7 +37,7 @@ internal fun PersistenceWrapper.getTransactionsFromAgent(
         )
     }
 
-internal fun PersistenceWrapper.getTransactionsFromAgent(
+internal fun QueryManager.getTransactionsFromAgent(
     tag: Hash,
     publicKey: PublicKey
 ): Outcome<Sequence<Transaction>, LoadFailure> =
@@ -46,7 +46,7 @@ internal fun PersistenceWrapper.getTransactionsFromAgent(
     )
 
 
-internal fun PersistenceWrapper.getTransactionByHash(
+internal fun QueryManager.getTransactionByHash(
     tag: String,
     hash: Hash
 ): Outcome<Transaction, LoadFailure> =
@@ -68,7 +68,7 @@ internal fun PersistenceWrapper.getTransactionByHash(
         )
     }
 
-internal fun PersistenceWrapper.getTransactionByHash(
+internal fun QueryManager.getTransactionByHash(
     tag: Hash,
     hash: Hash
 ): Outcome<Transaction, LoadFailure> =
@@ -76,7 +76,7 @@ internal fun PersistenceWrapper.getTransactionByHash(
 
 
 //Execution must be runtime determined.
-internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
+internal fun QueryManager.getTransactionsOrderedByTimestamp(
     tag: String
 ): Outcome<Sequence<Transaction>, LoadFailure> =
     transactionStorageAdapter.let {
@@ -98,13 +98,13 @@ internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
     }
 
 //Execution must be runtime determined.
-internal fun PersistenceWrapper.getTransactionsOrderedByTimestamp(
+internal fun QueryManager.getTransactionsOrderedByTimestamp(
     tag: Hash
 ): Outcome<Sequence<Transaction>, LoadFailure> =
     getTransactionsOrderedByTimestamp(tag.base64Encoded())
 
 
-internal fun PersistenceWrapper.getTransactionsByClass(
+internal fun QueryManager.getTransactionsByClass(
     tag: String
 ): Outcome<Sequence<Transaction>, LoadFailure> =
     transactionStorageAdapter.let {
@@ -124,7 +124,7 @@ internal fun PersistenceWrapper.getTransactionsByClass(
 
     }
 
-internal fun PersistenceWrapper.getTransactionsByClass(
+internal fun QueryManager.getTransactionsByClass(
     tag: Hash
 ): Outcome<Sequence<Transaction>, LoadFailure> =
     getTransactionsByClass(tag.base64Encoded())

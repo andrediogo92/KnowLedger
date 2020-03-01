@@ -92,11 +92,13 @@ internal class ChainHandleStorageAdapter(
 
 
                 ChainHandle(
-                    container, persistenceWrapper,
+                    container, adapterManager,
                     id, transactionPool,
                     difficulty, lastRecalc,
                     currentBlockheight
-                )
+                ).also {
+                    it.addQueryManager(persistenceWrapper.chainManager(it.chainHash))
+                }
             }
         }
 }

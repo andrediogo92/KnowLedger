@@ -1,32 +1,21 @@
 package org.knowledger.ledger.service.transactions
 
-import org.knowledger.ledger.adapters.AdapterCollection
+import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.adapters.AdapterManager
-import org.knowledger.ledger.adapters.EagerStorable
 import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.data.LedgerData
+import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.database.ManagedSchemas
 import org.knowledger.ledger.database.ManagedSession
-import org.knowledger.ledger.database.NewInstanceSession
+import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageID
-import org.knowledger.ledger.database.adapters.Loadable
 import org.knowledger.ledger.database.adapters.SchemaProvider
-import org.knowledger.ledger.database.query.GenericQuery
 import org.knowledger.ledger.database.query.UnspecificQuery
-import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.database.results.QueryFailure
-import org.knowledger.ledger.results.*
-import org.knowledger.ledger.service.Identity
+import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.ServiceClass
-import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
-import org.knowledger.ledger.service.adapters.ServiceLoadable
+import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.results.LedgerFailure
-import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.service.results.UpdateFailure
-import org.knowledger.ledger.storage.LedgerContract
-import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.adapters.QueryLoadable
-import org.knowledger.ledger.storage.adapters.StorageLoadable
 
 
 /**
@@ -34,14 +23,13 @@ import org.knowledger.ledger.storage.adapters.StorageLoadable
  * for a ledger.
  */
 internal class PersistenceWrapper(
-    private val ledgerHash: Hash,
-    private val session: ManagedSession,
-    internal val adapterManager: AdapterManager
-) : EntityStore, ServiceClass, AdapterCollection by adapterManager {
+    ledgerHash: Hash,
+    session: ManagedSession,
+    adapterManager: AdapterManager
+) : AbstractQueryManager(ledgerHash, session, adapterManager),
+    EntityStore, ServiceClass {
 
     private val schemas = session.managedSchemas
-    internal val isClosed
-        get() = session.isClosed
 
     internal fun registerDefaultSchemas(
     ) {
@@ -114,384 +102,97 @@ internal class PersistenceWrapper(
         }
     }
 
-    private fun beginTransaction() =
-        apply {
-            session.begin()
-        }
-
-    private fun commitTransaction() =
-        apply {
-            session.commit()
-        }
-
-    private fun rollbackTransaction() =
-        apply {
-            session.rollback()
-        }
-
-
     internal fun closeCurrentSession(): PersistenceWrapper =
         apply {
             session.close()
         }
 
-    internal fun getInstanceSession(): NewInstanceSession = session
+    internal fun chainManager(chainHash: Hash): QueryManager =
+        QueryManager(ledgerHash, session, adapterManager, chainHash)
 
-    /**
-     * Requires:
-     * - A [query] with the command to execute
-     * and it's arguments.
-     * - A [Loadable] that converts from documents to
-     * a usable user-typeId that implements [LedgerData].
-     *
-     * Returns an [Outcome] with a possible [DataFailure].
-     */
-    private fun <T : LedgerData> queryUniqueResult(
-        query: GenericQuery,
-        loader: Loadable<T>
-    ): Outcome<T, DataFailure> =
-        tryOrDataUnknownFailure {
-            session.query(query).use {
-                if (hasNext()) {
-                    loader.load(next().element)
-                } else {
-                    Outcome.Error<DataFailure>(
-                        DataFailure.NonExistentData(
-                            "Empty ResultSet for ${query.query}"
-                        )
-                    )
-                }
-            }
-        }
+    //-------------------------
+    // LedgerHandle Transactions
+    //-------------------------
+    internal fun getChainHandle(
+        id: Tag
+    ): Outcome<ChainHandle, LedgerFailure> =
+        getChainHandle(id.base64Encoded())
 
-    /**
-     * Requires:
-     * - A [query] with the command to execute
-     * and it's arguments.
-     * - A [StorageLoadable] to load ledger domain elements from
-     * the first applicable database element. [StorageLoadable]s
-     * apply *exclusively* to [LedgerContract] classes.
-     *
-     * Returns an [Outcome] with a possible [LoadFailure].
-     */
-    internal fun <T : LedgerContract> queryUniqueResult(
-        query: GenericQuery,
-        loader: StorageLoadable<T>
-    ): Outcome<T, LoadFailure> =
-        tryOrLoadUnknownFailure {
-            session.query(query).use {
-                if (hasNext()) {
-                    loader.load(
-                        ledgerHash,
-                        next().element
-                    )
-                } else {
-                    Outcome.Error<LoadFailure>(
-                        LoadFailure.NonExistentData(
-                            "Empty ResultSet for ${query.query}"
-                        )
-                    )
-                }
-            }
-        }
-
-    /**
-     * Requires:
-     * - A [query] with the command to execute
-     * and it's arguments.
-     * - A [ServiceLoadable] to load ledger service objects
-     * from a database element.
-     * [ServiceLoadable]s apply *exclusively*
-     * to [ServiceClass] classes.
-     *
-     *
-     * *Note:* An extra argument is required for any
-     * query over a [ServiceLoadable]:
-     * - The common wrapper itself.
-     *
-     * Returns an [Outcome] with a possible [LedgerFailure].
-     */
-    internal fun <T : ServiceClass> queryUniqueResult(
-        query: GenericQuery,
-        loader: ServiceLoadable<T>
-    ): Outcome<T, LedgerFailure> =
-        tryOrLedgerUnknownFailure {
-            session.query(query).use {
-                if (hasNext()) {
-                    loader.load(
-                        ledgerHash, next().element
-                    )
-                } else {
-                    Outcome.Error<LedgerFailure>(
-                        LedgerFailure.NonExistentData(
-                            query.query
-                        )
-                    )
-                }
-            }
-        }
-
-
-    /**
-     * Requires:
-     * - The [session] in which to execute the query.
-     * - A [query] with the command to execute
-     * and it's arguments.
-     * - A [QueryLoadable] to load an arbitrary typeId
-     * through application of a reduction to the
-     * underlying database element.
-     *
-     *
-     * Returns an [Outcome] with a possible [QueryFailure].
-     */
-    private fun <T : Any> queryUniqueResult(
-        query: GenericQuery,
-        loader: QueryLoadable<T>
-    ): Outcome<T, QueryFailure> =
-        tryOrQueryUnknownFailure {
-            session.query(query).use {
-                if (hasNext()) {
-                    loader.load(next().element)
-                } else {
-                    Outcome.Error<QueryFailure>(
-                        QueryFailure.NonExistentData(
-                            "Empty ResultSet for ${query.query}"
-                        )
-                    )
-                }
-            }
-        }
-
-
-    /**
-     * Requires:
-     * - A [query] with the command to execute
-     * and it's arguments.
-     * - A [Loadable] that converts from documents to
-     * a usable user-typeId that implements [LedgerData].
-     *
-     *
-     * Returns an [Outcome] with a possible [DataFailure]
-     * over a [Sequence].
-     */
-    private fun <T : LedgerData> queryResults(
-        query: GenericQuery,
-        loader: Loadable<T>
-    ): Outcome<Sequence<T>, DataFailure> =
-        tryOrDataUnknownFailure {
-            session.query(query).use {
-                asSequence().map {
-                    loader.load(it.element)
-                }.allValues()
-            }
-        }
-
-    /**
-     * Requires:
-     * - A [query] with the command to execute
-     * and it's arguments.
-     * - A [StorageLoadable] to load ledger domain elements from
-     * the first applicable database element. [StorageLoadable]s
-     * apply *exclusively* to [LedgerContract] classes.
-     *
-     *
-     * Returns an [Outcome] with a possible [LoadFailure]
-     * over a [Sequence].
-     */
-    internal fun <T : LedgerContract> queryResults(
-        query: GenericQuery,
-        loader: StorageLoadable<T>
-    ): Outcome<Sequence<T>, LoadFailure> =
-        tryOrLoadUnknownFailure {
-            session.query(query).use {
-                asSequence().map {
-                    loader.load(ledgerHash, it.element)
-                }.allValues()
-            }
-        }
-
-    /**
-     * Requires:
-     * - A [query] with the command to execute
-     * and it's arguments.
-     * - A [ServiceLoadable] to load ledger service objects
-     * from a database element.
-     * [ServiceLoadable]s apply *exclusively*
-     * to [ServiceClass] classes.
-     *
-     *
-     * *Note:* One extra argument is required for any
-     * query over a [ServiceLoadable]:
-     * - The common wrapper itself.
-     *
-     *
-     * Returns an [Outcome] with a possible [LedgerFailure]
-     * over a [Sequence].
-     */
-    internal fun <T : ServiceClass> queryResults(
-        query: GenericQuery,
-        loader: ServiceLoadable<T>
-    ): Outcome<Sequence<T>, LedgerFailure> =
-        tryOrLedgerUnknownFailure {
-            session.query(query).use {
-                asSequence().map {
-                    loader.load(ledgerHash, it.element)
-                }.allValues()
-            }
-        }
-
-
-    /**
-     * Not to be used directly.
-     * Requires knowledge of inner workings of DB.
-     *
-     * Requires:
-     * - A [query] with the command to execute
-     * and it's arguments.
-     * - A [QueryLoadable] to transform the element into a
-     * usable typeId.
-     *
-     * Returns an [Outcome] with a possible [QueryFailure]
-     * over a [Sequence].
-     */
-    internal fun <T : Any> queryResults(
-        query: GenericQuery,
-        loader: QueryLoadable<T>
-    ): Outcome<Sequence<T>, QueryFailure> =
-        tryOrQueryUnknownFailure {
-            session.query(query).use {
-                asSequence().map {
-                    loader.load(it.element)
-                }.allValues()
-            }
-        }
-
-
-    /**
-     * Should be called when querying is finished to
-     * reset the persistence context.
-     */
-    internal fun clearTransactionsContext() =
-        closeCurrentSession()
-
-
-    /**
-     * Persists an [element] to an active [ManagedSession]
-     * in a synchronous manner, in a transaction context.
-     *
-     * Returns an [Outcome] with a possible [QueryFailure]
-     * over a [StorageID].
-     */
-    @Synchronized
-    internal fun <T> persistEntity(
-        element: T,
-        storable: EagerStorable<T>
-    ): Outcome<StorageID, QueryFailure> =
-        tryOrQueryUnknownFailure {
-            beginTransaction()
-            val elem = storable.persist(element, session)
-            val r = session.save(elem)
-            if (r != null) {
-                commitTransaction()
-                Outcome.Ok(r.identity)
-            } else {
-                rollbackTransaction()
-                Outcome.Error<QueryFailure>(
-                    QueryFailure.NonExistentData(
-                        "Failed to save element ${elem.json}"
-                    )
-                )
-            }
-        }
-
-    /**
-     * Persists an [element] to an active [ManagedSession]
-     * in a synchronous manner.
-     *
-     * Returns an [Outcome] with a possible [QueryFailure]
-     * over a [StorageID].
-     */
-    @Synchronized
-    internal fun <T> persistEntity(
-        element: T,
-        storable: EagerStorable<T>,
-        cluster: String
-    ): Outcome<StorageID, QueryFailure> =
-        tryOrQueryUnknownFailure {
-            beginTransaction()
-            val elem = storable.persist(element, session)
-            val r = session.save(elem, cluster)
-            if (r != null) {
-                commitTransaction()
-                Outcome.Ok(r.identity)
-            } else {
-                rollbackTransaction()
-                Outcome.Error<QueryFailure>(
-                    QueryFailure.NonExistentData(
-                        "Failed to save element ${elem.json}"
-                    )
-                )
-            }
-        }
-
-
-    /**
-     * Updates an [element] in place with its invalidated
-     * fields in a synchronous manner, in a transaction
-     * context.
-     *
-     * Returns an [Outcome] with a possible [UpdateFailure]
-     * over a [StorageID].
-     */
-    @Synchronized
-    internal fun <T> updateEntity(
-        element: StorageAware<T>
-    ): Outcome<StorageID, UpdateFailure> =
-        tryOrUpdateUnknownFailure {
-            beginTransaction()
-            element.update(session).peekSuccess {
-                commitTransaction()
-            }.peekFailure {
-                rollbackTransaction()
-            }
-        }
-
-
-    // ------------------------------
-    // Identity transaction.
-    //
-    // ------------------------------
-
-    internal fun getLedgerIdentityByTag(
+    internal fun getChainHandle(
         id: String
-    ): Outcome<Identity, LoadFailure> =
-        IdentityStorageAdapter.let {
-            val query = UnspecificQuery(
+    ): Outcome<ChainHandle, LedgerFailure> =
+        chainHandleStorageAdapter.let {
+            queryUniqueResult(
+                UnspecificQuery(
+                    """
+                    SELECT 
+                    FROM ${it.id} 
+                    WHERE id.tag = :id
+                """.trimIndent(),
+                    mapOf("id" to id)
+                ),
+                it
+            )
+        }
+
+
+    internal fun tryAddChainHandle(
+        chainHandle: ChainHandle
+    ): Outcome<StorageID, QueryFailure> {
+        return persistEntity(
+            chainHandle,
+            chainHandleStorageAdapter
+        )
+    }
+
+    internal fun getKnownChainHandleTypes(
+    ): Outcome<Sequence<String>, QueryFailure> =
+        queryResults(
+            UnspecificQuery(
                 """
+                SELECT id.tag as tag 
+                FROM ${chainHandleStorageAdapter.id}
+            """.trimIndent()
+            ),
+            object : QueryLoadable<String> {
+                override fun load(
+                    element: StorageElement
+                ): Outcome<String, QueryFailure> =
+                    Outcome.Ok(
+                        element.getStorageProperty("tag")
+                    )
+            }
+        )
+
+    internal fun getKnownChainHandleIDs(
+    ): Outcome<Sequence<StorageID>, QueryFailure> =
+        queryResults(
+            UnspecificQuery(
+                """
+                SELECT 
+                FROM ${chainHandleStorageAdapter.id}
+            """.trimIndent()
+            ),
+            object : QueryLoadable<StorageID> {
+                override fun load(
+                    element: StorageElement
+                ): Outcome<StorageID, QueryFailure> =
+                    Outcome.Ok(element.identity)
+            }
+        )
+
+
+    internal fun getKnownChainHandles(
+    ): Outcome<Sequence<ChainHandle>, LedgerFailure> =
+        chainHandleStorageAdapter.let {
+            queryResults(
+                UnspecificQuery(
+                    """
                     SELECT 
                     FROM ${it.id}
-                    WHERE id = :id
-                """.trimIndent(),
-                mapOf(
-                    "id" to id
-                )
+                """.trimIndent()
+                ),
+                it
             )
-            tryOrLoadUnknownFailure {
-                session.query(query).use {
-                    if (hasNext()) {
-                        it.load(
-                            ledgerHash,
-                            next().element
-                        )
-                    } else {
-                        Outcome.Error<LoadFailure>(
-                            LoadFailure.NonExistentData(
-                                "Empty ResultSet for ${query.query}"
-                            )
-                        )
-                    }
-                }
-            }
         }
-
 }

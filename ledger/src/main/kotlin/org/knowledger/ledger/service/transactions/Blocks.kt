@@ -12,7 +12,7 @@ import org.knowledger.ledger.storage.Block
 // ------------------------------
 
 
-internal fun PersistenceWrapper.getBlockByBlockHeight(
+internal fun QueryManager.getBlockByBlockHeight(
     chainHash: Hash,
     height: Long
 ): Outcome<Block, LoadFailure> =
@@ -36,7 +36,7 @@ internal fun PersistenceWrapper.getBlockByBlockHeight(
     }
 
 
-internal fun PersistenceWrapper.getBlockByHeaderHash(
+internal fun QueryManager.getBlockByHeaderHash(
     chainHash: Hash,
     hash: Hash
 ): Outcome<Block, LoadFailure> =
@@ -60,7 +60,7 @@ internal fun PersistenceWrapper.getBlockByHeaderHash(
     }
 
 
-internal fun PersistenceWrapper.getBlockByPrevHeaderHash(
+internal fun QueryManager.getBlockByPrevHeaderHash(
     chainHash: Hash,
     hash: Hash
 ): Outcome<Block, LoadFailure> =
@@ -84,7 +84,7 @@ internal fun PersistenceWrapper.getBlockByPrevHeaderHash(
     }
 
 
-internal fun PersistenceWrapper.getLatestBlock(
+internal fun QueryManager.getLatestBlock(
     chainHash: Hash
 ): Outcome<Block, LoadFailure> =
     blockStorageAdapter.let {
@@ -104,7 +104,7 @@ internal fun PersistenceWrapper.getLatestBlock(
         )
     }
 
-internal fun PersistenceWrapper.getBlockListByBlockHeightInterval(
+internal fun QueryManager.getBlockListByBlockHeightInterval(
     chainHash: Hash,
     startInclusive: Long,
     endInclusive: Long
@@ -128,7 +128,7 @@ internal fun PersistenceWrapper.getBlockListByBlockHeightInterval(
         )
     }
 
-internal fun PersistenceWrapper.getBlockListByHash(
+internal fun QueryManager.getBlockListByHash(
     chainHash: Hash, start: Hash,
     chunkSize: Long
 ): Outcome<Sequence<Block>, LoadFailure> =

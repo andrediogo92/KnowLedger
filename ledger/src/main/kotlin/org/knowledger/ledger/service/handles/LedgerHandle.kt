@@ -2,7 +2,7 @@ package org.knowledger.ledger.service.handles
 
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.base64.base64DecodedToHash
-import org.knowledger.ledger.config.LedgerId
+import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.base.data.DefaultDiff
 import org.knowledger.ledger.core.base.hash.classDigest
@@ -25,11 +25,6 @@ import org.knowledger.ledger.service.handles.builder.LedgerByTag
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.service.transactions.PersistenceWrapper
-import org.knowledger.ledger.service.transactions.getChainHandle
-import org.knowledger.ledger.service.transactions.getKnownChainHandleIDs
-import org.knowledger.ledger.service.transactions.getKnownChainHandleTypes
-import org.knowledger.ledger.service.transactions.getKnownChainHandles
-import org.knowledger.ledger.service.transactions.tryAddChainHandle
 import org.knowledger.ledger.results.Failure as CoreFailure
 
 
@@ -40,9 +35,9 @@ class LedgerHandle internal constructor(
     builder: AbstractLedgerBuilder
 ) : ServiceClass {
     internal val pw: PersistenceWrapper = builder.persistenceWrapper
-    val container: LedgerInfo = builder.ledgerInfo
-    val id: LedgerId = builder.ledgerInfo.ledgerId
-    val ledgerHash = id.hash
+    private val adapterManager: AdapterManager = builder.adapterManager
+    val ledgerInfo: LedgerInfo = builder.ledgerInfo
+    val ledgerHash = ledgerInfo.ledgerId.hash
     val hasher: Hashers = builder.hasher
     val encoder: BinaryFormat = builder.encoder
     val isClosed: Boolean
@@ -74,7 +69,7 @@ class LedgerHandle internal constructor(
     fun addStorageAdapter(
         adapter: AbstractStorageAdapter<out LedgerData>
     ): Boolean =
-        pw.adapterManager.addAdapter(adapter).also {
+        adapterManager.addAdapter(adapter).also {
             if (it) {
                 pw.registerSchema(adapter)
             }
@@ -84,7 +79,7 @@ class LedgerHandle internal constructor(
     fun <T : LedgerData> getChainHandleOf(
         clazz: Class<in T>
     ): Outcome<ChainHandle, LedgerFailure> =
-        if (pw.adapterManager.hasAdapter(clazz)) {
+        if (adapterManager.hasAdapter(clazz)) {
             pw.getChainHandle(clazz.classDigest(hasher))
         } else {
             Outcome.Error(
@@ -97,7 +92,7 @@ class LedgerHandle internal constructor(
     fun <T : LedgerData> getChainHandleOf(
         adapter: AbstractStorageAdapter<out T>
     ): Outcome<ChainHandle, LedgerFailure> =
-        if (pw.adapterManager.hasAdapter(adapter.id)) {
+        if (adapterManager.hasAdapter(adapter.id)) {
             pw.getChainHandle(
                 adapter.id
             )
@@ -114,10 +109,11 @@ class LedgerHandle internal constructor(
         adapter: AbstractStorageAdapter<out T>
     ): Outcome<ChainHandle, LedgerFailure> =
         ChainHandle(
-            container,
-            pw,
+            ledgerInfo,
+            adapterManager,
             adapter.id.base64DecodedToHash()
         ).let { ch ->
+            ch.addQueryManager(pw.chainManager(ch.chainHash))
             addStorageAdapter(adapter)
             pw.tryAddChainHandle(ch).fold(
                 {
