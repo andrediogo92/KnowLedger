@@ -1,9 +1,9 @@
 object Versions {
-    const val assertK = "0.20"
+    const val assertK = "0.21"
     const val autoService = "1.0-rc6"
     const val bouncyCastle = "1.64"
     const val commons = "1.2"
-    const val dokka = "0.10.0"
+    const val dokka = "0.10.1"
     const val eclipsePaho = "1.2.0"
     const val jade = "4.5.0"
     const val jadeMisc = "2.8.0"
@@ -11,14 +11,14 @@ object Versions {
     const val jdkV = 8
     const val jmh = "1.21"
     const val jmhPlugin = "0.5.0"
-    const val jUnit = "5.5.2"
-    const val jUnitRunner = "1.5.2"
+    const val jUnit = "5.6.0"
+    const val jUnitRunner = "1.6.0"
     const val kotlin = "1.3.61"
-    const val koin = "2.0.1"
-    const val kotlinPoet = "1.4.4"
-    const val orientDB = "3.0.26"
+    const val koin = "2.1.1"
+    const val kotlinPoet = "1.5.0"
+    const val orientDB = "3.0.28"
     const val serial = "0.14.0"
-    const val tinylog = "2.0.0"
+    const val tinylog = "2.0.1"
 }
 
 object Libs {
