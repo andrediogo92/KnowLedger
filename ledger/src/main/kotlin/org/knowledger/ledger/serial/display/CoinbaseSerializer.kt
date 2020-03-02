@@ -7,7 +7,7 @@ import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.serial.internal.AbstractCoinbaseSerializer
 import org.knowledger.ledger.serial.internal.HashEncodeForDisplay
 
-internal object CoinbaseSerializer : AbstractCoinbaseSerializer(TransactionOutputSerializer),
+internal object CoinbaseSerializer : AbstractCoinbaseSerializer(WitnessSerializer),
                                      HashEncodeForDisplay {
     override fun CompositeEncoder.encodeDifficulty(
         index: Int, difficulty: Difficulty

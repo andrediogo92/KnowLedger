@@ -1,85 +1,77 @@
 package org.knowledger.ledger.serial.internal
 
-import kotlinx.serialization.*
+import kotlinx.serialization.CompositeDecoder
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.core.serial.PayoutSerializer
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.storage.TransactionOutput
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
-import org.knowledger.ledger.storage.transaction.output.TransactionOutputImpl
-import java.security.PublicKey
+import org.knowledger.ledger.storage.transaction.output.transactionOutput
+import kotlin.properties.Delegates
 
-internal abstract class AbstractTransactionOutputSerializer(
-    hashSerializer: KSerializer<Hash>
-) : KSerializer<TransactionOutput>, HashEncode {
+internal abstract class AbstractTransactionOutputSerializer : KSerializer<TransactionOutput>, HashEncode {
     private object TransactionOutputSerialDescriptor : SerialClassDescImpl("TransactionOutput") {
         init {
-            addElement("hash")
-            addElement("publicKey")
-            addElement("previousCoinbase")
             addElement("payout")
-            addElement("transactionHashes")
+            addElement("prevTxBlock")
+            addElement("prevTxIndex")
+            addElement("prevTx")
+            addElement("txIndex")
+            addElement("tx")
         }
     }
 
     override val descriptor: SerialDescriptor = TransactionOutputSerialDescriptor
 
-    abstract fun CompositeEncoder.encodePublicKey(
-        index: Int, publicKey: PublicKey
-    )
-
-    abstract fun CompositeDecoder.decodePublicKey(
-        index: Int
-    ): PublicKey
-
-    private val hashsSerializer = hashSerializer.set
 
     override fun deserialize(decoder: Decoder): TransactionOutput =
         with(decoder.beginStructure(descriptor)) {
-            lateinit var publicKey: PublicKey
-            lateinit var previousCoinbase: Hash
             lateinit var payout: Payout
-            lateinit var transactionHashes: MutableSet<Hash>
-            lateinit var hash: Hash
+            lateinit var prevTxBlock: Hash
+            var prevTxIndex by Delegates.notNull<Int>()
+            lateinit var prevTx: Hash
+            var txIndex by Delegates.notNull<Int>()
+            lateinit var tx: Hash
             loop@ while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
-                    0 -> hash = decodeHash(i)
-                    1 -> publicKey = decodePublicKey(i)
-                    2 -> previousCoinbase = decodeHash(i)
-                    3 -> payout = decodeSerializableElement(
+                    0 -> payout = decodeSerializableElement(
                         descriptor, i, PayoutSerializer
                     )
-                    4 -> transactionHashes = decodeSerializableElement(
-                        descriptor, i, hashsSerializer
-                    ) as MutableSet<Hash>
-                    else -> throw SerializationException("Unknown index $i")
+                    1 -> prevTxBlock = decodeHash(i)
+                    2 -> prevTxIndex = decodeIntElement(descriptor, i)
+                    3 -> prevTx = decodeHash(i)
+                    4 -> txIndex = decodeIntElement(descriptor, i)
+                    5 -> tx = decodeHash(i)
+                    else -> throw SerializationException(
+                        "Unknown index $i"
+                    )
                 }
             }
             endStructure(descriptor)
-            HashedTransactionOutputImpl(
-                TransactionOutputImpl(
-                    publicKey = publicKey,
-                    previousCoinbase = previousCoinbase,
-                    _payout = payout,
-                    _transactionHashes = transactionHashes
-                ), hash
+            transactionOutput(
+                payout = payout, newTransaction = tx,
+                newIndex = txIndex, previousBlock = prevTxBlock,
+                previousIndex = prevTxIndex, previousTransaction = prevTx
             )
         }
 
     override fun serialize(encoder: Encoder, obj: TransactionOutput) {
         with(encoder.beginStructure(descriptor)) {
-            encodeHash(0, obj.hash)
-            encodePublicKey(1, obj.publicKey)
-            encodeHash(2, obj.previousCoinbase)
             encodeSerializableElement(
-                descriptor, 3, PayoutSerializer, obj.payout
+                descriptor, 0,
+                PayoutSerializer, obj.payout
             )
-            encodeSerializableElement(
-                descriptor, 4, hashsSerializer,
-                obj.transactionHashes
-            )
+            encodeHash(1, obj.prevTxBlock)
+            encodeIntElement(descriptor, 2, obj.prevTxIndex)
+            encodeHash(3, obj.prevTx)
+            encodeIntElement(descriptor, 4, obj.txIndex)
+            encodeHash(5, obj.tx)
             endStructure(descriptor)
         }
     }

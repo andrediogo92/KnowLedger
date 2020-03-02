@@ -6,11 +6,11 @@ import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.serial.DifficultySerializer
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.serial.display.CoinbaseSerializer
-import org.knowledger.ledger.serial.display.TransactionOutputSerializer
+import org.knowledger.ledger.serial.display.WitnessSerializer
 import org.knowledger.ledger.serial.internal.AbstractCoinbaseSerializer
 import org.knowledger.ledger.serial.internal.HashEncodeInBytes
 
-internal object CoinbaseByteSerializer : AbstractCoinbaseSerializer(TransactionOutputSerializer),
+internal object CoinbaseByteSerializer : AbstractCoinbaseSerializer(WitnessSerializer),
                                          HashEncodeInBytes {
     override fun CompositeEncoder.encodeDifficulty(
         index: Int, difficulty: Difficulty

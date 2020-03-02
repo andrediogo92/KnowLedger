@@ -1,28 +1,12 @@
 package org.knowledger.ledger.serial.binary
 
-import kotlinx.serialization.CompositeDecoder
-import kotlinx.serialization.CompositeEncoder
-import org.knowledger.ledger.core.serial.HashSerializer
-import org.knowledger.ledger.crypto.serial.PublicKeySerializer
 import org.knowledger.ledger.serial.internal.AbstractTransactionOutputSerializer
-import org.knowledger.ledger.serial.internal.HashEncodeForDisplay
-import java.security.PublicKey
+import org.knowledger.ledger.serial.internal.HashEncodeInBytes
+import org.knowledger.ledger.storage.TransactionOutput
 
-internal object TransactionOutputByteSerializer : AbstractTransactionOutputSerializer(HashSerializer),
-                                                  HashEncodeForDisplay {
-    override fun CompositeEncoder.encodePublicKey(
-        index: Int, publicKey: PublicKey
-    ) {
-        encodeSerializableElement(
-            descriptor, index, PublicKeySerializer,
-            publicKey
-        )
-    }
-
-    override fun CompositeDecoder.decodePublicKey(
-        index: Int
-    ): PublicKey =
-        decodeSerializableElement(
-            descriptor, index, PublicKeySerializer
-        )
-}
+/**
+ * A pretty printing friendly serializer for [TransactionOutput].
+ * It encodes all byte data directly as ByteArray.
+ */
+internal object TransactionOutputByteSerializer : AbstractTransactionOutputSerializer(),
+                                                  HashEncodeInBytes

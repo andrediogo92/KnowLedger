@@ -1,20 +1,28 @@
 package org.knowledger.ledger.serial.internal
 
-import kotlinx.serialization.*
+import kotlinx.serialization.CompositeDecoder
+import kotlinx.serialization.CompositeEncoder
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.internal.SerialClassDescImpl
+import org.knowledger.collections.MutableSortedList
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.serial.PayoutSerializer
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Payout
+import org.knowledger.ledger.serial.SortedListSerializer
 import org.knowledger.ledger.storage.Coinbase
-import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.storage.Witness
 import org.knowledger.ledger.storage.coinbase.CoinbaseImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
 import kotlin.properties.Delegates
 
 internal abstract class AbstractCoinbaseSerializer(
-    transactionOutputSerializer: KSerializer<TransactionOutput>
+    witnessSerializer: KSerializer<Witness>
 ) : KSerializer<Coinbase>, HashEncode {
     private object CoinbaseSerialDescriptor : SerialClassDescImpl("Coinbase") {
         init {
@@ -24,13 +32,13 @@ internal abstract class AbstractCoinbaseSerializer(
             addElement("blockheight")
             addElement("extraNonce")
             addElement("coinbaseParams")
-            addElement("transactionOutputs")
+            addElement("witnesses")
         }
     }
 
     override val descriptor: SerialDescriptor = CoinbaseSerialDescriptor
 
-    private val transactionOutputsSerializer = transactionOutputSerializer.set
+    private val witnessesSerializer = SortedListSerializer(witnessSerializer)
 
     abstract fun CompositeEncoder.encodeDifficulty(
         index: Int, difficulty: Difficulty
@@ -50,7 +58,7 @@ internal abstract class AbstractCoinbaseSerializer(
 
     override fun deserialize(decoder: Decoder): Coinbase =
         with(decoder.beginStructure(descriptor)) {
-            lateinit var transactionOutputs: MutableSet<TransactionOutput>
+            lateinit var witnesses: MutableSortedList<Witness>
             lateinit var payout: Payout
             lateinit var difficulty: Difficulty
             var blockheight by Delegates.notNull<Long>()
@@ -58,6 +66,7 @@ internal abstract class AbstractCoinbaseSerializer(
             lateinit var coinbaseParams: CoinbaseParams
             lateinit var hash: Hash
             loop@ while (true) {
+                @Suppress("UNCHECKED_CAST")
                 when (val i = decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
                     0 -> hash = decodeHash(i)
@@ -68,16 +77,16 @@ internal abstract class AbstractCoinbaseSerializer(
                     3 -> blockheight = decodeLongElement(descriptor, i)
                     4 -> extraNonce = decodeLongElement(descriptor, i)
                     5 -> coinbaseParams = decodeCoinbaseParams(i)
-                    6 -> transactionOutputs = decodeSerializableElement(
-                        descriptor, i, transactionOutputsSerializer
-                    ) as MutableSet<TransactionOutput>
+                    6 -> witnesses = decodeSerializableElement(
+                        descriptor, i, witnessesSerializer
+                    ) as MutableSortedList<Witness>
                     else -> throw SerializationException("Unknown index $i")
                 }
             }
             endStructure(descriptor)
             HashedCoinbaseImpl(
                 CoinbaseImpl(
-                    _transactionOutputs = transactionOutputs,
+                    _witnesses = witnesses,
                     _payout = payout,
                     _difficulty = difficulty,
                     _blockheight = blockheight,
@@ -99,8 +108,8 @@ internal abstract class AbstractCoinbaseSerializer(
             encodeLongElement(descriptor, 4, obj.extraNonce)
             encodeCoinbaseParams(5, obj.coinbaseParams)
             encodeSerializableElement(
-                descriptor, 6, transactionOutputsSerializer,
-                obj.transactionOutputs
+                descriptor, 6, witnessesSerializer,
+                obj.witnesses
             )
             endStructure(descriptor)
         }
