@@ -10,33 +10,27 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.cbor.Cbor
+import org.knowledger.collections.MutableSortedList
 import org.knowledger.collections.SortedList
-import org.knowledger.ledger.config.BlockParams
-import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.crypto.hash.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.data.Difficulty
-import org.knowledger.ledger.serial.SortedListSerializer
+import org.knowledger.ledger.serial.MutableSortedListSerializer
 import org.knowledger.ledger.serial.binary.BlockHeaderByteSerializer
 import org.knowledger.ledger.serial.binary.CoinbaseByteSerializer
 import org.knowledger.ledger.serial.binary.MerkleTreeByteSerializer
 import org.knowledger.ledger.serial.binary.TransactionByteSerializer
-import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.LedgerContract
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.storage.blockheader.StorageAwareBlockHeader
-import org.knowledger.ledger.storage.coinbase.StorageAwareCoinbase
-import org.knowledger.ledger.storage.merkletree.StorageAwareMerkleTree
 import org.tinylog.kotlin.Logger
 
 @Serializable
 internal data class BlockImpl(
-    @Serializable(with = SortedListSerializer::class)
-    override val transactions: SortedList<Transaction>,
+    @Serializable(with = MutableSortedListSerializer::class)
+    private val _transactions: MutableSortedList<Transaction>,
     override val coinbase: Coinbase,
     override val header: BlockHeader,
     override var merkleTree: MerkleTree,
@@ -48,26 +42,11 @@ internal data class BlockImpl(
     @Transient
     internal var cachedSize: Long? = null
 
+    override val transactions: SortedList<Transaction>
+        get() = _transactions
+
     override val approximateSize: Long
         get() = cachedSize ?: recalculateApproximateSize()
-
-    internal constructor(
-        chainId: ChainId, previousHash: Hash,
-        params: BlockParams, ledgerInfo: LedgerInfo
-    ) : this(
-        SortedList(),
-        StorageAwareCoinbase(
-            ledgerInfo
-        ),
-        StorageAwareBlockHeader(
-            chainId,
-            ledgerInfo.hasher,
-            ledgerInfo.encoder,
-            previousHash,
-            params
-        ),
-        StorageAwareMerkleTree(ledgerInfo.hasher)
-    )
 
     override fun newExtraNonce(): Block {
         coinbase.newNonce()
@@ -101,9 +80,9 @@ internal data class BlockImpl(
             transaction.approximateSize(encoder)
         val cumSize = approximateSize + transactionSize
         if (cumSize < header.params.blockMemorySize) {
-            if (transactions.size < header.params.blockLength) {
+            if (_transactions.size < header.params.blockLength) {
                 if (transaction.processTransaction(encoder)) {
-                    transactions.add(transaction)
+                    _transactions.add(transaction)
                     cachedSize = cumSize
                     Logger.info {
                         "Transaction Successfully added to Block"
@@ -125,7 +104,7 @@ internal data class BlockImpl(
 
 
     override fun updateHashes() {
-        merkleTree.rebuildMerkleTree(coinbase, transactions.toTypedArray())
+        merkleTree.rebuildMerkleTree(coinbase, _transactions.toTypedArray())
         header.updateMerkleTree(merkleTree.hash)
     }
 
@@ -133,7 +112,7 @@ internal data class BlockImpl(
     override fun verifyTransactions(): Boolean {
         return merkleTree.verifyBlockTransactions(
             coinbase,
-            transactions.toTypedArray()
+            _transactions.toTypedArray()
         )
     }
 
@@ -155,7 +134,7 @@ internal data class BlockImpl(
         if (this === other) return true
         if (other !is Block) return false
 
-        if (transactions != other.transactions) return false
+        if (_transactions != other.transactions) return false
         if (coinbase != other.coinbase) return false
         if (header != other.header) return false
         if (merkleTree != other.merkleTree) return false
@@ -164,7 +143,7 @@ internal data class BlockImpl(
     }
 
     override fun hashCode(): Int {
-        var result = transactions.hashCode()
+        var result = _transactions.hashCode()
         result = 31 * result + coinbase.hashCode()
         result = 31 * result + header.hashCode()
         result = 31 * result + merkleTree.hashCode()

@@ -1,16 +1,20 @@
 @file:UseSerializers(
-    TransactionOutputByteSerializer::class,
+    WitnessByteSerializer::class,
     CoinbaseParamsByteSerializer::class,
     DifficultySerializer::class,
     PayoutSerializer::class
 )
+
 package org.knowledger.ledger.storage.coinbase
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.UseSerializers
-import org.knowledger.collections.copyMutableSet
+import org.knowledger.collections.MutableSortedList
+import org.knowledger.collections.SortedList
+import org.knowledger.collections.copyMutableSortedList
+import org.knowledger.collections.mutableSortedListOf
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.base.data.DefaultDiff
@@ -20,19 +24,21 @@ import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.data.PhysicalData
+import org.knowledger.ledger.serial.MutableSortedListSerializer
 import org.knowledger.ledger.serial.binary.CoinbaseParamsByteSerializer
-import org.knowledger.ledger.serial.binary.TransactionOutputByteSerializer
+import org.knowledger.ledger.serial.binary.WitnessByteSerializer
 import org.knowledger.ledger.service.LedgerInfo
-import org.knowledger.ledger.storage.TransactionOutput
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
+import org.knowledger.ledger.storage.Witness
+import org.knowledger.ledger.storage.witness.HashedWitnessImpl
 import java.math.BigDecimal
 import java.time.temporal.ChronoField
 
 @Serializable
 internal data class CoinbaseImpl(
-    private var _transactionOutputs: MutableSet<TransactionOutput>,
-    private var _payout: Payout,
     override val coinbaseParams: CoinbaseParams,
+    @Serializable(with = MutableSortedListSerializer::class)
+    private var _witnesses: MutableSortedList<Witness> = mutableSortedListOf(),
+    private var _payout: Payout = Payout.ZERO,
     // Difficulty is fixed at mining time.
     private var _difficulty: Difficulty = Difficulty.MAX_DIFFICULTY,
     private var _blockheight: Long = -1,
@@ -40,8 +46,8 @@ internal data class CoinbaseImpl(
     @Transient
     override val formula: DataFormula = DefaultDiff
 ) : Coinbase {
-    override val transactionOutputs: Set<TransactionOutput>
-        get() = _transactionOutputs
+    override val witnesses: SortedList<Witness>
+        get() = _witnesses
 
     override val blockheight: Long
         get() = _blockheight
@@ -58,13 +64,13 @@ internal data class CoinbaseImpl(
     internal constructor(
         info: LedgerInfo
     ) : this(
-        _transactionOutputs = mutableSetOf(),
+        _witnesses = mutableSortedListOf(),
         _payout = Payout(BigDecimal.ZERO),
         coinbaseParams = info.coinbaseParams,
         formula = info.formula
     )
 
-    internal fun getTimeDelta(
+    private fun getTimeDelta(
         dt: PhysicalData,
         dt2: PhysicalData
     ): BigDecimal {
@@ -83,17 +89,27 @@ internal data class CoinbaseImpl(
 
     internal fun calculatePayout(
         dt: PhysicalData,
-        dt2: PhysicalData,
-        payoutFormula: DataFormula,
-        coinbaseParams: CoinbaseParams
+        dt2: PhysicalData
     ): Payout =
-        payoutFormula.calculateDiff(
+        formula.calculateDiff(
             coinbaseParams.baseIncentive,
             coinbaseParams.timeIncentive,
             getTimeDelta(dt, dt2),
             coinbaseParams.valueIncentive,
             dt.calculateDiff(dt2.data),
             dt.dataConstant,
+            coinbaseParams.dividingThreshold,
+            GLOBALCONTEXT
+        )
+
+    internal fun calculatePayout(dt: PhysicalData): Payout =
+        formula.calculateDiff(
+            coinbaseParams.baseIncentive,
+            coinbaseParams.timeIncentive,
+            BigDecimal.ONE,
+            coinbaseParams.valueIncentive,
+            BigDecimal.ONE,
+            dt.data.dataConstant,
             coinbaseParams.dividingThreshold,
             GLOBALCONTEXT
         )
@@ -108,8 +124,8 @@ internal data class CoinbaseImpl(
 
     override fun clone(): CoinbaseImpl =
         copy(
-            _transactionOutputs =
-            transactionOutputs.copyMutableSet(TransactionOutput::clone)
+            _witnesses =
+            witnesses.copyMutableSortedList(Witness::clone)
         )
 
     override fun newNonce() {
@@ -117,8 +133,8 @@ internal data class CoinbaseImpl(
     }
 
 
-    internal fun newTXO(transactionOutput: HashedTransactionOutputImpl) {
-        _transactionOutputs.add(transactionOutput)
+    internal fun newTXO(transactionOutput: HashedWitnessImpl) {
+        _witnesses.add(transactionOutput)
     }
 
     internal fun updatePayout(payoutToAdd: Payout) {
@@ -130,11 +146,11 @@ internal data class CoinbaseImpl(
         if (this === other) return true
         if (other !is Coinbase) return false
 
-        if (_transactionOutputs != other.transactionOutputs) return false
-        if (_payout != other.payout) return false
-        if (_difficulty != other.difficulty) return false
-        if (_blockheight != other.blockheight) return false
-        if (_extraNonce != other.extraNonce) return false
+        if (witnesses != other.witnesses) return false
+        if (payout != other.payout) return false
+        if (difficulty != other.difficulty) return false
+        if (blockheight != other.blockheight) return false
+        if (extraNonce != other.extraNonce) return false
         if (coinbaseParams != other.coinbaseParams) return false
         if (formula != other.formula) return false
 
@@ -142,7 +158,7 @@ internal data class CoinbaseImpl(
     }
 
     override fun hashCode(): Int {
-        var result = _transactionOutputs.hashCode()
+        var result = _witnesses.hashCode()
         result = 31 * result + _payout.hashCode()
         result = 31 * result + _difficulty.hashCode()
         result = 31 * result + _blockheight.hashCode()

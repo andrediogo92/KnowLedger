@@ -1,23 +1,24 @@
 package org.knowledger.ledger.storage.transaction.output
 
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.serial.HashSerializable
 import org.knowledger.ledger.storage.LedgerContract
-import java.security.PublicKey
 
-interface TransactionOutput : HashSerializable, LedgerContract, Cloneable {
-    val publicKey: PublicKey
-    val previousCoinbase: Hash
+interface TransactionOutput : Comparable<TransactionOutput>,
+                              HashSerializable, LedgerContract,
+                              Hashing, Cloneable {
     val payout: Payout
-    val transactionHashes: Set<Hash>
+    val prevTxBlock: Hash
+    val prevTxIndex: Int
+    val prevTx: Hash
+    val txIndex: Int
+    val tx: Hash
 
+    override val hash: Hash
+        get() = tx
 
-    fun addToPayout(
-        payout: Payout,
-        newTransaction: Hash,
-        previousTransaction: Hash
-    )
-
-    public override fun clone(): TransactionOutput
+    override fun compareTo(other: TransactionOutput): Int =
+        txIndex.compareTo(other.txIndex)
 }

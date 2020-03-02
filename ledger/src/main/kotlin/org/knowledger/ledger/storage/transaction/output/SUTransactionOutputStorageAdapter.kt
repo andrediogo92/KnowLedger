@@ -1,67 +1,71 @@
 package org.knowledger.ledger.storage.transaction.output
 
-import org.knowledger.ledger.crypto.EncodedPublicKey
-import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.toPublicKey
+import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import java.security.PublicKey
 
-internal class SUTransactionOutputStorageAdapter(
-    private val container: LedgerInfo
-) : LedgerStorageAdapter<HashedTransactionOutputImpl> {
+internal class SUTransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutputImpl> {
     override val id: String
         get() = "TransactionOutput"
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "publicKey" to StorageType.BYTES,
-            "prevCoinbase" to StorageType.HASH,
-            "hash" to StorageType.HASH,
-            "payout" to StorageType.PAYOUT,
-            "txSet" to StorageType.SET
+            "payout" to StorageType.DECIMAL,
+            "prevTxBlock" to StorageType.HASH,
+            "prevTxIndex" to StorageType.INTEGER,
+            "prevTx" to StorageType.HASH,
+            "txIndex" to StorageType.INTEGER,
+            "tx" to StorageType.HASH
         )
 
-
     override fun store(
-        toStore: HashedTransactionOutputImpl, session: ManagedSession
+        toStore: TransactionOutputImpl, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
             .setStorageProperty(
-                "publicKey", toStore.publicKey.encoded
+                "payout", toStore.payout
             ).setHashProperty(
-                "prevCoinbase", toStore.previousCoinbase
-            ).setHashProperty("hash", toStore.hash)
-            .setPayoutProperty("payout", toStore.payout)
-            .setHashSet("txSet", toStore.transactionHashes)
+                "prevTxBlock", toStore.prevTxBlock
+            ).setStorageProperty(
+                "prevTxIndex", toStore.prevTxIndex
+            ).setHashProperty(
+                "prevTx", toStore.prevTx
+            ).setStorageProperty(
+                "txIndex", toStore.txIndex
+            )
+            .setHashProperty("tx", toStore.tx)
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<HashedTransactionOutputImpl, LoadFailure> =
+    ): Outcome<TransactionOutputImpl, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val publicKey: PublicKey = EncodedPublicKey(
-                element.getStorageProperty("publicKey")
-            ).toPublicKey()
-            val prevCoinbase =
-                element.getHashProperty("prevCoinbase")
-            val hash =
-                element.getHashProperty("hash")
-            val payout =
-                element.getPayoutProperty("payout")
-            val txSet = element.getMutableHashSet("txSet")
-
+            val payout: Payout = Payout(
+                element.getStorageProperty("payout")
+            )
+            val prevTxBlock: Hash =
+                element.getHashProperty("prevTxBlock")
+            val prevTxIndex: Int =
+                element.getStorageProperty("prevTxIndex")
+            val prevTx: Hash =
+                element.getHashProperty("prevTx")
+            val txIndex: Int =
+                element.getStorageProperty("txIndex")
+            val tx: Hash =
+                element.getHashProperty("tx")
             Outcome.Ok(
-                HashedTransactionOutputImpl(
-                    publicKey, prevCoinbase, payout,
-                    txSet, hash, container.hasher, container.encoder
+                TransactionOutputImpl(
+                    payout = payout, prevTxBlock = prevTxBlock,
+                    prevTxIndex = prevTxIndex, prevTx = prevTx,
+                    txIndex = txIndex, tx = tx
                 )
             )
         }
+
 }

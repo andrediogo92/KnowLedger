@@ -2,7 +2,7 @@ package org.knowledger.ledger.service.handles
 
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.base64.base64Encoded
-import org.knowledger.collections.sortedListOf
+import org.knowledger.collections.mutableSortedListOf
 import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
@@ -17,7 +17,7 @@ import org.knowledger.ledger.core.base.data.Difficulty.Companion.INIT_DIFFICULTY
 import org.knowledger.ledger.core.base.data.Difficulty.Companion.MAX_DIFFICULTY
 import org.knowledger.ledger.core.base.data.Difficulty.Companion.MIN_DIFFICULTY
 import org.knowledger.ledger.core.base.hash.Hash.Companion.emptyHash
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.data.Difficulty
@@ -503,10 +503,11 @@ class ChainHandle private constructor(
                 }
             )
         return StorageAwareBlock(
-            adapterManager, BlockImpl(
-                id, previousHash,
-                ledgerParams.blockParams, ledgerInfo
-            )
+            adapterManager = adapterManager,
+            ledgerInfo = ledgerInfo,
+            chainId = id,
+            previousHash = previousHash,
+            blockParams = ledgerParams.blockParams
         )
     }
 
@@ -551,9 +552,9 @@ class ChainHandle private constructor(
         fun getOriginBlock(
             ledgerInfo: LedgerInfo,
             chainId: ChainId
-        ): Block {
-            return BlockImpl(
-                sortedListOf(),
+        ): Block =
+            BlockImpl(
+                mutableSortedListOf(),
                 HashedCoinbaseImpl(
                     ledgerInfo
                 ),
@@ -562,7 +563,7 @@ class ChainHandle private constructor(
             ).also {
                 it.markMined(0, INIT_DIFFICULTY)
             }
-        }
     }
+
 }
 

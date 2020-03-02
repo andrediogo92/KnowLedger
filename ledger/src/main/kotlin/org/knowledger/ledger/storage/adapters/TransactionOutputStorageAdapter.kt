@@ -1,6 +1,7 @@
 package org.knowledger.ledger.storage.adapters
 
-import org.knowledger.ledger.crypto.hash.Hash
+
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.adapters.SchemaProvider
@@ -8,10 +9,10 @@ import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.deadCode
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.TransactionOutput
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
 import org.knowledger.ledger.storage.transaction.output.SATransactionOutputStorageAdapter
 import org.knowledger.ledger.storage.transaction.output.SUTransactionOutputStorageAdapter
 import org.knowledger.ledger.storage.transaction.output.StorageAwareTransactionOutput
+import org.knowledger.ledger.storage.transaction.output.TransactionOutputImpl
 
 internal class TransactionOutputStorageAdapter(
     private val suTransactionOutputStorageAdapter: SUTransactionOutputStorageAdapter,
@@ -25,7 +26,7 @@ internal class TransactionOutputStorageAdapter(
         when (toStore) {
             is StorageAwareTransactionOutput ->
                 saTransactionOutputStorageAdapter.store(toStore, session)
-            is HashedTransactionOutputImpl ->
+            is TransactionOutputImpl ->
                 suTransactionOutputStorageAdapter.store(toStore, session)
             else -> deadCode()
         }
@@ -35,4 +36,5 @@ internal class TransactionOutputStorageAdapter(
         element: StorageElement
     ): Outcome<TransactionOutput, LoadFailure> =
         saTransactionOutputStorageAdapter.load(ledgerHash, element)
+
 }

@@ -1,6 +1,7 @@
 package org.knowledger.ledger.storage.coinbase
 
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.collections.toMutableSortedListFromPreSorted
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
@@ -11,18 +12,18 @@ import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
+import org.knowledger.ledger.storage.adapters.WitnessStorageAdapter
 
 internal class SUCoinbaseStorageAdapter(
     private val ledgerInfo: LedgerInfo,
-    private val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
+    private val witnessStorageAdapter: WitnessStorageAdapter
 ) : LedgerStorageAdapter<HashedCoinbaseImpl> {
     override val id: String
         get() = "Coinbase"
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "payoutTXOs" to StorageType.SET,
+            "witnesses" to StorageType.LIST,
             "payout" to StorageType.PAYOUT,
             "hash" to StorageType.HASH,
             "difficulty" to StorageType.DIFFICULTY,
@@ -35,19 +36,23 @@ internal class SUCoinbaseStorageAdapter(
     ): StorageElement =
         session
             .newInstance(id)
-            .setElementSet(
-                "payoutTXOs",
+            .setElementList(
+                "witnesses",
                 toStore
-                    .transactionOutputs
+                    .witnesses
                     .map {
-                        transactionOutputStorageAdapter.persist(
+                        witnessStorageAdapter.persist(
                             it, session
                         )
-                    }.toSet()
+                    }
             ).setDifficultyProperty(
                 "difficulty", toStore.difficulty, session
-            ).setStorageProperty("blockheight", toStore.blockheight)
-            .setStorageProperty("extraNonce", toStore.extraNonce)
+            ).setStorageProperty(
+                "blockheight", toStore.blockheight
+            )
+            .setStorageProperty(
+                "extraNonce", toStore.extraNonce
+            )
             .setPayoutProperty("payout", toStore.payout)
             .setHashProperty("hash", toStore.hash)
 
@@ -65,16 +70,16 @@ internal class SUCoinbaseStorageAdapter(
                 element.getStorageProperty("extraNonce")
 
             element
-                .getElementSet("payoutTXOs")
-                .map {
-                    transactionOutputStorageAdapter.load(
-                        ledgerHash, it
+                .getElementList("witnesses")
+                .map { element ->
+                    witnessStorageAdapter.load(
+                        ledgerHash, element
                     )
                 }.allValues()
-                .flatMapSuccess { txos ->
+                .flatMapSuccess { witnesses ->
                     Outcome.Ok(
                         HashedCoinbaseImpl(
-                            transactionOutputs = txos.toMutableSet(),
+                            witnesses = witnesses.toMutableSortedListFromPreSorted(),
                             payout = element.getPayoutProperty("payout"),
                             difficulty = difficulty,
                             blockheight = blockheight,

@@ -27,6 +27,7 @@ import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
 import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
+import org.knowledger.ledger.storage.adapters.WitnessStorageAdapter
 import org.knowledger.ledger.storage.block.SABlockStorageAdapter
 import org.knowledger.ledger.storage.block.SUBlockStorageAdapter
 import org.knowledger.ledger.storage.blockheader.SABlockHeaderStorageAdapter
@@ -39,6 +40,8 @@ import org.knowledger.ledger.storage.transaction.SATransactionStorageAdapter
 import org.knowledger.ledger.storage.transaction.SUTransactionStorageAdapter
 import org.knowledger.ledger.storage.transaction.output.SATransactionOutputStorageAdapter
 import org.knowledger.ledger.storage.transaction.output.SUTransactionOutputStorageAdapter
+import org.knowledger.ledger.storage.witness.SAWitnessStorageAdapter
+import org.knowledger.ledger.storage.witness.SUWitnessStorageAdapter
 
 internal class AdapterManager(
     container: LedgerInfo,
@@ -49,6 +52,7 @@ internal class AdapterManager(
         PhysicalDataStorageAdapter(this)
     override val transactionStorageAdapter: TransactionStorageAdapter
     override val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
+    override val witnessStorageAdapter: WitnessStorageAdapter
     override val merkleTreeStorageAdapter: MerkleTreeStorageAdapter
     override val coinbaseStorageAdapter: CoinbaseStorageAdapter
     override val blockHeaderStorageAdapter: BlockHeaderStorageAdapter
@@ -57,6 +61,7 @@ internal class AdapterManager(
     init {
         val suTransactionStorageAdapter =
             SUTransactionStorageAdapter(physicalDataStorageAdapter)
+
         transactionStorageAdapter = TransactionStorageAdapter(
             suTransactionStorageAdapter,
             SATransactionStorageAdapter(suTransactionStorageAdapter)
@@ -65,10 +70,24 @@ internal class AdapterManager(
 
     init {
         val suTransactionOutputStorageAdapter =
-            SUTransactionOutputStorageAdapter(container)
+            SUTransactionOutputStorageAdapter()
+
         transactionOutputStorageAdapter = TransactionOutputStorageAdapter(
             suTransactionOutputStorageAdapter,
             SATransactionOutputStorageAdapter(suTransactionOutputStorageAdapter)
+        )
+    }
+
+
+    init {
+        val suWitnessStorageAdapter = SUWitnessStorageAdapter(
+            container, transactionOutputStorageAdapter
+        )
+        witnessStorageAdapter = WitnessStorageAdapter(
+            suWitnessStorageAdapter,
+            SAWitnessStorageAdapter(
+                suWitnessStorageAdapter
+            )
         )
     }
 
@@ -83,7 +102,7 @@ internal class AdapterManager(
 
     init {
         val suCoinbaseStorageAdapter = SUCoinbaseStorageAdapter(
-            container, transactionOutputStorageAdapter
+            container, witnessStorageAdapter
         )
         coinbaseStorageAdapter = CoinbaseStorageAdapter(
             suCoinbaseStorageAdapter,
@@ -144,6 +163,7 @@ internal class AdapterManager(
             physicalDataStorageAdapter,
             transactionStorageAdapter,
             transactionOutputStorageAdapter,
+            witnessStorageAdapter,
             //Configuration Adapters
             BlockParamsStorageAdapter,
             ChainIdStorageAdapter,

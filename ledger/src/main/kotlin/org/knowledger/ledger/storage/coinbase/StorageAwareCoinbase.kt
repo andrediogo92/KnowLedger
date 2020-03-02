@@ -1,5 +1,6 @@
 package org.knowledger.ledger.storage.coinbase
 
+import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageID
 import org.knowledger.ledger.results.Outcome
@@ -14,21 +15,28 @@ internal data class StorageAwareCoinbase(
     internal val coinbase: HashedCoinbaseImpl
 ) : HashedCoinbase by coinbase,
     StorageAware<HashedCoinbase> {
-    override val invalidated: Array<StoragePairs<*>> =
-        arrayOf(
-            StoragePairs.Native("extraNonce"),
-            StoragePairs.Hash("hash")
-        )
+    private var _invalidated: Array<StoragePairs<*>> =
+        emptyArray()
+
+    override val invalidated: Array<StoragePairs<*>>
+        get() = _invalidated
 
     override var id: StorageID? = null
 
     internal constructor(
-        info: LedgerInfo
-    ) : this(
-        coinbase = HashedCoinbaseImpl(
-            info = info
+        info: LedgerInfo,
+        adapterManager: AdapterManager
+    ) : this(HashedCoinbaseImpl(info)) {
+        _invalidated = arrayOf(
+            StoragePairs.Native("extraNonce"),
+            StoragePairs.Hash("hash"),
+            StoragePairs.LinkedList(
+                "witnesses",
+                adapterManager.witnessStorageAdapter
+            )
         )
-    )
+
+    }
 
     override fun newNonce() {
         coinbase.newNonce()

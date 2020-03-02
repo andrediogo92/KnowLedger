@@ -1,4 +1,4 @@
-package org.knowledger.ledger.storage.coinbase
+package org.knowledger.ledger.storage.witness
 
 import org.knowledger.ledger.adapters.cacheStore
 import org.knowledger.ledger.adapters.cachedLoad
@@ -10,22 +10,25 @@ import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
 
-internal class SACoinbaseStorageAdapter(
-    private val suCoinbaseStorageAdapter: SUCoinbaseStorageAdapter
-) : LedgerStorageAdapter<StorageAwareCoinbase>,
-    SchemaProvider by suCoinbaseStorageAdapter {
+internal class SAWitnessStorageAdapter(
+    private val suTransactionStorageAdapter: SUWitnessStorageAdapter
+) : LedgerStorageAdapter<StorageAwareWitness>,
+    SchemaProvider by suTransactionStorageAdapter {
     override fun store(
-        toStore: StorageAwareCoinbase, session: ManagedSession
+        toStore: StorageAwareWitness,
+        session: ManagedSession
     ): StorageElement =
         session.cacheStore(
-            suCoinbaseStorageAdapter,
-            toStore, toStore.coinbase
+            suTransactionStorageAdapter, toStore,
+            toStore.transactionOutput
         )
 
     override fun load(
-        ledgerHash: Hash, element: StorageElement
-    ): Outcome<StorageAwareCoinbase, LoadFailure> =
+        ledgerHash: Hash,
+        element: StorageElement
+    ): Outcome<StorageAwareWitness, LoadFailure> =
         element.cachedLoad(
-            ledgerHash, suCoinbaseStorageAdapter, ::StorageAwareCoinbase
+            ledgerHash, suTransactionStorageAdapter,
+            ::StorageAwareWitness
         )
 }

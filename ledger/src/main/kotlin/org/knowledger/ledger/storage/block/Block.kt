@@ -13,7 +13,8 @@ import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
 
 @Serializable(with = BlockSerializer::class)
-interface Block : HashSerializable, Cloneable, Markable, Sizeable, LedgerContract {
+interface Block : HashSerializable, Cloneable,
+                  Markable, Sizeable, LedgerContract {
     val miningReady: Boolean
         get() {
             val blockParams = header.params

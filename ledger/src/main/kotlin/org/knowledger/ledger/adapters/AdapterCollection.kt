@@ -13,6 +13,7 @@ import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
 import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
+import org.knowledger.ledger.storage.adapters.WitnessStorageAdapter
 
 internal interface AdapterCollection {
     //Storage Adapters
@@ -23,6 +24,7 @@ internal interface AdapterCollection {
     val physicalDataStorageAdapter: PhysicalDataStorageAdapter
     val transactionStorageAdapter: TransactionStorageAdapter
     val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
+    val witnessStorageAdapter: WitnessStorageAdapter
 
     //Service Adapters
     val poolTransactionStorageAdapter: PoolTransactionStorageAdapter

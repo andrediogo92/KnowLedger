@@ -1,7 +1,7 @@
 package org.knowledger.ledger.storage.block
 
-import org.knowledger.collections.toSortedListFromPreSorted
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.collections.toMutableSortedListFromPreSorted
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
@@ -96,7 +96,7 @@ internal class SUBlockStorageAdapter(
             )
             { data, coinbase, header, merkleTree ->
                 BlockImpl(
-                    data.toSortedListFromPreSorted(), coinbase,
+                    data.toMutableSortedListFromPreSorted(), coinbase,
                     header, merkleTree
                 )
             }

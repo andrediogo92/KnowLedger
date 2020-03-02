@@ -6,12 +6,15 @@ import org.knowledger.ledger.storage.block.Block
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeader
 import org.knowledger.ledger.storage.coinbase.HashedCoinbase
 import org.knowledger.ledger.storage.transaction.HashedTransaction
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutput
+import org.knowledger.ledger.storage.transaction.output.TransactionOutput
+import org.knowledger.ledger.storage.witness.HashedWitness
 
-typealias Transaction = HashedTransaction
-typealias TransactionOutput = HashedTransactionOutput
-typealias MerkleTree = MerkleTree
-typealias Coinbase = HashedCoinbase
-typealias BlockHeader = HashedBlockHeader
 typealias Block = Block
+typealias BlockHeader = HashedBlockHeader
+typealias Coinbase = HashedCoinbase
+typealias MerkleTree = MerkleTree
+typealias Transaction = HashedTransaction
+typealias TransactionOutput = TransactionOutput
+typealias Witness = HashedWitness
 internal typealias LedgerContract = LedgerContract
+
