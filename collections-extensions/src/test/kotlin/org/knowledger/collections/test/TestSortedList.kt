@@ -8,15 +8,16 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
-import org.knowledger.collections.SortedList
+import org.knowledger.collections.MutableSortedList
+import org.knowledger.collections.mutableSortedListOf
 import org.knowledger.testing.core.random
 
 class TestSortedList {
 
     @Nested
     inner class CornerCases {
-        private val emptyList: SortedList<Int> =
-            SortedList()
+        private val emptyList: MutableSortedList<Int> =
+            mutableSortedListOf()
 
         @BeforeEach
         fun `clear list`() {
@@ -47,14 +48,21 @@ class TestSortedList {
 
     @Nested
     inner class Random {
-        private var randomList: SortedList<Int> =
-            SortedList()
+        private var randomList: MutableSortedList<Int> =
+            mutableSortedListOf()
 
         @RepeatedTest(value = 30)
         fun `random Inserts`() {
-            val randoms: List<Int> = random.randomInts().take(random.randomInt(3000)).toList()
+            val randoms: List<Int> = random
+                .randomInts()
+                .take(random.randomInt(3000))
+                .toList()
             randomList.addAll(randoms)
-            assertThat(randomList.toTypedArray()).containsExactly(*randoms.distinct().sorted().toTypedArray())
+            assertThat(
+                randomList.toTypedArray()
+            ).containsExactly(
+                *randoms.distinct().sorted().toTypedArray()
+            )
         }
     }
 }
