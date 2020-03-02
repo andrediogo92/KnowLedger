@@ -1,8 +1,8 @@
 package org.knowledger.ledger.storage.blockheader
 
 import kotlinx.serialization.Serializable
-import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.Hashing
+import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.serial.display.BlockHeaderSerializer
 
 @Serializable(with = BlockHeaderSerializer::class)

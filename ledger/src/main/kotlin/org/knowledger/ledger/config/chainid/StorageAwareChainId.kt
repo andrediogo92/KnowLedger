@@ -2,7 +2,7 @@ package org.knowledger.ledger.config.chainid
 
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.database.ManagedSession

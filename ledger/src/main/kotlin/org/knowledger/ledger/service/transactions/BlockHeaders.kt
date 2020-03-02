@@ -1,6 +1,6 @@
 package org.knowledger.ledger.service.transactions
 
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.query.UnspecificQuery
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.LoadFailure

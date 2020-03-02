@@ -1,7 +1,7 @@
 package org.knowledger.ledger.storage.transaction
 
 import kotlinx.serialization.BinaryFormat
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.service.Identity

@@ -1,8 +1,9 @@
 package org.knowledger.ledger.builders
 
-import org.knowledger.collections.SortedList
+import org.knowledger.collections.MutableSortedList
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.EncodedPublicKey
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.Payout
@@ -14,6 +15,7 @@ import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.storage.Witness
 import java.security.PublicKey
 
 interface ChainBuilder {
@@ -22,7 +24,7 @@ interface ChainBuilder {
     val chainId: ChainId
 
     fun block(
-        transactions: SortedList<Transaction>,
+        transactions: MutableSortedList<Transaction>,
         coinbase: Coinbase, blockHeader: BlockHeader,
         merkleTree: MerkleTree
     ): Block
@@ -33,20 +35,14 @@ interface ChainBuilder {
     ): BlockHeader
 
     fun coinbase(
-        transactionOutputs: Set<TransactionOutput>,
+        transactionOutputs: MutableSortedList<Witness>,
         payout: Payout, difficulty: Difficulty,
         blockheight: Long, extraNonce: Long, hash: Hash
     ): Coinbase
 
     fun merkletree(
-        collapsedTree: List<Hash>,
-        levelIndex: List<Int>
+        collapsedTree: List<Hash>, levelIndex: List<Int>
     ): MerkleTree
-
-    fun transactionOutput(
-        transactionSet: Set<Hash>, prevCoinbase: Hash,
-        publicKey: PublicKey, hash: Hash, payout: Payout
-    ): TransactionOutput
 
     fun transaction(
         publicKey: PublicKey, physicalData: PhysicalData,
@@ -56,6 +52,19 @@ interface ChainBuilder {
     fun transaction(
         data: PhysicalData
     ): Transaction
+
+    fun transactionOutput(
+        payout: Payout, newIndex: Int,
+        newTransaction: Hash, previousBlock: Hash,
+        previousIndex: Int, previousTransaction: Hash
+    ): TransactionOutput
+
+    fun witness(
+        transactionOutputs: MutableSortedList<TransactionOutput>,
+        previousWitnessIndex: Int, prevCoinbase: Hash,
+        publicKey: EncodedPublicKey, hash: Hash,
+        payout: Payout
+    ): Witness
 
     fun data(bytes: ByteArray): LedgerData
 

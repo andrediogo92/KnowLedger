@@ -2,7 +2,7 @@ package org.knowledger.ledger.service.transactions
 
 import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.adapters.AdapterManager
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.database.ManagedSchemas
 import org.knowledger.ledger.database.ManagedSession

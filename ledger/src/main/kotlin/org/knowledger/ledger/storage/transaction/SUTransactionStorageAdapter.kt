@@ -1,7 +1,7 @@
 package org.knowledger.ledger.storage.transaction
 
 import org.knowledger.ledger.crypto.EncodedPublicKey
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.toPublicKey
 import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.database.ManagedSession

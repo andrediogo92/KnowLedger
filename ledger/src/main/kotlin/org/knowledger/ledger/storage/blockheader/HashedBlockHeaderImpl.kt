@@ -4,7 +4,7 @@ import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.storage.HashUpdateable

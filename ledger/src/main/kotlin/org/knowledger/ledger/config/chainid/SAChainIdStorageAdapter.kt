@@ -2,7 +2,7 @@ package org.knowledger.ledger.config.chainid
 
 import org.knowledger.ledger.adapters.cacheStore
 import org.knowledger.ledger.adapters.cachedLoad
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.adapters.SchemaProvider

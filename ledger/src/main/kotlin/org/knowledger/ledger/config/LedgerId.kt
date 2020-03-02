@@ -8,10 +8,10 @@ import kotlinx.serialization.UseSerializers
 import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.core.serial.InstantSerializer
 import org.knowledger.ledger.core.serial.UUIDSerializer
-import org.knowledger.ledger.crypto.hash.Hash
-import org.knowledger.ledger.crypto.hash.Hasher
+import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.crypto.Hasher
+import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.hash.Hashing
 import org.knowledger.ledger.serial.HashSerializable
 import org.knowledger.ledger.service.ServiceClass
 import java.time.Instant

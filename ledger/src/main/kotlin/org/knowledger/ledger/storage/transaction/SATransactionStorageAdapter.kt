@@ -2,7 +2,7 @@ package org.knowledger.ledger.storage.transaction
 
 import org.knowledger.ledger.adapters.cacheStore
 import org.knowledger.ledger.adapters.cachedLoad
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.adapters.SchemaProvider
@@ -18,13 +18,17 @@ internal class SATransactionStorageAdapter(
         toStore: StorageAwareTransaction,
         session: ManagedSession
     ): StorageElement =
-        session.cacheStore(suTransactionAdapter, toStore, toStore.transaction)
+        session.cacheStore(
+            suTransactionAdapter, toStore,
+            toStore.transaction
+        )
 
     override fun load(
         ledgerHash: Hash,
         element: StorageElement
     ): Outcome<StorageAwareTransaction, LoadFailure> =
         element.cachedLoad(
-            ledgerHash, suTransactionAdapter, ::StorageAwareTransaction
+            ledgerHash, suTransactionAdapter,
+            ::StorageAwareTransaction
         )
 }

@@ -6,7 +6,7 @@ import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.core.base.data.DefaultDiff
 import org.knowledger.ledger.core.base.hash.classDigest
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.LedgerData

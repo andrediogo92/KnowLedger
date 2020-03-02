@@ -1,11 +1,12 @@
 package org.knowledger.ledger.builders
 
 import kotlinx.serialization.PolymorphicSerializer
-import org.knowledger.collections.SortedList
+import org.knowledger.collections.MutableSortedList
 import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.data.PhysicalData
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.EncodedPublicKey
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.data.Difficulty
@@ -19,12 +20,14 @@ import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.storage.Witness
 import org.knowledger.ledger.storage.block.BlockImpl
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
+import org.knowledger.ledger.storage.witness.HashedWitnessImpl
 import java.security.PublicKey
+import org.knowledger.ledger.storage.transaction.output.transactionOutput as transactionOutputBuilder
 
 internal data class WorkingChainBuilder(
     internal val adapterManager: AdapterManager,
@@ -38,13 +41,13 @@ internal data class WorkingChainBuilder(
         get() = chainId.tag
 
     override fun block(
-        transactions: SortedList<Transaction>,
+        transactions: MutableSortedList<Transaction>,
         coinbase: Coinbase,
         blockHeader: BlockHeader,
         merkleTree: MerkleTree
     ): Block =
         BlockImpl(
-            transactions = transactions,
+            _transactions = transactions,
             coinbase = coinbase,
             header = blockHeader,
             merkleTree = merkleTree
@@ -70,12 +73,12 @@ internal data class WorkingChainBuilder(
         )
 
     override fun coinbase(
-        transactionOutputs: Set<TransactionOutput>,
+        witnesses: MutableSortedList<Witness>,
         payout: Payout, difficulty: Difficulty,
         blockheight: Long, extraNonce: Long, hash: Hash
     ): Coinbase =
         HashedCoinbaseImpl(
-            transactionOutputs = transactionOutputs.toMutableSet(),
+            witnesses = witnesses,
             payout = payout, difficulty = difficulty,
             blockheight = blockheight,
             ledgerInfo = ledgerInfo,
@@ -93,21 +96,6 @@ internal data class WorkingChainBuilder(
             hasher = ledgerInfo.hasher
         )
 
-    override fun transactionOutput(
-        transactionSet: Set<Hash>,
-        prevCoinbase: Hash,
-        publicKey: PublicKey, hash: Hash,
-        payout: Payout
-    ): TransactionOutput =
-        HashedTransactionOutputImpl(
-            previousCoinbase = prevCoinbase,
-            publicKey = publicKey,
-            hash = hash, payout = payout,
-            transactionSet = transactionSet.toMutableSet(),
-            hasher = ledgerInfo.hasher,
-            encoder = ledgerInfo.encoder
-        )
-
     override fun transaction(
         publicKey: PublicKey, physicalData: PhysicalData,
         signature: ByteArray, hash: Hash
@@ -122,6 +110,39 @@ internal data class WorkingChainBuilder(
     ): Transaction =
         HashedTransactionImpl(
             identity = identity, data = data,
+            hasher = ledgerInfo.hasher,
+            encoder = ledgerInfo.encoder
+        )
+
+    override fun transactionOutput(
+        payout: Payout,
+        newIndex: Int,
+        newTransaction: Hash,
+        previousBlock: Hash,
+        previousIndex: Int,
+        previousTransaction: Hash
+    ): TransactionOutput =
+        transactionOutputBuilder(
+            payout = payout,
+            newIndex = newIndex,
+            newTransaction = newTransaction,
+            previousBlock = previousBlock,
+            previousIndex = previousIndex,
+            previousTransaction = previousTransaction
+        )
+
+    override fun witness(
+        transactionOutputs: MutableSortedList<TransactionOutput>,
+        previousWitnessIndex: Int, prevCoinbase: Hash,
+        publicKey: EncodedPublicKey, hash: Hash,
+        payout: Payout
+    ): Witness =
+        HashedWitnessImpl(
+            previousWitnessIndex = previousWitnessIndex,
+            previousCoinbase = prevCoinbase,
+            publicKey = publicKey,
+            hash = hash, payout = payout,
+            transactionOutputs = transactionOutputs,
             hasher = ledgerInfo.hasher,
             encoder = ledgerInfo.encoder
         )

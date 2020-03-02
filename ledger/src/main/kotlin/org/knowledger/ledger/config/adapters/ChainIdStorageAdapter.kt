@@ -5,7 +5,7 @@ import org.knowledger.ledger.config.chainid.ChainIdImpl
 import org.knowledger.ledger.config.chainid.SAChainIdStorageAdapter
 import org.knowledger.ledger.config.chainid.SUChainIdStorageAdapter
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.adapters.SchemaProvider

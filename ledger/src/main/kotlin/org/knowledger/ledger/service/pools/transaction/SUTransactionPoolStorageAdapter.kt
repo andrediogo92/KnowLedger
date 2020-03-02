@@ -2,7 +2,7 @@ package org.knowledger.ledger.service.pools.transaction
 
 import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType

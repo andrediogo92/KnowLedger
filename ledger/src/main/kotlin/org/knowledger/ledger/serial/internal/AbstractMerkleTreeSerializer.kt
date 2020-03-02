@@ -3,7 +3,7 @@ package org.knowledger.ledger.serial.internal
 import kotlinx.serialization.*
 import kotlinx.serialization.internal.IntSerializer
 import kotlinx.serialization.internal.SerialClassDescImpl
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.serial.HashAlgorithmSerializer
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl

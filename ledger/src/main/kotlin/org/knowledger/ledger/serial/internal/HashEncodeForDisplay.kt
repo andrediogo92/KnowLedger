@@ -2,7 +2,7 @@ package org.knowledger.ledger.serial.internal
 
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.CompositeEncoder
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.serial.display.HashDisplaySerializer
 
 internal interface HashEncodeForDisplay : HashEncode {

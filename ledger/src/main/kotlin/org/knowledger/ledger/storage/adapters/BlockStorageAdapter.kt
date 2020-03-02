@@ -1,6 +1,6 @@
 package org.knowledger.ledger.storage.adapters
 
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.adapters.SchemaProvider

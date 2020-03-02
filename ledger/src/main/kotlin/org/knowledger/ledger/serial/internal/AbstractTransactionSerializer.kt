@@ -9,7 +9,7 @@ import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.crypto.EncodedSignature
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl

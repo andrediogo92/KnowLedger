@@ -1,7 +1,7 @@
 package org.knowledger.ledger.data.adapters
 
 import org.knowledger.ledger.adapters.AdapterManager
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.GeoCoords
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.database.ManagedSession

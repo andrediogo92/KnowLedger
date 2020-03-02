@@ -8,7 +8,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.internal.SerialClassDescImpl
-import org.knowledger.collections.SortedList
+import org.knowledger.collections.MutableSortedList
 import org.knowledger.ledger.serial.SortedListSerializer
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
@@ -60,7 +60,7 @@ internal abstract class AbstractBlockSerializer(
 
     override fun deserialize(decoder: Decoder): Block =
         with(decoder.beginStructure(descriptor)) {
-            lateinit var transactions: SortedList<Transaction>
+            lateinit var transactions: MutableSortedList<Transaction>
             lateinit var coinbase: Coinbase
             lateinit var header: BlockHeader
             lateinit var merkleTree: MerkleTree
@@ -72,13 +72,13 @@ internal abstract class AbstractBlockSerializer(
                     2 -> merkleTree = decodeMerkleTree(i)
                     3 -> transactions = decodeSerializableElement(
                         descriptor, i, sortedListSerializer
-                    )
+                    ) as MutableSortedList<Transaction>
                     else -> throw SerializationException("Unknown index $i")
                 }
             }
             endStructure(descriptor)
             BlockImpl(
-                transactions = transactions,
+                _transactions = transactions,
                 coinbase = coinbase,
                 header = header,
                 merkleTree = merkleTree

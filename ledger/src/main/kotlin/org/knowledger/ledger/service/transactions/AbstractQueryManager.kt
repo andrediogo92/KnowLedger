@@ -3,7 +3,7 @@ package org.knowledger.ledger.service.transactions
 import org.knowledger.ledger.adapters.AdapterCollection
 import org.knowledger.ledger.adapters.AdapterManager
 import org.knowledger.ledger.adapters.EagerStorable
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.NewInstanceSession

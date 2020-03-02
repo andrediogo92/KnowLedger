@@ -1,7 +1,7 @@
 package org.knowledger.ledger.storage.merkletree
 
+import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.hash.Hashing
 import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.database.ManagedSession

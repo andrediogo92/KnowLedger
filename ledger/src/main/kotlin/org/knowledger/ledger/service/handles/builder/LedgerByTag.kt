@@ -4,7 +4,7 @@ import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.LedgerId
 import org.knowledger.ledger.config.LedgerParams
 import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.LedgerData

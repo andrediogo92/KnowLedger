@@ -2,7 +2,7 @@ package org.knowledger.ledger.service.adapters
 
 import org.knowledger.ledger.crypto.EncodedPrivateKey
 import org.knowledger.ledger.crypto.EncodedPublicKey
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.toPrivateKey
 import org.knowledger.ledger.crypto.toPublicKey
 import org.knowledger.ledger.database.ManagedSession

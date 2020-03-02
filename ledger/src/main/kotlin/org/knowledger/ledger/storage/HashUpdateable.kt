@@ -2,9 +2,9 @@ package org.knowledger.ledger.storage
 
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.core.base.Sizeable
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.hash.Hashing
 
 internal interface HashUpdateable : Hashing, Sizeable {
     fun updateHash(
