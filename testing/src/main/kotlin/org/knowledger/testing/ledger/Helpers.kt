@@ -3,9 +3,9 @@ package org.knowledger.testing.ledger
 import org.knowledger.base64.base64Encoded
 import org.knowledger.collections.mapToArray
 import org.knowledger.ledger.core.base.data.LedgerData
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.hash.Hashing
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageResult

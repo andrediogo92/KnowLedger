@@ -10,8 +10,7 @@ serialPlugin {
     module = "testing"
 }
 
-group = "org.knowledger"
-version = "0.1"
+version = "0.2"
 
 dependencies {
     implementation(project(":ledger-core"))

@@ -7,7 +7,7 @@ import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.test.generateBlock
 import org.knowledger.ledger.test.generateXTransactionsArray
-import org.knowledger.testing.ledger.testEncoder
+import org.knowledger.ledger.test.testEncoder
 import org.openjdk.jmh.annotations.Scope
 import org.openjdk.jmh.annotations.State
 
@@ -15,8 +15,7 @@ import org.openjdk.jmh.annotations.State
 open class SerializationState : BaseState() {
     val ts: Array<Transaction> =
         generateXTransactionsArray(id, 100)
-    val block: Block =
-        generateBlock(id, ts)
+    val block: Block = generateBlock(ts)
     val binarySerializer: LedgerSerializer.Binary =
         ledgerBinarySerializer { encoder = testEncoder }.unwrap()
 }

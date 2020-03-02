@@ -8,31 +8,38 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.SerializersModule
-import org.knowledger.collections.sortedListOf
+import org.knowledger.collections.MutableSortedList
+import org.knowledger.collections.mutableSortedListOf
+import org.knowledger.collections.toMutableSortedList
+import org.knowledger.collections.toMutableSortedListFromPreSorted
 import org.knowledger.collections.toSizedArray
-import org.knowledger.collections.toSortedList
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.chainid.ChainIdImpl
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
 import org.knowledger.ledger.core.base.data.LedgerData
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
-import org.knowledger.ledger.data.*
+import org.knowledger.ledger.data.DataFormula
+import org.knowledger.ledger.data.DefaultDiff
+import org.knowledger.ledger.data.GeoCoords
+import org.knowledger.ledger.data.PhysicalData
+import org.knowledger.ledger.data.TemperatureData
+import org.knowledger.ledger.data.TemperatureUnit
+import org.knowledger.ledger.data.TrafficFlowData
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.storage.Witness
 import org.knowledger.ledger.storage.block.BlockImpl
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
 import org.knowledger.ledger.storage.coinbase.CoinbaseImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
-import org.knowledger.ledger.storage.transaction.output.HashedTransactionOutputImpl
 import org.knowledger.testing.core.random
 import org.knowledger.testing.ledger.DataGenerator
 import org.knowledger.testing.ledger.testHasher
@@ -120,10 +127,10 @@ fun generateXTransactions(
     hasher: Hashers = testHasher,
     encoder: BinaryFormat = testEncoder,
     generator: DataGenerator = ::temperature
-): List<Transaction> =
+): MutableSortedList<Transaction> =
     transactionGenerator(id, hasher, encoder, generator)
         .take(size)
-        .toList()
+        .toMutableSortedListFromPreSorted()
 
 fun generateXTransactions(
     id: Identity,
@@ -131,7 +138,7 @@ fun generateXTransactions(
     hasher: Hashers = testHasher,
     encoder: BinaryFormat = testEncoder,
     generator: DataGenerator = ::temperature
-): List<Transaction> =
+): MutableSortedList<Transaction> =
     generateXTransactions(arrayOf(id), size, hasher, encoder, generator)
 
 fun generateXTransactionsArray(
@@ -157,8 +164,36 @@ fun generateXTransactionsArray(
     )
 
 fun generateBlock(
-    id: Array<Identity>,
     ts: Array<Transaction>,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
+    formula: DataFormula = DefaultDiff,
+    coinbaseParams: CoinbaseParams = CoinbaseParams(),
+    blockParams: BlockParams = BlockParams()
+): Block =
+    generateBlock(
+        ts.toMutableSortedList(), hasher,
+        encoder, formula, coinbaseParams,
+        blockParams
+    )
+
+fun generateBlockWithChain(
+    chainId: ChainId,
+    ts: Array<Transaction>,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
+    formula: DataFormula = DefaultDiff,
+    coinbaseParams: CoinbaseParams = CoinbaseParams(),
+    blockParams: BlockParams = BlockParams()
+): Block =
+    generateBlockWithChain(
+        chainId, ts.toMutableSortedList(),
+        hasher, encoder, formula,
+        coinbaseParams, blockParams
+    )
+
+fun generateBlock(
+    ts: MutableSortedList<Transaction>,
     hasher: Hashers = testHasher,
     encoder: BinaryFormat = testEncoder,
     formula: DataFormula = DefaultDiff,
@@ -166,11 +201,11 @@ fun generateBlock(
     blockParams: BlockParams = BlockParams()
 ): Block {
     val coinbase = generateCoinbase(
-        id, ts, hasher, encoder,
+        ts.toTypedArray(), hasher, encoder,
         formula, coinbaseParams
     )
     return BlockImpl(
-        ts.toSortedList(), coinbase,
+        ts.toMutableSortedList(), coinbase,
         HashedBlockHeaderImpl(
             generateChainId(hasher),
             hasher, encoder,
@@ -178,15 +213,14 @@ fun generateBlock(
             blockParams
         ),
         MerkleTreeImpl(
-            hasher, coinbase, ts
+            hasher, coinbase, ts.toTypedArray()
         ), encoder, hasher
     )
 }
 
 fun generateBlockWithChain(
     chainId: ChainId,
-    id: Array<Identity>,
-    ts: Array<Transaction>,
+    ts: MutableSortedList<Transaction>,
     hasher: Hashers = testHasher,
     encoder: BinaryFormat = testEncoder,
     formula: DataFormula = DefaultDiff,
@@ -194,17 +228,17 @@ fun generateBlockWithChain(
     blockParams: BlockParams = BlockParams()
 ): Block {
     val coinbase = generateCoinbase(
-        id, ts, hasher, encoder,
+        ts.toTypedArray(), hasher, encoder,
         formula, coinbaseParams
     )
     return BlockImpl(
-        ts.toSortedList(), coinbase,
+        ts.toMutableSortedList(), coinbase,
         HashedBlockHeaderImpl(
             chainId, hasher, encoder,
             Hash(random.randomByteArray(32)),
             blockParams
         ),
-        MerkleTreeImpl(hasher, coinbase, ts),
+        MerkleTreeImpl(hasher, coinbase, ts.toTypedArray()),
         encoder, hasher
     )
 }
@@ -222,7 +256,7 @@ fun generateBlockWithChain(
         formula = formula, coinbaseParams = coinbaseParams
     )
     return BlockImpl(
-        sortedListOf(), coinbase,
+        mutableSortedListOf(), coinbase,
         HashedBlockHeaderImpl(
             chainId, hasher, encoder,
             Hash(random.randomByteArray(32)),
@@ -233,68 +267,87 @@ fun generateBlockWithChain(
 }
 
 fun generateCoinbase(
-    id: Array<Identity>,
     ts: Array<Transaction>,
     hasher: Hashers = testHasher,
     encoder: BinaryFormat = testEncoder,
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams()
-): Coinbase {
-    val sets: MutableSet<TransactionOutput> = mutableSetOf(
-        HashedTransactionOutputImpl(
-            id[0].publicKey, Hash.emptyHash,
-            Payout(BigDecimal.ONE),
-            ts[0].hash, Hash.emptyHash,
-            hasher, encoder
-        ),
-        HashedTransactionOutputImpl(
-            id[1].publicKey, Hash.emptyHash,
-            Payout(BigDecimal.ONE),
-            ts[1].hash, Hash.emptyHash,
-            hasher, encoder
-        )
-    )
-    val first = sets.first()
-    //First transaction output has
-    //transaction 0.
-    //Second is transaction 2
-    //referencing transaction 0.
-    //Third is transaction 4
-    //referencing transaction 0.
-    first.addToPayout(
-        Payout(BigDecimal.ONE),
-        ts[2].hash, ts[0].hash
-    )
-    first.addToPayout(
-        Payout(BigDecimal.ONE),
-        ts[4].hash, ts[0].hash
-    )
-    return generateCoinbase(
-        transactionOutputs = sets,
+): Coinbase =
+    generateCoinbase(
+        coinbaseParams = coinbaseParams,
         hasher = hasher,
         encoder = encoder,
-        formula = formula,
-        coinbaseParams = coinbaseParams
-    )
-}
+        formula = formula
+    ).apply {
+        addToWitness(
+            newIndex = 0,
+            newTransaction = ts[0]
+        )
+        findAndAdd(1, ts[1])
+
+        //First transaction output has
+        //transaction 0.
+        //Second is transaction 2
+        //referencing transaction 0.
+        //Third is transaction 4
+        //referencing transaction 0.
+        findAndAdd(0, ts[0], 2, ts[2])
+        findAndAdd(0, ts[0], 4, ts[4])
+    }
 
 fun generateCoinbase(
-    transactionOutputs: MutableSet<TransactionOutput> = mutableSetOf(),
+    coinbaseParams: CoinbaseParams = CoinbaseParams(),
+    witnesses: MutableSortedList<Witness> = mutableSortedListOf(),
     hasher: Hashers = testHasher,
     encoder: BinaryFormat = testEncoder,
-    formula: DataFormula = DefaultDiff,
-    coinbaseParams: CoinbaseParams = CoinbaseParams()
+    formula: DataFormula = DefaultDiff
 ): Coinbase =
     HashedCoinbaseImpl(
         CoinbaseImpl(
-            _transactionOutputs = transactionOutputs,
-            _payout = Payout(BigDecimal("3")),
-            _difficulty = Difficulty.INIT_DIFFICULTY,
-            _blockheight = 2, coinbaseParams = coinbaseParams,
+            coinbaseParams = coinbaseParams,
+            _witnesses = witnesses,
             formula = formula
         ), hasher = hasher, encoder = encoder
     )
 
+fun Coinbase.findAndAdd(newIndex: Int, newTransaction: Transaction) {
+    val index = findWitness(newTransaction)
+    if (index >= 0) {
+        addToWitness(
+            witness = witnesses[index],
+            newIndex = newIndex,
+            newTransaction = newTransaction
+        )
+    } else {
+        addToWitness(
+            newIndex = newIndex,
+            newTransaction = newTransaction
+        )
+    }
+}
+
+fun Coinbase.findAndAdd(
+    latestKnownIndex: Int, latestKnown: Transaction,
+    newIndex: Int, newTransaction: Transaction
+) {
+    val index = findWitness(newTransaction)
+    if (index >= 0) {
+        addToWitness(
+            witness = witnesses[index],
+            newIndex = newIndex,
+            newTransaction = newTransaction,
+            latestKnownIndex = latestKnownIndex,
+            latestKnown = latestKnown
+        )
+    } else {
+        addToWitness(
+            newIndex = newIndex,
+            newTransaction = newTransaction,
+            latestKnownIndex = latestKnownIndex,
+            latestKnown = latestKnown
+        )
+    }
+}
 
 fun Sequence<Transaction>.asTransactions(): List<Transaction> =
     asIterable().asTransactions()

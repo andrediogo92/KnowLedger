@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
@@ -198,7 +198,7 @@ class TestMerkleTree {
         @Test
         fun `all transaction verification`() {
             val coinbase7 = generateCoinbase(
-                id = id, ts = ts7, coinbaseParams = coinbaseParams
+                ts = ts7, coinbaseParams = coinbaseParams
             )
             val tree7WithCoinbase =
                 MerkleTreeImpl(testHasher, coinbase7, ts7)
@@ -234,7 +234,7 @@ class TestMerkleTree {
 
         private val ts6 = base.sliceArray(begin until begin + 6)
         private val coinbase5 = generateCoinbase(
-            id = id, ts = ts5, coinbaseParams = coinbaseParams
+            ts = ts5, coinbaseParams = coinbaseParams
         )
         private val tree5WithCoinbase =
             MerkleTreeImpl(testHasher, coinbase5, ts5)
@@ -443,7 +443,7 @@ class TestMerkleTree {
         fun `all transaction verification`() {
 
             val coinbase6 = generateCoinbase(
-                id = id, ts = ts6, coinbaseParams = coinbaseParams
+                ts = ts6, coinbaseParams = coinbaseParams
             )
             val tree6WithCoinbase =
                 MerkleTreeImpl(testHasher, coinbase6, ts6)

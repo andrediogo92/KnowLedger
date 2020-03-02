@@ -34,7 +34,7 @@ class TestSerialization {
     private val testSize = 10
 
     private val testTransactions =
-        generateXTransactions(id, testSize).toSortedSet()
+        generateXTransactions(id, testSize)
 
     private val textSerializer = ledgerTextSerializer {
         encoder = testJson
@@ -168,11 +168,8 @@ class TestSerialization {
         @BeforeEach
         fun startup() {
             block = generateBlockWithChain(
-                chainId = chainId, coinbaseParams = coinbaseParams
+                chainId = chainId, ts = testTransactions, coinbaseParams = coinbaseParams
             )
-            testTransactions.forEach { t ->
-                block + t
-            }
         }
 
         @Test

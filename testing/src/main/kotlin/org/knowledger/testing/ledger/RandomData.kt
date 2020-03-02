@@ -8,7 +8,7 @@ import kotlinx.serialization.UseSerializers
 import org.knowledger.ledger.core.base.data.LedgerData
 import org.knowledger.ledger.core.base.data.SelfInterval
 import org.knowledger.ledger.core.serial.HashSerializer
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.testing.core.random
 import java.math.BigDecimal
 

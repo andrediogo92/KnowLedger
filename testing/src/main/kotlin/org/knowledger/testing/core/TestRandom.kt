@@ -2,7 +2,7 @@ package org.knowledger.testing.core
 
 import org.apache.commons.rng.RestorableUniformRandomProvider
 import org.apache.commons.rng.simple.RandomSource
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 
 class TestRandom {

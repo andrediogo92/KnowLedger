@@ -1,6 +1,6 @@
 package org.knowledger.testing.core
 
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 
 
