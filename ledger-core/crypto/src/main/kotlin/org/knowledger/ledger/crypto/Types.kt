@@ -1,4 +1,4 @@
-package org.knowledger.ledger.crypto.hash
+package org.knowledger.ledger.crypto
 
 import org.knowledger.ledger.core.base.hash.Hash
 import org.knowledger.ledger.core.base.hash.Hasher

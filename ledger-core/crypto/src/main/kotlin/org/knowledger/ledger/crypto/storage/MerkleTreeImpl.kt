@@ -7,9 +7,9 @@ import kotlinx.serialization.UseSerializers
 import org.knowledger.collections.mapAndAdd
 import org.knowledger.collections.mapToArray
 import org.knowledger.ledger.core.serial.HashSerializer
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.hash.Hashing
 import org.knowledger.ledger.crypto.serial.HashAlgorithmSerializer
 
 @Serializable

@@ -2,6 +2,8 @@ package org.knowledger.ledger.crypto.hash
 
 import kotlinx.serialization.cbor.Cbor
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.crypto.Hasher
 import org.knowledger.ledger.crypto.hash.Hashers.*
 import org.knowledger.ledger.crypto.serial.HashAlgorithmSerializer
 import java.security.MessageDigest

@@ -1,5 +1,7 @@
 package org.knowledger.ledger.crypto.hash
 
+import org.knowledger.ledger.crypto.Hash
+
 
 class NoSuchHasherRegistered() : Exception() {
     override var message: String? = super.message

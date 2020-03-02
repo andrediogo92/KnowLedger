@@ -4,9 +4,9 @@ package org.knowledger.ledger.crypto.storage
 import org.knowledger.ledger.core.base.hash.Hash.Companion.emptyHash
 import org.knowledger.ledger.core.base.serial.HashSerializable
 import org.knowledger.ledger.core.base.storage.LedgerContract
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.hash.Hashing
 
 interface MerkleTree : HashSerializable,
                        Hashing,
