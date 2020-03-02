@@ -19,4 +19,9 @@ data class Payout(
 
     override fun toString(): String =
         payout.toString()
+
+    companion object {
+        val ZERO = Payout(BigDecimal.ZERO)
+        val ONE = Payout(BigDecimal.ONE)
+    }
 }
