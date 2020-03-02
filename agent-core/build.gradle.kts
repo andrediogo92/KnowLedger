@@ -12,4 +12,5 @@ docsPlugin {
 dependencies {
     Libs.jade.forEach(::implementation)
     implementation(project(":base64-extensions"))
+    implementation(project(":collections-extensions"))
 }

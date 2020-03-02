@@ -7,6 +7,7 @@ import org.knowledger.agent.core.ontologies.block.concepts.JBlockHeader
 import org.knowledger.agent.core.ontologies.block.concepts.JCoinbase
 import org.knowledger.agent.core.ontologies.block.concepts.JMerkleTree
 import org.knowledger.agent.core.ontologies.block.concepts.JTransactionOutput
+import org.knowledger.agent.core.ontologies.block.concepts.JWitness
 import org.knowledger.agent.core.ontologies.ledger.concepts.JBlockParams
 import org.knowledger.agent.core.ontologies.ledger.concepts.JChainId
 import org.knowledger.agent.core.ontologies.ledger.concepts.JLedgerId
@@ -18,14 +19,14 @@ import org.knowledger.agent.data.CheckedTransaction
 import org.knowledger.base64.base64Decoded
 import org.knowledger.base64.base64DecodedToHash
 import org.knowledger.base64.base64Encoded
-import org.knowledger.collections.mapToSet
 import org.knowledger.collections.mapToSortedSet
+import org.knowledger.collections.toMutableSortedListFromPreSorted
 import org.knowledger.ledger.builders.ChainBuilder
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.LedgerId
 import org.knowledger.ledger.crypto.EncodedPublicKey
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.toPublicKey
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.GeoCoords
@@ -39,17 +40,18 @@ import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.storage.Witness
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.Instant
 
 
-fun Block.toJadeBlock(chainBuilder: ChainBuilder): JBlock =
+fun Block.toJadeBlock(builder: ChainBuilder): JBlock =
     JBlock(
         data = transactions.mapToSortedSet {
-            it.toJadeTransaction(chainBuilder)
+            it.toJadeTransaction(builder)
         },
-        coinbase = coinbase.toJadeCoinbase(),
+        coinbase = coinbase.toJadeCoinbase(builder),
         header = header.toJadeBlockHeader(),
         merkleTree = merkleTree.toJadeMerkleTree()
     )
@@ -91,10 +93,13 @@ fun LedgerId.toJadeLedgerId(): JLedgerId =
     )
 
 
-fun Coinbase.toJadeCoinbase(): JCoinbase =
+fun Coinbase.toJadeCoinbase(
+    builder: ChainBuilder
+): JCoinbase =
     JCoinbase(
-        payoutTXO = transactionOutputs
-            .mapToSet(TransactionOutput::toJadeTransactionOutput),
+        witnesses = witnesses.map {
+            it.toJadeWitness(builder)
+        }.toMutableSortedListFromPreSorted(),
         payout = payout.toString(),
         difficulty = JHash(difficulty.bytes.base64Encoded()),
         extraNonce = extraNonce,
@@ -104,11 +109,13 @@ fun Coinbase.toJadeCoinbase(): JCoinbase =
     )
 
 fun Coinbase.toJadeCoinbase(
+    builder: ChainBuilder,
     formula: Hash
 ): JCoinbase =
     JCoinbase(
-        payoutTXO = transactionOutputs
-            .mapToSet(TransactionOutput::toJadeTransactionOutput),
+        witnesses = witnesses.map {
+            it.toJadeWitness(builder)
+        }.toMutableSortedListFromPreSorted(),
         payout = payout.toString(),
         difficulty = JHash(difficulty.bytes.base64Encoded()),
         extraNonce = extraNonce,
@@ -117,13 +124,28 @@ fun Coinbase.toJadeCoinbase(
         formula = formula.toJadeHash()
     )
 
-private fun TransactionOutput.toJadeTransactionOutput(): JTransactionOutput =
-    JTransactionOutput(
+fun Witness.toJadeWitness(builder: ChainBuilder): JWitness =
+    JWitness(
         pubkey = publicKey.base64Encoded(),
-        hashId = hash.toJadeHash(),
+        hash = hash.toJadeHash(),
+        previousWitnessIndex = previousWitnessIndex,
         prevCoinbase = previousCoinbase.toJadeHash(),
         payout = payout.toString(),
-        tx = transactionHashes.mapToSet(Hash::toJadeHash)
+        transactionOutputs = transactionOutputs.map {
+            it.toJadeTransactionOutput(builder)
+        }.toMutableSortedListFromPreSorted()
+    )
+
+fun TransactionOutput.toJadeTransactionOutput(
+    builder: ChainBuilder
+): JTransactionOutput =
+    JTransactionOutput(
+        payout = payout.payout.toString(),
+        prevTxBlock = prevTxBlock.toJadeHash(),
+        prevTxIndex = prevTxIndex,
+        prevTx = prevTx.toJadeHash(),
+        txIndex = txIndex,
+        tx = tx.toJadeHash()
     )
 
 
@@ -178,9 +200,9 @@ fun JBlock.fromJadeBlock(
     builder: ChainBuilder
 ): Block =
     builder.block(
-        transactions = data.mapToSortedSet {
+        transactions = data.map {
             it.fromJadeTransaction(builder)
-        },
+        }.toMutableSortedListFromPreSorted(),
         coinbase = coinbase.fromJadeCoinbase(builder),
         blockHeader = header.fromJadeBlockHeader(builder),
         merkleTree = merkleTree.fromJadeMerkleTree(builder)
@@ -217,9 +239,9 @@ fun JCoinbase.fromJadeCoinbase(
     builder: ChainBuilder
 ): Coinbase =
     builder.coinbase(
-        transactionOutputs = payoutTXO.mapToSet {
-            it.fromJadeTransactionOutput(builder)
-        },
+        transactionOutputs = witnesses.map {
+            it.fromJadeWitness(builder)
+        }.toMutableSortedListFromPreSorted(),
         payout = Payout(BigDecimal(payout)),
         difficulty = Difficulty(BigInteger(difficulty.hash.base64Decoded())),
         blockheight = blockheight,
@@ -227,17 +249,31 @@ fun JCoinbase.fromJadeCoinbase(
         hash = hashId.fromJadeHash()
     )
 
-private fun JTransactionOutput.fromJadeTransactionOutput(
+private fun JWitness.fromJadeWitness(
+    builder: ChainBuilder
+): Witness =
+    builder.witness(
+        publicKey = EncodedPublicKey(pubkey.base64Decoded()),
+        previousWitnessIndex = previousWitnessIndex,
+        prevCoinbase = prevCoinbase.fromJadeHash(),
+        hash = hash.fromJadeHash(),
+        payout = Payout(BigDecimal(payout)),
+        transactionOutputs = transactionOutputs.map {
+            it.fromJadeTransactionOutput(builder)
+        }.toMutableSortedListFromPreSorted()
+    )
+
+fun JTransactionOutput.fromJadeTransactionOutput(
     builder: ChainBuilder
 ): TransactionOutput =
     builder.transactionOutput(
-        publicKey = EncodedPublicKey(pubkey.base64Decoded()).toPublicKey(),
-        prevCoinbase = prevCoinbase.fromJadeHash(),
-        hash = hashId.fromJadeHash(),
         payout = Payout(BigDecimal(payout)),
-        transactionSet = tx.mapToSet(JHash::fromJadeHash)
+        previousBlock = prevTxBlock.fromJadeHash(),
+        previousIndex = prevTxIndex,
+        previousTransaction = prevTx.fromJadeHash(),
+        newIndex = txIndex,
+        newTransaction = tx.fromJadeHash()
     )
-
 
 fun JTransaction.fromJadeTransaction(
     builder: ChainBuilder
