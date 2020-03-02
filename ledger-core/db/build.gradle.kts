@@ -14,5 +14,3 @@ dependencies {
     implementation(project(":base64-extensions"))
     implementation(project(":results"))
 }
-
-version = "0.1"

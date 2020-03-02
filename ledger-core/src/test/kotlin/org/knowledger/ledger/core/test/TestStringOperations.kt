@@ -5,7 +5,7 @@ import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
 import org.knowledger.ledger.core.base.data.toHexString
 import org.knowledger.ledger.core.base.hash.hashFromHexString
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.testing.core.random
 
 class TestStringOperations {

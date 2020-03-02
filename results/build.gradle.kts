@@ -8,4 +8,4 @@ basePlugin {
     packageName = "org.knowledger.ledger.results"
 }
 
-version = "0.1"
+version = "0.2"

@@ -3,8 +3,6 @@ plugins {
     id(Plugins.serial)
 }
 
-version = "0.1"
-
 serialPlugin {
     packageName = "org.knowledger.ledger.crypto"
     module = "ledger-core/crypto"
@@ -19,5 +17,4 @@ dependencies {
     implementation(Libs.bouncyCastle)
 
     testImplementation(project(":testing"))
-    testImplementation(project(":ledger-core"))
 }

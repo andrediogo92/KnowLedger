@@ -6,7 +6,7 @@ import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
 import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.core.flattenBytes
-import org.knowledger.ledger.crypto.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.testing.core.random
 import org.tinylog.kotlin.Logger
 

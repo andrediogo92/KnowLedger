@@ -1,4 +1,4 @@
-version = "0.1"
+version = "0.2"
 
 
 plugins {
@@ -21,4 +21,8 @@ dependencies {
     api(project(":results"))
 
     testImplementation(project(":testing"))
+}
+
+subprojects {
+    version = this.version
 }
