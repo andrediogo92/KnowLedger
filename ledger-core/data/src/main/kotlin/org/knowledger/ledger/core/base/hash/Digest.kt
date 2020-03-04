@@ -9,7 +9,7 @@ import java.math.BigInteger
 import java.security.PrivateKey
 import java.security.PublicKey
 import java.util.*
-
+import kotlin.collections.ArrayDeque
 
 private data class DigestState(
     var field: String, var clazz: Class<*>,
@@ -138,29 +138,30 @@ fun <T : Any> T.classDigest(hasher: Hasher): Tag =
     javaClass.classDigest(hasher)
 
 
+@OptIn(ExperimentalStdlibApi::class)
 fun <T : Any> Class<in T>.classDigest(hasher: Hasher): Tag {
     if (isInterface) {
         throw ClassCastException("Can't resolve fields of interface type: $canonicalName")
     }
     val states: ArrayDeque<DigestState> = ArrayDeque()
-    states.offer(DigestState("", this, DigestState.State.FirstPass))
+    states.addLast(DigestState("", this, DigestState.State.FirstPass))
     //Fill up states by breadth first search until all leaves have been resolved.
-    while (states.first.state == DigestState.State.FirstPass) {
+    while (states[0].state == DigestState.State.FirstPass) {
         levelPass(states, states.takeWhile { it.state == DigestState.State.FirstPass })
     }
     val feed = ArrayDeque<DigestState>()
     while (states.size > 1) {
-        while (states.peekFirst().state != DigestState.State.Composite) {
-            val item = states.pollFirst()
-            feed.offerLast(item)
+        while (states[0].state != DigestState.State.Composite) {
+            feed.addLast(states.removeFirst())
         }
 
         compactLevel(hasher, states, feed)
         feed.clear()
     }
-    return hasher.applyHash(states.pollFirst().type)
+    return hasher.applyHash(states.removeFirst().type)
 }
 
+@ExperimentalStdlibApi
 private fun compactLevel(
     hasher: Hasher,
     feedback: ArrayDeque<DigestState>,
@@ -171,17 +172,16 @@ private fun compactLevel(
         type.append(it.field)
         type.append(it.type)
     }
-    feedback
-        .peekFirst()
-        .compact(
-            hasher.applyHash(type.toString())
-        )
+    feedback[0].compact(
+        hasher.applyHash(type.toString())
+    )
 }
 
 /**
  * Level pass does one level of a breadth first search, resolving final types or
  * expanding into their fields for later compacting.
  */
+@ExperimentalStdlibApi
 private fun levelPass(
     feedback: ArrayDeque<DigestState>,
     states: List<DigestState>
@@ -191,7 +191,7 @@ private fun levelPass(
         when {
             digestState.clazz.isArray -> {
                 digestState.markArray()
-                feedback.offerFirst(
+                feedback.addFirst(
                     DigestState(
                         clazz = digestState.clazz.componentType,
                         field = "",
@@ -214,6 +214,7 @@ private fun levelPass(
     }
 }
 
+@ExperimentalStdlibApi
 private fun expandFields(
     states: ArrayDeque<DigestState>,
     digestState: DigestState
@@ -228,7 +229,7 @@ private fun expandFields(
             .filter { it.name != "Companion" }
             .forEach { field ->
                 if (field.type == digestState.clazz) {
-                    states.offerFirst(
+                    states.addFirst(
                         DigestState(
                             field = field.name,
                             clazz = digestState.clazz,
@@ -238,7 +239,7 @@ private fun expandFields(
                 } else {
                     when (field.genericType) {
                         is ParameterizedType -> {
-                            states.offerFirst(
+                            states.addFirst(
                                 DigestState(
                                     field = field.name,
                                     clazz = field.type,
@@ -251,7 +252,7 @@ private fun expandFields(
                             )
                         }
                         else -> {
-                            states.offerFirst(
+                            states.addFirst(
                                 DigestState(
                                     field = field.name,
                                     clazz = field.type,
