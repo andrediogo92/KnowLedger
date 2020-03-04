@@ -1,9 +1,8 @@
-@file:Suppress("UnstableApiUsage")
-
 package org.knowledger.plugin
 
 import Libs
 import org.gradle.api.Project
+import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.testing.Test
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
@@ -18,31 +17,33 @@ internal fun Project.addCommonPlugins() {
 internal fun Project.addCommonTasks(key: String) {
     val extension: BaseJVMPluginExtension =
         extensions[key] as BaseJVMPluginExtension
-    addDokkaTask(extension)
-    addKotlinTask(extension)
-    addOptInOptions(extension)
     with(tasks) {
-
-        withType<Test> {
-            useJUnitPlatform {
-                includeEngines("junit-jupiter")
-            }
+        addDokkaTask(extension, buildDir)
+        applyJunit()
+        onKotlinCompile {
+            configureKotlin(extension)
+            applyOptIn(extension)
         }
     }
 }
 
+private fun KotlinCompile.applyOptIn(extension: OptIn) {
+    if (extension.experimentalOptIn) {
+        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.Experimental"
+    }
+    if (extension.requiresOptIn) {
+        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+    }
+}
 
-internal fun Project.addOptInOptions(extension: OptIn) {
-    tasks.withType<KotlinCompile> {
-        if (extension.experimentalOptIn) {
-            kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.Experimental"
-        }
-        if (extension.requiresOptIn) {
-            kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
+private fun TaskContainer.applyJunit() {
+    withType<Test> {
+        useJUnitPlatform {
+            includeEngines("junit-jupiter")
         }
     }
-
 }
+
 
 internal fun Project.addCommonDependencies() {
     addBarebonesDependencies()

@@ -10,6 +10,4 @@ import java.util.concurrent.TimeUnit
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
 @Fork(2)
-class SingleAgentBlockGeneration {
-
-}
+class SingleAgentBlockGeneration

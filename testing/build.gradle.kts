@@ -9,9 +9,9 @@ serialPlugin {
     requiresOptIn = true
 }
 
-version = "0.2"
-
 dependencies {
     implementation(project(":ledger-core"))
     implementation(Libs.commonsRNG)
 }
+
+version = "0.2"

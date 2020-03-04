@@ -16,11 +16,11 @@ dependencies {
     val kotlinVersion by extra {
         "1.3.70"
     }
-    val dokka_version by extra {
+    val dokkaVersion by extra {
         "0.10.1"
     }
     val dokkaPlugin by extra {
-        "org.jetbrains.dokka:dokka-gradle-plugin:${dokka_version}"
+        "org.jetbrains.dokka:dokka-gradle-plugin:${dokkaVersion}"
     }
 
     implementation(kotlin("gradle-plugin", kotlinVersion))

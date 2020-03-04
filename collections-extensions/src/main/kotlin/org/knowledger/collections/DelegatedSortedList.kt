@@ -2,7 +2,7 @@ package org.knowledger.collections
 
 /**
  * Sorted list implementation that delegates to internal mutable list.
- * Single adding is implemented via ([binarySearch] + [addAt]).
+ * Single adding is implemented via ([binarySearch] + addAt(index)).
  * Collections are added by single adding each element.
  * Collections are removed by single removing each element.
  */

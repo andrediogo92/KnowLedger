@@ -1,5 +1,5 @@
 package org.knowledger.plugin
 
 interface HasInlineClasses {
-    val inlineClasses: Boolean
+    var inlineClasses: Boolean
 }

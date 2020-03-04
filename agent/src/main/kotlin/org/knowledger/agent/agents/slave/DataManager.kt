@@ -8,5 +8,4 @@ import java.util.concurrent.BlockingQueue
 class DataManager(
     val dataQueue: BlockingQueue<CheckedData> =
         ArrayBlockingQueue(GlobalLedgerConfiguration.CACHE_SIZE)
-) : BlockingQueue<CheckedData> by dataQueue {
-}
+) : BlockingQueue<CheckedData> by dataQueue

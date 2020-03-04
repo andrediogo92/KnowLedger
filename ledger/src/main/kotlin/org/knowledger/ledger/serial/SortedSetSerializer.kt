@@ -18,7 +18,7 @@ internal class SortedSetSerializer<T>(
     override val descriptor = TreeSetDescriptor(valueSerializer.descriptor)
 
 
-    fun patch(decoder: Decoder, old: TreeSet<T>): SortedSet<T> {
+    private fun patch(decoder: Decoder, old: TreeSet<T>): SortedSet<T> {
         val builder = old as? TreeSet<T> ?: TreeSet(old)
         val startIndex = builder.size
 
@@ -33,8 +33,7 @@ internal class SortedSetSerializer<T>(
         } else {
             mainLoop@ while (true) {
                 //Read element by element
-                val index = decoder.decodeElementIndex(descriptor)
-                when (index) {
+                when (val index = decoder.decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@mainLoop
                     else -> readItem(decoder, startIndex + index, builder)
                 }

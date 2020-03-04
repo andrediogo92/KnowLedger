@@ -4,6 +4,7 @@ import Plugins
 import Versions
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.tasks.TaskContainer
 import org.gradle.kotlin.dsl.DependencyHandlerScope
 import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
@@ -18,14 +19,27 @@ import java.io.File
 internal fun Project.addBarebonesTasks(key: String) {
     val extension: DocsOnlyPluginExtension =
         extensions[key] as DocsOnlyPluginExtension
-    addDokkaTask(extension)
-    addKotlinTask(extension)
+    with(tasks) {
+        addDokkaTask(extension, buildDir)
+        onKotlinCompile {
+            configureKotlin(extension)
+        }
+    }
 }
 
-internal fun Project.addDokkaTask(
-    extension: ModuleNameProvider
+inline fun TaskContainer.onKotlinCompile(
+    crossinline function: KotlinCompile.() -> Unit
 ) {
-    tasks.withType<DokkaTask> {
+    withType<KotlinCompile> {
+        function()
+    }
+}
+
+internal fun TaskContainer.addDokkaTask(
+    extension: ModuleNameProvider,
+    buildDir: File
+) {
+    withType<DokkaTask> {
         configureDokka(extension, buildDir)
     }
 }
@@ -60,14 +74,11 @@ private fun DokkaTask.configureDokka(
     }
 }
 
-fun Project.addKotlinTask(extension: HasInlineClasses) {
-    tasks.withType<KotlinCompile> {
-        if (extension.inlineClasses) {
-            kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
-        }
-        kotlinOptions.jvmTarget = Versions.jdk
+fun KotlinCompile.configureKotlin(extension: HasInlineClasses) {
+    if (extension.inlineClasses) {
+        kotlinOptions.freeCompilerArgs += "-XXLanguage:+InlineClasses"
     }
-
+    kotlinOptions.jvmTarget = Versions.jdk
 }
 
 

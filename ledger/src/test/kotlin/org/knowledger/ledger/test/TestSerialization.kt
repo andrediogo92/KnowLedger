@@ -163,7 +163,7 @@ class TestSerialization {
 
     @Nested
     inner class Blocks {
-        lateinit var block: Block
+        private lateinit var block: Block
 
         @BeforeEach
         fun startup() {

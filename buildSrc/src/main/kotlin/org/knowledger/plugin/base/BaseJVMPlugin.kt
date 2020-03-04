@@ -13,7 +13,9 @@ open class BaseJVMPlugin : Plugin<Project> {
             target.extensions.create(key, BaseJVMPluginExtension::class.java)
             addCommonPlugins()
             addCommonDependencies()
-            addCommonTasks(key)
+            afterEvaluate {
+                addCommonTasks(key)
+            }
         }
     }
 }

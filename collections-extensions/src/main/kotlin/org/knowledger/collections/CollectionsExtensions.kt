@@ -187,7 +187,7 @@ inline fun <T, R> Collection<T>.mapToSet(
 inline fun <T, R> Collection<T>.mapToSortedSet(
     map: (T) -> R
 ): SortedSet<R> =
-    mapTo(TreeSet<R>()) {
+    mapTo(TreeSet()) {
         map(it)
     }
 

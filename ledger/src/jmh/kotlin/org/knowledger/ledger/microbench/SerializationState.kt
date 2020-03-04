@@ -13,7 +13,7 @@ import org.openjdk.jmh.annotations.State
 
 @State(Scope.Benchmark)
 open class SerializationState : BaseState() {
-    val ts: Array<Transaction> =
+    private val ts: Array<Transaction> =
         generateXTransactionsArray(id, 100)
     val block: Block = generateBlock(ts)
     val binarySerializer: LedgerSerializer.Binary =

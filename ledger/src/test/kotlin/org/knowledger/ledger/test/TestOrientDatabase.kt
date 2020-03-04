@@ -105,7 +105,7 @@ class TestOrientDatabase {
 
         @Nested
         inner class Clusters {
-            val adapters = pw.defaultSchemas.also {
+            private val adapters = pw.defaultSchemas.also {
                 it.addAll(pw.dataAdapters)
             }
 

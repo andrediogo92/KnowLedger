@@ -7,6 +7,5 @@ import java.util.concurrent.BlockingQueue
 
 data class TransactionManager(
     val checkedTransactions: BlockingQueue<CheckedTransaction> =
-        ArrayBlockingQueue<CheckedTransaction>(CACHE_SIZE)
-) : BlockingQueue<CheckedTransaction> by checkedTransactions {
-}
+        ArrayBlockingQueue(CACHE_SIZE)
+) : BlockingQueue<CheckedTransaction> by checkedTransactions

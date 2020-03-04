@@ -11,7 +11,7 @@ import jade.lang.acl.MessageTemplate
 import org.knowledger.agent.agents.wrap
 import org.knowledger.agent.messaging.state.ConversationIds
 
-inline fun <T : ContentElement> Behaviour.registerReplies(
+inline fun <T : ContentElement> registerReplies(
     replies: Array<T?>,
     consumer: (i: Int, t: T) -> Unit
 ) {

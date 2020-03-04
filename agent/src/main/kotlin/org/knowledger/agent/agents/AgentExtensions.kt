@@ -112,11 +112,11 @@ inline fun Agent.searchService(
     sd.init()
     dfd.addServices(sd)
 
-    val ALL = SearchConstraints()
-    ALL.maxResults = -1
+    val constraints = SearchConstraints()
+    constraints.maxResults = -1
 
     try {
-        val result = DFService.search(this, dfd, ALL)
+        val result = DFService.search(this, dfd, constraints)
         return Array(result.size) {
             result[it].name
         }

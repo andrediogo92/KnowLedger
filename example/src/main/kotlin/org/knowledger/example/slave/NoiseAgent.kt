@@ -5,7 +5,7 @@ import org.knowledger.base64.base64DecodedToHash
 import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.crypto.hash.Hashers
 
-class NoiseAgent() : SlaveAgent() {
+class NoiseAgent : SlaveAgent() {
     val hasher: Hashers =
         if (arguments.size > 1) {
             arguments[1] as Hashers

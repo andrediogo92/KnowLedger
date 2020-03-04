@@ -12,8 +12,10 @@ open class DocsOnlyPlugin : Plugin<Project> {
         with(target) {
             target.extensions.create(key, DocsOnlyPluginExtension::class.java)
             addDocsPlugin()
-            addBarebonesTasks(key)
             addBarebonesDependencies()
+            afterEvaluate {
+                addBarebonesTasks(key)
+            }
         }
     }
 }

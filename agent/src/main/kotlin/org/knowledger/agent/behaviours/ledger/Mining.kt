@@ -17,8 +17,7 @@ class Mining internal constructor(
     private var done: Boolean = false
 
     override fun action() {
-        val mining = state.attemptMine()
-        when (mining) {
+        when (state.attemptMine()) {
             MiningState.Attempted -> {
                 if (sc.checkAgainstTarget(state.hashId)) {
                     done = true
@@ -32,8 +31,7 @@ class Mining internal constructor(
                 }
             }
             MiningState.Refresh -> {
-                val refresh = sc.refreshHeader(state.merkleRoot)
-                when (refresh) {
+                when (val refresh = sc.refreshHeader(state.merkleRoot)) {
                     is BlockState.BlockReady -> state = refresh
                     is BlockState.BlockFailure -> Logger.error("Block Failure")
                     is BlockState.BlockNotReady -> Logger.error("Block Not Ready")

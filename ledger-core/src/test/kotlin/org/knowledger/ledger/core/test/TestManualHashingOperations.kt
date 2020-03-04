@@ -11,9 +11,9 @@ import org.knowledger.testing.core.random
 import org.tinylog.kotlin.Logger
 
 class TestManualHashingOperations {
-    val hashSize = 16
-    val minBound = 12
-    val randomHashes = Array(random.randomInt(minBound) + 8) {
+    private val hashSize = 16
+    private val minBound = 12
+    private val randomHashes = Array(random.randomInt(minBound) + 8) {
         Hash(random.randomByteArray(hashSize))
     }
 

@@ -9,6 +9,7 @@ plugins {
 serialPlugin {
     packageName = "org.knowledger.ledger.core"
     module = "ledger-core"
+    requiresOptIn = true
 }
 
 dependencies {

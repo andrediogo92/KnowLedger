@@ -6,6 +6,4 @@ data class Conversation(
     val aid: AID, val id: Int,
     val data: ConversationData,
     val state: ConversationState
-) {
-
-}
+)

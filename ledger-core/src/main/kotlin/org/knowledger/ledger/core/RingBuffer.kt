@@ -1,11 +1,13 @@
+package org.knowledger.ledger.core
+
 import kotlin.math.min
 
 @Suppress("UNCHECKED_CAST")
 class RingBuffer<T : Any>(capacity: Int) {
-    var elements: Array<Any> = Array(capacity) {}
-    var capacity = capacity
-    var writePos = 0
-    var available = 0
+    private var elements: Array<Any> = Array(capacity) {}
+    private var capacity = capacity
+    private var writePos = 0
+    private var available = 0
 
     fun reset() {
         writePos = 0

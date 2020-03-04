@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Fork(1)
 open class BenchSortedCollections {
-    fun extractArray(state: SortedCollectionState, extractSize: Int): Array<SmallData> {
+    private fun extractArray(state: SortedCollectionState, extractSize: Int): Array<SmallData> {
         val minBound = random.randomInt(state.totalSize - extractSize)
         val maxBound = minBound + extractSize
         return state.base.sliceArray(minBound until maxBound)

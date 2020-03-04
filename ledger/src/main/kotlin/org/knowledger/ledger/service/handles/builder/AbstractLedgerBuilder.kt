@@ -38,12 +38,12 @@ abstract class AbstractLedgerBuilder {
     private var dbType: DatabaseType = DatabaseType.LOCAL
     private var dbUser: String = "admin"
     private var dbPassword: String = "admin"
-    protected val registeredAdapters: MutableSet<AbstractStorageAdapter<*>> =
+    private val registeredAdapters: MutableSet<AbstractStorageAdapter<*>> =
         mutableSetOf()
-    protected var serialModule: SerialModule = baseModule
+    private var serialModule: SerialModule = baseModule
     lateinit var encoder: BinaryFormat
 
-    internal lateinit var ledgerConfig: LedgerConfig
+    private lateinit var ledgerConfig: LedgerConfig
     internal lateinit var adapterManager: AdapterManager
     internal lateinit var persistenceWrapper: PersistenceWrapper
     internal lateinit var ledgerInfo: LedgerInfo

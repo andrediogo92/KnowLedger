@@ -13,7 +13,9 @@ open class WithSerialPlugin : Plugin<Project> {
             target.extensions.create(key, WithSerialPluginExtension::class.java)
             addSerialPlugins()
             addSerialDependencies()
-            addCommonTasks(key)
+            afterEvaluate {
+                addCommonTasks(key)
+            }
         }
     }
 }

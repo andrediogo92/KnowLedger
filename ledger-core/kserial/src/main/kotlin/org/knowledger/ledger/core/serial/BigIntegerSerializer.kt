@@ -15,7 +15,7 @@ object BigIntegerSerializer : KSerializer<BigInteger> {
     override val descriptor: SerialDescriptor =
         PrimitiveDescriptor("BigInteger", PrimitiveKind.STRING)
 
-    val byteArraySerializer = ByteArraySerializer()
+    private val byteArraySerializer = ByteArraySerializer()
 
     override fun deserialize(decoder: Decoder): BigInteger =
         BigInteger(

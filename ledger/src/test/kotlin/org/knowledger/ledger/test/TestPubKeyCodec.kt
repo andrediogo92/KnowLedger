@@ -19,9 +19,9 @@ import java.security.Key
  * Tests for encoding/decoding [Key]s.
  */
 class TestPubKeyCodec {
-    val pair = Identity("test")
-    val pr = pair.privateKey
-    val pub = pair.publicKey
+    private val pair = Identity("test")
+    private val pr = pair.privateKey
+    private val pub = pair.publicKey
 
     @Test
     fun `Test encode and decode of private and public keys`() {
