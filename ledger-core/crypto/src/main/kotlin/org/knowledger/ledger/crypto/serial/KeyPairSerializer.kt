@@ -6,18 +6,21 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.internal.SerialClassDescImpl
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.PublicKey
 
 object KeyPairSerializer : KSerializer<KeyPair> {
     override val descriptor: SerialDescriptor =
-        object : SerialClassDescImpl("keyPair") {
-            init {
-                addElement("private")
-                addElement("public")
-            }
+        SerialDescriptor("keyPair") {
+            element(
+                elementName = "private",
+                descriptor = PrivateKeySerializer.descriptor
+            )
+            element(
+                elementName = "public",
+                descriptor = PublicKeySerializer.descriptor
+            )
         }
 
     override fun deserialize(decoder: Decoder): KeyPair {
@@ -44,15 +47,15 @@ object KeyPairSerializer : KSerializer<KeyPair> {
     }
 
 
-    override fun serialize(encoder: Encoder, obj: KeyPair) {
+    override fun serialize(encoder: Encoder, value: KeyPair) {
         with(encoder.beginStructure(descriptor)) {
             encodeSerializableElement(
                 descriptor, 0,
-                PrivateKeySerializer, obj.private
+                PrivateKeySerializer, value.private
             )
             encodeSerializableElement(
                 descriptor, 0,
-                PublicKeySerializer, obj.public
+                PublicKeySerializer, value.public
             )
             endStructure(descriptor)
         }

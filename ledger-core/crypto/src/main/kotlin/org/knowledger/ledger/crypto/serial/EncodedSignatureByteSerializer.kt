@@ -4,18 +4,17 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.internal.ByteArraySerializer
-import kotlinx.serialization.internal.StringDescriptor
-import kotlinx.serialization.withName
+import kotlinx.serialization.builtins.ByteArraySerializer
 import org.knowledger.ledger.crypto.EncodedSignature
 
 object EncodedSignatureByteSerializer : KSerializer<EncodedSignature> {
+    private val byteArraySerializer = ByteArraySerializer()
     override val descriptor: SerialDescriptor =
-        StringDescriptor.withName("EncodedSignature")
+        byteArraySerializer.descriptor
 
     override fun deserialize(decoder: Decoder): EncodedSignature =
-        EncodedSignature(decoder.decodeSerializableValue(ByteArraySerializer))
+        EncodedSignature(decoder.decodeSerializableValue(byteArraySerializer))
 
-    override fun serialize(encoder: Encoder, obj: EncodedSignature) =
-        encoder.encodeSerializableValue(ByteArraySerializer, obj.bytes)
+    override fun serialize(encoder: Encoder, value: EncodedSignature) =
+        encoder.encodeSerializableValue(byteArraySerializer, value.bytes)
 }

@@ -9,11 +9,11 @@ class TestRandom {
     private val r: RestorableUniformRandomProvider =
         RandomSource.create(RandomSource.SPLIT_MIX_64)
 
-    @UseExperimental(ExperimentalStdlibApi::class)
+    @OptIn(ExperimentalStdlibApi::class)
     fun randomString(size: Int): String =
         randomByteArray(size).decodeToString()
 
-    @UseExperimental(ExperimentalStdlibApi::class)
+    @OptIn(ExperimentalStdlibApi::class)
     fun randomStrings(size: Int): Sequence<String> =
         generateSequence {
             randomByteArray(size).decodeToString()

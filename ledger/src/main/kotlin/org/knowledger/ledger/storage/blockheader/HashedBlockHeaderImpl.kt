@@ -13,7 +13,7 @@ internal data class HashedBlockHeaderImpl(
     internal val blockHeader: BlockHeaderImpl,
     internal var _hash: Hash? = null,
     private var hasher: Hashers = DEFAULT_HASHER,
-    private var encoder: BinaryFormat = Cbor.plain
+    private var encoder: BinaryFormat = Cbor
 ) : HashedBlockHeader,
     HashUpdateable,
     BlockHeader by blockHeader {

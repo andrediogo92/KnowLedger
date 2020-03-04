@@ -2,6 +2,7 @@ package org.knowledger.ledger.serial.binary
 
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.CompositeEncoder
+import kotlinx.serialization.SerialDescriptor
 import org.knowledger.ledger.crypto.EncodedSignature
 import org.knowledger.ledger.crypto.serial.EncodedSignatureByteSerializer
 import org.knowledger.ledger.crypto.serial.PublicKeySerializer
@@ -15,6 +16,9 @@ import java.security.PublicKey
  */
 internal object TransactionByteSerializer : AbstractTransactionSerializer(),
                                             HashEncodeInBytes {
+    override val publicKeyDescriptor: SerialDescriptor
+        get() = PublicKeySerializer.descriptor
+
     override fun CompositeEncoder.encodePublicKey(
         index: Int, publicKey: PublicKey
     ) {
@@ -30,6 +34,9 @@ internal object TransactionByteSerializer : AbstractTransactionSerializer(),
         decodeSerializableElement(
             descriptor, index, PublicKeySerializer
         )
+
+    override val signatureDescriptor: SerialDescriptor
+        get() = EncodedSignatureByteSerializer.descriptor
 
 
     override fun CompositeEncoder.encodeSignature(

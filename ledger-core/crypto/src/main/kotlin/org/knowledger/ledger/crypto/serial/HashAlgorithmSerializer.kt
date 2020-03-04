@@ -4,21 +4,24 @@ import kotlinx.serialization.CompositeDecoder.Companion.READ_DONE
 import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.PrimitiveDescriptor
+import kotlinx.serialization.PrimitiveKind
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.NoSuchHasherRegistered
 import kotlin.properties.Delegates
 
 object HashAlgorithmSerializer : KSerializer<Hashers> {
     override val descriptor: SerialDescriptor =
-        object : SerialClassDescImpl("HashAlgorithm") {
-            init {
-                addElement("digestLength")
-                addElement("algorithm")
-                addElement("providerName")
-                addElement("providerVersion")
-            }
+        SerialDescriptor("HashAlgorithm") {
+            val digestLength = PrimitiveDescriptor("digestLength", PrimitiveKind.INT)
+            val algorithm = PrimitiveDescriptor("algorithm", PrimitiveKind.STRING)
+            val providerName = PrimitiveDescriptor("providerName", PrimitiveKind.STRING)
+            val providerVersion = PrimitiveDescriptor("providerVersion", PrimitiveKind.DOUBLE)
+            element(elementName = digestLength.serialName, descriptor = digestLength)
+            element(elementName = algorithm.serialName, descriptor = algorithm)
+            element(elementName = providerName.serialName, descriptor = providerName)
+            element(elementName = providerVersion.serialName, descriptor = providerVersion)
         }
 
     override fun deserialize(decoder: Decoder): Hashers {
@@ -47,12 +50,12 @@ object HashAlgorithmSerializer : KSerializer<Hashers> {
         }
     }
 
-    override fun serialize(encoder: Encoder, obj: Hashers) {
+    override fun serialize(encoder: Encoder, value: Hashers) {
         with(encoder.beginStructure(descriptor)) {
-            encodeIntElement(descriptor, 0, obj.digester.digestLength)
-            encodeStringElement(descriptor, 1, obj.digester.algorithm)
-            encodeStringElement(descriptor, 2, obj.digester.provider.name)
-            encodeDoubleElement(descriptor, 3, obj.digester.provider.version)
+            encodeIntElement(descriptor, 0, value.digester.digestLength)
+            encodeStringElement(descriptor, 1, value.digester.algorithm)
+            encodeStringElement(descriptor, 2, value.digester.provider.name)
+            encodeDoubleElement(descriptor, 3, value.digester.provider.version)
             endStructure(descriptor)
         }
     }

@@ -6,22 +6,27 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.chainid.ChainIdImpl
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.Tag
 
 internal abstract class AbstractChainIdSerializer : KSerializer<ChainId>, HashEncode {
-    object ChainIdSerialDescriptor : SerialClassDescImpl("ChainId") {
-        init {
-            addElement("tag")
-            addElement("ledgerHash")
-            addElement("hash")
+    override val descriptor: SerialDescriptor =
+        SerialDescriptor("ChainId") {
+            element(
+                elementName = "tag",
+                descriptor = hashDescriptor
+            )
+            element(
+                elementName = "ledgerHash",
+                descriptor = hashDescriptor
+            )
+            element(
+                elementName = "hash",
+                descriptor = hashDescriptor
+            )
         }
-    }
-
-    override val descriptor: SerialDescriptor = ChainIdSerialDescriptor
 
     override fun deserialize(decoder: Decoder): ChainId =
         with(decoder.beginStructure(descriptor)) {
@@ -41,11 +46,11 @@ internal abstract class AbstractChainIdSerializer : KSerializer<ChainId>, HashEn
             ChainIdImpl(tag, ledgerHash, hash)
         }
 
-    override fun serialize(encoder: Encoder, obj: ChainId) {
+    override fun serialize(encoder: Encoder, value: ChainId) {
         with(encoder.beginStructure(descriptor)) {
-            encodeHash(0, obj.tag)
-            encodeHash(1, obj.ledgerHash)
-            encodeHash(2, obj.hash)
+            encodeHash(0, value.tag)
+            encodeHash(1, value.ledgerHash)
+            encodeHash(2, value.hash)
             endStructure(descriptor)
         }
     }

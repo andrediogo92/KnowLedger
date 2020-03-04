@@ -7,7 +7,6 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
-import kotlinx.serialization.internal.SerialClassDescImpl
 import org.knowledger.collections.MutableSortedList
 import org.knowledger.ledger.serial.SortedListSerializer
 import org.knowledger.ledger.storage.Block
@@ -20,19 +19,30 @@ import org.knowledger.ledger.storage.block.BlockImpl
 internal abstract class AbstractBlockSerializer(
     transactionSerializer: KSerializer<Transaction>
 ) : KSerializer<Block> {
-    private object BlockSerialDescriptor : SerialClassDescImpl("Block") {
-        init {
-            addElement("header")
-            addElement("coinbase")
-            addElement("merkleTree")
-            addElement("transactions")
+    private val sortedListSerializer =
+        SortedListSerializer(transactionSerializer)
+    override val descriptor: SerialDescriptor =
+        SerialDescriptor("Block") {
+            element(
+                elementName = "header",
+                descriptor = blockHeaderDescriptor
+            )
+            element(
+                elementName = "coinbase",
+                descriptor = coinbaseDescriptor
+            )
+            element(
+                elementName = "merkleTree",
+                descriptor = merkleTreeDescriptor
+            )
+            element(
+                elementName = "transactions",
+                descriptor = sortedListSerializer.descriptor
+            )
         }
-    }
 
-    override val descriptor: SerialDescriptor = BlockSerialDescriptor
 
-    private val sortedListSerializer = SortedListSerializer(transactionSerializer)
-
+    abstract val coinbaseDescriptor: SerialDescriptor
     abstract fun CompositeEncoder.encodeCoinbase(
         index: Int, coinbase: Coinbase
     )
@@ -41,6 +51,7 @@ internal abstract class AbstractBlockSerializer(
         index: Int
     ): Coinbase
 
+    abstract val blockHeaderDescriptor: SerialDescriptor
     abstract fun CompositeEncoder.encodeBlockHeader(
         index: Int, header: BlockHeader
     )
@@ -49,6 +60,7 @@ internal abstract class AbstractBlockSerializer(
         index: Int
     ): BlockHeader
 
+    abstract val merkleTreeDescriptor: SerialDescriptor
     abstract fun CompositeEncoder.encodeMerkleTree(
         index: Int, merkleTree: MerkleTree
     )
@@ -85,14 +97,14 @@ internal abstract class AbstractBlockSerializer(
             )
         }
 
-    override fun serialize(encoder: Encoder, obj: Block) {
+    override fun serialize(encoder: Encoder, value: Block) {
         with(encoder.beginStructure(descriptor)) {
-            encodeBlockHeader(0, obj.header)
-            encodeCoinbase(1, obj.coinbase)
-            encodeMerkleTree(2, obj.merkleTree)
+            encodeBlockHeader(0, value.header)
+            encodeCoinbase(1, value.coinbase)
+            encodeMerkleTree(2, value.merkleTree)
             encodeSerializableElement(
                 descriptor, 3, sortedListSerializer,
-                obj.transactions
+                value.transactions
             )
             endStructure(descriptor)
         }

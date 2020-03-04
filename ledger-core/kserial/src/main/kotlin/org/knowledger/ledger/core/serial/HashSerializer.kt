@@ -5,25 +5,26 @@ import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.ByteArraySerializer
-import kotlinx.serialization.internal.StringDescriptor
-import kotlinx.serialization.withName
+import kotlinx.serialization.builtins.ByteArraySerializer
 import org.knowledger.ledger.core.base.hash.Hash
 
 @Serializer(forClass = Hash::class)
 object HashSerializer : KSerializer<Hash> {
+    private val byteArraySerializer = ByteArraySerializer()
+
     override val descriptor: SerialDescriptor =
-        StringDescriptor.withName("Hash")
+        byteArraySerializer.descriptor
+
 
     override fun deserialize(decoder: Decoder): Hash =
         Hash(
-            decoder.decodeSerializableValue(ByteArraySerializer)
+            decoder.decodeSerializableValue(byteArraySerializer)
         )
 
 
-    override fun serialize(encoder: Encoder, obj: Hash) {
+    override fun serialize(encoder: Encoder, value: Hash) {
         encoder.encodeSerializableValue(
-            ByteArraySerializer, obj.bytes
+            byteArraySerializer, value.bytes
         )
     }
 }

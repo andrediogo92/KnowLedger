@@ -239,7 +239,7 @@ fun JCoinbase.fromJadeCoinbase(
     builder: ChainBuilder
 ): Coinbase =
     builder.coinbase(
-        transactionOutputs = witnesses.map {
+        witnesses = witnesses.map {
             it.fromJadeWitness(builder)
         }.toMutableSortedListFromPreSorted(),
         payout = Payout(BigDecimal(payout)),

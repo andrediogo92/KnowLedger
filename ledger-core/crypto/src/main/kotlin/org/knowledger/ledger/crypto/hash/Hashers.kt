@@ -34,7 +34,7 @@ sealed class Hashers(algorithmTag: String) : Hasher {
     }
 
     override val id: Hash by lazy {
-        applyHash(Cbor.plain.dump(HashAlgorithmSerializer, this))
+        applyHash(Cbor.dump(HashAlgorithmSerializer, this))
     }
 
 

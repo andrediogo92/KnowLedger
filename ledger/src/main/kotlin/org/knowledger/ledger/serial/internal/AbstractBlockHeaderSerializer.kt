@@ -1,13 +1,6 @@
 package org.knowledger.ledger.serial.internal
 
-import kotlinx.serialization.CompositeDecoder
-import kotlinx.serialization.CompositeEncoder
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.internal.SerialClassDescImpl
+import kotlinx.serialization.*
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.crypto.Hash
@@ -17,33 +10,62 @@ import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
 import kotlin.properties.Delegates
 
 internal abstract class AbstractBlockHeaderSerializer : KSerializer<BlockHeader>, HashEncode {
-    private object BlockHeaderSerialDescriptor : SerialClassDescImpl("BlockHeader") {
-        init {
-            addElement("chainId")
-            addElement("merkleRoot")
-            addElement("hash")
-            addElement("previousHash")
-            addElement("params")
-            addElement("seconds")
-            addElement("nonce")
+    override val descriptor: SerialDescriptor =
+        SerialDescriptor("BlockHeader") {
+            val seconds = PrimitiveDescriptor(
+                "seconds", PrimitiveKind.LONG
+            )
+            val nonce = PrimitiveDescriptor(
+                "nonce", PrimitiveKind.LONG
+            )
+            element(
+                elementName = "chainId",
+                descriptor = chainIdDescriptor
+            )
+            element(
+                elementName = "merkleRoot",
+                descriptor = hashDescriptor
+            )
+            element(
+                elementName = "hash",
+                descriptor = hashDescriptor
+            )
+            element(
+                elementName = "previousHash",
+                descriptor = hashDescriptor
+            )
+            element(
+                elementName = "params",
+                descriptor = BlockParams.serializer().descriptor
+            )
+            element(
+                elementName = seconds.serialName,
+                descriptor = seconds
+            )
+            element(
+                elementName = nonce.serialName,
+                descriptor = nonce
+            )
         }
-    }
 
-    abstract fun CompositeEncoder.encodeChainId(index: Int, chainId: ChainId)
-    abstract fun CompositeDecoder.decodeChainId(index: Int): ChainId
+    abstract val chainIdDescriptor: SerialDescriptor
+    abstract fun CompositeEncoder.encodeChainId(
+        index: Int, chainId: ChainId
+    )
 
-    override val descriptor: SerialDescriptor = BlockHeaderSerialDescriptor
+    abstract fun CompositeDecoder.decodeChainId(
+        index: Int
+    ): ChainId
 
     override fun deserialize(decoder: Decoder): BlockHeader =
         with(decoder.beginStructure(descriptor)) {
             lateinit var chainId: ChainId
             lateinit var merkleRoot: Hash
-            // Difficulty is fixed at block generation time.
+            lateinit var hash: Hash
             lateinit var previousHash: Hash
             lateinit var blockParams: BlockParams
             var seconds by Delegates.notNull<Long>()
             var nonce by Delegates.notNull<Long>()
-            lateinit var hash: Hash
             loop@ while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
                     CompositeDecoder.READ_DONE -> break@loop
@@ -76,20 +98,20 @@ internal abstract class AbstractBlockHeaderSerializer : KSerializer<BlockHeader>
             )
         }
 
-    override fun serialize(encoder: Encoder, obj: BlockHeader) {
+    override fun serialize(encoder: Encoder, value: BlockHeader) {
         with(encoder.beginStructure(descriptor)) {
-            encodeChainId(0, obj.chainId)
-            encodeHash(1, obj.merkleRoot)
-            encodeHash(2, obj.hash)
-            encodeHash(3, obj.previousHash)
+            encodeChainId(0, value.chainId)
+            encodeHash(1, value.merkleRoot)
+            encodeHash(2, value.hash)
+            encodeHash(3, value.previousHash)
             encodeSerializableElement(
-                descriptor, 4, BlockParams.serializer(), obj.params
+                descriptor, 4, BlockParams.serializer(), value.params
             )
             encodeLongElement(
-                descriptor, 5, obj.seconds
+                descriptor, 5, value.seconds
             )
             encodeLongElement(
-                descriptor, 6, obj.nonce
+                descriptor, 6, value.nonce
             )
             endStructure(descriptor)
         }

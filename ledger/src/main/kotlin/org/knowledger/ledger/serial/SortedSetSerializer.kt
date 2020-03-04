@@ -21,20 +21,24 @@ internal class SortedSetSerializer<T>(
     fun patch(decoder: Decoder, old: TreeSet<T>): SortedSet<T> {
         val builder = old as? TreeSet<T> ?: TreeSet(old)
         val startIndex = builder.size
-        @Suppress("NAME_SHADOWING")
-        val decoder = decoder.beginStructure(descriptor, valueSerializer)
-        val size = readSize(decoder)
-        mainLoop@ while (true) {
-            val index = decoder.decodeElementIndex(descriptor)
-            when (index) {
-                CompositeDecoder.READ_ALL -> {
-                    readAll(decoder, builder, startIndex, size)
-                    break@mainLoop
-                }
-                CompositeDecoder.READ_DONE -> break@mainLoop
-                else -> readItem(decoder, startIndex + index, builder)
-            }
 
+        @Suppress("NAME_SHADOWING")
+        val decoder = decoder.beginStructure(
+            descriptor, valueSerializer
+        )
+        val size = readSize(decoder)
+        //Can be read in entirety sequentially
+        if (decoder.decodeSequentially()) {
+            readAll(decoder, builder, startIndex, size)
+        } else {
+            mainLoop@ while (true) {
+                //Read element by element
+                val index = decoder.decodeElementIndex(descriptor)
+                when (index) {
+                    CompositeDecoder.READ_DONE -> break@mainLoop
+                    else -> readItem(decoder, startIndex + index, builder)
+                }
+            }
         }
         decoder.endStructure(descriptor)
         return builder
@@ -45,13 +49,19 @@ internal class SortedSetSerializer<T>(
         return patch(decoder, builder)
     }
 
-    override fun serialize(encoder: Encoder, obj: SortedSet<T>) {
-        val size = obj.size
+    override fun serialize(encoder: Encoder, value: SortedSet<T>) {
+        val size = value.size
+
         @Suppress("NAME_SHADOWING")
-        val encoder = encoder.beginCollection(descriptor, size, valueSerializer)
-        val iterator = obj.iterator()
+        val encoder = encoder.beginCollection(
+            descriptor, size, valueSerializer
+        )
+        val iterator = value.iterator()
         for (index in 0 until size)
-            encoder.encodeSerializableElement(descriptor, index, valueSerializer, iterator.next())
+            encoder.encodeSerializableElement(
+                descriptor, index,
+                valueSerializer, iterator.next()
+            )
         encoder.endStructure(descriptor)
     }
 
@@ -80,26 +90,34 @@ internal class SortedSetSerializer<T>(
     }
 
     class TreeSetDescriptor(val elementDesc: SerialDescriptor) : SerialDescriptor {
-        override val name: String = "java.util.TreeSet"
+        override val serialName: String = "java.util.TreeSet"
         override val kind: SerialKind get() = StructureKind.LIST
         override val elementsCount: Int = 1
         override fun getElementName(index: Int): String = index.toString()
         override fun getElementIndex(name: String): Int =
             name.toIntOrNull() ?: throw IllegalArgumentException("$name is not a valid list index")
 
+        override fun getElementAnnotations(index: Int): List<Annotation> =
+            elementDesc.annotations
+
         override fun getElementDescriptor(index: Int): SerialDescriptor = elementDesc
+
+        override fun isElementOptional(index: Int): Boolean =
+            false
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is TreeSetDescriptor) return false
 
-            if (elementDesc == other.elementDesc && name == other.name) return true
+            if (elementDesc == other.elementDesc && serialName == other.serialName) return true
 
             return false
         }
 
+
         override fun hashCode(): Int {
-            return elementDesc.hashCode() * 31 + name.hashCode()
+            return elementDesc.hashCode() * 31 + serialName.hashCode()
         }
+
     }
 }

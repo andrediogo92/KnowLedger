@@ -1,29 +1,47 @@
 package org.knowledger.ledger.serial.internal
 
-import kotlinx.serialization.CompositeDecoder
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.internal.SerialClassDescImpl
+import kotlinx.serialization.*
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.crypto.Hash
 import kotlin.properties.Delegates
 
 internal abstract class AbstractCoinbaseParamsSerializer : KSerializer<CoinbaseParams>,
                                                            HashEncode {
-    private object CoinbaseParamsSerialDescriptor : SerialClassDescImpl("CoinbaseParams") {
-        init {
-            addElement("timeIncentive")
-            addElement("valueIncentive")
-            addElement("baseIncentive")
-            addElement("dividingThreshold")
-            addElement("formula")
+    override val descriptor: SerialDescriptor =
+        SerialDescriptor("CoinbaseParams") {
+            val timeIncentive = PrimitiveDescriptor(
+                "timeIncentive", PrimitiveKind.LONG
+            )
+            val valueIncentive = PrimitiveDescriptor(
+                "valueIncentive", PrimitiveKind.LONG
+            )
+            val baseIncentive = PrimitiveDescriptor(
+                "baseIncentive", PrimitiveKind.LONG
+            )
+            val dividingThreshold = PrimitiveDescriptor(
+                "dividingThreshold", PrimitiveKind.LONG
+            )
+            element(
+                elementName = timeIncentive.serialName,
+                descriptor = timeIncentive
+            )
+            element(
+                elementName = valueIncentive.serialName,
+                descriptor = valueIncentive
+            )
+            element(
+                elementName = baseIncentive.serialName,
+                descriptor = baseIncentive
+            )
+            element(
+                elementName = dividingThreshold.serialName,
+                descriptor = dividingThreshold
+            )
+            element(
+                elementName = "formula",
+                descriptor = hashDescriptor
+            )
         }
-    }
-
-    override val descriptor: SerialDescriptor = CoinbaseParamsSerialDescriptor
 
     override fun deserialize(decoder: Decoder): CoinbaseParams =
         with(decoder.beginStructure(descriptor)) {
@@ -61,21 +79,21 @@ internal abstract class AbstractCoinbaseParamsSerializer : KSerializer<CoinbaseP
             )
         }
 
-    override fun serialize(encoder: Encoder, obj: CoinbaseParams) {
+    override fun serialize(encoder: Encoder, value: CoinbaseParams) {
         with(encoder.beginStructure(descriptor)) {
             encodeLongElement(
-                descriptor, 0, obj.timeIncentive
+                descriptor, 0, value.timeIncentive
             )
             encodeLongElement(
-                descriptor, 1, obj.valueIncentive
+                descriptor, 1, value.valueIncentive
             )
             encodeLongElement(
-                descriptor, 2, obj.baseIncentive
+                descriptor, 2, value.baseIncentive
             )
             encodeLongElement(
-                descriptor, 3, obj.dividingThreshold
+                descriptor, 3, value.dividingThreshold
             )
-            encodeHash(4, obj.formula)
+            encodeHash(4, value.formula)
             endStructure(descriptor)
         }
     }

@@ -18,7 +18,7 @@ internal data class HashedWitnessImpl(
     @Transient
     var hasher: Hashers = DEFAULT_HASHER,
     @Transient
-    var encoder: BinaryFormat = Cbor.plain
+    var encoder: BinaryFormat = Cbor
 ) : HashedWitness,
     HashUpdateable,
     Witness by witness {

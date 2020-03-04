@@ -1,13 +1,6 @@
 package org.knowledger.ledger.serial.internal
 
-import kotlinx.serialization.CompositeDecoder
-import kotlinx.serialization.CompositeEncoder
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.internal.SerialClassDescImpl
+import kotlinx.serialization.*
 import org.knowledger.collections.MutableSortedList
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.serial.PayoutSerializer
@@ -24,22 +17,47 @@ import kotlin.properties.Delegates
 internal abstract class AbstractCoinbaseSerializer(
     witnessSerializer: KSerializer<Witness>
 ) : KSerializer<Coinbase>, HashEncode {
-    private object CoinbaseSerialDescriptor : SerialClassDescImpl("Coinbase") {
-        init {
-            addElement("hash")
-            addElement("payout")
-            addElement("difficulty")
-            addElement("blockheight")
-            addElement("extraNonce")
-            addElement("coinbaseParams")
-            addElement("witnesses")
+    private val witnessesSerializer =
+        SortedListSerializer(witnessSerializer)
+    override val descriptor: SerialDescriptor =
+        SerialDescriptor("Coinbase") {
+            val blockheight = PrimitiveDescriptor(
+                "blockheight", PrimitiveKind.LONG
+            )
+            val extraNonce = PrimitiveDescriptor(
+                "extraNonce", PrimitiveKind.LONG
+            )
+            element(
+                elementName = "hash",
+                descriptor = hashDescriptor
+            )
+            element(
+                elementName = "payout",
+                descriptor = PayoutSerializer.descriptor
+            )
+            element(
+                elementName = "difficulty",
+                descriptor = difficultyDescriptor
+            )
+            element(
+                elementName = blockheight.serialName,
+                descriptor = blockheight
+            )
+            element(
+                elementName = extraNonce.serialName,
+                descriptor = extraNonce
+            )
+            element(
+                elementName = "coinbaseParams",
+                descriptor = coinbaseParamsDescriptor
+            )
+            element(
+                elementName = "witnesses",
+                descriptor = witnessesSerializer.descriptor
+            )
         }
-    }
 
-    override val descriptor: SerialDescriptor = CoinbaseSerialDescriptor
-
-    private val witnessesSerializer = SortedListSerializer(witnessSerializer)
-
+    abstract val difficultyDescriptor: SerialDescriptor
     abstract fun CompositeEncoder.encodeDifficulty(
         index: Int, difficulty: Difficulty
     )
@@ -48,6 +66,7 @@ internal abstract class AbstractCoinbaseSerializer(
         index: Int
     ): Difficulty
 
+    abstract val coinbaseParamsDescriptor: SerialDescriptor
     abstract fun CompositeEncoder.encodeCoinbaseParams(
         index: Int, params: CoinbaseParams
     )
@@ -58,13 +77,13 @@ internal abstract class AbstractCoinbaseSerializer(
 
     override fun deserialize(decoder: Decoder): Coinbase =
         with(decoder.beginStructure(descriptor)) {
-            lateinit var witnesses: MutableSortedList<Witness>
+            lateinit var hash: Hash
             lateinit var payout: Payout
             lateinit var difficulty: Difficulty
             var blockheight by Delegates.notNull<Long>()
             var extraNonce by Delegates.notNull<Long>()
             lateinit var coinbaseParams: CoinbaseParams
-            lateinit var hash: Hash
+            lateinit var witnesses: MutableSortedList<Witness>
             loop@ while (true) {
                 @Suppress("UNCHECKED_CAST")
                 when (val i = decodeElementIndex(descriptor)) {
@@ -97,19 +116,19 @@ internal abstract class AbstractCoinbaseSerializer(
         }
 
 
-    override fun serialize(encoder: Encoder, obj: Coinbase) {
+    override fun serialize(encoder: Encoder, value: Coinbase) {
         with(encoder.beginStructure(descriptor)) {
-            encodeHash(0, obj.hash)
+            encodeHash(0, value.hash)
             encodeSerializableElement(
-                descriptor, 1, PayoutSerializer, obj.payout
+                descriptor, 1, PayoutSerializer, value.payout
             )
-            encodeDifficulty(2, obj.difficulty)
-            encodeLongElement(descriptor, 3, obj.blockheight)
-            encodeLongElement(descriptor, 4, obj.extraNonce)
-            encodeCoinbaseParams(5, obj.coinbaseParams)
+            encodeDifficulty(2, value.difficulty)
+            encodeLongElement(descriptor, 3, value.blockheight)
+            encodeLongElement(descriptor, 4, value.extraNonce)
+            encodeCoinbaseParams(5, value.coinbaseParams)
             encodeSerializableElement(
                 descriptor, 6, witnessesSerializer,
-                obj.witnesses
+                value.witnesses
             )
             endStructure(descriptor)
         }

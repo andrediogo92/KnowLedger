@@ -35,7 +35,7 @@ interface ChainBuilder {
     ): BlockHeader
 
     fun coinbase(
-        transactionOutputs: MutableSortedList<Witness>,
+        witnesses: MutableSortedList<Witness>,
         payout: Payout, difficulty: Difficulty,
         blockheight: Long, extraNonce: Long, hash: Hash
     ): Coinbase

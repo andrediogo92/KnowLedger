@@ -1,13 +1,6 @@
 package org.knowledger.ledger.serial.internal
 
-import kotlinx.serialization.CompositeDecoder
-import kotlinx.serialization.CompositeEncoder
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.internal.SerialClassDescImpl
+import kotlinx.serialization.*
 import org.knowledger.collections.MutableSortedList
 import org.knowledger.ledger.core.serial.PayoutSerializer
 import org.knowledger.ledger.crypto.EncodedPublicKey
@@ -23,19 +16,38 @@ import kotlin.properties.Delegates
 internal abstract class AbstractWitnessSerializer(
     transactionOutputSerializer: KSerializer<TransactionOutput>
 ) : KSerializer<Witness>, HashEncode {
-    private object TransactionOutputSerialDescriptor : SerialClassDescImpl("TransactionOutput") {
-        init {
-            addElement("publicKey")
-            addElement("previousWitnessIndex")
-            addElement("previousCoinbase")
-            addElement("hash")
-            addElement("payout")
-            addElement("transactionOutputs")
+    override val descriptor: SerialDescriptor =
+        SerialDescriptor("TransactionOutput") {
+            val previousWitnessIndex = PrimitiveDescriptor(
+                "previousWitnessIndex", PrimitiveKind.INT
+            )
+            element(
+                elementName = "publicKey",
+                descriptor = publicKeyDescriptor
+            )
+            element(
+                elementName = previousWitnessIndex.serialName,
+                descriptor = previousWitnessIndex
+            )
+            element(
+                elementName = "previousCoinbase",
+                descriptor = hashDescriptor
+            )
+            element(
+                elementName = "hash",
+                descriptor = hashDescriptor
+            )
+            element(
+                elementName = "payout",
+                descriptor = PayoutSerializer.descriptor
+            )
+            element(
+                elementName = "transactionOutputs",
+                descriptor = transactionOutputSerializer.descriptor
+            )
         }
-    }
 
-    override val descriptor: SerialDescriptor = TransactionOutputSerialDescriptor
-
+    abstract val publicKeyDescriptor: SerialDescriptor
     abstract fun CompositeEncoder.encodePublicKey(
         index: Int, publicKey: EncodedPublicKey
     )
@@ -44,7 +56,8 @@ internal abstract class AbstractWitnessSerializer(
         index: Int
     ): EncodedPublicKey
 
-    private val transactionOutputsSerializer = SortedListSerializer(transactionOutputSerializer)
+    private val transactionOutputsSerializer =
+        SortedListSerializer(transactionOutputSerializer)
 
     override fun deserialize(decoder: Decoder): Witness =
         with(decoder.beginStructure(descriptor)) {
@@ -82,18 +95,18 @@ internal abstract class AbstractWitnessSerializer(
             )
         }
 
-    override fun serialize(encoder: Encoder, obj: Witness) {
+    override fun serialize(encoder: Encoder, value: Witness) {
         with(encoder.beginStructure(descriptor)) {
-            encodePublicKey(0, obj.publicKey)
-            encodeIntElement(descriptor, 1, obj.previousWitnessIndex)
-            encodeHash(2, obj.previousCoinbase)
-            encodeHash(3, obj.hash)
+            encodePublicKey(0, value.publicKey)
+            encodeIntElement(descriptor, 1, value.previousWitnessIndex)
+            encodeHash(2, value.previousCoinbase)
+            encodeHash(3, value.hash)
             encodeSerializableElement(
-                descriptor, 4, PayoutSerializer, obj.payout
+                descriptor, 4, PayoutSerializer, value.payout
             )
             encodeSerializableElement(
                 descriptor, 5, transactionOutputsSerializer,
-                obj.transactionOutputs
+                value.transactionOutputs
             )
             endStructure(descriptor)
         }

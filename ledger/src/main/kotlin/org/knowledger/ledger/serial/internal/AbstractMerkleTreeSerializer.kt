@@ -1,8 +1,14 @@
 package org.knowledger.ledger.serial.internal
 
-import kotlinx.serialization.*
-import kotlinx.serialization.internal.IntSerializer
-import kotlinx.serialization.internal.SerialClassDescImpl
+import kotlinx.serialization.CompositeDecoder
+import kotlinx.serialization.CompositeEncoder
+import kotlinx.serialization.Decoder
+import kotlinx.serialization.Encoder
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.list
+import kotlinx.serialization.builtins.serializer
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.serial.HashAlgorithmSerializer
@@ -10,17 +16,26 @@ import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.storage.MerkleTree
 
 internal abstract class AbstractMerkleTreeSerializer : KSerializer<MerkleTree> {
-    private object MerkleTreeSerialDescriptor : SerialClassDescImpl("MerkleTree") {
-        init {
-            addElement("collapsedTree")
-            addElement("levelIndex")
-            addElement("hasher")
+    private val intListSerializer = Int.serializer().list
+    override val descriptor: SerialDescriptor =
+        SerialDescriptor("MerkleTree") {
+            element(
+                elementName = "collapsedTree",
+                descriptor = hashListDescriptor
+            )
+            element(
+                elementName = "levelIndex",
+                descriptor = intListSerializer.descriptor
+            )
+            element(
+                elementName = "hasher",
+                descriptor = HashAlgorithmSerializer.descriptor
+            )
+
         }
-    }
-
-    override val descriptor: SerialDescriptor = MerkleTreeSerialDescriptor
 
 
+    abstract val hashListDescriptor: SerialDescriptor
     abstract fun CompositeEncoder.encodeHashList(
         index: Int, hashList: List<Hash>
     )
@@ -40,7 +55,7 @@ internal abstract class AbstractMerkleTreeSerializer : KSerializer<MerkleTree> {
                     CompositeDecoder.READ_DONE -> break@loop
                     0 -> collapsedTree = decodeHashList(i) as MutableList<Hash>
                     1 -> levelIndex = decodeSerializableElement(
-                        descriptor, i, IntSerializer.list
+                        descriptor, i, intListSerializer
                     ) as MutableList<Int>
                     2 -> hashers = decodeSerializableElement(
                         descriptor, i, HashAlgorithmSerializer
@@ -56,14 +71,14 @@ internal abstract class AbstractMerkleTreeSerializer : KSerializer<MerkleTree> {
             )
         }
 
-    override fun serialize(encoder: Encoder, obj: MerkleTree) {
+    override fun serialize(encoder: Encoder, value: MerkleTree) {
         with(encoder.beginStructure(descriptor)) {
-            encodeHashList(0, obj.collapsedTree)
+            encodeHashList(0, value.collapsedTree)
             encodeSerializableElement(
-                descriptor, 1, IntSerializer.list, obj.levelIndex
+                descriptor, 1, intListSerializer, value.levelIndex
             )
             encodeSerializableElement(
-                descriptor, 2, HashAlgorithmSerializer, obj.hasher
+                descriptor, 2, HashAlgorithmSerializer, value.hasher
             )
             endStructure(descriptor)
         }

@@ -1,6 +1,5 @@
 package org.knowledger.ledger.config
 
-import kotlinx.serialization.cbor.Cbor
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.math.MathContext
@@ -14,5 +13,4 @@ object GlobalLedgerConfiguration {
         BigInteger("10000000000000")
     val RECALC_MULT =
         BigDecimal("10000000000000")
-    val DEFAULT_ENCODER = Cbor.plain
 }

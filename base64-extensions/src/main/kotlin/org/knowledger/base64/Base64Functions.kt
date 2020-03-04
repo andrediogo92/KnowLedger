@@ -11,11 +11,11 @@ private val b64Encoder = Base64.getUrlEncoder()
 private val b64Decoder = Base64.getUrlDecoder()
 
 @Suppress("NOTHING_TO_INLINE")
-@UseExperimental(ExperimentalStdlibApi::class)
+@OptIn(ExperimentalStdlibApi::class)
 inline fun String.encodedStringInUTF8(): ByteArray = encodeToByteArray()
 
 @Suppress("NOTHING_TO_INLINE")
-@UseExperimental(ExperimentalStdlibApi::class)
+@OptIn(ExperimentalStdlibApi::class)
 inline fun ByteArray.decodedUTF8String(): String = decodeToString()
 
 fun Key.base64Encoded(): Base64String =

@@ -2,6 +2,7 @@ package org.knowledger.ledger.serial.binary
 
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.CompositeEncoder
+import kotlinx.serialization.SerialDescriptor
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.serial.DifficultySerializer
 import org.knowledger.ledger.data.Difficulty
@@ -12,6 +13,9 @@ import org.knowledger.ledger.serial.internal.HashEncodeInBytes
 
 internal object CoinbaseByteSerializer : AbstractCoinbaseSerializer(WitnessSerializer),
                                          HashEncodeInBytes {
+    override val difficultyDescriptor: SerialDescriptor
+        get() = DifficultySerializer.descriptor
+
     override fun CompositeEncoder.encodeDifficulty(
         index: Int, difficulty: Difficulty
     ) {
@@ -28,6 +32,9 @@ internal object CoinbaseByteSerializer : AbstractCoinbaseSerializer(WitnessSeria
             CoinbaseSerializer.descriptor, index,
             DifficultySerializer
         )
+
+    override val coinbaseParamsDescriptor: SerialDescriptor
+        get() = CoinbaseParamsByteSerializer.descriptor
 
 
     override fun CompositeEncoder.encodeCoinbaseParams(

@@ -35,7 +35,7 @@ internal data class BlockImpl(
     override val header: BlockHeader,
     override var merkleTree: MerkleTree,
     @Transient
-    internal var encoder: BinaryFormat = Cbor.plain,
+    internal var encoder: BinaryFormat = Cbor,
     @Transient
     internal var hasher: Hashers = DEFAULT_HASHER
 ) : Block, LedgerContract {

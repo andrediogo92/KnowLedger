@@ -23,7 +23,7 @@ internal data class HashedCoinbaseImpl(
     val coinbase: CoinbaseImpl,
     internal var _hash: Hash? = null,
     private var hasher: Hashers = DEFAULT_HASHER,
-    private var encoder: BinaryFormat = Cbor.plain
+    private var encoder: BinaryFormat = Cbor
 ) : HashedCoinbase,
     HashUpdateable,
     Coinbase by coinbase {

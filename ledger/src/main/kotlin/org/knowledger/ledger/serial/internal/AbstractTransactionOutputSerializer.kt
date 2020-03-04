@@ -1,12 +1,6 @@
 package org.knowledger.ledger.serial.internal
 
-import kotlinx.serialization.CompositeDecoder
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.internal.SerialClassDescImpl
+import kotlinx.serialization.*
 import org.knowledger.ledger.core.serial.PayoutSerializer
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.Payout
@@ -14,19 +8,41 @@ import org.knowledger.ledger.storage.TransactionOutput
 import org.knowledger.ledger.storage.transaction.output.transactionOutput
 import kotlin.properties.Delegates
 
-internal abstract class AbstractTransactionOutputSerializer : KSerializer<TransactionOutput>, HashEncode {
-    private object TransactionOutputSerialDescriptor : SerialClassDescImpl("TransactionOutput") {
-        init {
-            addElement("payout")
-            addElement("prevTxBlock")
-            addElement("prevTxIndex")
-            addElement("prevTx")
-            addElement("txIndex")
-            addElement("tx")
+internal abstract class AbstractTransactionOutputSerializer : KSerializer<TransactionOutput>,
+                                                              HashEncode {
+    override val descriptor: SerialDescriptor =
+        SerialDescriptor("TransactionOutput") {
+            val prevTxIndex = PrimitiveDescriptor(
+                "prevTxIndex", PrimitiveKind.INT
+            )
+            val txIndex = PrimitiveDescriptor(
+                "txIndex", PrimitiveKind.INT
+            )
+            element(
+                elementName = "payout",
+                descriptor = PayoutSerializer.descriptor
+            )
+            element(
+                elementName = "prevTxBlock",
+                descriptor = hashDescriptor
+            )
+            element(
+                elementName = prevTxIndex.serialName,
+                descriptor = prevTxIndex
+            )
+            element(
+                elementName = "prevTx",
+                descriptor = hashDescriptor
+            )
+            element(
+                elementName = txIndex.serialName,
+                descriptor = txIndex
+            )
+            element(
+                elementName = "tx",
+                descriptor = hashDescriptor
+            )
         }
-    }
-
-    override val descriptor: SerialDescriptor = TransactionOutputSerialDescriptor
 
 
     override fun deserialize(decoder: Decoder): TransactionOutput =
@@ -61,17 +77,17 @@ internal abstract class AbstractTransactionOutputSerializer : KSerializer<Transa
             )
         }
 
-    override fun serialize(encoder: Encoder, obj: TransactionOutput) {
+    override fun serialize(encoder: Encoder, value: TransactionOutput) {
         with(encoder.beginStructure(descriptor)) {
             encodeSerializableElement(
                 descriptor, 0,
-                PayoutSerializer, obj.payout
+                PayoutSerializer, value.payout
             )
-            encodeHash(1, obj.prevTxBlock)
-            encodeIntElement(descriptor, 2, obj.prevTxIndex)
-            encodeHash(3, obj.prevTx)
-            encodeIntElement(descriptor, 4, obj.txIndex)
-            encodeHash(5, obj.tx)
+            encodeHash(1, value.prevTxBlock)
+            encodeIntElement(descriptor, 2, value.prevTxIndex)
+            encodeHash(3, value.prevTx)
+            encodeIntElement(descriptor, 4, value.txIndex)
+            encodeHash(5, value.tx)
             endStructure(descriptor)
         }
     }

@@ -1,24 +1,17 @@
 package org.knowledger.ledger.core.serial
 
-import kotlinx.serialization.CompositeDecoder
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.SerializationException
-import kotlinx.serialization.Serializer
-import kotlinx.serialization.internal.SerialClassDescImpl
+import kotlinx.serialization.*
 import java.util.*
 import kotlin.properties.Delegates
 
 @Serializer(forClass = UUID::class)
 object UUIDSerializer : KSerializer<UUID> {
     override val descriptor: SerialDescriptor =
-        object : SerialClassDescImpl("UUID") {
-            init {
-                addElement(name = "higher")
-                addElement(name = "lower")
-            }
+        SerialDescriptor("UUID") {
+            val higher = PrimitiveDescriptor("higher", PrimitiveKind.LONG)
+            val lower = PrimitiveDescriptor("lower", PrimitiveKind.LONG)
+            element(elementName = higher.serialName, descriptor = higher)
+            element(elementName = lower.serialName, descriptor = lower)
         }
 
     override fun deserialize(decoder: Decoder): UUID {
@@ -38,13 +31,13 @@ object UUIDSerializer : KSerializer<UUID> {
         }
     }
 
-    override fun serialize(encoder: Encoder, obj: UUID) {
+    override fun serialize(encoder: Encoder, value: UUID) {
         with(encoder.beginStructure(descriptor)) {
             encodeLongElement(
-                descriptor, 0, obj.mostSignificantBits
+                descriptor, 0, value.mostSignificantBits
             )
             encodeLongElement(
-                descriptor, 1, obj.leastSignificantBits
+                descriptor, 1, value.leastSignificantBits
             )
             endStructure(descriptor)
         }

@@ -4,8 +4,6 @@ import kotlinx.serialization.Decoder
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.internal.StringDescriptor
-import kotlinx.serialization.withName
 import org.knowledger.ledger.core.base.data.DefaultDiff
 import org.knowledger.ledger.core.base.hash.classDigest
 import org.knowledger.ledger.core.serial.HashSerializer
@@ -13,7 +11,7 @@ import org.knowledger.ledger.crypto.hash.Hashers
 
 object DefaultDataFormulaSerializer : KSerializer<DefaultDiff> {
     override val descriptor: SerialDescriptor =
-        StringDescriptor.withName("DefaultDiff")
+        HashSerializer.descriptor
 
     override fun deserialize(
         decoder: Decoder
@@ -26,7 +24,7 @@ object DefaultDataFormulaSerializer : KSerializer<DefaultDiff> {
         }
 
     override fun serialize(
-        encoder: Encoder, obj: DefaultDiff
+        encoder: Encoder, value: DefaultDiff
     ) {
         encoder.encodeSerializableValue(
             HashSerializer,

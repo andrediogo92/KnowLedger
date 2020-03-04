@@ -2,6 +2,7 @@ package org.knowledger.ledger.serial.display
 
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.CompositeEncoder
+import kotlinx.serialization.SerialDescriptor
 import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.serial.EncodedPublicKeySerializer
 import org.knowledger.ledger.serial.internal.AbstractWitnessSerializer
@@ -9,6 +10,9 @@ import org.knowledger.ledger.serial.internal.HashEncodeForDisplay
 
 internal object WitnessSerializer : AbstractWitnessSerializer(TransactionOutputSerializer),
                                     HashEncodeForDisplay {
+    override val publicKeyDescriptor: SerialDescriptor
+        get() = EncodedPublicKeySerializer.descriptor
+
     override fun CompositeEncoder.encodePublicKey(
         index: Int, publicKey: EncodedPublicKey
     ) {
