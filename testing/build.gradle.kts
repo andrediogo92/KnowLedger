@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 plugins {
     kotlin("jvm")
     id(Plugins.serial)
@@ -8,6 +6,7 @@ plugins {
 serialPlugin {
     packageName = "org.knowledger.ledger.testing"
     module = "testing"
+    requiresOptIn = true
 }
 
 version = "0.2"
@@ -15,8 +14,4 @@ version = "0.2"
 dependencies {
     implementation(project(":ledger-core"))
     implementation(Libs.commonsRNG)
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
 }

@@ -13,6 +13,6 @@ internal fun Project.addSerialPlugins() {
 internal fun Project.addSerialDependencies() {
     addCommonDependencies()
     dependencies {
-        implementation(Libs.serialization)
+        Libs.serialization.forEach(::implementation)
     }
 }

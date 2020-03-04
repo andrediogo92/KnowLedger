@@ -1,6 +1,4 @@
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
-version = "0.1"
+version = "0.2"
 
 
 plugins {
@@ -10,12 +8,9 @@ plugins {
 
 basePlugin {
     module = "base64-extensions"
+    requiresOptIn = true
 }
 
 dependencies {
     implementation(project(":ledger-core:data"))
-}
-
-tasks.withType<KotlinCompile> {
-    kotlinOptions.freeCompilerArgs += "-Xuse-experimental=kotlin.Experimental"
 }

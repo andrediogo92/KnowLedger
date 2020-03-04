@@ -14,7 +14,7 @@ kotlinDslPluginOptions {
 
 dependencies {
     val kotlinVersion by extra {
-        "1.3.61"
+        "1.3.70"
     }
     val dokka_version by extra {
         "0.10.1"

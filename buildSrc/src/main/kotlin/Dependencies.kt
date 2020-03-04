@@ -13,11 +13,11 @@ object Versions {
     const val jmhPlugin = "0.5.0"
     const val jUnit = "5.6.0"
     const val jUnitRunner = "1.6.0"
-    const val kotlin = "1.3.61"
+    const val kotlin = "1.3.70"
     const val koin = "2.1.1"
     const val kotlinPoet = "1.5.0"
     const val orientDB = "3.0.28"
-    const val serial = "0.14.0"
+    const val serial = "0.20.0"
     const val tinylog = "2.0.1"
 }
 
@@ -69,8 +69,10 @@ object Libs {
         "com.orientechnologies:orientdb-server:${Versions.orientDB}"
     )
 
-    const val serialization =
-        "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serial}"
+    val serialization = listOf(
+        "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serial}",
+        "org.jetbrains.kotlinx:kotlinx-serialization-cbor:${Versions.serial}"
+    )
 
     val tinylog = listOf(
         "org.tinylog:tinylog-api-kotlin:${Versions.tinylog}",
