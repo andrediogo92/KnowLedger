@@ -45,7 +45,9 @@ internal class SUCoinbaseStorageAdapter(
                             it, session
                         )
                     }
-            ).setDifficultyProperty(
+            ).setPayoutProperty("payout", toStore.payout)
+            .setHashProperty("hash", toStore.hash)
+            .setDifficultyProperty(
                 "difficulty", toStore.difficulty, session
             ).setStorageProperty(
                 "blockheight", toStore.blockheight
@@ -53,8 +55,6 @@ internal class SUCoinbaseStorageAdapter(
             .setStorageProperty(
                 "extraNonce", toStore.extraNonce
             )
-            .setPayoutProperty("payout", toStore.payout)
-            .setHashProperty("hash", toStore.hash)
 
     override fun load(
         ledgerHash: Hash, element: StorageElement

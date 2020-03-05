@@ -16,7 +16,7 @@ internal class SUTransactionOutputStorageAdapter : LedgerStorageAdapter<Transact
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "payout" to StorageType.DECIMAL,
+            "payout" to StorageType.PAYOUT,
             "prevTxBlock" to StorageType.HASH,
             "prevTxIndex" to StorageType.INTEGER,
             "prevTx" to StorageType.HASH,
@@ -29,7 +29,7 @@ internal class SUTransactionOutputStorageAdapter : LedgerStorageAdapter<Transact
     ): StorageElement =
         session
             .newInstance(id)
-            .setStorageProperty(
+            .setPayoutProperty(
                 "payout", toStore.payout
             ).setHashProperty(
                 "prevTxBlock", toStore.prevTxBlock
@@ -46,9 +46,8 @@ internal class SUTransactionOutputStorageAdapter : LedgerStorageAdapter<Transact
         ledgerHash: Hash, element: StorageElement
     ): Outcome<TransactionOutputImpl, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val payout: Payout = Payout(
-                element.getStorageProperty("payout")
-            )
+            val payout: Payout =
+                element.getPayoutProperty("payout")
             val prevTxBlock: Hash =
                 element.getHashProperty("prevTxBlock")
             val prevTxIndex: Int =
