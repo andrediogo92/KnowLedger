@@ -7,7 +7,9 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.knowledger.collections.MutableSortedList
 import org.knowledger.collections.mapToSet
+import org.knowledger.collections.toMutableSortedListFromPreSorted
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.LedgerParams
 import org.knowledger.ledger.core.truncatedHexString
@@ -26,9 +28,12 @@ import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.transactions.QueryManager
 import org.knowledger.ledger.service.transactions.getTransactionByHash
+import org.knowledger.ledger.service.transactions.getTransactionByIndex
 import org.knowledger.ledger.service.transactions.getTransactionsByClass
 import org.knowledger.ledger.service.transactions.getTransactionsFromAgent
 import org.knowledger.ledger.service.transactions.getTransactionsOrderedByTimestamp
+import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.knowledger.testing.ledger.appendByLine
 import org.knowledger.testing.ledger.failOnError
@@ -39,7 +44,10 @@ import org.knowledger.testing.ledger.testHasher
 import org.tinylog.kotlin.Logger
 
 class TestOrientDatabase {
-    private val ids = arrayOf(Identity("test"), Identity("test2"))
+    private val ids = arrayOf(
+        Identity("test"),
+        Identity("test2")
+    )
 
     private val db = OrientDatabase(
         OrientDatabaseInfo(
@@ -50,8 +58,10 @@ class TestOrientDatabase {
     )
     private val session = db.newManagedSession("test")
     private val hasher = testHasher
-    private val trafficFlowDataStorageAdapter = TrafficFlowDataStorageAdapter(hasher)
-    private val temperatureDataStorageAdapter = TemperatureDataStorageAdapter(hasher)
+    private val trafficFlowDataStorageAdapter =
+        TrafficFlowDataStorageAdapter(hasher)
+    private val temperatureDataStorageAdapter =
+        TemperatureDataStorageAdapter(hasher)
 
     private val ledger = LedgerHandle
         .Builder()
@@ -85,10 +95,13 @@ class TestOrientDatabase {
     private val chainId = temperatureChain.id
     private val pw = ledger.pw
     private val transactionStorageAdapter = pw.transactionStorageAdapter
-    private val transactions = generateXTransactionsArray(
-        id = ids, size = 20,
-        hasher = hasher, encoder = encoder
-    ).toSortedSet()
+    private val transactions: MutableSortedList<Transaction> =
+        generateXTransactions(
+            id = ids, size = 20,
+            hasher = hasher, encoder = encoder
+        ).map {
+            StorageAwareTransaction((it as HashedTransactionImpl))
+        }.toMutableSortedListFromPreSorted()
 
 
     @BeforeAll
@@ -113,7 +126,7 @@ class TestOrientDatabase {
             fun `created clusters`() {
                 val plug = session as OrientSession
                 val clusterNames = session.clustersPresent
-                Logger.info {
+                Logger.debug {
                     StringBuilder()
                         .append(System.lineSeparator())
                         .append("Clusters present in ${plug.name}")
@@ -141,7 +154,7 @@ class TestOrientDatabase {
                     """.trimIndent()
                 )
                 elements.forEach { res ->
-                    Logger.info {
+                    Logger.debug {
                         res.json
                     }
                 }
@@ -182,7 +195,7 @@ class TestOrientDatabase {
                     )
                 }
             }
-            Logger.info {
+            Logger.debug {
                 StringBuilder("Properties in Transaction:")
                     .appendByLine(present[0].presentProperties)
                     .toString()
@@ -217,12 +230,12 @@ class TestOrientDatabase {
             val elements = session.queryToList(
                 UnspecificQuery(
                     """
-                    SELECT
-                    FROM $tid
-                    WHERE hash = :hash
+                        SELECT
+                        FROM $tid
+                        WHERE hash = :hash
                     """.trimIndent(),
                     mapOf(
-                        "hash" to transactions.first().hash.bytes
+                        "hash" to transactions[0].hash.bytes
                     )
                 )
             )
@@ -237,28 +250,54 @@ class TestOrientDatabase {
 
     @Nested
     inner class Handles {
-        private val trafficChain: ChainHandle = ledger.registerNewChainHandleOf(
-            trafficFlowDataStorageAdapter
-        ).unwrap()
+        private val trafficChain: ChainHandle =
+            ledger.registerNewChainHandleOf(
+                trafficFlowDataStorageAdapter
+            ).unwrap()
 
         @Nested
         inner class Blocks {
 
             @Test
             fun `Test simple insertion`() {
-
                 val block = generateBlockWithChain(
-                    temperatureChain.id, hasher, encoder, ledger.ledgerInfo.formula,
+                    temperatureChain.id, hasher, encoder,
+                    ledger.ledgerInfo.formula,
                     ledger.ledgerInfo.coinbaseParams,
                     ledger.ledgerInfo.ledgerParams.blockParams
                 )
-                assertThat(block + transactions.first())
+                assertThat(block + transactions[0])
                     .isTrue()
-                assertThat(block.transactions.first())
+                assertThat(block.transactions[0])
                     .isNotNull()
-                    .isEqualTo(transactions.first())
+                    .isEqualTo(transactions[0])
             }
 
+            @Test
+            fun `Test transactions by index`() {
+                val block = generateBlockWithChain(
+                    temperatureChain.id,
+                    transactions, hasher, encoder,
+                    ledger.ledgerInfo.formula,
+                    ledger.ledgerInfo.coinbaseParams,
+                    ledger.ledgerInfo.ledgerParams.blockParams
+                )
+                val trafficQueryManager =
+                    pw.chainManager(trafficChain.chainHash)
+
+                block.newExtraNonce()
+
+                trafficQueryManager.persistEntity(
+                    block, trafficQueryManager.blockStorageAdapter
+                )
+
+                trafficQueryManager.getTransactionByIndex(
+                    block.header.hash,
+                    2
+                ).mapSuccess {
+                    assertThat(it).isEqualTo(transactions[2])
+                }.failOnError()
+            }
 
             @Test
             fun `Test traffic insertion`() {
@@ -267,14 +306,15 @@ class TestOrientDatabase {
                 )[0]
 
                 val block = generateBlockWithChain(
-                    trafficChain.id, hasher, encoder, ledger.ledgerInfo.formula,
+                    trafficChain.id, hasher, encoder,
+                    ledger.ledgerInfo.formula,
                     ledger.ledgerInfo.coinbaseParams,
                     ledger.ledgerInfo.ledgerParams.blockParams
                 )
                 assertThat(block).isNotNull()
                 assertThat(block + testTraffic)
                     .isTrue()
-                assertThat(block.transactions.first())
+                assertThat(block.transactions[0])
                     .isNotNull()
                     .isEqualTo(testTraffic)
             }

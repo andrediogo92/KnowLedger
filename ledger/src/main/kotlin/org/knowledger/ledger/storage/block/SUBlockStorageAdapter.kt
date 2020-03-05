@@ -27,7 +27,7 @@ internal class SUBlockStorageAdapter(
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "data" to StorageType.LIST,
+            "transactions" to StorageType.LIST,
             "payout" to StorageType.LINK,
             "header" to StorageType.LINK,
             "merkleTree" to StorageType.LINK
@@ -40,7 +40,7 @@ internal class SUBlockStorageAdapter(
         session
             .newInstance(id)
             .setElementList(
-                "data",
+                "transactions",
                 toStore.transactions.map {
                     transactionStorageAdapter.persist(
                         it, session
@@ -74,7 +74,7 @@ internal class SUBlockStorageAdapter(
             val merkleTree = element.getLinked("merkleTree")
             zip(
                 element
-                    .getElementList("data")
+                    .getElementList("transactions")
                     .asSequence()
                     .map {
                         transactionStorageAdapter.load(

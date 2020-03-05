@@ -59,9 +59,5 @@ data class PhysicalData(
     ) : this(instant, GeoCoords(lat, lng, alt), data)
 
     override fun compareTo(other: PhysicalData): Int =
-        when {
-            instant > other.instant -> -1
-            instant < other.instant -> 1
-            else -> 0
-        }
+        instant.compareTo(other.instant)
 }

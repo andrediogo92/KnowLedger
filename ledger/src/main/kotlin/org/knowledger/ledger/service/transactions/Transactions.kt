@@ -16,8 +16,7 @@ import java.security.PublicKey
 // Execution must be runtime determined.
 // ------------------------------
 internal fun QueryManager.getTransactionsFromAgent(
-    tag: String,
-    publicKey: PublicKey
+    tag: String, publicKey: PublicKey
 ): Outcome<Sequence<Transaction>, LoadFailure> =
     transactionStorageAdapter.let {
         queryResults(
@@ -38,17 +37,30 @@ internal fun QueryManager.getTransactionsFromAgent(
     }
 
 internal fun QueryManager.getTransactionsFromAgent(
-    tag: Hash,
-    publicKey: PublicKey
+    tag: Hash, publicKey: PublicKey
 ): Outcome<Sequence<Transaction>, LoadFailure> =
     getTransactionsFromAgent(
         tag.base64Encoded(), publicKey
     )
 
+internal fun QueryManager.getTransactionByIndex(
+    blockHash: Hash, index: Int
+): Outcome<Transaction, LoadFailure> =
+    queryUniqueResult(
+        UnspecificQuery(
+            """
+                SELECT expand(transactions[$index])
+                FROM ${blockStorageAdapter.id}
+                WHERE header.hash = :hash
+            """.trimIndent(),
+            mapOf(
+                "hash" to blockHash.bytes
+            )
+        ), transactionStorageAdapter
+    )
 
 internal fun QueryManager.getTransactionByHash(
-    tag: String,
-    hash: Hash
+    tag: String, hash: Hash
 ): Outcome<Transaction, LoadFailure> =
     transactionStorageAdapter.let {
         queryUniqueResult(
@@ -63,14 +75,12 @@ internal fun QueryManager.getTransactionByHash(
                     "tag" to tag,
                     "hash" to hash.bytes
                 )
-            ),
-            it
+            ), it
         )
     }
 
 internal fun QueryManager.getTransactionByHash(
-    tag: Hash,
-    hash: Hash
+    tag: Hash, hash: Hash
 ): Outcome<Transaction, LoadFailure> =
     getTransactionByHash(tag.base64Encoded(), hash)
 
@@ -86,7 +96,7 @@ internal fun QueryManager.getTransactionsOrderedByTimestamp(
                     SELECT 
                     FROM ${it.id}
                     WHERE value.value.@class = :tag
-                    ORDER BY value.seconds DESC, value.nanos DESC
+                    ORDER BY value.seconds ASC, value.nanos ASC
                 """.trimIndent(),
                 mapOf(
                     "tag" to tag

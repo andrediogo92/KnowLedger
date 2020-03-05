@@ -25,7 +25,7 @@ internal fun QueryManager.getBlockHeaderByHash(
                     FROM ${it.id} 
                     WHERE hash = :hash 
                         AND chainId.hash = :chainHash
-                    """.trimIndent(),
+                """.trimIndent(),
                 mapOf(
                     "hash" to hash.bytes,
                     "chainHash" to chainHash.bytes

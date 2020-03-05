@@ -11,7 +11,6 @@ import kotlinx.serialization.modules.SerializersModule
 import org.knowledger.collections.MutableSortedList
 import org.knowledger.collections.mutableSortedListOf
 import org.knowledger.collections.toMutableSortedList
-import org.knowledger.collections.toMutableSortedListFromPreSorted
 import org.knowledger.collections.toSizedArray
 import org.knowledger.ledger.config.BlockParams
 import org.knowledger.ledger.config.ChainId
@@ -130,7 +129,7 @@ fun generateXTransactions(
 ): MutableSortedList<Transaction> =
     transactionGenerator(id, hasher, encoder, generator)
         .take(size)
-        .toMutableSortedListFromPreSorted()
+        .toMutableSortedList()
 
 fun generateXTransactions(
     id: Identity,
