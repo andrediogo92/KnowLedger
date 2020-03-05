@@ -136,7 +136,7 @@ internal data class HashedCoinbaseImpl(
             previousIndex = latestKnownIndex,
             previousTransaction = latestKnownBlockHash
         )
-
+        updateHash(hasher, encoder)
     }
 
     override fun addToWitness(
@@ -161,6 +161,7 @@ internal data class HashedCoinbaseImpl(
             previousTransaction = latestKnownBlockHash,
             payout = payout
         )
+        updateHash(hasher, encoder)
     }
 
     private fun checkInput(

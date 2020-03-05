@@ -369,9 +369,9 @@ data class MerkleTreeImpl(
 
     override fun buildFromCoinbase(coinbase: Hashing) {
         var accumulate = coinbase.hash
-        _collapsedTree[levelIndex.size - 1] = accumulate
         var i = levelIndex.size - 1
         var j = levelIndex[i]
+        _collapsedTree[j] = accumulate
         while (i > 0) {
             accumulate = hasher.applyHash(accumulate + _collapsedTree[j + 1])
             i -= 1
