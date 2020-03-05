@@ -85,6 +85,11 @@ class TestMerkleTree {
             begin = random.randomInt(size - 8)
         }
 
+        val coinbase7 = generateCoinbase(
+            ts = ts7, coinbaseParams = coinbaseParams
+        )
+        val tree7WithCoinbase =
+            MerkleTreeImpl(testHasher, coinbase7, ts7)
         private val ts8 = base.sliceArray(begin until begin + 8)
         private val tree8 = MerkleTreeImpl(testHasher, ts8)
 
@@ -123,12 +128,9 @@ class TestMerkleTree {
             //transactions 1 + 2 + hashId of transactions 3 + 4
             assertThat(nakedTree[1].bytes).containsExactly(
                 *applyHashInPairs(
-                    testHasher,
-                    arrayOf(
-                        ts8[0].hash,
-                        ts8[1].hash,
-                        ts8[2].hash,
-                        ts8[3].hash
+                    testHasher, arrayOf(
+                        ts8[0].hash, ts8[1].hash,
+                        ts8[2].hash, ts8[3].hash
                     )
                 ).bytes
             )
@@ -136,28 +138,20 @@ class TestMerkleTree {
             //transactions 1 + 2 + hashId of transactions 3 + 4
             assertThat(nakedTree[2].bytes).containsExactly(
                 *applyHashInPairs(
-                    testHasher,
-                    arrayOf(
-                        ts8[4].hash,
-                        ts8[5].hash,
-                        ts8[6].hash,
-                        ts8[7].hash
+                    testHasher, arrayOf(
+                        ts8[4].hash, ts8[5].hash,
+                        ts8[6].hash, ts8[7].hash
                     )
                 ).bytes
 
             )
             assertThat(tree8.hash.bytes).containsExactly(
                 *applyHashInPairs(
-                    testHasher,
-                    arrayOf(
-                        ts8[0].hash,
-                        ts8[1].hash,
-                        ts8[2].hash,
-                        ts8[3].hash,
-                        ts8[4].hash,
-                        ts8[5].hash,
-                        ts8[6].hash,
-                        ts8[7].hash
+                    testHasher, arrayOf(
+                        ts8[0].hash, ts8[1].hash,
+                        ts8[2].hash, ts8[3].hash,
+                        ts8[4].hash, ts8[5].hash,
+                        ts8[6].hash, ts8[7].hash
                     )
                 ).bytes
 
@@ -197,14 +191,135 @@ class TestMerkleTree {
         }
 
         @Test
-        fun `all transaction verification`() {
-            val coinbase7 = generateCoinbase(
-                ts = ts7, coinbaseParams = coinbaseParams
+        fun `merkle tree coinbase recreation`() {
+            //Log constructed merkle
+            logMerkle(coinbase7, ts7, tree7WithCoinbase)
+
+            val treeClone = tree7WithCoinbase.collapsedTree.toList()
+
+            //Two levels in to the left is a hashId of transaction 1 + 2.
+            assertThat(treeClone[3].bytes).containsExactly(
+                *testHasher.applyHash(coinbase7.hash + ts7[0].hash).bytes
             )
-            val tree7WithCoinbase =
-                MerkleTreeImpl(testHasher, coinbase7, ts7)
+            assertThat(treeClone[4].bytes).containsExactly(
+                *testHasher.applyHash(ts7[1].hash + ts7[2].hash).bytes
+            )
+            assertThat(treeClone[5].bytes).containsExactly(
+                *testHasher.applyHash(ts7[3].hash + ts7[4].hash).bytes
+            )
+            assertThat(treeClone[6].bytes).containsExactly(
+                *testHasher.applyHash(ts7[5].hash + ts7[6].hash).bytes
+            )
+            //One level to the left is a hashId of the hashId of
+            //transactions 1 + 2 and the hashId of transactions 3 + 4
+            assertThat(treeClone[1].bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        coinbase7.hash, ts7[0].hash,
+                        ts7[1].hash, ts7[2].hash
+                    )
+                ).bytes
+            )
+            //One level to the right is a hashId of the hashId of
+            //transactions 5 + 6 and 7 + 8
+            assertThat(treeClone[2].bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        ts7[3].hash, ts7[4].hash,
+                        ts7[5].hash, ts7[6].hash
+                    )
+                ).bytes
+            )
+            //Root is everything else.
+            assertThat(treeClone[0].bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        coinbase7.hash, ts7[0].hash,
+                        ts7[1].hash, ts7[2].hash,
+                        ts7[3].hash, ts7[4].hash,
+                        ts7[5].hash, ts7[6].hash
+                    )
+                ).bytes
+            )
 
 
+            coinbase7.addToWitness(
+                coinbase7.witnesses[0], 4, ts7[4]
+            )
+
+
+            tree7WithCoinbase.buildFromCoinbase(coinbase7)
+
+            //Log constructed merkle
+            logMerkle(coinbase7, ts7, tree7WithCoinbase)
+
+            //Root is present
+            assertThat(tree7WithCoinbase.hash).isNotNull()
+            val nakedTree = tree7WithCoinbase.collapsedTree
+            //Three levels to the left is first transaction.
+            assertThat(nakedTree[7].bytes).containsExactly(*coinbase7.hash.bytes)
+            assertThat(nakedTree[8].bytes).containsExactly(*ts7[0].hash.bytes)
+            assertThat(nakedTree[9].bytes).containsExactly(*ts7[1].hash.bytes)
+            assertThat(nakedTree[10].bytes).containsExactly(*ts7[2].hash.bytes)
+            assertThat(nakedTree[11].bytes).containsExactly(*ts7[3].hash.bytes)
+            assertThat(nakedTree[12].bytes).containsExactly(*ts7[4].hash.bytes)
+            assertThat(nakedTree[13].bytes).containsExactly(*ts7[5].hash.bytes)
+            assertThat(nakedTree[14].bytes).containsExactly(*ts7[6].hash.bytes)
+            //Two levels in to the left is a hashId of transaction 1 + 2.
+            assertThat(nakedTree[3].bytes).containsExactly(
+                *testHasher.applyHash(coinbase7.hash + ts7[0].hash).bytes
+            )
+            assertThat(nakedTree[4].bytes).containsExactly(
+                *testHasher.applyHash(ts7[1].hash + ts7[2].hash).bytes
+            )
+            assertThat(nakedTree[5].bytes).containsExactly(
+                *testHasher.applyHash(ts7[3].hash + ts7[4].hash).bytes
+            )
+            assertThat(nakedTree[6].bytes).containsExactly(
+                *testHasher.applyHash(ts7[5].hash + ts7[6].hash).bytes
+            )
+            //One level to the left is a hashId of the hashId of
+            //transactions 1 + 2 + hashId of transactions 3 + 4
+            assertThat(nakedTree[1].bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        coinbase7.hash, ts7[0].hash,
+                        ts7[1].hash, ts7[2].hash
+                    )
+                ).bytes
+            )
+            //One level to the left is a hashId of the hashId of
+            //transactions 1 + 2 + hashId of transactions 3 + 4
+            assertThat(nakedTree[2].bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        ts7[3].hash, ts7[4].hash,
+                        ts7[5].hash, ts7[6].hash
+                    )
+                ).bytes
+
+            )
+            assertThat(tree7WithCoinbase.hash.bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        coinbase7.hash, ts7[0].hash,
+                        ts7[1].hash, ts7[2].hash,
+                        ts7[3].hash, ts7[4].hash,
+                        ts7[5].hash, ts7[6].hash
+                    )
+                ).bytes
+
+            )
+
+            //Verify coinbase update triggered left branch rehash up to root.
+            assertThat(treeClone[0]).isNotEqualTo(tree7WithCoinbase.collapsedTree[0])
+            assertThat(treeClone[1]).isNotEqualTo(tree7WithCoinbase.collapsedTree[1])
+            assertThat(treeClone[3]).isNotEqualTo(tree7WithCoinbase.collapsedTree[3])
+            assertThat(treeClone[7]).isNotEqualTo(tree7WithCoinbase.collapsedTree[7])
+        }
+
+        @Test
+        fun `all transaction verification`() {
             //Log constructed merkle
             logMerkle(coinbase7, ts7, tree7WithCoinbase)
 
@@ -414,6 +529,7 @@ class TestMerkleTree {
                 ).bytes
             )
 
+            //Verify coinbase update triggered left branch rehash up to root.
             assertThat(treeClone[0]).isNotEqualTo(tree5WithCoinbase.collapsedTree[0])
             assertThat(treeClone[1]).isNotEqualTo(tree5WithCoinbase.collapsedTree[1])
             assertThat(treeClone[3]).isNotEqualTo(tree5WithCoinbase.collapsedTree[3])
