@@ -3,6 +3,7 @@ package org.knowledger.ledger.test
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
+import assertk.assertions.isNotEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
 import org.junit.jupiter.api.Nested
@@ -273,10 +274,8 @@ class TestMerkleTree {
                 *applyHashInPairs(
                     testHasher,
                     arrayOf(
-                        ts6[0].hash,
-                        ts6[1].hash,
-                        ts6[2].hash,
-                        ts6[3].hash
+                        ts6[0].hash, ts6[1].hash,
+                        ts6[2].hash, ts6[3].hash
                     )
                 ).bytes
             )
@@ -286,10 +285,8 @@ class TestMerkleTree {
                 *applyHashInPairs(
                     testHasher,
                     arrayOf(
-                        ts6[4].hash,
-                        ts6[5].hash,
-                        ts6[4].hash,
-                        ts6[5].hash
+                        ts6[4].hash, ts6[5].hash,
+                        ts6[4].hash, ts6[5].hash
                     )
                 ).bytes
             )
@@ -298,15 +295,129 @@ class TestMerkleTree {
                 *applyHashInPairs(
                     testHasher,
                     arrayOf(
-                        ts6[0].hash,
-                        ts6[1].hash,
-                        ts6[2].hash,
-                        ts6[3].hash,
-                        ts6[4].hash,
-                        ts6[5].hash
+                        ts6[0].hash, ts6[1].hash,
+                        ts6[2].hash, ts6[3].hash,
+                        ts6[4].hash, ts6[5].hash
                     )
                 ).bytes
             )
+        }
+
+        @Test
+        fun `merkle tree coinbase recreation`() {
+            //Log constructed merkle
+            logMerkle(coinbase5, ts5, tree5WithCoinbase)
+
+            val treeClone = tree5WithCoinbase.collapsedTree.toList()
+
+            //Two levels in to the left is a hashId of transaction 1 + 2.
+            assertThat(treeClone[3].bytes).containsExactly(
+                *testHasher.applyHash(coinbase5.hash + ts5[0].hash).bytes
+            )
+            assertThat(treeClone[4].bytes).containsExactly(
+                *testHasher.applyHash(ts5[1].hash + ts5[2].hash).bytes
+            )
+            assertThat(treeClone[5].bytes).containsExactly(
+                *testHasher.applyHash(ts5[3].hash + ts5[4].hash).bytes
+            )
+            //One level to the left is a hashId of the hashId of
+            //transactions 1 + 2 and the hashId of transactions 3 + 4
+            assertThat(treeClone[1].bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        coinbase5.hash, ts5[0].hash,
+                        ts5[1].hash, ts5[2].hash
+                    )
+                ).bytes
+            )
+            //One level to the right is a hashId of the hashId of
+            //transactions 5 + 6 * 2
+            assertThat(treeClone[2].bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        ts5[3].hash, ts5[4].hash,
+                        ts5[3].hash, ts5[4].hash
+                    )
+                ).bytes
+            )
+            //Root is everything else.
+            assertThat(tree5WithCoinbase.hash.bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        coinbase5.hash, ts5[0].hash,
+                        ts5[1].hash, ts5[2].hash,
+                        ts5[3].hash, ts5[4].hash
+                    )
+                ).bytes
+            )
+
+
+            coinbase5.addToWitness(
+                coinbase5.witnesses[0], 4, ts5[4]
+            )
+
+
+            tree5WithCoinbase.buildFromCoinbase(coinbase5)
+
+            //Log constructed merkle
+            logMerkle(coinbase5, ts5, tree5WithCoinbase)
+
+            //Root is present
+            assertThat(tree5WithCoinbase.hash).isNotNull()
+            val nakedTree = tree5WithCoinbase.collapsedTree
+            //Three levels to the left is first transaction.
+            //Said transaction is the coinbase
+            assertThat(nakedTree[6].bytes).containsExactly(*coinbase5.hash.bytes)
+            assertThat(nakedTree[7].bytes).containsExactly(*ts5[0].hash.bytes)
+            assertThat(nakedTree[8].bytes).containsExactly(*ts5[1].hash.bytes)
+            assertThat(nakedTree[9].bytes).containsExactly(*ts5[2].hash.bytes)
+            assertThat(nakedTree[10].bytes).containsExactly(*ts5[3].hash.bytes)
+            assertThat(nakedTree[11].bytes).containsExactly(*ts5[4].hash.bytes)
+            //Two levels in to the left is a hashId of transaction 1 + 2.
+            assertThat(nakedTree[3].bytes).containsExactly(
+                *testHasher.applyHash(coinbase5.hash + ts5[0].hash).bytes
+            )
+            assertThat(nakedTree[4].bytes).containsExactly(
+                *testHasher.applyHash(ts5[1].hash + ts5[2].hash).bytes
+            )
+            assertThat(nakedTree[5].bytes).containsExactly(
+                *testHasher.applyHash(ts5[3].hash + ts5[4].hash).bytes
+            )
+            //One level to the left is a hashId of the hashId of
+            //transactions 1 + 2 and the hashId of transactions 3 + 4
+            assertThat(nakedTree[1].bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        coinbase5.hash, ts5[0].hash,
+                        ts5[1].hash, ts5[2].hash
+                    )
+                ).bytes
+            )
+            //One level to the right is a hashId of the hashId of
+            //transactions 5 + 6 * 2
+            assertThat(nakedTree[2].bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        ts5[3].hash, ts5[4].hash,
+                        ts5[3].hash, ts5[4].hash
+                    )
+                ).bytes
+            )
+            //Root is everything else.
+            assertThat(tree5WithCoinbase.hash.bytes).containsExactly(
+                *applyHashInPairs(
+                    testHasher, arrayOf(
+                        coinbase5.hash, ts5[0].hash,
+                        ts5[1].hash, ts5[2].hash,
+                        ts5[3].hash, ts5[4].hash
+                    )
+                ).bytes
+            )
+
+            assertThat(treeClone[0]).isNotEqualTo(tree5WithCoinbase.collapsedTree[0])
+            assertThat(treeClone[1]).isNotEqualTo(tree5WithCoinbase.collapsedTree[1])
+            assertThat(treeClone[3]).isNotEqualTo(tree5WithCoinbase.collapsedTree[3])
+            assertThat(treeClone[6]).isNotEqualTo(tree5WithCoinbase.collapsedTree[6])
         }
 
         @Test
