@@ -18,6 +18,7 @@ import org.knowledger.ledger.service.adapters.IdentityStorageAdapter
 import org.knowledger.ledger.service.adapters.LedgerConfigStorageAdapter
 import org.knowledger.ledger.service.adapters.PoolTransactionStorageAdapter
 import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
+import org.knowledger.ledger.service.adapters.TransactionWithBlockHashStorageLoadable
 import org.knowledger.ledger.service.pools.transaction.SATransactionPoolStorageAdapter
 import org.knowledger.ledger.service.pools.transaction.SUTransactionPoolStorageAdapter
 import org.knowledger.ledger.service.transactions.PersistenceWrapper
@@ -52,6 +53,8 @@ internal class AdapterManager(
         PhysicalDataStorageAdapter(this)
     override val transactionStorageAdapter: TransactionStorageAdapter
     override val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
+    override val transactionWithBlockHashStorageLoadable: TransactionWithBlockHashStorageLoadable =
+        TransactionWithBlockHashStorageLoadable(physicalDataStorageAdapter)
     override val witnessStorageAdapter: WitnessStorageAdapter
     override val merkleTreeStorageAdapter: MerkleTreeStorageAdapter
     override val coinbaseStorageAdapter: CoinbaseStorageAdapter

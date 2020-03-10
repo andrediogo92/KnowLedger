@@ -30,7 +30,8 @@ internal abstract class AbstractQueryManager(
     protected val ledgerHash: Hash,
     protected val session: ManagedSession,
     protected val adapterManager: AdapterManager
-) : AdapterCollection by adapterManager {
+) : AdapterCollection by adapterManager,
+    EntityStore {
     internal val isClosed
         get() = session.isClosed
 
@@ -139,7 +140,7 @@ internal abstract class AbstractQueryManager(
                 } else {
                     Outcome.Error<LedgerFailure>(
                         LedgerFailure.NonExistentData(
-                            query.query
+                            "Empty ResultSet for ${query.query}"
                         )
                     )
                 }

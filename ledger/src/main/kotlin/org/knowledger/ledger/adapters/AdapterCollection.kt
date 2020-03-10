@@ -7,6 +7,7 @@ import org.knowledger.ledger.database.adapters.SchemaProvider
 import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
 import org.knowledger.ledger.service.adapters.PoolTransactionStorageAdapter
 import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
+import org.knowledger.ledger.service.adapters.TransactionWithBlockHashStorageLoadable
 import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
 import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
 import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
@@ -24,6 +25,7 @@ internal interface AdapterCollection {
     val physicalDataStorageAdapter: PhysicalDataStorageAdapter
     val transactionStorageAdapter: TransactionStorageAdapter
     val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
+    val transactionWithBlockHashStorageLoadable: TransactionWithBlockHashStorageLoadable
     val witnessStorageAdapter: WitnessStorageAdapter
 
     //Service Adapters
