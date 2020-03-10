@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 import org.knowledger.base64.base64Encoded
 import org.knowledger.collections.mapToArray
 import org.knowledger.ledger.config.CoinbaseParams
+import org.knowledger.ledger.core.base.hash.Hash.Companion.emptyHash
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.crypto.service.Identity
@@ -18,6 +19,7 @@ import org.knowledger.ledger.crypto.storage.MerkleTreeImpl
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.storage.coinbase.WitnessAdding
 import org.knowledger.testing.core.applyHashInPairs
 import org.knowledger.testing.core.random
 import org.knowledger.testing.ledger.testHasher
@@ -35,8 +37,8 @@ class TestMerkleTree {
 
     private val size = 24
     private val base = generateXTransactionsArray(id, size)
-    private var begin = random.randomInt(size - 7)
-    private val ts7 = base.sliceArray(begin until begin + 7)
+    private val begin7 = random.randomInt(size - 7)
+    private val ts7 = base.sliceArray(begin7 until begin7 + 7)
 
     //Cache coinbase params to avoid repeated digest of formula calculations.
     private val coinbaseParams = CoinbaseParams()
@@ -291,13 +293,14 @@ class TestMerkleTree {
 
     @Nested
     inner class BalancedMerkleTree {
-        init {
-            begin = random.randomInt(size - 8)
-        }
+        private val begin = random.randomInt(size - 8)
 
         val coinbase7 = generateCoinbase(
-            ts = ts7, coinbaseParams = coinbaseParams
-        )
+            coinbaseParams = coinbaseParams
+        ).also {
+            it.addWitnesses(ts = ts7)
+        }
+
         val tree7WithCoinbase =
             MerkleTreeImpl(testHasher, coinbase7, ts7)
         private val ts8 = base.sliceArray(begin until begin + 8)
@@ -336,10 +339,11 @@ class TestMerkleTree {
             //Assert all levels of the tree have correct hashing upstream.
             assertUpstream(treeClone.sliceArray(0..6), coinbase7, ts7)
 
-
             //Alter coinbase to add extra witness.
-            coinbase7.addToWitness(
-                coinbase7.witnesses[0], 4, ts7[4]
+            (coinbase7 as WitnessAdding).addToWitness(
+                witness = coinbase7.witnesses[0], newIndex = 4, newTransaction = ts7[4],
+                latestKnownBlockHash = emptyHash, latestKnownHash = emptyHash,
+                latestKnownIndex = -1, latestKnown = null
             )
 
             //Recalculate only coinbase propagation
@@ -383,24 +387,20 @@ class TestMerkleTree {
 
     @Nested
     inner class UnbalancedMerkleTree {
-        init {
-            begin = random.randomInt(size - 5)
-        }
+        private var begin5 = random.randomInt(size - 5)
+        private val ts5 = base.sliceArray(begin5 until begin5 + 5)
 
-        private val ts5 = base.sliceArray(begin until begin + 5)
+        private val begin6 = random.randomInt(size - 6)
+        private val ts6 = base.sliceArray(begin6 until begin6 + 6)
 
-        init {
-            begin = random.randomInt(size - 6)
-        }
-
-        private val ts6 = base.sliceArray(begin until begin + 6)
         private val coinbase5 = generateCoinbase(
-            ts = ts5, coinbaseParams = coinbaseParams
-        )
+            coinbaseParams = coinbaseParams
+        ).also {
+            it.addWitnesses(ts = ts5)
+        }
         private val tree5WithCoinbase =
             MerkleTreeImpl(testHasher, coinbase5, ts5)
         private val tree6 = MerkleTreeImpl(testHasher, ts6)
-
 
         @Test
         fun `merkle tree creation`() {
@@ -429,10 +429,12 @@ class TestMerkleTree {
             //Assert all levels of the tree have correct hashing upstream.
             assertUpstream(treeClone.sliceArray(0..5), coinbase5, ts5)
 
-
             //Alter coinbase to add extra witness.
-            coinbase5.addToWitness(
-                coinbase5.witnesses[0], 4, ts5[4]
+            (coinbase5 as WitnessAdding).addToWitness(
+                witness = coinbase5.witnesses[0], newIndex = 4,
+                newTransaction = ts5[4], latestKnownBlockHash = emptyHash,
+                latestKnownHash = emptyHash, latestKnownIndex = -1,
+                latestKnown = null
             )
 
             //Recalculate only coinbase propagation
@@ -499,11 +501,13 @@ class TestMerkleTree {
         fun `all transaction verification`() {
 
             val coinbase6 = generateCoinbase(
-                ts = ts6, coinbaseParams = coinbaseParams
-            )
+                coinbaseParams = coinbaseParams
+            ).also {
+                it.addWitnesses(ts = ts6)
+            }
+
             val tree6WithCoinbase =
                 MerkleTreeImpl(testHasher, coinbase6, ts6)
-
             //Log constructed merkle
             logMerkle(coinbase6, ts6, tree6WithCoinbase)
 
@@ -535,7 +539,7 @@ class TestMerkleTree {
 
     @Test
     fun `merkle tree creation with just root`() {
-        begin = random.randomInt(size - 1)
+        val begin = random.randomInt(size - 1)
 
         val ts = arrayOf(base[begin])
         val tree = MerkleTreeImpl(testHasher, ts)

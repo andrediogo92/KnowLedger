@@ -169,7 +169,9 @@ class TestSerialization {
         fun startup() {
             block = generateBlockWithChain(
                 chainId = chainId, ts = testTransactions, coinbaseParams = coinbaseParams
-            )
+            ).also {
+                it.coinbase.addWitnesses(testTransactions.toTypedArray())
+            }
         }
 
         @Test
