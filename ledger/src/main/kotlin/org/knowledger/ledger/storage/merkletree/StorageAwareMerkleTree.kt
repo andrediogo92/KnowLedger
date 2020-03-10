@@ -45,12 +45,18 @@ internal data class StorageAwareMerkleTree(
     ): Outcome<StorageID, UpdateFailure> =
         simpleUpdate(invalidated)
 
+    override fun buildFromCoinbase(coinbase: Hashing) {
+        merkleTree.buildFromCoinbase(coinbase)
+        if (id != null) {
+            invalidated.replace(0, collapsedTree)
+        }
+    }
 
     override fun rebuildMerkleTree(data: Array<out Hashing>) {
         merkleTree.rebuildMerkleTree(data)
         if (id != null) {
-            invalidated.replace(0, merkleTree.collapsedTree)
-            invalidated.replace(1, merkleTree.levelIndex)
+            invalidated.replace(0, collapsedTree)
+            invalidated.replace(1, levelIndex)
         }
     }
 

@@ -1,10 +1,5 @@
-@file:UseSerializers(HashSerializer::class, PayoutSerializer::class)
-
 package org.knowledger.ledger.storage.transaction.output
 
-import kotlinx.serialization.UseSerializers
-import org.knowledger.ledger.core.serial.HashSerializer
-import org.knowledger.ledger.core.serial.PayoutSerializer
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageID
 import org.knowledger.ledger.results.Outcome
@@ -12,7 +7,7 @@ import org.knowledger.ledger.service.results.UpdateFailure
 import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.StoragePairs
 
-internal class StorageAwareTransactionOutput(
+internal data class StorageAwareTransactionOutput(
     internal val transactionOutput: TransactionOutputImpl
 ) : TransactionOutput by transactionOutput,
     StorageAware<TransactionOutput> {
