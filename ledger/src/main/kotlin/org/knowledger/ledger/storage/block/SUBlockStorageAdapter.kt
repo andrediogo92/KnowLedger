@@ -93,11 +93,10 @@ internal class SUBlockStorageAdapter(
                     ledgerHash,
                     merkleTree
                 )
-            )
-            { data, coinbase, header, merkleTree ->
+            ) { data, coinbase, header, merkleTree ->
                 BlockImpl(
-                    data.toMutableSortedListFromPreSorted(), coinbase,
-                    header, merkleTree
+                    data.toMutableSortedListFromPreSorted(),
+                    coinbase, header, merkleTree
                 )
             }
         }

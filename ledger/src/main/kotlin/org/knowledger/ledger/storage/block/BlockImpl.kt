@@ -1,35 +1,25 @@
-@file:UseSerializers(
-    TransactionByteSerializer::class, MerkleTreeByteSerializer::class,
-    BlockHeaderByteSerializer::class, CoinbaseByteSerializer::class
-)
-
 package org.knowledger.ledger.storage.block
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.collections.MutableSortedList
 import org.knowledger.collections.SortedList
+import org.knowledger.collections.copyMutableSortedList
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.data.Difficulty
-import org.knowledger.ledger.serial.MutableSortedListSerializer
-import org.knowledger.ledger.serial.binary.BlockHeaderByteSerializer
-import org.knowledger.ledger.serial.binary.CoinbaseByteSerializer
-import org.knowledger.ledger.serial.binary.MerkleTreeByteSerializer
-import org.knowledger.ledger.serial.binary.TransactionByteSerializer
-import org.knowledger.ledger.storage.BlockHeader
-import org.knowledger.ledger.storage.Coinbase
-import org.knowledger.ledger.storage.LedgerContract
-import org.knowledger.ledger.storage.MerkleTree
-import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.data.PhysicalData
+import org.knowledger.ledger.serial.binary.BlockByteSerializer
+import org.knowledger.ledger.service.transactions.TransactionWithBlockHash
+import org.knowledger.ledger.storage.*
+import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
+import org.knowledger.ledger.storage.blockheader.MerkleTreeUpdate
+import org.knowledger.ledger.storage.coinbase.WitnessAdding
 import org.tinylog.kotlin.Logger
 
-@Serializable
 internal data class BlockImpl(
-    @Serializable(with = MutableSortedListSerializer::class)
     private val _transactions: MutableSortedList<Transaction>,
     override val coinbase: Coinbase,
     override val header: BlockHeader,
@@ -38,7 +28,8 @@ internal data class BlockImpl(
     internal var encoder: BinaryFormat = Cbor,
     @Transient
     internal var hasher: Hashers = DEFAULT_HASHER
-) : Block, LedgerContract {
+) : Block, BlockUpdates, Markable, WitnessCalculator,
+    TransactionAdding, LedgerContract {
     @Transient
     internal var cachedSize: Long? = null
 
@@ -48,18 +39,20 @@ internal data class BlockImpl(
     override val approximateSize: Long
         get() = cachedSize ?: recalculateApproximateSize()
 
-    override fun newExtraNonce(): Block {
-        coinbase.newNonce()
+    override fun newExtraNonce() {
+        (coinbase as NonceRegen).newNonce()
         merkleTree.buildFromCoinbase(coinbase)
-        header.updateMerkleTree(merkleTree.hash)
-        return this
+        (header as MerkleTreeUpdate).updateMerkleTree(merkleTree.hash)
     }
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(serializer(), this)
+        encoder.dump(BlockByteSerializer, this)
 
     override fun clone(): Block =
         copy(
+            _transactions = _transactions.copyMutableSortedList {
+                it.clone()
+            },
             header = header.clone(),
             coinbase = coinbase.clone(),
             merkleTree = merkleTree.clone()
@@ -75,37 +68,116 @@ internal data class BlockImpl(
      * @param transaction   Transaction to attempt to add to the block.
      * @return Whether the transaction was valid and cprrectly inserted.
      */
-    override fun plus(transaction: Transaction): Boolean {
+    override fun plus(transaction: Transaction): Boolean =
+        addTransaction(transaction)
+
+    override fun addTransaction(
+        transaction: Transaction, checkTransaction: Boolean
+    ): Boolean {
         val transactionSize =
             transaction.approximateSize(encoder)
         val cumSize = approximateSize + transactionSize
         if (cumSize < header.params.blockMemorySize) {
             if (_transactions.size < header.params.blockLength) {
-                if (transaction.processTransaction(encoder)) {
+                //If we don't have to check the transaction,
+                //Skip processing signatures.
+                if (!checkTransaction || transaction.processTransaction(encoder)) {
                     _transactions.add(transaction)
+                    _transactions.forEachIndexed { i, elem ->
+                        (elem as Indexed).markIndex(i)
+                    }
                     cachedSize = cumSize
-                    Logger.info {
+                    Logger.debug {
                         "Transaction Successfully added to Block"
                     }
                     return true
                 }
             }
         }
-        Logger.info {
+        Logger.debug {
             "Transaction failed to process. Discarded."
         }
         return false
     }
 
+    override fun calculateWitness(
+        newTransaction: Transaction,
+        transactionOutputStorageAdapter: TransactionOutputStorageAdapter,
+        previousWitnessIndex: Int,
+        coinbaseHash: Hash, latestKnownIndex: Int,
+        latestKnownHash: Hash, latestKnown: PhysicalData?,
+        latestKnownBlockHash: Hash
+    ) {
+        val index = transactions.binarySearch(newTransaction)
+        (coinbase as WitnessAdding).addToWitness(
+            newIndex = index, newTransaction = newTransaction,
+            previousWitnessIndex = previousWitnessIndex,
+            latestCoinbase = coinbaseHash,
+            latestKnownIndex = latestKnownIndex,
+            latestKnown = latestKnown,
+            latestKnownHash = latestKnownHash,
+            latestKnownBlockHash = latestKnownBlockHash,
+            transactionOutputStorageAdapter = transactionOutputStorageAdapter
+        )
+    }
 
-    override fun markMined(blockheight: Long, difficulty: Difficulty) {
-        coinbase.markMined(blockheight, difficulty)
+    override fun calculateWitness(
+        newTransaction: Transaction,
+        lastTransaction: TransactionWithBlockHash,
+        transactionOutputStorageAdapter: TransactionOutputStorageAdapter,
+        previousWitnessIndex: Int, coinbaseHash: Hash
+    ) {
+        val index = transactions.binarySearch(newTransaction)
+        (coinbase as WitnessAdding).addToWitness(
+            newIndex = index, newTransaction = newTransaction,
+            previousWitnessIndex = previousWitnessIndex, latestCoinbase = coinbaseHash,
+            latestKnownIndex = lastTransaction.txIndex,
+            latestKnown = lastTransaction.txData,
+            latestKnownHash = lastTransaction.txHash,
+            latestKnownBlockHash = lastTransaction.txBlockHash,
+            transactionOutputStorageAdapter = transactionOutputStorageAdapter
+        )
+    }
+
+    override fun calculateWitness(
+        witnessIndex: Int, newTransaction: Transaction,
+        lastTransaction: TransactionWithBlockHash
+    ) {
+        val index = transactions.binarySearch(newTransaction)
+        (coinbase as WitnessAdding).addToWitness(
+            witness = coinbase.witnesses[witnessIndex],
+            newIndex = index, newTransaction = newTransaction,
+            latestKnownIndex = lastTransaction.txIndex,
+            latestKnown = lastTransaction.txData,
+            latestKnownHash = lastTransaction.txHash,
+            latestKnownBlockHash = lastTransaction.txBlockHash
+        )
+    }
+
+    override fun calculateWitness(
+        newTransaction: Transaction, witnessIndex: Int,
+        latestKnownIndex: Int, latestKnownHash: Hash,
+        latestKnown: PhysicalData?, latestKnownBlockHash: Hash
+    ) {
+        val index = transactions.binarySearch(newTransaction)
+        (coinbase as WitnessAdding).addToWitness(
+            witness = coinbase.witnesses[witnessIndex],
+            newIndex = index, newTransaction = newTransaction,
+            latestKnownIndex = latestKnownIndex,
+            latestKnown = latestKnown,
+            latestKnownHash = latestKnownHash,
+            latestKnownBlockHash = latestKnownBlockHash
+        )
+    }
+
+    override fun markForMining(blockheight: Long, difficulty: Difficulty) {
+        (coinbase as Markable).markForMining(blockheight, difficulty)
     }
 
 
     override fun updateHashes() {
         merkleTree.rebuildMerkleTree(coinbase, _transactions.toTypedArray())
-        header.updateMerkleTree(merkleTree.hash)
+        (header as MerkleTreeUpdate).updateMerkleTree(merkleTree.hash)
     }
 
 
