@@ -8,14 +8,15 @@ import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.storage.HashUpdateable
+import org.knowledger.ledger.storage.NonceRegen
 
 internal data class HashedBlockHeaderImpl(
     internal val blockHeader: BlockHeaderImpl,
     internal var _hash: Hash? = null,
     private var hasher: Hashers = DEFAULT_HASHER,
     private var encoder: BinaryFormat = Cbor
-) : HashedBlockHeader,
-    HashUpdateable,
+) : HashedBlockHeader, HashUpdateable,
+    MerkleTreeUpdate, HashRegen, NonceRegen,
     BlockHeader by blockHeader {
     private var cachedSize: Long? = null
 
@@ -53,12 +54,6 @@ internal data class HashedBlockHeaderImpl(
         ), _hash = hash, hasher = hasher, encoder = encoder
     )
 
-    override fun updateMerkleTree(newRoot: Hash) {
-        blockHeader._merkleRoot = newRoot
-        blockHeader._nonce = 0
-        updateHash(hasher, encoder)
-    }
-
     override fun recalculateSize(
         hasher: Hashers, encoder: BinaryFormat
     ): Long {
@@ -82,9 +77,19 @@ internal data class HashedBlockHeaderImpl(
                 _hash!!.bytes.size.toLong()
     }
 
-    override fun newHash() {
-        blockHeader._nonce++
+    override fun updateMerkleTree(newRoot: Hash) {
+        (blockHeader as MerkleTreeUpdate).updateMerkleTree(newRoot)
+        (blockHeader as NonceReset).nonceReset()
         updateHash(hasher, encoder)
+    }
+
+    override fun updateHash() {
+        updateHash(hasher, encoder)
+    }
+
+    override fun newNonce() {
+        blockHeader.newNonce()
+        updateHash()
     }
 
 

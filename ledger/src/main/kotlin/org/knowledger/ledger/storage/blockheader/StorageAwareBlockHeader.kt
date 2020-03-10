@@ -9,20 +9,23 @@ import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageID
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.service.results.UpdateFailure
+import org.knowledger.ledger.storage.NonceRegen
 import org.knowledger.ledger.storage.StorageAware
 import org.knowledger.ledger.storage.StoragePairs
 import org.knowledger.ledger.storage.replace
 import org.knowledger.ledger.storage.simpleUpdate
 
-internal data class StorageAwareBlockHeader(
+internal class StorageAwareBlockHeader(
     internal val blockHeader: HashedBlockHeaderImpl
 ) : HashedBlockHeader by blockHeader,
+    MerkleTreeUpdate, NonceRegen, HashRegen,
     StorageAware<HashedBlockHeader> {
     override val hash: Hash
         get() = blockHeader.hash
 
     override val invalidated: Array<StoragePairs<*>> =
         arrayOf(
+            StoragePairs.Native("nonce"),
             StoragePairs.Hash("merkleRoot"),
             StoragePairs.Hash("hash"),
             StoragePairs.Native("seconds")
@@ -42,8 +45,9 @@ internal data class StorageAwareBlockHeader(
         )
     )
 
-    override fun newHash() {
-        blockHeader.newHash()
+    override fun updateHash() {
+        blockHeader.updateHash()
+        invalidated.replace(2, hash)
     }
 
     override fun update(
@@ -54,10 +58,16 @@ internal data class StorageAwareBlockHeader(
     override fun updateMerkleTree(newRoot: Hash) {
         blockHeader.updateMerkleTree(newRoot)
         if (id != null) {
-            invalidated.replace(0, newRoot)
-            invalidated.replace(1, hash)
-            invalidated.replace(2, seconds)
+            invalidated.replace(1, newRoot)
+            invalidated.replace(2, hash)
+            invalidated.replace(3, seconds)
         }
+    }
+
+    override fun newNonce() {
+        blockHeader.newNonce()
+        invalidated.replace(0, nonce)
+        invalidated.replace(2, hash)
     }
 
     override fun equals(other: Any?): Boolean =

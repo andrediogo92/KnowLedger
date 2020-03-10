@@ -10,6 +10,7 @@ import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.serial.binary.ChainIdByteSerializer
+import org.knowledger.ledger.storage.NonceRegen
 import java.time.Instant
 
 @Serializable
@@ -17,19 +18,33 @@ internal data class BlockHeaderImpl(
     override val chainId: ChainId,
     override val previousHash: Hash,
     override val params: BlockParams,
-    internal var _merkleRoot: Hash = Hash.emptyHash,
+    private var _merkleRoot: Hash = Hash.emptyHash,
     override val seconds: Long = Instant.now().epochSecond,
-    internal var _nonce: Long = Long.MIN_VALUE
-) : BlockHeader {
+    private var _nonce: Long = Long.MIN_VALUE
+) : BlockHeader, NonceRegen,
+    NonceReset, MerkleTreeUpdate {
     override val nonce: Long
         get() = _nonce
 
     override val merkleRoot: Hash
         get() = _merkleRoot
 
-    override fun serialize(encoder: BinaryFormat): ByteArray =
+    override fun serialize(
+        encoder: BinaryFormat
+    ): ByteArray =
         encoder.dump(serializer(), this)
 
+    override fun updateMerkleTree(newRoot: Hash) {
+        _merkleRoot = newRoot
+    }
+
+    override fun nonceReset() {
+        _nonce = 0
+    }
+
+    override fun newNonce() {
+        _nonce++
+    }
 
     override fun clone(): BlockHeaderImpl =
         copy(
