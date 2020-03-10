@@ -17,4 +17,3 @@ typealias Transaction = HashedTransaction
 typealias TransactionOutput = TransactionOutput
 typealias Witness = HashedWitness
 internal typealias LedgerContract = LedgerContract
-
