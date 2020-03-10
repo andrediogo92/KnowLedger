@@ -1,4 +1,5 @@
-@file:UseSerializers(InstantSerializer::class, GeoCoordinatesSerializer::class)
+@file:UseSerializers(GeoCoordinatesSerializer::class)
+
 package org.knowledger.ledger.core.data
 
 import kotlinx.serialization.BinaryFormat
@@ -11,19 +12,19 @@ import org.knowledger.ledger.core.base.data.SelfInterval
 import org.knowledger.ledger.core.base.serial.HashSerializable
 import org.knowledger.ledger.core.base.storage.LedgerContract
 import org.knowledger.ledger.core.serial.GeoCoordinatesSerializer
-import org.knowledger.ledger.core.serial.InstantSerializer
 import java.math.BigDecimal
 import java.time.Instant
 
 /**
  * Physical value is the main class in which to store ledger value.
  *
- * It requires an [instant] in which the value was recorded and
- * geo coordinates for where it was recorded.
+ * It requires the milli seconds from Unix Epoch ([millis]) in which
+ * the value was recorded and optional geo coordinates for where it
+ * was recorded.
  */
 @Serializable
 data class PhysicalData(
-    val instant: Instant,
+    val millis: Long,
     val coords: GeoCoords,
     val data: LedgerData
 ) : HashSerializable,
@@ -33,31 +34,33 @@ data class PhysicalData(
     Comparable<PhysicalData>,
     LedgerContract {
     public override fun clone(): PhysicalData =
-        copy()
+        PhysicalData(
+            millis, coords, data.clone()
+        )
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
 
     constructor(
         geoCoords: GeoCoords, data: LedgerData
-    ) : this(Instant.now(), geoCoords, data)
+    ) : this(Instant.now().toEpochMilli(), geoCoords, data)
 
     constructor(
         lat: BigDecimal, lng: BigDecimal,
         data: LedgerData
-    ) : this(Instant.now(), GeoCoords(lat, lng), data)
+    ) : this(Instant.now().toEpochMilli(), GeoCoords(lat, lng), data)
 
     constructor(
         instant: Instant, lat: BigDecimal,
         lng: BigDecimal, data: LedgerData
-    ) : this(instant, GeoCoords(lat, lng), data)
+    ) : this(instant.toEpochMilli(), GeoCoords(lat, lng), data)
 
     constructor(
         instant: Instant, lat: BigDecimal,
         lng: BigDecimal, alt: BigDecimal,
         data: LedgerData
-    ) : this(instant, GeoCoords(lat, lng, alt), data)
+    ) : this(instant.toEpochMilli(), GeoCoords(lat, lng, alt), data)
 
     override fun compareTo(other: PhysicalData): Int =
-        instant.compareTo(other.instant)
+        millis.compareTo(other.millis)
 }
