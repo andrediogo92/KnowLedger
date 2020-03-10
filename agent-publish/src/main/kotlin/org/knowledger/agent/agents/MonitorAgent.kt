@@ -138,7 +138,7 @@ data class MonitorAgent(
      * @param t The sensor store to fill in
      */
     private fun setData(rx: Reduxer, t: PhysicalData) {
-        publish.created_at = t.instant.toString()
+        publish.created_at = t.millis.toString()
         publish.lat = t.coords.latitude.toString()
         publish.lon = t.coords.longitude.toString()
         publish.alt = t.coords.altitude.toString()
