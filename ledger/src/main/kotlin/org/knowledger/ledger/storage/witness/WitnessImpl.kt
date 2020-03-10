@@ -12,7 +12,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import org.knowledger.collections.MutableSortedList
 import org.knowledger.collections.SortedList
-import org.knowledger.collections.mutableSortedListOf
 import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.core.serial.PayoutSerializer
 import org.knowledger.ledger.crypto.EncodedPublicKey
@@ -22,7 +21,6 @@ import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.serial.MutableSortedListSerializer
 import org.knowledger.ledger.serial.binary.TransactionOutputByteSerializer
 import org.knowledger.ledger.storage.TransactionOutput
-import org.knowledger.ledger.storage.transaction.output.transactionOutput
 
 /**
  * [WitnessImpl] contains transaction hashes used
@@ -38,54 +36,23 @@ internal data class WitnessImpl(
     private var _payout: Payout,
     @Serializable(with = MutableSortedListSerializer::class)
     private var _transactionOutputs: MutableSortedList<TransactionOutput>
-) : Witness {
+) : Witness, PayoutAdding {
+
     override val payout: Payout
         get() = _payout
 
     override val transactionOutputs: SortedList<TransactionOutput>
         get() = _transactionOutputs
 
-    internal constructor(
-        publicKey: EncodedPublicKey, previousWitnessIndex: Int,
-        previousCoinbase: Hash, payout: Payout,
-        newIndex: Int, newTransaction: Hash,
-        previousBlock: Hash, previousIndex: Int,
-        previousTransaction: Hash
-    ) : this(
-        publicKey = publicKey,
-        previousWitnessIndex = previousWitnessIndex,
-        previousCoinbase = previousCoinbase,
-        _payout = Payout.ZERO,
-        _transactionOutputs = mutableSortedListOf()
-    ) {
-        addToPayout(
-            payout = payout, newIndex = newIndex,
-            newTransaction = newTransaction,
-            previousBlock = previousBlock,
-            previousIndex = previousIndex,
-            previousTransaction = previousTransaction
-        )
-    }
 
     override fun clone(): WitnessImpl =
         copy()
 
-
     override fun addToPayout(
-        payout: Payout, newIndex: Int, newTransaction: Hash,
-        previousBlock: Hash, previousIndex: Int,
-        previousTransaction: Hash
+        transactionOutput: TransactionOutput
     ) {
-        _transactionOutputs.add(
-            transactionOutput(
-                payout = payout, newIndex = newIndex,
-                newTransaction = newTransaction,
-                previousBlock = previousBlock,
-                previousIndex = previousIndex,
-                previousTransaction = previousTransaction
-            )
-        )
-        _payout += payout
+        _transactionOutputs.add(transactionOutput)
+        _payout += transactionOutput.payout
     }
 
     override fun serialize(encoder: BinaryFormat): ByteArray =

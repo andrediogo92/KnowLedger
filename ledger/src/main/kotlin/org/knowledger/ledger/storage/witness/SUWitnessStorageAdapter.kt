@@ -17,16 +17,17 @@ import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 
 internal class SUWitnessStorageAdapter(
     private val container: LedgerInfo,
-    private val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
+    internal val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
 ) : LedgerStorageAdapter<HashedWitnessImpl> {
     override val id: String
-        get() = "TransactionOutput"
+        get() = "Witness"
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "publicKey" to StorageType.BYTES,
             "previousWitnessIndex" to StorageType.INTEGER,
             "previousCoinbase" to StorageType.HASH,
+            "index" to StorageType.INTEGER,
             "hash" to StorageType.HASH,
             "payout" to StorageType.PAYOUT,
             "transactionOutputs" to StorageType.LIST
@@ -45,6 +46,7 @@ internal class SUWitnessStorageAdapter(
             ).setHashProperty(
                 "previousCoinbase", toStore.previousCoinbase
             ).setHashProperty("hash", toStore.hash)
+            .setStorageProperty("index", toStore.index)
             .setPayoutProperty("payout", toStore.payout)
             .setElementList(
                 "transactionOutputs",
@@ -66,6 +68,8 @@ internal class SUWitnessStorageAdapter(
                 element.getHashProperty("previousCoinbase")
             val hash =
                 element.getHashProperty("hash")
+            val index: Int =
+                element.getStorageProperty("index")
             val payout =
                 element.getPayoutProperty("payout")
             element.getElementList("transactionOutputs").map {
@@ -73,7 +77,7 @@ internal class SUWitnessStorageAdapter(
                     ledgerHash, it
                 )
             }.allValues().mapSuccess {
-                HashedWitnessImpl(
+                val hwi = HashedWitnessImpl(
                     publicKey = publicKey,
                     previousWitnessIndex = previousWitnessIndex,
                     previousCoinbase = previousCoinbase,
@@ -82,7 +86,8 @@ internal class SUWitnessStorageAdapter(
                     hash = hash, hasher = container.hasher,
                     encoder = container.encoder
                 )
-
+                hwi.markIndex(index)
+                hwi
             }
 
         }

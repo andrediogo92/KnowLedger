@@ -4,23 +4,26 @@ import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.Transient
 import kotlinx.serialization.cbor.Cbor
 import org.knowledger.collections.MutableSortedList
+import org.knowledger.collections.mutableSortedListOf
 import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.Hashers.Companion.DEFAULT_HASHER
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.storage.HashUpdateable
+import org.knowledger.ledger.storage.Indexed
 import org.knowledger.ledger.storage.TransactionOutput
 
 internal data class HashedWitnessImpl(
-    val witness: WitnessImpl,
+    private val witness: WitnessImpl,
     private var _hash: Hash? = null,
+    private var _index: Int = -1,
     @Transient
-    var hasher: Hashers = DEFAULT_HASHER,
+    private var hasher: Hashers = DEFAULT_HASHER,
     @Transient
-    var encoder: BinaryFormat = Cbor
-) : HashedWitness,
-    HashUpdateable,
+    private var encoder: BinaryFormat = Cbor
+) : HashedWitness, HashUpdateable,
+    Indexed, PayoutAdding,
     Witness by witness {
     private var cachedSize: Long? = null
 
@@ -30,28 +33,25 @@ internal data class HashedWitnessImpl(
     override val hash
         get() = _hash ?: recalculateHash(hasher, encoder)
 
+    override val index: Int
+        get() = _index
 
+    /**
+     * Constructor for initializating transaction outputs with
+     * the first one for the witness.
+     */
     internal constructor(
         publicKey: EncodedPublicKey, previousWitnessIndex: Int,
-        previousCoinbase: Hash, payout: Payout,
-        newIndex: Int, newTransaction: Hash,
-        previousBlock: Hash, previousIndex: Int,
-        previousTransaction: Hash,
-        hasher: Hashers, encoder: BinaryFormat
+        previousCoinbase: Hash, hasher: Hashers,
+        encoder: BinaryFormat, transactionOutput: TransactionOutput
     ) : this(
         witness = WitnessImpl(
             publicKey = publicKey,
             previousWitnessIndex = previousWitnessIndex,
             previousCoinbase = previousCoinbase,
-            payout = payout,
-            newIndex = newIndex,
-            newTransaction = newTransaction,
-            previousBlock = previousBlock,
-            previousIndex = previousIndex,
-            previousTransaction = previousTransaction
-        ),
-        hasher = hasher,
-        encoder = encoder
+            _payout = transactionOutput.payout,
+            _transactionOutputs = mutableSortedListOf(transactionOutput)
+        ), hasher = hasher, encoder = encoder
     ) {
         updateHash(hasher, encoder)
     }
@@ -100,28 +100,21 @@ internal data class HashedWitnessImpl(
     }
 
     override fun addToPayout(
-        payout: Payout, newIndex: Int, newTransaction: Hash,
-        previousBlock: Hash, previousIndex: Int,
-        previousTransaction: Hash
+        transactionOutput: TransactionOutput
     ) {
-        witness.addToPayout(
-            payout = payout, newIndex = newIndex,
-            newTransaction = newTransaction,
-            previousBlock = previousBlock,
-            previousIndex = previousIndex,
-            previousTransaction = previousTransaction
-        )
+        witness.addToPayout(transactionOutput)
         if (cachedSize != null) {
             cachedSize = (cachedSize as Long) +
-                    newTransaction.bytes.size.toLong() +
-                    previousTransaction.bytes.size.toLong()
+                    transactionOutput.approximateSize(encoder)
         }
         updateHash(hasher, encoder)
     }
 
-    override fun equals(
-        other: Any?
-    ): Boolean {
+    override fun markIndex(index: Int) {
+        _index = index
+    }
+
+    override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is HashedWitness) return false
 

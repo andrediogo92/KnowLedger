@@ -20,7 +20,7 @@ internal class SAWitnessStorageAdapter(
     ): StorageElement =
         session.cacheStore(
             suTransactionStorageAdapter, toStore,
-            toStore.transactionOutput
+            toStore.witness
         )
 
     override fun load(
@@ -28,7 +28,11 @@ internal class SAWitnessStorageAdapter(
         element: StorageElement
     ): Outcome<StorageAwareWitness, LoadFailure> =
         element.cachedLoad(
-            ledgerHash, suTransactionStorageAdapter,
-            ::StorageAwareWitness
-        )
+            ledgerHash, suTransactionStorageAdapter
+        ) { hashedWitness ->
+            StorageAwareWitness(
+                suTransactionStorageAdapter.transactionOutputStorageAdapter,
+                hashedWitness
+            )
+        }
 }
