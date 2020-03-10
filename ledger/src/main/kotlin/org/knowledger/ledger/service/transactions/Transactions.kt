@@ -24,7 +24,7 @@ internal fun QueryManager.getTransactionsFromAgent(
                 """
                     SELECT 
                     FROM ${it.id}
-                    WHERE value.value.@class = :tag
+                    WHERE data.value.@class = :tag
                         AND publicKey = :publicKey
                 """.trimIndent(),
                 mapOf(
@@ -59,6 +59,27 @@ internal fun QueryManager.getTransactionByIndex(
         ), transactionStorageAdapter
     )
 
+internal fun QueryManager.getTransactionByBound(
+    currentMillis: Long, diff: Long
+): Outcome<TransactionWithBlockHash, LoadFailure> {
+    val lowerBound = currentMillis - diff
+    val upperBound = currentMillis + diff
+    return queryUniqueResult(
+        UnspecificQuery(
+            """
+            SELECT txBlockHash, tx.hash as txHash, tx.data as txData, 
+                   tx.index as txIndex, tx.millis as txMillis, 
+                   min(abs(tx.millis - $currentMillis)) as txMin
+            FROM    
+                (SELECT header.hash as txBlockHash, transactions:{hash, index, data, data.millis as millis} as tx
+                FROM ${blockStorageAdapter.id}
+                UNWIND tx)
+            WHERE tx.millis BETWEEN $lowerBound AND $upperBound
+            """.trimIndent()
+        ), transactionWithBlockHashStorageLoadable
+    )
+}
+
 internal fun QueryManager.getTransactionByHash(
     tag: String, hash: Hash
 ): Outcome<Transaction, LoadFailure> =
@@ -68,7 +89,7 @@ internal fun QueryManager.getTransactionByHash(
                 """
                     SELECT 
                     FROM ${it.id}
-                    WHERE value.value.@class = :tag
+                    WHERE data.value.@class = :tag
                         AND hash = :hash
                 """.trimIndent(),
                 mapOf(
@@ -95,8 +116,8 @@ internal fun QueryManager.getTransactionsOrderedByTimestamp(
                 """
                     SELECT 
                     FROM ${it.id}
-                    WHERE value.value.@class = :tag
-                    ORDER BY value.seconds ASC, value.nanos ASC
+                    WHERE data.value.@class = :tag
+                    ORDER BY data.millis ASC
                 """.trimIndent(),
                 mapOf(
                     "tag" to tag
@@ -123,7 +144,7 @@ internal fun QueryManager.getTransactionsByClass(
                 """
                     SELECT 
                     FROM ${it.id}
-                    WHERE value.value.@class = :tag
+                    WHERE data.value.@class = :tag
                 """.trimIndent(),
                 mapOf(
                     "tag" to tag
