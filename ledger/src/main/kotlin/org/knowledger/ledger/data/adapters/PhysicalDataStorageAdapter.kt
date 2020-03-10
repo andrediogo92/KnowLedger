@@ -15,7 +15,6 @@ import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import java.time.Instant
 
 internal class PhysicalDataStorageAdapter(
     private val adapterManager: AdapterManager
@@ -25,8 +24,7 @@ internal class PhysicalDataStorageAdapter(
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "seconds" to StorageType.LONG,
-            "nanos" to StorageType.INTEGER,
+            "millis" to StorageType.LONG,
             "value" to StorageType.LINK,
             "latitude" to StorageType.DECIMAL,
             "longitude" to StorageType.DECIMAL,
@@ -38,14 +36,12 @@ internal class PhysicalDataStorageAdapter(
     ): StorageElement =
         adapterManager.findAdapter(
             toStore.data.javaClass
-        )?.let {
+        )?.let { adapter ->
             session
                 .newInstance(id).setStorageProperty(
-                    "seconds", toStore.instant.epochSecond
-                ).setStorageProperty(
-                    "nanos", toStore.instant.nano
+                    "millis", toStore.millis
                 ).setLinked(
-                    "value", it,
+                    "value", adapter,
                     toStore.data, session
                 ).setStorageProperty("latitude", toStore.coords.latitude)
                 .setStorageProperty("longitude", toStore.coords.longitude)
@@ -67,19 +63,16 @@ internal class PhysicalDataStorageAdapter(
                     .load(dataElem)
                     .mapFailure {
                         it.intoLoad()
-                    }.mapSuccess {
-                        val instant = Instant.ofEpochSecond(
-                            element.getStorageProperty("seconds"),
-                            element.getStorageProperty("nanos")
-                        )
+                    }.mapSuccess { ledgerData ->
+                        val millis: Long =
+                            element.getStorageProperty("millis")
+
                         PhysicalData(
-                            instant,
-                            GeoCoords(
+                            millis, GeoCoords(
                                 element.getStorageProperty("latitude"),
                                 element.getStorageProperty("longitude"),
                                 element.getStorageProperty("altitude")
-                            ),
-                            it
+                            ), ledgerData
                         )
                     }
             } else {
