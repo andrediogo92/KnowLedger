@@ -14,20 +14,14 @@ import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.service.LedgerInfo
-import org.knowledger.ledger.storage.Block
-import org.knowledger.ledger.storage.BlockHeader
-import org.knowledger.ledger.storage.Coinbase
-import org.knowledger.ledger.storage.MerkleTree
-import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.storage.TransactionOutput
-import org.knowledger.ledger.storage.Witness
+import org.knowledger.ledger.storage.*
 import org.knowledger.ledger.storage.block.BlockImpl
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
+import org.knowledger.ledger.storage.transaction.output.TransactionOutputImpl
 import org.knowledger.ledger.storage.witness.HashedWitnessImpl
 import java.security.PublicKey
-import org.knowledger.ledger.storage.transaction.output.transactionOutput as transactionOutputBuilder
 
 internal data class WorkingChainBuilder(
     internal val adapterManager: AdapterManager,
@@ -47,7 +41,7 @@ internal data class WorkingChainBuilder(
         merkleTree: MerkleTree
     ): Block =
         BlockImpl(
-            _transactions = transactions,
+            _transactions = transactions.indexed(),
             coinbase = coinbase,
             header = blockHeader,
             merkleTree = merkleTree
@@ -122,13 +116,13 @@ internal data class WorkingChainBuilder(
         previousIndex: Int,
         previousTransaction: Hash
     ): TransactionOutput =
-        transactionOutputBuilder(
+        TransactionOutputImpl(
             payout = payout,
-            newIndex = newIndex,
-            newTransaction = newTransaction,
-            previousBlock = previousBlock,
-            previousIndex = previousIndex,
-            previousTransaction = previousTransaction
+            txIndex = newIndex,
+            tx = newTransaction,
+            prevTxBlock = previousBlock,
+            prevTxIndex = previousIndex,
+            prevTx = previousTransaction
         )
 
     override fun witness(

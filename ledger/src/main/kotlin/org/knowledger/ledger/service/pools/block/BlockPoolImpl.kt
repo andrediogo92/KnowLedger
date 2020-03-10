@@ -9,6 +9,7 @@ import org.knowledger.ledger.service.pools.transaction.TransactionPool
 import org.knowledger.ledger.service.results.BlockFailure
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
+import org.knowledger.ledger.storage.block.BlockUpdates
 
 internal data class BlockPoolImpl(
     internal val chainId: ChainId,
@@ -33,7 +34,8 @@ internal data class BlockPoolImpl(
         get() = candidateBlocks
 
     override fun refresh(hash: Hash): Outcome<BlockHeader, BlockFailure> =
-        get(hash)?.newExtraNonce()?.let {
+        get(hash)?.let {
+            (it as BlockUpdates).newExtraNonce()
             Outcome.Ok(it.header)
         } ?: Outcome.Error(BlockFailure.NoBlockForHash(hash))
 
