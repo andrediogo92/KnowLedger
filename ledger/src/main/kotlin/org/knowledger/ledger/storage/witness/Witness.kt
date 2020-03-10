@@ -8,7 +8,9 @@ import org.knowledger.ledger.serial.HashSerializable
 import org.knowledger.ledger.storage.LedgerContract
 import org.knowledger.ledger.storage.TransactionOutput
 
-interface Witness : Comparable<Witness>, HashSerializable, LedgerContract, Cloneable {
+interface Witness : Comparable<Witness>, HashSerializable,
+                    LedgerContract, Cloneable {
+
     val publicKey: EncodedPublicKey
     val previousWitnessIndex: Int
     val previousCoinbase: Hash
@@ -17,15 +19,6 @@ interface Witness : Comparable<Witness>, HashSerializable, LedgerContract, Clone
 
     override fun compareTo(other: Witness): Int =
         publicKey.compareTo(other.publicKey)
-
-    fun addToPayout(
-        payout: Payout,
-        newIndex: Int,
-        newTransaction: Hash,
-        previousBlock: Hash,
-        previousIndex: Int,
-        previousTransaction: Hash
-    )
 
     public override fun clone(): Witness
 }
