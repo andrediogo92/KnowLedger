@@ -6,7 +6,7 @@ import kotlin.collections.LinkedHashMap
 import kotlin.collections.LinkedHashSet
 
 fun <T : Comparable<T>> emptySortedList(): SortedList<T> =
-    DelegatedSortedList(emptyList())
+    DelegatedSortedList()
 
 fun <T : Comparable<T>> mutableSortedListOf(
     vararg elements: T
@@ -19,13 +19,14 @@ fun <T : Comparable<T>> sortedListOf(
     elements.asIterable().toSortedList()
 
 fun <T : Comparable<T>> Sequence<T>.toMutableSortedListFromPreSorted(): MutableSortedList<T> =
-    DelegatedSortedList(delegate = toMutableList())
+    asIterable().toMutableSortedListFromPreSorted()
 
 fun <T : Comparable<T>> Iterable<T>.toMutableSortedListFromPreSorted(): MutableSortedList<T> =
     DelegatedSortedList(delegate = toMutableList())
 
 fun <T : Comparable<T>> List<T>.toMutableSortedListFromPreSorted(): MutableSortedList<T> =
-    DelegatedSortedList(delegate = this as MutableList<T>)
+    asIterable().toMutableSortedListFromPreSorted()
+
 
 fun <T : Comparable<T>> Array<T>.toMutableSortedList(): MutableSortedList<T> =
     asIterable().toMutableSortedList()
@@ -34,17 +35,18 @@ fun <T : Comparable<T>> Sequence<T>.toMutableSortedList(): MutableSortedList<T> 
     asIterable().toMutableSortedList()
 
 fun <T : Comparable<T>> Iterable<T>.toMutableSortedList(): MutableSortedList<T> =
-    DelegatedSortedList(this)
+    DelegatedSortedList(initial = this)
 
 
 fun <T : Comparable<T>> Sequence<T>.toSortedListFromPreSorted(): SortedList<T> =
-    DelegatedSortedList(delegate = toMutableList())
+    asIterable().toSortedListFromPreSorted()
 
 fun <T : Comparable<T>> Iterable<T>.toSortedListFromPreSorted(): SortedList<T> =
     DelegatedSortedList(delegate = toMutableList())
 
 fun <T : Comparable<T>> List<T>.toSortedListFromPreSorted(): SortedList<T> =
-    DelegatedSortedList(delegate = this as MutableList<T>)
+    asIterable().toSortedListFromPreSorted()
+
 
 fun <T : Comparable<T>> Array<T>.toSortedList(): SortedList<T> =
     asIterable().toSortedList()
@@ -53,7 +55,8 @@ fun <T : Comparable<T>> Sequence<T>.toSortedList(): SortedList<T> =
     asIterable().toSortedList()
 
 fun <T : Comparable<T>> Iterable<T>.toSortedList(): SortedList<T> =
-    DelegatedSortedList(this)
+    DelegatedSortedList(initial = this)
+
 
 inline fun <reified T> Sequence<T>.toSizedArray(i: Int): Array<T> {
     val iter = iterator()

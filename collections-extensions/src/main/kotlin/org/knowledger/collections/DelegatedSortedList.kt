@@ -12,10 +12,8 @@ class DelegatedSortedList<E : Comparable<E>> internal constructor(
     MutableList<E> by delegate {
     constructor() : this(mutableListOf())
 
-    constructor(initial: Iterable<E>) : this(initial.toMutableList()) {
-        if (delegate.size > 1) {
-            delegate.sort()
-        }
+    constructor(initial: Iterable<E>) : this() {
+        delegate.addAll(initial)
     }
 
     override fun add(element: E): Boolean {
