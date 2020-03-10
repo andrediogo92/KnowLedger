@@ -12,20 +12,28 @@ import org.knowledger.ledger.crypto.hash.toEncoded
 import org.knowledger.ledger.data.DataFormula
 import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Payout
+import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.storage.HashUpdateable
+import org.knowledger.ledger.storage.Markable
+import org.knowledger.ledger.storage.NonceRegen
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.TransactionOutput
 import org.knowledger.ledger.storage.Witness
+import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
+import org.knowledger.ledger.storage.indexed
+import org.knowledger.ledger.storage.transaction.output.TransactionOutputImpl
 import org.knowledger.ledger.storage.witness.HashedWitnessImpl
+import org.knowledger.ledger.storage.witness.PayoutAdding
 
 internal data class HashedCoinbaseImpl(
     val coinbase: CoinbaseImpl,
     internal var _hash: Hash? = null,
     private var hasher: Hashers = DEFAULT_HASHER,
     private var encoder: BinaryFormat = Cbor
-) : HashedCoinbase,
-    HashUpdateable,
+) : HashedCoinbase, HashUpdateable,
+    Markable by coinbase,
+    NonceRegen, WitnessAdding,
     Coinbase by coinbase {
     private var cachedSize: Long? = null
 
@@ -111,72 +119,128 @@ internal data class HashedCoinbaseImpl(
     }
 
     override fun findWitness(tx: Transaction): Int =
-        witnesses.binarySearch {
-            it.publicKey.compareTo(tx.publicKey.toEncoded())
+        witnesses.binarySearch { witness ->
+            witness.publicKey.compareTo(tx.publicKey.toEncoded())
         }
 
+    internal fun calculateTransactionOutput(
+        payout: Payout, newIndex: Int,
+        newTransaction: Hash,
+        previousBlock: Hash, previousIndex: Int,
+        previousTransaction: Hash
+    ): TransactionOutputImpl =
+        TransactionOutputImpl(
+            payout = payout, txIndex = newIndex, tx = newTransaction,
+            prevTxBlock = previousBlock, prevTxIndex = previousIndex,
+            prevTx = previousTransaction
+        )
+
+    internal fun calculateWitness(
+        publicKey: EncodedPublicKey,
+        previousWitnessIndex: Int,
+        previousCoinbase: Hash,
+        transactionOutput: TransactionOutput
+    ): HashedWitnessImpl =
+        HashedWitnessImpl(
+            publicKey = publicKey,
+            previousWitnessIndex = previousWitnessIndex,
+            previousCoinbase = previousCoinbase,
+            transactionOutput = transactionOutput,
+            hasher = hasher, encoder = encoder
+        )
+
+    internal fun calculateWitness(
+        publicKey: EncodedPublicKey, payout: Payout,
+        previousWitnessIndex: Int, previousCoinbase: Hash,
+        newIndex: Int, newTransaction: Hash,
+        previousBlock: Hash, previousIndex: Int,
+        previousTransaction: Hash
+    ): Witness =
+        calculateWitness(
+            publicKey, previousWitnessIndex, previousCoinbase,
+            calculateTransactionOutput(
+                payout = payout,
+                newIndex = newIndex, newTransaction = newTransaction,
+                previousBlock = previousBlock,
+                previousIndex = previousIndex,
+                previousTransaction = previousTransaction
+            )
+        )
 
     override fun addToWitness(
         witness: Witness,
         newIndex: Int, newTransaction: Transaction,
         latestKnownIndex: Int,
-        latestKnown: Transaction?,
+        latestKnownHash: Hash,
+        latestKnown: PhysicalData?,
         latestKnownBlockHash: Hash
     ) {
-        val payout: Payout =
-            checkInput(newTransaction, latestKnown)
-
-        coinbase.updatePayout(payout)
-        addToOutputs(
-            witness = witness,
-            payout = payout,
-            newIndex = newIndex,
-            newTransaction = newTransaction.hash,
-            previousBlock = latestKnownBlockHash,
-            previousIndex = latestKnownIndex,
-            previousTransaction = latestKnownBlockHash
-        )
-        updateHash(hasher, encoder)
+        calculateThenAdd(newTransaction, latestKnown) { payoutToAdd ->
+            addToOutputs(witness = witness) {
+                calculateTransactionOutput(
+                    payout = payoutToAdd,
+                    newIndex = newIndex,
+                    newTransaction = newTransaction.hash,
+                    previousBlock = latestKnownBlockHash,
+                    previousIndex = latestKnownIndex,
+                    previousTransaction = latestKnownHash
+                )
+            }
+        }
     }
 
     override fun addToWitness(
         newIndex: Int, newTransaction: Transaction,
         previousWitnessIndex: Int, latestCoinbase: Hash,
         latestKnownIndex: Int,
-        latestKnown: Transaction?,
-        latestKnownBlockHash: Hash
+        latestKnownHash: Hash,
+        latestKnown: PhysicalData?,
+        latestKnownBlockHash: Hash,
+        transactionOutputStorageAdapter: TransactionOutputStorageAdapter?
     ) {
-        val payout: Payout =
-            checkInput(newTransaction, latestKnown)
+        calculateThenAdd(newTransaction, latestKnown) { payoutToAdd ->
+            addToOutputs {
+                calculateWitness(
+                    payout = payoutToAdd,
+                    newIndex = newIndex,
+                    newTransaction = newTransaction.hash,
+                    previousBlock = latestKnownBlockHash,
+                    previousIndex = latestKnownIndex,
+                    previousTransaction = latestKnownHash,
+                    publicKey = newTransaction.publicKey.toEncoded(),
+                    previousWitnessIndex = previousWitnessIndex,
+                    previousCoinbase = latestCoinbase
+                )
+            }
+        }
+    }
 
-        coinbase.updatePayout(payout)
-        addToOutputs(
-            publicKey = newTransaction.publicKey.toEncoded(),
-            previousWitnessIndex = previousWitnessIndex,
-            previousCoinbase = latestCoinbase,
-            newIndex = newIndex,
-            newTransaction = newTransaction.hash,
-            previousBlock = latestKnownBlockHash,
-            previousIndex = latestKnownIndex,
-            previousTransaction = latestKnownBlockHash,
-            payout = payout
-        )
+    internal inline fun calculateThenAdd(
+        newTransaction: Transaction, latestKnown: PhysicalData?,
+        add: (Payout) -> Unit
+    ) {
+        val payoutToAdd: Payout =
+            checkInput(newTransaction.data, latestKnown)
+
+        coinbase.updatePayout(payoutToAdd)
+        add(payoutToAdd)
         updateHash(hasher, encoder)
     }
 
+
     private fun checkInput(
-        newTransaction: Transaction,
-        latestKnown: Transaction?
+        physicalData: PhysicalData,
+        latestKnown: PhysicalData?
     ): Payout =
         //None are known for this area.
         if (latestKnown == null) {
             coinbase.calculatePayout(
-                newTransaction.data
+                physicalData
             )
         } else {
             coinbase.calculatePayout(
-                newTransaction.data,
-                latestKnown.data
+                physicalData,
+                latestKnown
             )
         }
 
@@ -190,22 +254,14 @@ internal data class HashedCoinbaseImpl(
      * The respective [payout] associated with this transaction is
      * added to the total for this [Witness].
      */
-    private fun addToOutputs(
-        witness: Witness, payout: Payout,
-        newIndex: Int, newTransaction: Hash,
-        previousBlock: Hash, previousIndex: Int,
-        previousTransaction: Hash
+    internal inline fun addToOutputs(
+        witness: Witness, calculate: () -> TransactionOutput
     ) {
         cachedSize = approximateSize - witness.approximateSize(encoder)
-        witness.addToPayout(
-            payout = payout, newIndex = newIndex,
-            newTransaction = newTransaction,
-            previousBlock = previousBlock,
-            previousIndex = previousIndex,
-            previousTransaction = previousTransaction
-        )
+        (witness as PayoutAdding).addToPayout(calculate())
         cachedSize = approximateSize + witness.approximateSize(encoder)
     }
+
 
     /**
      * Adds a [payout] to a transaction output in the [publicKey]'s
@@ -214,27 +270,15 @@ internal data class HashedCoinbaseImpl(
      * The [Witness] does not yet exist, so a new [Witness]
      * is created referencing the [previousCoinbase].
      */
-    private fun addToOutputs(
-        publicKey: EncodedPublicKey, payout: Payout,
-        previousWitnessIndex: Int, previousCoinbase: Hash,
-        newIndex: Int, newTransaction: Hash,
-        previousBlock: Hash, previousIndex: Int,
-        previousTransaction: Hash
+    internal inline fun addToOutputs(
+        calculateWitness: () -> Witness
     ) {
         coinbase.newTXO(
-            HashedWitnessImpl(
-                publicKey = publicKey,
-                previousWitnessIndex = previousWitnessIndex,
-                previousCoinbase = previousCoinbase, payout = payout,
-                newIndex = newIndex, newTransaction = newTransaction,
-                previousBlock = previousBlock,
-                previousIndex = previousIndex,
-                previousTransaction = previousTransaction,
-                hasher = hasher, encoder = encoder
-            ).also {
+            calculateWitness().also {
                 cachedSize = approximateSize + it.approximateSize(encoder)
             }
         )
+        witnesses.indexed()
     }
 
     override fun clone(): HashedCoinbaseImpl =

@@ -28,10 +28,10 @@ import org.knowledger.ledger.serial.MutableSortedListSerializer
 import org.knowledger.ledger.serial.binary.CoinbaseParamsByteSerializer
 import org.knowledger.ledger.serial.binary.WitnessByteSerializer
 import org.knowledger.ledger.service.LedgerInfo
+import org.knowledger.ledger.storage.Markable
+import org.knowledger.ledger.storage.NonceRegen
 import org.knowledger.ledger.storage.Witness
-import org.knowledger.ledger.storage.witness.HashedWitnessImpl
 import java.math.BigDecimal
-import java.time.temporal.ChronoField
 
 @Serializable
 internal data class CoinbaseImpl(
@@ -45,7 +45,7 @@ internal data class CoinbaseImpl(
     private var _extraNonce: Long = 0,
     @Transient
     override val formula: DataFormula = DefaultDiff
-) : Coinbase {
+) : Coinbase, NonceRegen, Markable {
     override val witnesses: SortedList<Witness>
         get() = _witnesses
 
@@ -71,25 +71,17 @@ internal data class CoinbaseImpl(
     )
 
     private fun getTimeDelta(
-        dt: PhysicalData,
-        dt2: PhysicalData
+        dt: PhysicalData, dt2: PhysicalData
     ): BigDecimal {
-        val stamp1 = BigDecimal(
-            dt.instant.epochSecond * 1000000000 +
-                    dt.instant.get(ChronoField.NANO_OF_SECOND)
-        )
-        val stamp2 = BigDecimal(
-            dt2.instant.epochSecond * 1000000000 +
-                    dt2.instant.get(ChronoField.NANO_OF_SECOND)
-        )
+        val stamp1 = BigDecimal(dt.millis)
+        val stamp2 = BigDecimal(dt2.millis)
         return stamp1
             .subtract(stamp2)
             .divide(stamp1, GLOBALCONTEXT)
     }
 
     internal fun calculatePayout(
-        dt: PhysicalData,
-        dt2: PhysicalData
+        dt: PhysicalData, dt2: PhysicalData
     ): Payout =
         formula.calculateDiff(
             coinbaseParams.baseIncentive,
@@ -114,9 +106,11 @@ internal data class CoinbaseImpl(
             GLOBALCONTEXT
         )
 
-    override fun markMined(blockheight: Long, difficulty: Difficulty) {
-        this._blockheight = blockheight
-        this._difficulty = difficulty
+    override fun markForMining(
+        blockheight: Long, difficulty: Difficulty
+    ) {
+        _blockheight = blockheight
+        _difficulty = difficulty
     }
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
@@ -133,8 +127,8 @@ internal data class CoinbaseImpl(
     }
 
 
-    internal fun newTXO(transactionOutput: HashedWitnessImpl) {
-        _witnesses.add(transactionOutput)
+    internal fun newTXO(witness: Witness) {
+        _witnesses.add(witness)
     }
 
     internal fun updatePayout(payoutToAdd: Payout) {

@@ -26,6 +26,11 @@ internal class SACoinbaseStorageAdapter(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<StorageAwareCoinbase, LoadFailure> =
         element.cachedLoad(
-            ledgerHash, suCoinbaseStorageAdapter, ::StorageAwareCoinbase
-        )
+            ledgerHash, suCoinbaseStorageAdapter
+        ) { hashedCoinbase ->
+            StorageAwareCoinbase(
+                hashedCoinbase,
+                suCoinbaseStorageAdapter.witnessStorageAdapter
+            )
+        }
 }

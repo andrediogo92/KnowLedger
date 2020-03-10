@@ -16,7 +16,7 @@ import org.knowledger.ledger.storage.adapters.WitnessStorageAdapter
 
 internal class SUCoinbaseStorageAdapter(
     private val ledgerInfo: LedgerInfo,
-    private val witnessStorageAdapter: WitnessStorageAdapter
+    internal val witnessStorageAdapter: WitnessStorageAdapter
 ) : LedgerStorageAdapter<HashedCoinbaseImpl> {
     override val id: String
         get() = "Coinbase"
