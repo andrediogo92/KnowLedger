@@ -26,13 +26,11 @@ import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.results.unwrap
 import org.knowledger.ledger.service.handles.ChainHandle
 import org.knowledger.ledger.service.handles.LedgerHandle
-import org.knowledger.ledger.service.transactions.QueryManager
-import org.knowledger.ledger.service.transactions.getTransactionByHash
-import org.knowledger.ledger.service.transactions.getTransactionByIndex
-import org.knowledger.ledger.service.transactions.getTransactionsByClass
-import org.knowledger.ledger.service.transactions.getTransactionsFromAgent
-import org.knowledger.ledger.service.transactions.getTransactionsOrderedByTimestamp
+import org.knowledger.ledger.service.transactions.*
 import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.storage.block.BlockUpdates
+import org.knowledger.ledger.storage.block.TransactionAdding
+import org.knowledger.ledger.storage.indexed
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.knowledger.testing.ledger.appendByLine
@@ -42,6 +40,7 @@ import org.knowledger.testing.ledger.logActualToExpectedHashing
 import org.knowledger.testing.ledger.queryToList
 import org.knowledger.testing.ledger.testHasher
 import org.tinylog.kotlin.Logger
+import kotlin.math.absoluteValue
 
 class TestOrientDatabase {
     private val ids = arrayOf(
@@ -95,13 +94,16 @@ class TestOrientDatabase {
     private val chainId = temperatureChain.id
     private val pw = ledger.pw
     private val transactionStorageAdapter = pw.transactionStorageAdapter
+    private val rawTransactions = generateXTransactions(
+        id = ids, size = 20,
+        hasher = hasher, encoder = encoder
+    )
+
+    @Suppress("USELESS_CAST")
     private val transactions: MutableSortedList<Transaction> =
-        generateXTransactions(
-            id = ids, size = 20,
-            hasher = hasher, encoder = encoder
-        ).map {
-            StorageAwareTransaction((it as HashedTransactionImpl))
-        }.toMutableSortedListFromPreSorted()
+        rawTransactions.map {
+            StorageAwareTransaction(it as HashedTransactionImpl) as Transaction
+        }.toMutableSortedListFromPreSorted().indexed()
 
 
     @BeforeAll
@@ -255,6 +257,28 @@ class TestOrientDatabase {
                 trafficFlowDataStorageAdapter
             ).unwrap()
 
+        val tempBlock = generateBlockWithChain(
+            transactions, temperatureChain.id,
+            hasher, encoder,
+            ledger.ledgerInfo.formula,
+            ledger.ledgerInfo.coinbaseParams,
+            ledger.ledgerInfo.ledgerParams.blockParams
+        )
+
+        private val tempQueryManager =
+            pw.chainManager(trafficChain.chainHash)
+
+        @BeforeAll
+        fun `init blocks`() {
+            tempBlock.coinbase.addWitnesses(transactions.toTypedArray())
+            (tempBlock as BlockUpdates).newExtraNonce()
+
+            tempQueryManager.persistEntity(
+                tempBlock, tempQueryManager.blockStorageAdapter
+            )
+        }
+
+
         @Nested
         inner class Blocks {
 
@@ -266,7 +290,7 @@ class TestOrientDatabase {
                     ledger.ledgerInfo.coinbaseParams,
                     ledger.ledgerInfo.ledgerParams.blockParams
                 )
-                assertThat(block + transactions[0])
+                assertThat((block as TransactionAdding) + transactions[0])
                     .isTrue()
                 assertThat(block.transactions[0])
                     .isNotNull()
@@ -275,28 +299,44 @@ class TestOrientDatabase {
 
             @Test
             fun `Test transactions by index`() {
-                val block = generateBlockWithChain(
-                    temperatureChain.id,
-                    transactions, hasher, encoder,
-                    ledger.ledgerInfo.formula,
-                    ledger.ledgerInfo.coinbaseParams,
-                    ledger.ledgerInfo.ledgerParams.blockParams
-                )
-                val trafficQueryManager =
-                    pw.chainManager(trafficChain.chainHash)
-
-                block.newExtraNonce()
-
-                trafficQueryManager.persistEntity(
-                    block, trafficQueryManager.blockStorageAdapter
-                )
-
-                trafficQueryManager.getTransactionByIndex(
-                    block.header.hash,
+                tempQueryManager.getTransactionByIndex(
+                    tempBlock.header.hash,
                     2
                 ).mapSuccess {
                     assertThat(it).isEqualTo(transactions[2])
                 }.failOnError()
+            }
+
+            @Test
+            fun `Test fetch witness info`() {
+                val publicKey = transactions[0].publicKey
+                tempQueryManager
+                    .getWitnessInfoBy(publicKey)
+                    .mapSuccess { info ->
+                        assertThat(info.hash).isEqualTo(tempBlock.coinbase.hash)
+                        assertThat(info.index).isEqualTo(tempBlock.coinbase.findWitness(transactions[0]))
+                        assertThat(info.max).isEqualTo(tempBlock.coinbase.blockheight)
+                        Logger.debug { info.toString() }
+                    }.failOnError()
+            }
+
+            @Test
+            fun `Test transactions by time bound`() {
+                val newT = generateXTransactions(ids, 1, hasher, encoder)[0]
+                val current = newT.data.millis
+                val currentMillis = current
+                val diff = (current - transactions[0].data.millis).absoluteValue
+                tempQueryManager
+                    .getTransactionByBound(currentMillis, diff)
+                    .mapSuccess { withBlockHash ->
+                        val last = transactions.size - 1
+                        assertThat(withBlockHash.txBlockHash).isEqualTo(tempBlock.header.hash)
+                        assertThat(withBlockHash.txHash).isEqualTo(transactions[last].hash)
+                        assertThat(withBlockHash.txIndex).isEqualTo(last)
+                        assertThat(withBlockHash.txMillis).isEqualTo(transactions[last].data.millis)
+                        assertThat(withBlockHash.txMin).isLessThanOrEqualTo(diff)
+                        Logger.debug { withBlockHash.toString() }
+                    }.failOnError()
             }
 
             @Test
@@ -312,7 +352,7 @@ class TestOrientDatabase {
                     ledger.ledgerInfo.ledgerParams.blockParams
                 )
                 assertThat(block).isNotNull()
-                assertThat(block + testTraffic)
+                assertThat((block as TransactionAdding) + testTraffic)
                     .isTrue()
                 assertThat(block.transactions[0])
                     .isNotNull()
