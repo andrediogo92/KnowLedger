@@ -24,12 +24,7 @@ import org.knowledger.ledger.data.Difficulty
 import org.knowledger.ledger.data.Tag
 import org.knowledger.ledger.database.results.QueryFailure
 import org.knowledger.ledger.mining.BlockState
-import org.knowledger.ledger.results.Outcome
-import org.knowledger.ledger.results.flatMapSuccess
-import org.knowledger.ledger.results.fold
-import org.knowledger.ledger.results.intoQuery
-import org.knowledger.ledger.results.mapSuccess
-import org.knowledger.ledger.results.reduce
+import org.knowledger.ledger.results.*
 import org.knowledger.ledger.service.ChainInfo
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.service.LedgerInfo
@@ -43,15 +38,23 @@ import org.knowledger.ledger.service.transactions.*
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.BlockHeader
 import org.knowledger.ledger.storage.Transaction
+import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
 import org.knowledger.ledger.storage.block.BlockImpl
+import org.knowledger.ledger.storage.block.BlockUpdates
 import org.knowledger.ledger.storage.block.StorageAwareBlock
+import org.knowledger.ledger.storage.block.TransactionAdding
+import org.knowledger.ledger.storage.block.WitnessCalculator
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
+import org.knowledger.ledger.storage.convertToStorageAware
+import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
+import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.tinylog.kotlin.Logger
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import kotlin.math.abs
 
 /**
  * A facade into useful methods for managing a
@@ -483,13 +486,123 @@ class ChainHandle private constructor(
     fun addTransaction(
         t: Transaction
     ): BlockState {
-        transactionPool += t
-        val block = blockPool.firstUnconfirmedNotFull ?: newBlock()
-        block + t
-        return if (block.miningReady) {
-            BlockState.BlockReady(block.full, block.header)
+        val internal = t.convertToStorageAware {
+            StorageAwareTransaction(this as HashedTransactionImpl)
+        }
+        if (internal.processTransaction(encoder)) {
+            transactionPool += internal
+            val block = blockPool.firstUnconfirmedNotFull ?: newBlock().also { block ->
+                blockPool += block
+            }
+            (block as TransactionAdding) + internal
+            calculateTransactionDifference(block, internal)
+            return if (block.miningReady) {
+                BlockState.BlockReady(block.full, block.header)
+            } else {
+                BlockState.BlockNotReady
+            }
+        }
+        return BlockState.BlockFailure
+    }
+
+    private fun calculateTransactionDifference(block: Block, newTransaction: Transaction) {
+        val previousTransaction = block.transactions
+            .filter { it == newTransaction }
+            .minBy {
+                abs(it.data.millis - newTransaction.data.millis)
+            }
+        val diff = if (previousTransaction != null) {
+            abs(newTransaction.data.millis - previousTransaction.data.millis)
         } else {
-            BlockState.BlockNotReady
+            abs(newTransaction.data.millis - 1)
+        }
+        val reference: Outcome<TransactionWithBlockHash, LoadFailure> =
+            queryManager.getTransactionByBound(newTransaction.data.millis, diff)
+        val witnessIndex = block.coinbase.findWitness(newTransaction)
+
+        reference.mapSuccess { withBlockHash ->
+            (block as WitnessCalculator).calculateWitnessWithExistingTransaction(
+                witnessIndex, withBlockHash, newTransaction
+            )
+        }.peekFailure { fail ->
+            when (fail) {
+                is LoadFailure.NonExistentData ->
+                    (block as WitnessCalculator).calculateWitnessWithNoExistingTransaction(
+                        witnessIndex, newTransaction
+                    )
+                else -> throw RuntimeException(fail.failable.cause)
+            }
+        }
+    }
+
+    private fun WitnessCalculator.calculateWitnessWithNoExistingTransaction(
+        witnessIndex: Int, newTransaction: Transaction
+    ) {
+        if (witnessIndex > 0) {
+            calculateWitness(
+                newTransaction = newTransaction,
+                witnessIndex = witnessIndex
+            )
+        } else {
+            val TXOStorageAdapter: TransactionOutputStorageAdapter =
+                queryManager.transactionOutputStorageAdapter
+            queryManager
+                .getWitnessInfoBy(newTransaction.publicKey)
+                .mapSuccess { info ->
+                    calculateWitness(
+                        newTransaction = newTransaction,
+                        transactionOutputStorageAdapter = TXOStorageAdapter,
+                        previousWitnessIndex = info.index,
+                        coinbaseHash = info.hash
+                    )
+                }.peekFailure { fail ->
+                    when (fail) {
+                        is LoadFailure.NonExistentData ->
+                            calculateWitness(
+                                newTransaction = newTransaction,
+                                transactionOutputStorageAdapter = TXOStorageAdapter
+                            )
+                        else -> fail.unwrap()
+                    }
+                }
+        }
+    }
+
+    private fun WitnessCalculator.calculateWitnessWithExistingTransaction(
+        witnessIndex: Int,
+        withBlockHash: TransactionWithBlockHash,
+        newTransaction: Transaction
+    ) {
+        if (witnessIndex > 0) {
+            calculateWitness(
+                witnessIndex = witnessIndex,
+                newTransaction = newTransaction,
+                lastTransaction = withBlockHash
+            )
+        } else {
+            val TXOStorageAdapter: TransactionOutputStorageAdapter =
+                queryManager.transactionOutputStorageAdapter
+            queryManager
+                .getWitnessInfoBy(newTransaction.publicKey)
+                .mapSuccess { info ->
+                    calculateWitness(
+                        newTransaction = newTransaction,
+                        transactionOutputStorageAdapter = TXOStorageAdapter,
+                        lastTransaction = withBlockHash,
+                        previousWitnessIndex = info.index,
+                        coinbaseHash = info.hash
+                    )
+                }.peekFailure { fail ->
+                    when (fail) {
+                        is LoadFailure.NonExistentData ->
+                            calculateWitness(
+                                newTransaction = newTransaction,
+                                transactionOutputStorageAdapter = TXOStorageAdapter,
+                                lastTransaction = withBlockHash
+                            )
+                        else -> throw RuntimeException(fail.failable.cause)
+                    }
+                }
         }
     }
 
@@ -516,7 +629,8 @@ class ChainHandle private constructor(
 
     fun refreshHeader(merkleRoot: Hash): BlockState =
         blockPool[merkleRoot]?.let {
-            BlockState.BlockReady(it.full, it.newExtraNonce().header)
+            (it as BlockUpdates).newExtraNonce()
+            BlockState.BlockReady(it.full, it.header)
         } ?: BlockState.BlockFailure
 
 
@@ -561,7 +675,7 @@ class ChainHandle private constructor(
                 originHeader(ledgerInfo, chainId),
                 MerkleTreeImpl(hasher = ledgerInfo.hasher)
             ).also {
-                it.markMined(0, INIT_DIFFICULTY)
+                it.markForMining(0, INIT_DIFFICULTY)
             }
     }
 
