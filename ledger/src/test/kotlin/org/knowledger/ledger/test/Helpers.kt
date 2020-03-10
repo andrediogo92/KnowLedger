@@ -18,6 +18,7 @@ import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.config.chainid.ChainIdImpl
 import org.knowledger.ledger.config.chainid.StorageAwareChainId
 import org.knowledger.ledger.core.base.data.LedgerData
+import org.knowledger.ledger.core.base.hash.Hash.Companion.emptyHash
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.service.Identity
@@ -32,11 +33,12 @@ import org.knowledger.ledger.data.TrafficFlowData
 import org.knowledger.ledger.storage.Block
 import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.Transaction
-import org.knowledger.ledger.storage.Witness
 import org.knowledger.ledger.storage.block.BlockImpl
 import org.knowledger.ledger.storage.blockheader.HashedBlockHeaderImpl
 import org.knowledger.ledger.storage.coinbase.CoinbaseImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
+import org.knowledger.ledger.storage.coinbase.WitnessAdding
+import org.knowledger.ledger.storage.indexed
 import org.knowledger.ledger.storage.transaction.HashedTransactionImpl
 import org.knowledger.ledger.storage.transaction.StorageAwareTransaction
 import org.knowledger.testing.core.random
@@ -84,7 +86,6 @@ fun trafficFlow(): LedgerData =
         random.randomDouble() * 34,
         random.randomDouble() * 12
     )
-
 
 fun generateChainId(
     hasher: Hashers = testHasher,
@@ -177,8 +178,8 @@ fun generateBlock(
     )
 
 fun generateBlockWithChain(
-    chainId: ChainId,
     ts: Array<Transaction>,
+    chainId: ChainId,
     hasher: Hashers = testHasher,
     encoder: BinaryFormat = testEncoder,
     formula: DataFormula = DefaultDiff,
@@ -186,7 +187,7 @@ fun generateBlockWithChain(
     blockParams: BlockParams = BlockParams()
 ): Block =
     generateBlockWithChain(
-        chainId, ts.toMutableSortedList(),
+        ts.toMutableSortedList(), chainId,
         hasher, encoder, formula,
         coinbaseParams, blockParams
     )
@@ -198,105 +199,94 @@ fun generateBlock(
     formula: DataFormula = DefaultDiff,
     coinbaseParams: CoinbaseParams = CoinbaseParams(),
     blockParams: BlockParams = BlockParams()
-): Block {
-    val coinbase = generateCoinbase(
-        ts.toTypedArray(), hasher, encoder,
-        formula, coinbaseParams
+): Block =
+    generateBlockWithChain(
+        ts, generateChainId(hasher),
+        hasher, encoder, formula,
+        coinbaseParams, blockParams
     )
-    return BlockImpl(
-        ts.toMutableSortedList(), coinbase,
+
+fun generateBlockWithChain(
+    ts: MutableSortedList<Transaction>,
+    chainId: ChainId,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
+    formula: DataFormula = DefaultDiff,
+    coinbaseParams: CoinbaseParams = CoinbaseParams(),
+    blockParams: BlockParams = BlockParams()
+): Block =
+    generateBlockWithChain(
+        ts, generateCoinbase(
+            coinbaseParams, hasher,
+            encoder, formula
+        ), chainId, hasher,
+        encoder, blockParams
+    )
+
+
+fun generateBlockWithChain(
+    chainId: ChainId,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
+    formula: DataFormula = DefaultDiff,
+    coinbaseParams: CoinbaseParams = CoinbaseParams(),
+    blockParams: BlockParams = BlockParams()
+): Block =
+    generateBlockWithChain(
+        mutableSortedListOf(), generateCoinbase(
+            coinbaseParams, hasher,
+            encoder, formula
+        ), chainId, hasher,
+        encoder, blockParams
+    )
+
+fun generateBlockWithChain(
+    ts: MutableSortedList<Transaction>,
+    coinbase: Coinbase,
+    chainId: ChainId,
+    hasher: Hashers = testHasher,
+    encoder: BinaryFormat = testEncoder,
+    blockParams: BlockParams = BlockParams()
+): Block =
+    BlockImpl(
+        ts.indexed(), coinbase,
         HashedBlockHeaderImpl(
-            generateChainId(hasher),
-            hasher, encoder,
+            chainId, hasher, encoder,
             Hash(random.randomByteArray(32)),
             blockParams
-        ),
-        MerkleTreeImpl(
-            hasher, coinbase, ts.toTypedArray()
+        ), MerkleTreeImpl(
+            hasher, coinbase,
+            ts.toTypedArray()
         ), encoder, hasher
     )
-}
 
-fun generateBlockWithChain(
-    chainId: ChainId,
-    ts: MutableSortedList<Transaction>,
-    hasher: Hashers = testHasher,
-    encoder: BinaryFormat = testEncoder,
-    formula: DataFormula = DefaultDiff,
-    coinbaseParams: CoinbaseParams = CoinbaseParams(),
-    blockParams: BlockParams = BlockParams()
-): Block {
-    val coinbase = generateCoinbase(
-        ts.toTypedArray(), hasher, encoder,
-        formula, coinbaseParams
+fun Coinbase.addWitnesses(
+    ts: Array<Transaction>
+) {
+    (this as WitnessAdding).addToWitness(
+        newIndex = 0,
+        newTransaction = ts[0],
+        previousWitnessIndex = -1,
+        latestCoinbase = emptyHash,
+        latestKnownIndex = -1,
+        latestKnownHash = emptyHash,
+        latestKnownBlockHash = emptyHash,
+        latestKnown = null
     )
-    return BlockImpl(
-        ts.toMutableSortedList(), coinbase,
-        HashedBlockHeaderImpl(
-            chainId, hasher, encoder,
-            Hash(random.randomByteArray(32)),
-            blockParams
-        ),
-        MerkleTreeImpl(hasher, coinbase, ts.toTypedArray()),
-        encoder, hasher
-    )
-}
+    findAndAdd(1, ts[1])
 
-fun generateBlockWithChain(
-    chainId: ChainId,
-    hasher: Hashers = testHasher,
-    encoder: BinaryFormat = testEncoder,
-    formula: DataFormula = DefaultDiff,
-    coinbaseParams: CoinbaseParams = CoinbaseParams(),
-    blockParams: BlockParams = BlockParams()
-): Block {
-    val coinbase = generateCoinbase(
-        hasher = hasher, encoder = encoder,
-        formula = formula, coinbaseParams = coinbaseParams
-    )
-    return BlockImpl(
-        mutableSortedListOf(), coinbase,
-        HashedBlockHeaderImpl(
-            chainId, hasher, encoder,
-            Hash(random.randomByteArray(32)),
-            blockParams
-        ), MerkleTreeImpl(hasher, coinbase, emptyArray()),
-        encoder, hasher
-    )
+    //First transaction output has
+    //transaction 0.
+    //Second is transaction 2
+    //referencing transaction 0.
+    //Third is transaction 4
+    //referencing transaction 0.
+    findAndAdd(0, ts[0], 2, ts[2])
+    findAndAdd(0, ts[0], 4, ts[4])
 }
 
 fun generateCoinbase(
-    ts: Array<Transaction>,
-    hasher: Hashers = testHasher,
-    encoder: BinaryFormat = testEncoder,
-    formula: DataFormula = DefaultDiff,
-    coinbaseParams: CoinbaseParams = CoinbaseParams()
-): Coinbase =
-    generateCoinbase(
-        coinbaseParams = coinbaseParams,
-        hasher = hasher,
-        encoder = encoder,
-        formula = formula
-    ).apply {
-        addToWitness(
-            newIndex = 0,
-            newTransaction = ts[0]
-        )
-        findAndAdd(1, ts[1])
-
-        //First transaction output has
-        //transaction 0.
-        //Second is transaction 2
-        //referencing transaction 0.
-        //Third is transaction 4
-        //referencing transaction 0.
-        findAndAdd(0, ts[0], 2, ts[2])
-        findAndAdd(0, ts[0], 4, ts[4])
-    }
-
-fun generateCoinbase(
     coinbaseParams: CoinbaseParams = CoinbaseParams(),
-    witnesses: MutableSortedList<Witness> = mutableSortedListOf(),
     hasher: Hashers = testHasher,
     encoder: BinaryFormat = testEncoder,
     formula: DataFormula = DefaultDiff
@@ -304,23 +294,34 @@ fun generateCoinbase(
     HashedCoinbaseImpl(
         CoinbaseImpl(
             coinbaseParams = coinbaseParams,
-            _witnesses = witnesses,
+            _witnesses = mutableSortedListOf(),
             formula = formula
         ), hasher = hasher, encoder = encoder
     )
 
 fun Coinbase.findAndAdd(newIndex: Int, newTransaction: Transaction) {
     val index = findWitness(newTransaction)
+    val adding = this as WitnessAdding
     if (index >= 0) {
-        addToWitness(
+        adding.addToWitness(
             witness = witnesses[index],
             newIndex = newIndex,
-            newTransaction = newTransaction
+            newTransaction = newTransaction,
+            latestKnown = null,
+            latestKnownBlockHash = emptyHash,
+            latestKnownHash = emptyHash,
+            latestKnownIndex = -1
         )
     } else {
-        addToWitness(
+        adding.addToWitness(
             newIndex = newIndex,
-            newTransaction = newTransaction
+            newTransaction = newTransaction,
+            previousWitnessIndex = -1,
+            latestCoinbase = emptyHash,
+            latestKnown = null,
+            latestKnownBlockHash = emptyHash,
+            latestKnownHash = emptyHash,
+            latestKnownIndex = -1
         )
     }
 }
@@ -330,20 +331,27 @@ fun Coinbase.findAndAdd(
     newIndex: Int, newTransaction: Transaction
 ) {
     val index = findWitness(newTransaction)
+    val adding = this as WitnessAdding
     if (index >= 0) {
-        addToWitness(
+        adding.addToWitness(
             witness = witnesses[index],
             newIndex = newIndex,
             newTransaction = newTransaction,
             latestKnownIndex = latestKnownIndex,
-            latestKnown = latestKnown
+            latestKnown = latestKnown.data,
+            latestKnownHash = latestKnown.hash,
+            latestKnownBlockHash = emptyHash
         )
     } else {
-        addToWitness(
+        adding.addToWitness(
             newIndex = newIndex,
             newTransaction = newTransaction,
+            previousWitnessIndex = -1,
+            latestCoinbase = emptyHash,
             latestKnownIndex = latestKnownIndex,
-            latestKnown = latestKnown
+            latestKnown = latestKnown.data,
+            latestKnownHash = latestKnown.hash,
+            latestKnownBlockHash = emptyHash
         )
     }
 }
