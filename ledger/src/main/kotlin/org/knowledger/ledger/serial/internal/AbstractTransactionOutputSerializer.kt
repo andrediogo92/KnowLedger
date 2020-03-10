@@ -5,7 +5,7 @@ import org.knowledger.ledger.core.serial.PayoutSerializer
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.Payout
 import org.knowledger.ledger.storage.TransactionOutput
-import org.knowledger.ledger.storage.transaction.output.transactionOutput
+import org.knowledger.ledger.storage.transaction.output.TransactionOutputImpl
 import kotlin.properties.Delegates
 
 internal abstract class AbstractTransactionOutputSerializer : KSerializer<TransactionOutput>,
@@ -70,10 +70,10 @@ internal abstract class AbstractTransactionOutputSerializer : KSerializer<Transa
                 }
             }
             endStructure(descriptor)
-            transactionOutput(
-                payout = payout, newTransaction = tx,
-                newIndex = txIndex, previousBlock = prevTxBlock,
-                previousIndex = prevTxIndex, previousTransaction = prevTx
+            TransactionOutputImpl(
+                payout = payout, tx = tx,
+                txIndex = txIndex, prevTxBlock = prevTxBlock,
+                prevTxIndex = prevTxIndex, prevTx = prevTx
             )
         }
 

@@ -71,12 +71,11 @@ internal abstract class AbstractTransactionSerializer : KSerializer<Transaction>
             }
             endStructure(descriptor)
             HashedTransactionImpl(
-                SignedTransactionImpl(
+                signedTransaction = SignedTransactionImpl(
                     signature = signature,
                     publicKey = publicKey,
                     data = data
-                ),
-                hash
+                ), _hash = hash
             )
         }
 

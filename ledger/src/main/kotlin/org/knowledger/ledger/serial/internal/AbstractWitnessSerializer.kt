@@ -2,6 +2,7 @@ package org.knowledger.ledger.serial.internal
 
 import kotlinx.serialization.*
 import org.knowledger.collections.MutableSortedList
+import org.knowledger.collections.toMutableSortedListFromPreSorted
 import org.knowledger.ledger.core.serial.PayoutSerializer
 import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.Hash
@@ -79,7 +80,7 @@ internal abstract class AbstractWitnessSerializer(
                     )
                     5 -> transactionOutputs = decodeSerializableElement(
                         descriptor, i, transactionOutputsSerializer
-                    ) as MutableSortedList<TransactionOutput>
+                    ).toMutableSortedListFromPreSorted()
                     else -> throw SerializationException("Unknown index $i")
                 }
             }

@@ -2,6 +2,7 @@ package org.knowledger.ledger.serial.internal
 
 import kotlinx.serialization.*
 import org.knowledger.collections.MutableSortedList
+import org.knowledger.collections.toMutableSortedListFromPreSorted
 import org.knowledger.ledger.config.CoinbaseParams
 import org.knowledger.ledger.core.serial.PayoutSerializer
 import org.knowledger.ledger.crypto.Hash
@@ -12,6 +13,7 @@ import org.knowledger.ledger.storage.Coinbase
 import org.knowledger.ledger.storage.Witness
 import org.knowledger.ledger.storage.coinbase.CoinbaseImpl
 import org.knowledger.ledger.storage.coinbase.HashedCoinbaseImpl
+import org.knowledger.ledger.storage.indexed
 import kotlin.properties.Delegates
 
 internal abstract class AbstractCoinbaseSerializer(
@@ -98,7 +100,7 @@ internal abstract class AbstractCoinbaseSerializer(
                     5 -> coinbaseParams = decodeCoinbaseParams(i)
                     6 -> witnesses = decodeSerializableElement(
                         descriptor, i, witnessesSerializer
-                    ) as MutableSortedList<Witness>
+                    ).toMutableSortedListFromPreSorted().indexed()
                     else -> throw SerializationException("Unknown index $i")
                 }
             }
