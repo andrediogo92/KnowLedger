@@ -61,3 +61,12 @@ internal fun <T> Array<StoragePairs<*>>.replace(
 ) {
     (this[index] as StoragePairs<T>).replace(element)
 }
+
+@Suppress("UNCHECKED_CAST")
+internal inline fun <T, R : StorageAware<*>> T.convertToStorageAware(
+    convert: T.() -> R
+): R =
+    when (this) {
+        is StorageAware<*> -> this as R
+        else -> this.convert()
+    }
