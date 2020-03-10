@@ -6,14 +6,15 @@ import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.PhysicalData
 import org.knowledger.ledger.service.Identity
 import org.knowledger.ledger.storage.HashUpdateable
+import org.knowledger.ledger.storage.Indexed
 import java.security.PrivateKey
 import java.security.PublicKey
 
 internal data class HashedTransactionImpl(
     val signedTransaction: SignedTransactionImpl,
-    internal var _hash: Hash? = null
-) : HashedTransaction,
-    HashUpdateable,
+    private var _index: Int = -1,
+    private var _hash: Hash? = null
+) : HashedTransaction, Indexed, HashUpdateable,
     SignedTransaction by signedTransaction {
     private var cachedSize: Long? = null
 
@@ -23,42 +24,52 @@ internal data class HashedTransactionImpl(
     override val hash: Hash
         get() = _hash ?: throw UninitializedPropertyAccessException("Hash was not initialized")
 
+    override val index: Int
+        get() = _index
+
     internal constructor(
         privateKey: PrivateKey, publicKey: PublicKey,
-        data: PhysicalData, hasher: Hashers, encoder: BinaryFormat
+        data: PhysicalData, hasher: Hashers,
+        encoder: BinaryFormat, index: Int = -1
     ) : this(
         signedTransaction = SignedTransactionImpl(
             privateKey = privateKey,
             publicKey = publicKey,
             data = data, encoder = encoder
-        )
+        ), _index = index
     ) {
         updateHash(hasher, encoder)
     }
 
     internal constructor(
         publicKey: PublicKey, data: PhysicalData,
-        signature: ByteArray, hash: Hash
+        signature: ByteArray, hash: Hash, index: Int = -1
     ) : this(
         signedTransaction = SignedTransactionImpl(
             publicKey = publicKey, data = data,
             signature = signature
-        ), _hash = hash
+        ), _index = index, _hash = hash
     )
 
     internal constructor(
         identity: Identity, data: PhysicalData,
-        hasher: Hashers, encoder: BinaryFormat
+        hasher: Hashers, encoder: BinaryFormat,
+        index: Int = -1
     ) : this(
         privateKey = identity.privateKey,
         publicKey = identity.publicKey,
         data = data, hasher = hasher,
-        encoder = encoder
+        encoder = encoder, index = index
     )
+
+    override fun markIndex(index: Int) {
+        _index = index
+    }
 
     override fun clone(): HashedTransactionImpl =
         copy(
-            signedTransaction = signedTransaction.clone()
+            signedTransaction = signedTransaction.clone(),
+            _index = -1
         )
 
     override fun recalculateSize(

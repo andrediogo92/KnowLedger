@@ -23,9 +23,10 @@ internal class SUTransactionStorageAdapter(
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "publicKey" to StorageType.BYTES,
-            "value" to StorageType.LINK,
+            "data" to StorageType.LINK,
             "signature" to StorageType.LINK,
-            "hash" to StorageType.HASH
+            "hash" to StorageType.HASH,
+            "index" to StorageType.INTEGER
         )
 
     override fun store(
@@ -36,7 +37,7 @@ internal class SUTransactionStorageAdapter(
             .setStorageProperty(
                 "publicKey", toStore.publicKey.encoded
             ).setLinked(
-                "value",
+                "data",
                 physicalDataStorageAdapter.persist(
                     toStore.data, session
                 )
@@ -46,12 +47,13 @@ internal class SUTransactionStorageAdapter(
                     toStore.signature.bytes
                 )
             ).setHashProperty("hash", toStore.hash)
+            .setStorageProperty("index", toStore.index)
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
     ): Outcome<HashedTransactionImpl, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val physicalData = element.getLinked("value")
+            val physicalData = element.getLinked("data")
 
             physicalDataStorageAdapter.load(
                 ledgerHash,
@@ -66,9 +68,13 @@ internal class SUTransactionStorageAdapter(
                 val hash =
                     element.getHashProperty("hash")
 
+                val index =
+                    element.getStorageProperty<Int>("index")
+
                 HashedTransactionImpl(
-                    publicKey, data,
-                    signature, hash
+                    publicKey = publicKey, data = data,
+                    signature = signature, hash = hash,
+                    index = index
                 )
             }
         }
