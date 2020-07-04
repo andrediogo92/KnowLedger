@@ -16,6 +16,7 @@ internal object CoinbaseParamsStorageAdapter : ServiceStorageAdapter<CoinbasePar
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
+            "hashSize" to StorageType.INTEGER,
             "timeIncentive" to StorageType.LONG,
             "valueIncentive" to StorageType.LONG,
             "baseIncentive" to StorageType.LONG,
@@ -28,6 +29,8 @@ internal object CoinbaseParamsStorageAdapter : ServiceStorageAdapter<CoinbasePar
         session
             .newInstance(id)
             .setStorageProperty(
+                "hashSize", toStore.hashSize
+            ).setStorageProperty(
                 "timeIncentive", toStore.timeIncentive
             ).setStorageProperty(
                 "valueIncentive", toStore.valueIncentive
@@ -43,10 +46,11 @@ internal object CoinbaseParamsStorageAdapter : ServiceStorageAdapter<CoinbasePar
         tryOrLedgerUnknownFailure {
             Outcome.Ok(
                 CoinbaseParams(
-                    element.getStorageProperty("timeIncentive"),
-                    element.getStorageProperty("valueIncentive"),
-                    element.getStorageProperty("baseIncentive"),
-                    element.getStorageProperty("dividingThreshold")
+                    hashSize = element.getStorageProperty("hashSize"),
+                    timeIncentive = element.getStorageProperty("timeIncentive"),
+                    valueIncentive = element.getStorageProperty("valueIncentive"),
+                    baseIncentive = element.getStorageProperty("baseIncentive"),
+                    dividingThreshold = element.getStorageProperty("dividingThreshold")
                 )
             )
         }
