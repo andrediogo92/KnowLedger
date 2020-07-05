@@ -126,8 +126,8 @@ internal sealed class StoragePairs<T> {
             session: ManagedSession
         ): Outcome<StorageID, UpdateFailure> =
             when (value) {
-                is StorageAware<*> ->
-                    (value as StorageAware<*>).update(session)
+                is StorageAware ->
+                    (value as StorageAware).update(session)
                 else -> {
                     adapter.persist(value, session).let {
                         Outcome.Ok(it.identity)
