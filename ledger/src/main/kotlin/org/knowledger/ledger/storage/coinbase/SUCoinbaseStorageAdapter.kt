@@ -7,88 +7,77 @@ import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.allValues
-import org.knowledger.ledger.results.flatMapSuccess
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.service.LedgerInfo
+import org.knowledger.ledger.results.zip
 import org.knowledger.ledger.service.results.LoadFailure
+import org.knowledger.ledger.storage.MutableCoinbase
+import org.knowledger.ledger.storage.MutableCoinbaseHeader
+import org.knowledger.ledger.storage.MutableMerkleTree
+import org.knowledger.ledger.storage.MutableWitness
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.WitnessStorageAdapter
+import org.knowledger.ledger.storage.coinbase.factory.CoinbaseFactory
 
 internal class SUCoinbaseStorageAdapter(
-    private val ledgerInfo: LedgerInfo,
-    internal val witnessStorageAdapter: WitnessStorageAdapter
-) : LedgerStorageAdapter<HashedCoinbaseImpl> {
+    private val coinbaseFactory: CoinbaseFactory,
+    private val merkleTreeStorageAdapter: LedgerStorageAdapter<MutableMerkleTree>,
+    private val coinbaseStorageAdapter: LedgerStorageAdapter<MutableCoinbaseHeader>,
+    private val witnessStorageAdapter: LedgerStorageAdapter<MutableWitness>
+) : LedgerStorageAdapter<MutableCoinbase> {
     override val id: String
         get() = "Coinbase"
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
-            "witnesses" to StorageType.LIST,
-            "payout" to StorageType.PAYOUT,
-            "hash" to StorageType.HASH,
-            "difficulty" to StorageType.DIFFICULTY,
-            "blockheight" to StorageType.LONG,
-            "extraNonce" to StorageType.LONG
+            "merkleTree" to StorageType.LINK,
+            "header" to StorageType.LINK,
+            "witnesses" to StorageType.LIST
         )
 
     override fun store(
-        toStore: HashedCoinbaseImpl, session: ManagedSession
+        toStore: MutableCoinbase, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
-            .setElementList(
+            .setLinked(
+                "merkleTree",
+                merkleTreeStorageAdapter.persist(
+                    toStore.merkleTree, session
+                )
+            ).setLinked(
+                "header",
+                coinbaseStorageAdapter.persist(
+                    toStore.header, session
+                )
+            ).setElementList(
                 "witnesses",
-                toStore
-                    .witnesses
-                    .map {
-                        witnessStorageAdapter.persist(
-                            it, session
-                        )
-                    }
-            ).setPayoutProperty("payout", toStore.payout)
-            .setHashProperty("hash", toStore.hash)
-            .setDifficultyProperty(
-                "difficulty", toStore.difficulty, session
-            ).setStorageProperty(
-                "blockheight", toStore.blockheight
-            )
-            .setStorageProperty(
-                "extraNonce", toStore.extraNonce
+                toStore.mutableWitnesses.map {
+                    witnessStorageAdapter.persist(
+                        it, session
+                    )
+                }
             )
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<HashedCoinbaseImpl, LoadFailure> =
+    ): Outcome<MutableCoinbase, LoadFailure> =
         tryOrLoadUnknownFailure {
-            val difficulty =
-                element.getDifficultyProperty("difficulty")
-
-            val blockheight: Long =
-                element.getStorageProperty("blockheight")
-
-            val extraNonce: Long =
-                element.getStorageProperty("extraNonce")
-
-            element
-                .getElementList("witnesses")
-                .map { element ->
-                    witnessStorageAdapter.load(
-                        ledgerHash, element
-                    )
-                }.allValues()
-                .flatMapSuccess { witnesses ->
-                    Outcome.Ok(
-                        HashedCoinbaseImpl(
-                            witnesses = witnesses.toMutableSortedListFromPreSorted(),
-                            payout = element.getPayoutProperty("payout"),
-                            difficulty = difficulty,
-                            blockheight = blockheight,
-                            extraNonce = extraNonce,
-                            ledgerInfo = ledgerInfo,
-                            hash = element.getHashProperty("hash")
+            zip(
+                merkleTreeStorageAdapter.load(
+                    ledgerHash, element.getLinked("merkleTree")
+                ), coinbaseStorageAdapter.load(
+                    ledgerHash, element.getLinked("header")
+                ), element
+                    .getElementList("witnesses")
+                    .map { element ->
+                        witnessStorageAdapter.load(
+                            ledgerHash, element
                         )
-                    )
-                }
+                    }.allValues()
+            ) { merkleTree, coinbaseHeader, witnesses ->
+                coinbaseFactory.create(
+                    merkleTree = merkleTree, header = coinbaseHeader,
+                    witnesses = witnesses.toMutableSortedListFromPreSorted()
+                )
+            }
         }
-
 }

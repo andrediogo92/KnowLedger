@@ -1,36 +1,27 @@
 package org.knowledger.ledger.storage.coinbase
 
 import org.knowledger.collections.SortedList
-import org.knowledger.ledger.config.CoinbaseParams
-import org.knowledger.ledger.data.DataFormula
-import org.knowledger.ledger.data.Difficulty
-import org.knowledger.ledger.data.Payout
-import org.knowledger.ledger.serial.HashSerializable
+import org.knowledger.ledger.core.base.Sizeable
+import org.knowledger.ledger.crypto.hash.toEncoded
+import org.knowledger.ledger.storage.CoinbaseHeader
 import org.knowledger.ledger.storage.LedgerContract
+import org.knowledger.ledger.storage.MerkleTree
+import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.Witness
+import org.knowledger.ledger.storage.calculateWitnessesSize
 
-/**
- * The coinbase transaction. Pays out to contributors to
- * the ledger.
- *
- * The coinbase will be continually updated to reflect
- * changes to the block.
- */
-interface Coinbase : Cloneable,
-                     HashSerializable,
-                     LedgerContract {
-
+interface Coinbase : Sizeable, LedgerContract {
+    val header: CoinbaseHeader
     val witnesses: SortedList<Witness>
-    val payout: Payout
-    val coinbaseParams: CoinbaseParams
+    val merkleTree: MerkleTree
 
-    // Difficulty is fixed at block generation time.
-    val difficulty: Difficulty
-    val blockheight: Long
-    val extraNonce: Long
-    val formula: DataFormula
+    fun findWitness(tx: Transaction): Int =
+        witnesses.binarySearch { witness ->
+            witness.publicKey.compareTo(tx.publicKey.toEncoded())
+        }
 
-
-    public override fun clone(): Coinbase
+    override val approximateSize: Int
+        get() = witnesses.calculateWitnessesSize(
+            header.coinbaseParams.hashSize
+        )
 }
-
