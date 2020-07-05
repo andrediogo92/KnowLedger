@@ -6,6 +6,7 @@ plugins {
 
 basePlugin {
     module = "collections-extensions"
+    experimentalContracts = true
 }
 
 jmh {

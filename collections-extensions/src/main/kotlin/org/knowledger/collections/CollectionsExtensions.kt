@@ -4,6 +4,8 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.LinkedHashMap
 import kotlin.collections.LinkedHashSet
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 fun <T : Comparable<T>> emptySortedList(): SortedList<T> =
     DelegatedSortedList()
@@ -57,6 +59,21 @@ fun <T : Comparable<T>> Sequence<T>.toSortedList(): SortedList<T> =
 fun <T : Comparable<T>> Iterable<T>.toSortedList(): SortedList<T> =
     DelegatedSortedList(initial = this)
 
+/**
+ * Similar to [kotlin.collections.slice] but unsafe.
+ * Builds an exactly sized [ArrayList] in place with elements from [from] index
+ * up until [toExclusive] index.
+ * Does no bounds checking whatsoever.
+ */
+fun <T> List<T>.fastSlice(from: Int, toExclusive: Int): List<T> =
+    ArrayList<T>(toExclusive - from).apply {
+        for (i in from until toExclusive) {
+            this[i] = this@fastSlice[i]
+        }
+    }
+
+inline fun <T, R : Comparable<R>> Iterable<T>.mapSorted(map: (T) -> R): SortedList<R> =
+    DelegatedSortedList(map(map))
 
 inline fun <reified T> Sequence<T>.toSizedArray(i: Int): Array<T> {
     val iter = iterator()
@@ -64,6 +81,9 @@ inline fun <reified T> Sequence<T>.toSizedArray(i: Int): Array<T> {
         iter.next()
     }
 }
+
+operator fun <T : Comparable<T>> SortedList<T>.plus(other: SortedList<T>): MutableSortedList<T> =
+    DelegatedSortedList(initial = this).also { it.addAll(other) }
 
 inline fun <reified T> Iterable<T>.toSizedArray(i: Int): Array<T> {
     val iter = iterator()
@@ -87,15 +107,60 @@ inline fun <T, reified R> Array<out T>.mapToArray(
         transform(this[it])
     }
 
-inline fun <T, reified R> Array<out T>.mapAndAdd(
+inline fun <T, reified R> Array<out T>.mapAndPrefixAdd(
+    transform: (T) -> R, toAdd: T
+): Array<R> {
+    contract {
+        callsInPlace(transform, kind = InvocationKind.AT_LEAST_ONCE)
+    }
+    val result = Array(size + 1) {
+        transform(this[it - 1 % size])
+    }
+    result[0] = transform(toAdd)
+    return result
+}
+
+inline fun <T, reified R> Array<out T>.mapAndSuffixAdd(
+    transform: (T) -> R, toAdd: T
+): Array<R> {
+    contract {
+        callsInPlace(transform, kind = InvocationKind.AT_LEAST_ONCE)
+    }
+    val result = Array(size + 1) {
+        transform(this[it % size])
+    }
+    result[size] = transform(toAdd)
+    return result
+}
+
+
+inline fun <T, reified R> Array<out T>.mapAndPrefixAdd(
     transform: (T) -> R, vararg toAdd: T
-): Array<R> =
-    Array(size + toAdd.size) {
+): Array<R> {
+    contract {
+        callsInPlace(transform, kind = InvocationKind.AT_LEAST_ONCE)
+    }
+    return Array(size + toAdd.size) {
         when (it) {
             in toAdd.indices -> transform(toAdd[it])
             else -> transform(this[it - toAdd.size])
         }
     }
+}
+
+inline fun <T, reified R> Array<out T>.mapAndSuffixAdd(
+    transform: (T) -> R, vararg toAdd: T
+): Array<R> {
+    contract {
+        callsInPlace(transform, kind = InvocationKind.AT_LEAST_ONCE)
+    }
+    return Array(size + toAdd.size) {
+        when (it) {
+            in indices -> transform(this[it])
+            else -> transform(toAdd[it - size])
+        }
+    }
+}
 
 fun <T> List<T>.filterByIndex(
     function: (Int) -> Boolean

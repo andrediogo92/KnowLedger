@@ -33,25 +33,42 @@ class DelegatedSortedList<E : Comparable<E>> internal constructor(
         return true
     }
 
-    override operator fun plus(element: E): DelegatedSortedList<E> =
-        apply {
-            this += element
+    override fun addWithIndex(element: E): Int {
+        val insertionIndex: Int = delegate.binarySearch(element)
+        return if (insertionIndex < 0) {
+            //Invert the inverted insertion point
+            delegate.add(-insertionIndex - 1, element)
+            -insertionIndex - 1
+        } else {
+            -1
         }
+    }
 
     override operator fun plusAssign(element: E) {
         val insertionIndex: Int = delegate.binarySearch(element)
         if (insertionIndex < 0)
         //Invert the inverted insertion point
-            delegate.add(-(insertionIndex + 1), element)
+            delegate.add(-insertionIndex - 1, element)
     }
 
     override fun remove(element: E): Boolean {
-        val index: Int = delegate.binarySearch(element)
-        if (index >= 0) {
-            delegate.removeAt(index)
-            return true
+        val removeIndex: Int = delegate.binarySearch(element)
+        return if (removeIndex >= 0) {
+            delegate.removeAt(removeIndex)
+            true
+        } else {
+            false
         }
-        return false
+    }
+
+    override fun removeWithIndex(element: E): Int {
+        val removeIndex = delegate.binarySearch(element)
+        return if (removeIndex >= 0) {
+            delegate.removeAt(removeIndex)
+            removeIndex
+        } else {
+            -1
+        }
     }
 
     override fun removeAll(elements: Collection<E>): Boolean =
