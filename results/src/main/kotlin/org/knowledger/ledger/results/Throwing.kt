@@ -1,43 +1,56 @@
 package org.knowledger.ledger.results
 
+private class HardFailureException(
+    cause: String, exception: Exception
+) : Exception(cause, exception) {
+    override fun fillInStackTrace(): Throwable = this
+}
+
+private class FailureException(cause: String) : Exception(cause) {
+    override fun fillInStackTrace(): Throwable = this
+}
+
 private fun Failable.HardFailure.hardUnwrap(): Exception =
     if (exception != null) {
-        RuntimeException(cause, exception)
+        HardFailureException(cause, exception)
     } else {
-        unwrap()
+        lightUnwrap()
     }
+
+private fun Failable.lightUnwrap(): Exception =
+    FailureException(cause)
 
 private fun Failable.unwrap(): Exception =
     when (this) {
         is Failable.HardFailure -> hardUnwrap()
         is Failable.PropagatedFailure -> propagateUnwrap()
-        is Failable.LightFailure -> throw RuntimeException(cause)
+        is Failable.LightFailure -> lightUnwrap()
     }
 
 private fun Failable.PropagatedFailure.propagateUnwrap(): Exception =
     when (inner) {
         is Failable.HardFailure -> {
-            val hardFailure = inner
-            if (hardFailure.exception != null) {
-                RuntimeException(cause, hardFailure.exception)
+            if (inner.exception != null) {
+                HardFailureException(cause, inner.exception)
             } else {
-                RuntimeException(cause)
+                lightUnwrap()
             }
         }
         is Failable.PropagatedFailure -> {
             val extracted = extractException()
             if (extracted != null) {
-                RuntimeException(cause, extracted)
+                HardFailureException(cause, extracted)
             } else {
-                RuntimeException(cause)
+                lightUnwrap()
             }
         }
-        is Failable.LightFailure -> RuntimeException(cause)
+        is Failable.LightFailure -> lightUnwrap()
     }
 
-private fun Failable.PropagatedFailure.extractException(): Exception? =
+private tailrec fun Failable.PropagatedFailure.extractException(): Exception? =
     when (inner) {
         is Failable.HardFailure -> inner.exception
+        is Failable.PropagatedFailure -> inner.extractException()
         else -> null
     }
 
