@@ -1,4 +1,4 @@
-package org.knowledger.ledger.serial.internal
+package org.knowledger.ledger.serial
 
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.Decoder
@@ -7,11 +7,12 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
 import org.knowledger.ledger.config.ChainId
-import org.knowledger.ledger.config.chainid.ChainIdImpl
+import org.knowledger.ledger.config.chainid.ImmutableChainId
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.Tag
 
-internal abstract class AbstractChainIdSerializer : KSerializer<ChainId>, HashEncode {
+object ChainIdSerializer : KSerializer<ChainId>,
+                           HashEncode {
     override val descriptor: SerialDescriptor =
         SerialDescriptor("ChainId") {
             element(
@@ -29,7 +30,7 @@ internal abstract class AbstractChainIdSerializer : KSerializer<ChainId>, HashEn
         }
 
     override fun deserialize(decoder: Decoder): ChainId =
-        with(decoder.beginStructure(descriptor)) {
+        compositeDecode(decoder) {
             lateinit var tag: Tag
             lateinit var ledgerHash: Hash
             lateinit var hash: Hash
@@ -42,16 +43,14 @@ internal abstract class AbstractChainIdSerializer : KSerializer<ChainId>, HashEn
                     else -> throw SerializationException("Unknown index $i")
                 }
             }
-            endStructure(descriptor)
-            ChainIdImpl(tag, ledgerHash, hash)
+            ImmutableChainId(tag, ledgerHash, hash)
         }
 
     override fun serialize(encoder: Encoder, value: ChainId) {
-        with(encoder.beginStructure(descriptor)) {
+        compositeEncode(encoder) {
             encodeHash(0, value.tag)
             encodeHash(1, value.ledgerHash)
             encodeHash(2, value.hash)
-            endStructure(descriptor)
         }
     }
 }
