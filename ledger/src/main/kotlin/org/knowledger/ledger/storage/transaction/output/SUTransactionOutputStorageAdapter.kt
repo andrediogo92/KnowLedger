@@ -9,8 +9,11 @@ import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
+import org.knowledger.ledger.storage.transaction.output.factory.TransactionOutputFactory
 
-internal class SUTransactionOutputStorageAdapter : LedgerStorageAdapter<TransactionOutputImpl> {
+internal class SUTransactionOutputStorageAdapter(
+    private val transactionOutputFactory: TransactionOutputFactory
+) : LedgerStorageAdapter<TransactionOutput> {
     override val id: String
         get() = "TransactionOutput"
 
@@ -25,7 +28,7 @@ internal class SUTransactionOutputStorageAdapter : LedgerStorageAdapter<Transact
         )
 
     override fun store(
-        toStore: TransactionOutputImpl, session: ManagedSession
+        toStore: TransactionOutput, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
@@ -39,12 +42,11 @@ internal class SUTransactionOutputStorageAdapter : LedgerStorageAdapter<Transact
                 "prevTx", toStore.prevTx
             ).setStorageProperty(
                 "txIndex", toStore.txIndex
-            )
-            .setHashProperty("tx", toStore.tx)
+            ).setHashProperty("tx", toStore.tx)
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<TransactionOutputImpl, LoadFailure> =
+    ): Outcome<TransactionOutput, LoadFailure> =
         tryOrLoadUnknownFailure {
             val payout: Payout =
                 element.getPayoutProperty("payout")
@@ -59,7 +61,7 @@ internal class SUTransactionOutputStorageAdapter : LedgerStorageAdapter<Transact
             val tx: Hash =
                 element.getHashProperty("tx")
             Outcome.Ok(
-                TransactionOutputImpl(
+                transactionOutputFactory.create(
                     payout = payout, prevTxBlock = prevTxBlock,
                     prevTxIndex = prevTxIndex, prevTx = prevTx,
                     txIndex = txIndex, tx = tx

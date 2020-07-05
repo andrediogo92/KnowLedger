@@ -1,7 +1,9 @@
 @file:UseSerializers(HashSerializer::class, PayoutSerializer::class)
+
 package org.knowledger.ledger.storage.transaction.output
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import org.knowledger.ledger.core.serial.HashSerializer
@@ -10,7 +12,8 @@ import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.data.Payout
 
 @Serializable
-data class TransactionOutputImpl internal constructor(
+@SerialName("TransactionOutput")
+data class ImmutableTransactionOutput(
     override val payout: Payout,
     override val prevTxBlock: Hash,
     override val prevTxIndex: Int,

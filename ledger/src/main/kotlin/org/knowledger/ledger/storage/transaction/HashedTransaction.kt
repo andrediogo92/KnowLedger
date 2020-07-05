@@ -1,11 +1,12 @@
 package org.knowledger.ledger.storage.transaction
 
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.BinaryFormat
+import org.knowledger.ledger.core.base.Sizeable
 import org.knowledger.ledger.crypto.Hashing
-import org.knowledger.ledger.serial.display.TransactionSerializer
+import org.knowledger.ledger.storage.serial.SignedTransactionSerializationStrategy
 
-@Serializable(with = TransactionSerializer::class)
-interface HashedTransaction : Hashing,
+interface HashedTransaction : Hashing, Sizeable,
                               SignedTransaction {
-    override fun clone(): HashedTransaction
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(SignedTransactionSerializationStrategy, this)
 }

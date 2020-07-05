@@ -1,6 +1,7 @@
 package org.knowledger.ledger.storage.transaction
 
 import org.knowledger.ledger.crypto.EncodedPublicKey
+import org.knowledger.ledger.crypto.EncodedSignature
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.toPublicKey
 import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
@@ -10,13 +11,17 @@ import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
+import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
+import org.knowledger.ledger.storage.transaction.factory.HashedTransactionFactory
 import java.security.PublicKey
 
 internal class SUTransactionStorageAdapter(
-    private val physicalDataStorageAdapter: PhysicalDataStorageAdapter
-) : LedgerStorageAdapter<HashedTransactionImpl> {
+    private val ledgerInfo: LedgerInfo,
+    private val physicalDataStorageAdapter: PhysicalDataStorageAdapter,
+    private val transactionFactory: HashedTransactionFactory
+) : LedgerStorageAdapter<MutableHashedTransaction> {
     override val id: String
         get() = "Transaction"
 
@@ -30,7 +35,7 @@ internal class SUTransactionStorageAdapter(
         )
 
     override fun store(
-        toStore: HashedTransactionImpl, session: ManagedSession
+        toStore: MutableHashedTransaction, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
@@ -51,7 +56,7 @@ internal class SUTransactionStorageAdapter(
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<HashedTransactionImpl, LoadFailure> =
+    ): Outcome<MutableHashedTransaction, LoadFailure> =
         tryOrLoadUnknownFailure {
             val physicalData = element.getLinked("data")
 
@@ -62,8 +67,9 @@ internal class SUTransactionStorageAdapter(
                 val publicKey: PublicKey = EncodedPublicKey(
                     element.getStorageProperty("publicKey")
                 ).toPublicKey()
-                val signature =
+                val signature = EncodedSignature(
                     element.getStorageBytes("signature").bytes
+                )
 
                 val hash =
                     element.getHashProperty("hash")
@@ -71,11 +77,14 @@ internal class SUTransactionStorageAdapter(
                 val index =
                     element.getStorageProperty<Int>("index")
 
-                HashedTransactionImpl(
+                val mht = transactionFactory.create(
                     publicKey = publicKey, data = data,
-                    signature = signature, hash = hash,
-                    index = index
+                    signature = signature, hasher = ledgerInfo.hasher,
+                    encoder = ledgerInfo.encoder
                 )
+                assert(mht.hash == hash)
+                mht.markIndex(index)
+                mht
             }
         }
 
