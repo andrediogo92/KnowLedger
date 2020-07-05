@@ -1,97 +1,121 @@
 package org.knowledger.ledger.crypto.storage
 
 
-import org.knowledger.ledger.core.base.hash.Hash.Companion.emptyHash
-import org.knowledger.ledger.core.base.serial.HashSerializable
+import org.knowledger.collections.fastSlice
 import org.knowledger.ledger.core.base.storage.LedgerContract
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.crypto.hash.Hashers
 
-interface MerkleTree : HashSerializable,
-                       Hashing,
-                       LedgerContract,
-                       Cloneable {
+interface MerkleTree : Hashing,
+                       LedgerContract {
     val collapsedTree: List<Hash>
     val levelIndex: List<Int>
     val hasher: Hashers
 
     /**
-     * The root hash.
+     * The root hash, defined as the first hash of the [collapsedTree].
      */
     override val hash: Hash
-        get() =
-            if (collapsedTree.isNotEmpty())
-                collapsedTree[0] else
-                emptyHash
+        get() = collapsedTree[0]
 
-    public override fun clone(): MerkleTree
 
-    fun hasTransaction(hash: Hash): Boolean
-    fun getTransactionId(hash: Hash): Int?
+    fun hasTransaction(hash: Hash): Boolean {
+        //Cache lists in case they are synthetic properties
+        val cT = collapsedTree
+        val lI = levelIndex
+
+        //levelIndex[index] points to leftmost node at level index of the tree
+        return cT.fastSlice(lI[(lI.size - 1)], cT.size).contains(hash)
+    }
+
+    fun getTransactionId(hash: Hash): Int {
+        //Cache lists in case they are synthetic properties
+        val cT = collapsedTree
+        val lI = levelIndex
+
+        //levelIndex[index] points to leftmost node at level index of the tree.
+        return cT.fastSlice(lI[(lI.size - 1)], cT.size).indexOf(hash)
+    }
+
 
     /**
      * Takes a [hash] to verify against the [MerkleTree]
      * and returns whether the transaction is present and
      * matched all the way up the [MerkleTree].
      */
-    fun verifyTransaction(hash: Hash): Boolean
+    fun verifyTransaction(hash: Hash): Boolean {
+        //Cache list in case they are synthetic properties
+        val lI = levelIndex
+        return getTransactionId(hash).let { i ->
+            if (i != -1) {
+                loopUpVerification(
+                    i, hash, lI.size - 1,
+                    hasher, collapsedTree, lI
+                )
+            } else false
+        }
+    }
 
 
     /**
      * Verifies entire [MerkleTree] against the transaction value.
      *
-     * Takes the special [coinbase] transaction + the other [data]
-     * transactions in the block and returns whether the entire
-     * [MerkleTree] matches against the transaction [data] + [coinbase].
+     * Takes the [data] transactions in the block and returns whether
+     * the entire [MerkleTree] matches against the transaction [data].
      */
     fun verifyBlockTransactions(
-        coinbase: Hashing,
         data: Array<out Hashing>
-    ): Boolean
+    ): Boolean {
+        //Cache lists in case they are synthetic properties
+        val cT = collapsedTree
+        val lI = levelIndex
+        val tStart = lI[lI.size - 1]
+        //Check if collapsedTree is empty.
+        //Check last level is the same size as data.
+        if (cT.isNotEmpty() && cT.size - tStart == data.size) {
+            //Check all transactions in last level match provided.
+            if (checkAllTransactionsPresent(tStart, data, cT)) {
+                return if (lI.size > 1) {
+                    //Verify all transactions created upwards.
+                    loopUpAllVerification(lI.size - 2, hasher, cT, lI)
+                } else {
+                    true
+                }
+            }
+        }
+        return false
+    }
 
     /**
-     * Uses the provided [hasher] to rebuild the [MerkleTree] in-place with the new [hasher].
-     * If the [hasher] provided is already the one used it's a no-op.
-     */
-    fun changeHasher(hasher: Hashers)
-
-    /**
-     * Uses the provided [diff] array of changed elements and their indexes in [diffIndexes]
-     * to regenerate only the changed parts of the MerkleTree.
-     */
-    fun buildDiff(diff: Array<out Hashing>, diffIndexes: Array<Int>)
-
-
-    /**
-     * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
+     * Verifies entire [MerkleTree] against the transaction value.
      *
-     * Initializes the first tree layer, which is the transaction layer,
-     * sets a correspondence from each hashId to its index and starts a build loop,
-     * building all subsequent layers.
-     *
-     * Takes [data] as the transactions in the block and outputs the full
-     * corresponding [MerkleTree] for their hashes, or an empty [MerkleTree]
-     * if supplied with empty [data].
+     * Takes the special [primary] transaction + the other [data]
+     * transactions in the block and returns whether the entire
+     * [MerkleTree] matches against the transaction [data] + [primary].
      */
-    fun rebuildMerkleTree(data: Array<out Hashing>)
-
-    /**
-     * Builds a [MerkleTree] collapsed in a heap for easy navigability from bottom up.
-     *
-     * Initializes the first tree layer, which is the transaction layer,
-     * sets a correspondence from each hashId to its index and starts a build loop,
-     * building all subsequent layers.
-     *
-     * Takes [data] as the transactions in the block + the special [coinbase] transaction's
-     * hashes and outputs the full corresponding [Merkle Tree], or an empty [MerkleTree] if
-     * supplied with empty [data].
-     */
-    fun rebuildMerkleTree(
-        coinbase: Hashing, data: Array<out Hashing>
-    )
-
-    fun buildFromCoinbase(coinbase: Hashing)
+    fun verifyBlockTransactions(
+        primary: Hashing, data: Array<out Hashing>
+    ): Boolean {
+        //Cache lists in case they are synthetic properties
+        val cT = collapsedTree
+        val lI = levelIndex
+        val tStart = lI[lI.size - 1]
+        //Check if collapsedTree is empty.
+        //Check last level is the same size as coinbase + data.
+        if (cT.isNotEmpty() && cT.size - tStart == data.size + 1) {
+            //Check all transactions in last level match provided.
+            if (checkAllTransactionsPresent(tStart, primary, data, cT)) {
+                return if (lI.size > 1) {
+                    //Verify all transactions created upwards.
+                    loopUpAllVerification(lI.size - 2, hasher, cT, lI)
+                } else {
+                    true
+                }
+            }
+        }
+        return false
+    }
 }
 
 
