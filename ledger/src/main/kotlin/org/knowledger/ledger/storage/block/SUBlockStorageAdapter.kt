@@ -10,18 +10,20 @@ import org.knowledger.ledger.results.allValues
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.results.zip
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
-import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
+import org.knowledger.ledger.storage.MutableBlockHeader
+import org.knowledger.ledger.storage.MutableCoinbase
+import org.knowledger.ledger.storage.MutableMerkleTree
+import org.knowledger.ledger.storage.MutableTransaction
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
+import org.knowledger.ledger.storage.block.factory.BlockFactory
 
 internal class SUBlockStorageAdapter(
-    private val transactionStorageAdapter: TransactionStorageAdapter,
-    private val coinbaseStorageAdapter: CoinbaseStorageAdapter,
-    private val blockHeaderStorageAdapter: BlockHeaderStorageAdapter,
-    private val merkleTreeStorageAdapter: MerkleTreeStorageAdapter
-) : LedgerStorageAdapter<BlockImpl> {
+    private val blockFactory: BlockFactory,
+    private val transactionStorageAdapter: LedgerStorageAdapter<MutableTransaction>,
+    private val coinbaseStorageAdapter: LedgerStorageAdapter<MutableCoinbase>,
+    private val blockHeaderStorageAdapter: LedgerStorageAdapter<MutableBlockHeader>,
+    private val merkleTreeStorageAdapter: LedgerStorageAdapter<MutableMerkleTree>
+) : LedgerStorageAdapter<MutableBlock> {
     override val id: String
         get() = "Block"
 
@@ -34,14 +36,14 @@ internal class SUBlockStorageAdapter(
         )
 
     override fun store(
-        toStore: BlockImpl,
+        toStore: MutableBlock,
         session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
             .setElementList(
                 "transactions",
-                toStore.transactions.map {
+                toStore.innerTransactions.map {
                     transactionStorageAdapter.persist(
                         it, session
                     )
@@ -67,7 +69,7 @@ internal class SUBlockStorageAdapter(
     @Suppress("NAME_SHADOWING")
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<BlockImpl, LoadFailure> =
+    ): Outcome<MutableBlock, LoadFailure> =
         tryOrLoadUnknownFailure {
             val payout = element.getLinked("payout")
             val header = element.getLinked("header")
@@ -82,19 +84,16 @@ internal class SUBlockStorageAdapter(
                         )
                     }.allValues(),
                 coinbaseStorageAdapter.load(
-                    ledgerHash,
-                    payout
+                    ledgerHash, payout
                 ),
                 blockHeaderStorageAdapter.load(
-                    ledgerHash,
-                    header
+                    ledgerHash, header
                 ),
                 merkleTreeStorageAdapter.load(
-                    ledgerHash,
-                    merkleTree
+                    ledgerHash, merkleTree
                 )
             ) { data, coinbase, header, merkleTree ->
-                BlockImpl(
+                blockFactory.create(
                     data.toMutableSortedListFromPreSorted(),
                     coinbase, header, merkleTree
                 )

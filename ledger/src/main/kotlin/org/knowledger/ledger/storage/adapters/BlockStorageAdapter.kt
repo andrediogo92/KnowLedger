@@ -1,39 +1,56 @@
 package org.knowledger.ledger.storage.adapters
 
+import org.knowledger.ledger.adapters.cacheStore
+import org.knowledger.ledger.adapters.cachedLoad
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
-import org.knowledger.ledger.database.adapters.SchemaProvider
+import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.Outcome
-import org.knowledger.ledger.results.deadCode
 import org.knowledger.ledger.service.results.LoadFailure
-import org.knowledger.ledger.storage.Block
-import org.knowledger.ledger.storage.block.BlockImpl
-import org.knowledger.ledger.storage.block.SABlockStorageAdapter
+import org.knowledger.ledger.storage.MutableBlock
 import org.knowledger.ledger.storage.block.SUBlockStorageAdapter
 import org.knowledger.ledger.storage.block.StorageAwareBlock
+import org.knowledger.ledger.storage.block.factory.StorageAwareBlockFactory
 
 internal class BlockStorageAdapter(
-    private val suBlockStorageAdapter: SUBlockStorageAdapter,
-    private val saBlockStorageAdapter: SABlockStorageAdapter
-) : LedgerStorageAdapter<Block>,
-    SchemaProvider by suBlockStorageAdapter {
+    blockFactory: StorageAwareBlockFactory,
+    transactionStorageAdapter: TransactionStorageAdapter,
+    coinbaseStorageAdapter: CoinbaseStorageAdapter,
+    blockHeaderStorageAdapter: BlockHeaderStorageAdapter,
+    merkleTreeStorageAdapter: MerkleTreeStorageAdapter
+) : LedgerStorageAdapter<MutableBlock> {
+    private val suBlockStorageAdapter: SUBlockStorageAdapter =
+        SUBlockStorageAdapter(
+            blockFactory, transactionStorageAdapter,
+            coinbaseStorageAdapter,
+            blockHeaderStorageAdapter,
+            merkleTreeStorageAdapter
+        )
+
+    override val id: String
+        get() = suBlockStorageAdapter.id
+
+    override val properties: Map<String, StorageType>
+        get() = suBlockStorageAdapter.properties
 
     override fun store(
-        toStore: Block,
-        session: ManagedSession
+        toStore: MutableBlock, session: ManagedSession
     ): StorageElement =
         when (toStore) {
-            is StorageAwareBlock ->
-                saBlockStorageAdapter.store(toStore, session)
-            is BlockImpl ->
-                suBlockStorageAdapter.store(toStore, session)
-            else -> deadCode()
+            is StorageAwareBlock -> session.cacheStore(
+                suBlockStorageAdapter,
+                toStore, toStore.block
+            )
+            else -> suBlockStorageAdapter.store(toStore, session)
         }
 
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<Block, LoadFailure> =
-        saBlockStorageAdapter.load(ledgerHash, element)
+    ): Outcome<StorageAwareBlock, LoadFailure> =
+        element.cachedLoad(
+            ledgerHash, suBlockStorageAdapter
+        )
+
 }
