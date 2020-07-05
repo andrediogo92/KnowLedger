@@ -1,5 +1,7 @@
 package org.knowledger.ledger.config.chainid
 
+import org.knowledger.ledger.config.ChainId
+import org.knowledger.ledger.config.chainid.factory.ChainIdFactory
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
@@ -9,7 +11,9 @@ import org.knowledger.ledger.results.tryOrLedgerUnknownFailure
 import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
 import org.knowledger.ledger.service.results.LedgerFailure
 
-internal object SUChainIdStorageAdapter : ServiceStorageAdapter<ChainIdImpl> {
+internal class SUChainIdStorageAdapter(
+    private val chainIdFactory: ChainIdFactory
+) : ServiceStorageAdapter<ChainId> {
     override val id: String
         get() = "ChainId"
 
@@ -22,7 +26,7 @@ internal object SUChainIdStorageAdapter : ServiceStorageAdapter<ChainIdImpl> {
 
 
     override fun store(
-        toStore: ChainIdImpl, session: ManagedSession
+        toStore: ChainId, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
@@ -34,7 +38,7 @@ internal object SUChainIdStorageAdapter : ServiceStorageAdapter<ChainIdImpl> {
     override fun load(
         ledgerHash: Hash,
         element: StorageElement
-    ): Outcome<ChainIdImpl, LedgerFailure> =
+    ): Outcome<ChainId, LedgerFailure> =
         tryOrLedgerUnknownFailure {
             val hash: Hash =
                 element.getHashProperty("hash")
@@ -49,7 +53,7 @@ internal object SUChainIdStorageAdapter : ServiceStorageAdapter<ChainIdImpl> {
             assert(ledger == ledgerHash)
 
             Outcome.Ok(
-                ChainIdImpl(
+                chainIdFactory.create(
                     tag, ledger, hash
                 )
             )
