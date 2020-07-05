@@ -1,11 +1,10 @@
-package org.knowledger.ledger.core
+package org.knowledger.collections
 
 import kotlin.math.min
 
 @Suppress("UNCHECKED_CAST")
-class RingBuffer<T : Any>(capacity: Int) {
+class RingBuffer<T : Any>(private var capacity: Int) {
     private var elements: Array<Any> = Array(capacity) {}
-    private var capacity = capacity
     private var writePos = 0
     private var available = 0
 
@@ -53,8 +52,6 @@ class RingBuffer<T : Any>(capacity: Int) {
             } else {
                 //both space above writePos and below writePos is necessary to use
                 //to insert batch.
-
-                val lastEmptyPos = writePos - available
 
                 while (writePos < capacity) {
                     elements[writePos] = newElements[readPos]
