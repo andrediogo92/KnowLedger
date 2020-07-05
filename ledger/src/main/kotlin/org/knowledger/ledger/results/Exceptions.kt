@@ -7,88 +7,83 @@ import org.knowledger.ledger.service.handles.builder.LedgerConfig
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.service.results.UpdateFailure
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 //-----------------------------------------
 // Exception Handlers
 //-----------------------------------------
 
-internal inline fun tryOrHandleUnknownFailure(
-    run: () -> Outcome<LedgerConfig, LedgerHandle.Failure>
-): Outcome<LedgerConfig, LedgerHandle.Failure> =
-    try {
-        run()
+inline fun <T, R : Failure> tryOrUnknownFailure(
+    function: () -> Outcome<T, R>,
+    failureConstructor: (Exception) -> R
+): Outcome<T, R> {
+    contract {
+        callsInPlace(function, InvocationKind.EXACTLY_ONCE)
+        callsInPlace(failureConstructor, InvocationKind.AT_MOST_ONCE)
+    }
+    return try {
+        function()
     } catch (e: Exception) {
         Outcome.Error(
-            LedgerHandle.Failure.UnknownFailure(
-                e.message ?: "", e
-            )
+            failureConstructor(e)
+        )
+    }
+}
+
+internal inline fun tryOrHandleUnknownFailure(
+    function: () -> Outcome<LedgerConfig, LedgerHandle.Failure>
+): Outcome<LedgerConfig, LedgerHandle.Failure> =
+    tryOrUnknownFailure(function) { exception ->
+        LedgerHandle.Failure.UnknownFailure(
+            exception.message ?: "", exception
         )
     }
 
 inline fun <T> tryOrLedgerUnknownFailure(
-    run: () -> Outcome<T, LedgerFailure>
+    function: () -> Outcome<T, LedgerFailure>
 ): Outcome<T, LedgerFailure> =
-    try {
-        run()
-    } catch (e: Exception) {
-        Outcome.Error(
-            LedgerFailure.UnknownFailure(
-                e.message ?: "", e
-            )
+    tryOrUnknownFailure(function) { exception ->
+        LedgerFailure.UnknownFailure(
+            exception.message ?: "", exception
         )
     }
 
 
 inline fun <T> tryOrLoadUnknownFailure(
-    run: () -> Outcome<T, LoadFailure>
+    function: () -> Outcome<T, LoadFailure>
 ): Outcome<T, LoadFailure> =
-    try {
-        run()
-    } catch (e: Exception) {
-        Outcome.Error(
-            LoadFailure.UnknownFailure(
-                e.message ?: "", e
-            )
+    tryOrUnknownFailure(function) { exception ->
+        LoadFailure.UnknownFailure(
+            exception.message ?: "", exception
         )
     }
 
 inline fun <T> tryOrDataUnknownFailure(
-    run: () -> Outcome<T, DataFailure>
+    function: () -> Outcome<T, DataFailure>
 ): Outcome<T, DataFailure> =
-    try {
-        run()
-    } catch (e: Exception) {
-        Outcome.Error(
-            DataFailure.UnknownFailure(
-                e.message ?: "", e
-            )
+    tryOrUnknownFailure(function) { exception ->
+        DataFailure.UnknownFailure(
+            exception.message ?: "", exception
         )
     }
 
 inline fun <T> tryOrUpdateUnknownFailure(
-    run: () -> Outcome<T, UpdateFailure>
+    function: () -> Outcome<T, UpdateFailure>
 ): Outcome<T, UpdateFailure> =
-    try {
-        run()
-    } catch (e: Exception) {
-        Outcome.Error(
-            UpdateFailure.UnknownFailure(
-                e.message ?: "", e
-            )
+    tryOrUnknownFailure(function) { exception ->
+        UpdateFailure.UnknownFailure(
+            exception.message ?: "", exception
         )
     }
 
 
 inline fun <T> tryOrQueryUnknownFailure(
-    run: () -> Outcome<T, QueryFailure>
+    function: () -> Outcome<T, QueryFailure>
 ): Outcome<T, QueryFailure> =
-    try {
-        run()
-    } catch (e: Exception) {
-        Outcome.Error(
-            QueryFailure.UnknownFailure(
-                e.message ?: "", e
-            )
+    tryOrUnknownFailure(function) { exception ->
+        QueryFailure.UnknownFailure(
+            exception.message ?: "", exception
         )
     }
 
@@ -98,12 +93,16 @@ inline fun <T> tryOrQueryUnknownFailure(
  * is thrown or not.
  */
 @Suppress("ConvertTryFinallyToUseCall")
-inline fun <R : AutoCloseable, T> R.use(block: R.() -> T): T =
-    try {
+inline fun <R : AutoCloseable, T> R.use(block: R.() -> T): T {
+    contract {
+        callsInPlace(block, InvocationKind.EXACTLY_ONCE)
+    }
+    return try {
         this.block()
     } finally {
         this.close()
     }
+}
 
 
 fun deadCode(): Nothing {

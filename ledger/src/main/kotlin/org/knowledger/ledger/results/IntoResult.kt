@@ -5,6 +5,8 @@ import org.knowledger.ledger.database.results.QueryFailure
 import org.knowledger.ledger.service.handles.LedgerHandle
 import org.knowledger.ledger.service.results.LedgerFailure
 import org.knowledger.ledger.service.results.LoadFailure
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 //---------------------------------------
 //Into Handle Result
@@ -190,5 +192,9 @@ fun QueryFailure.intoData(): DataFailure =
 
 private inline fun <T : Failable, R : Failure> T.propagate(
     cons: (String, Failable) -> R
-): R =
-    cons(this.javaClass.simpleName, this)
+): R {
+    contract {
+        callsInPlace(cons, InvocationKind.EXACTLY_ONCE)
+    }
+    return cons(this.javaClass.simpleName, this)
+}
