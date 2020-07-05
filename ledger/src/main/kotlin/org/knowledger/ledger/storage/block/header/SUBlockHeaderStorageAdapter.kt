@@ -1,23 +1,27 @@
-package org.knowledger.ledger.storage.blockheader
+package org.knowledger.ledger.storage.block.header
 
+import org.knowledger.ledger.config.ChainId
 import org.knowledger.ledger.config.adapters.BlockParamsStorageAdapter
-import org.knowledger.ledger.config.adapters.ChainIdStorageAdapter
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.ManagedSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.results.Outcome
-import org.knowledger.ledger.results.flatZip
 import org.knowledger.ledger.results.intoLoad
 import org.knowledger.ledger.results.mapFailure
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.service.LedgerInfo
+import org.knowledger.ledger.results.zip
+import org.knowledger.ledger.service.adapters.ServiceStorageAdapter
 import org.knowledger.ledger.service.results.LoadFailure
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
+import org.knowledger.ledger.storage.block.header.factory.HashedBlockHeaderFactory
 
 internal class SUBlockHeaderStorageAdapter(
-    private val container: LedgerInfo
-) : LedgerStorageAdapter<HashedBlockHeaderImpl> {
+    private val blockHeaderFactory: HashedBlockHeaderFactory,
+    private val chainIdStorageAdapter: ServiceStorageAdapter<ChainId>
+) : LedgerStorageAdapter<MutableHashedBlockHeader> {
+    private val blockParamsStorageAdapter = BlockParamsStorageAdapter
+
     override val id: String
         get() = "BlockHeader"
 
@@ -33,13 +37,13 @@ internal class SUBlockHeaderStorageAdapter(
         )
 
     override fun store(
-        toStore: HashedBlockHeaderImpl, session: ManagedSession
+        toStore: MutableHashedBlockHeader, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
             .setLinked(
                 "chainId",
-                ChainIdStorageAdapter.persist(
+                chainIdStorageAdapter.persist(
                     toStore.chainId, session
                 )
             ).setHashProperty("hash", toStore.hash)
@@ -47,7 +51,7 @@ internal class SUBlockHeaderStorageAdapter(
             .setHashProperty("previousHash", toStore.previousHash)
             .setLinked(
                 "blockParams",
-                BlockParamsStorageAdapter.persist(
+                blockParamsStorageAdapter.persist(
                     toStore.params, session
                 )
             ).setStorageProperty(
@@ -57,15 +61,15 @@ internal class SUBlockHeaderStorageAdapter(
     @Suppress("NAME_SHADOWING")
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<HashedBlockHeaderImpl, LoadFailure> =
+    ): Outcome<MutableHashedBlockHeader, LoadFailure> =
         tryOrLoadUnknownFailure {
             val chainId = element.getLinked("chainId")
             val blockParams = element.getLinked("blockParams")
-            flatZip(
-                ChainIdStorageAdapter.load(
+            zip(
+                chainIdStorageAdapter.load(
                     ledgerHash, chainId
                 ).mapFailure { it.intoLoad() },
-                BlockParamsStorageAdapter.load(
+                blockParamsStorageAdapter.load(
                     ledgerHash, blockParams
                 ).mapFailure { it.intoLoad() }
             ) { chainId, blockParams ->
@@ -84,14 +88,9 @@ internal class SUBlockHeaderStorageAdapter(
                 val nonce: Long =
                     element.getStorageProperty("nonce")
 
-                Outcome.Ok(
-                    HashedBlockHeaderImpl(
-                        chainId, container
-                            .hasher, container
-                            .encoder,
-                        hash, blockParams, previousHash,
-                        merkleRoot, seconds, nonce
-                    )
+                blockHeaderFactory.create(
+                    chainId, blockParams, previousHash, hash,
+                    merkleRoot, seconds, nonce
                 )
             }
 
