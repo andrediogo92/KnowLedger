@@ -7,8 +7,7 @@ import kotlin.experimental.and
 
 @Suppress("DuplicatedCode", "SameParameterValue")
 private fun loopShifts(
-    sizeInBytes: Int, sizeOfByte: Int,
-    accum: Int
+    sizeInBytes: Int, sizeOfByte: Int, accum: Int
 ): ByteArray {
     val result = ByteArray(sizeInBytes)
     var l = accum
@@ -21,8 +20,7 @@ private fun loopShifts(
 
 @Suppress("DuplicatedCode", "SameParameterValue")
 private fun loopShifts(
-    sizeInBytes: Int, sizeOfByte: Int,
-    accum: Long
+    sizeInBytes: Int, sizeOfByte: Int, accum: Long
 ): ByteArray {
     val result = ByteArray(sizeInBytes)
     var l = accum
@@ -78,7 +76,7 @@ fun flattenBytes(
     vararg bytes: Byte
 ): ByteArray {
     val final = ByteArray(
-        byteArrays.sumBy { it.size } + bytes.size
+        byteArrays.sumBy(ByteArray::size) + bytes.size
     )
     var into = 0
     byteArrays.forEach {
@@ -93,7 +91,7 @@ fun flattenBytes(
     vararg byteArrays: ByteArray
 ): ByteArray =
     flattenCollectionsAndVarargs(
-        ByteArray(byteArrays.sumBy { it.size }),
+        ByteArray(byteArrays.sumBy(ByteArray::size)),
         null, byteArrays
     )
 
@@ -103,7 +101,7 @@ fun flattenBytes(
 ): ByteArray =
     flattenCollectionsAndVarargs(
         ByteArray(
-            collection.sumBy { it.size } + byteArrays.sumBy { it.size }
+            collection.sumBy(ByteArray::size) + byteArrays.sumBy(ByteArray::size)
         ), collection.iterator(), byteArrays
     )
 
@@ -113,7 +111,7 @@ fun flattenBytes(
 ): ByteArray =
     flattenCollectionsAndVarargs(
         ByteArray(
-            collection.sumBy { it.size } + byteArrays.sumBy { it.size }
+            collection.sumBy(ByteArray::size) + byteArrays.sumBy(ByteArray::size)
         ), collection.iterator(), byteArrays
     )
 
@@ -125,7 +123,7 @@ fun flattenBytes(
 ): ByteArray =
     flattenCollectionsAndVarargs(
         ByteArray(
-            collectionSize + byteArrays.sumBy { it.size }
+            collectionSize + byteArrays.sumBy(ByteArray::size)
         ), collection.iterator(), byteArrays
     )
 

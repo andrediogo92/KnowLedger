@@ -19,9 +19,8 @@ abstract class AbstractStorageAdapter<T : LedgerData>(
     val clazz: Class<out T>,
     hasher: Hashers
 ) : StorageAdapter<T> {
-    override val id: String by lazy {
+    override val id: String =
         clazz.classDigest(hasher).base64Encoded()
-    }
 
     abstract val serializer: KSerializer<T>
 

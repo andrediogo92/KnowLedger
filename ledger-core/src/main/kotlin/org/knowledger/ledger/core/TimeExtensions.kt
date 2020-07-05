@@ -3,9 +3,7 @@ package org.knowledger.ledger.core
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
-@Suppress("NOTHING_TO_INLINE")
-inline fun Instant.secondsFrom(instant: Instant): Long =
+fun Instant.secondsFrom(instant: Instant): Long =
     until(instant, ChronoUnit.SECONDS)
 
-@Suppress("NOTHING_TO_INLINE")
-inline fun Instant.secondsFromNow(): Long = secondsFrom(Instant.now())
+fun Instant.secondsFromNow(): Long = secondsFrom(Instant.now())

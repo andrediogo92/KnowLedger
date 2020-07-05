@@ -17,14 +17,14 @@ private val dsa: Signature =
     )
 
 /**
- * Signs the [data]'s byte encoding using the [this@generateSignature].
+ * Signs the [data]'s byte encoding using the [encoder].
  * Returns the generated signature as a [ByteArray].
  */
 fun PrivateKey.generateSignature(
     data: HashSerializable,
     encoder: BinaryFormat
 ): EncodedSignature =
-    this.applyECDSASig(
+    applyECDSASig(
         data.serialize(encoder)
     )
 
@@ -35,7 +35,7 @@ fun PrivateKey.generateSignature(
 fun PrivateKey.applyECDSASig(
     input: String
 ): EncodedSignature =
-    this.applyECDSASig(
+    applyECDSASig(
         input.toByteArray()
     )
 
