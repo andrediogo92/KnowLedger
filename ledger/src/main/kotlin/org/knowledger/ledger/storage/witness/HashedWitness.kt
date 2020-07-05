@@ -1,11 +1,14 @@
 package org.knowledger.ledger.storage.witness
 
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.crypto.Hashing
-import org.knowledger.ledger.serial.display.WitnessSerializer
+import org.knowledger.ledger.storage.serial.WitnessSerializationStrategy
 
-@Serializable(with = WitnessSerializer::class)
-interface HashedWitness : Hashing,
-                          Witness {
-    override fun clone(): HashedWitness
+interface HashedWitness : Comparable<HashedWitness>,
+                          Hashing, Witness {
+    override fun compareTo(other: HashedWitness): Int =
+        publicKey.compareTo(other.publicKey)
+
+    override fun serialize(encoder: BinaryFormat): ByteArray =
+        encoder.dump(WitnessSerializationStrategy, this as Witness)
 }

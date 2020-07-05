@@ -12,13 +12,15 @@ import org.knowledger.ledger.results.mapSuccess
 import org.knowledger.ledger.results.tryOrLoadUnknownFailure
 import org.knowledger.ledger.service.LedgerInfo
 import org.knowledger.ledger.service.results.LoadFailure
+import org.knowledger.ledger.storage.TransactionOutput
 import org.knowledger.ledger.storage.adapters.LedgerStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
+import org.knowledger.ledger.storage.witness.factory.HashedWitnessFactory
 
 internal class SUWitnessStorageAdapter(
     private val container: LedgerInfo,
-    internal val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
-) : LedgerStorageAdapter<HashedWitnessImpl> {
+    private val witnessFactory: HashedWitnessFactory,
+    private val transactionOutputStorageAdapter: LedgerStorageAdapter<TransactionOutput>
+) : LedgerStorageAdapter<MutableHashedWitness> {
     override val id: String
         get() = "Witness"
 
@@ -35,7 +37,7 @@ internal class SUWitnessStorageAdapter(
 
 
     override fun store(
-        toStore: HashedWitnessImpl, session: ManagedSession
+        toStore: MutableHashedWitness, session: ManagedSession
     ): StorageElement =
         session
             .newInstance(id)
@@ -57,7 +59,7 @@ internal class SUWitnessStorageAdapter(
 
     override fun load(
         ledgerHash: Hash, element: StorageElement
-    ): Outcome<HashedWitnessImpl, LoadFailure> =
+    ): Outcome<MutableHashedWitness, LoadFailure> =
         tryOrLoadUnknownFailure {
             val publicKey = EncodedPublicKey(
                 element.getStorageProperty("publicKey")
@@ -77,15 +79,15 @@ internal class SUWitnessStorageAdapter(
                     ledgerHash, it
                 )
             }.allValues().mapSuccess {
-                val hwi = HashedWitnessImpl(
+                val hwi = witnessFactory.create(
                     publicKey = publicKey,
                     previousWitnessIndex = previousWitnessIndex,
                     previousCoinbase = previousCoinbase,
                     payout = payout,
                     transactionOutputs = it.toMutableSortedListFromPreSorted(),
-                    hash = hash, hasher = container.hasher,
-                    encoder = container.encoder
+                    hasher = container.hasher, encoder = container.encoder
                 )
+                assert(hash == hwi.hash)
                 hwi.markIndex(index)
                 hwi
             }
