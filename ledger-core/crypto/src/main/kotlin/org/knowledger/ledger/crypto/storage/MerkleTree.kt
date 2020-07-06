@@ -25,8 +25,9 @@ interface MerkleTree : Hashing,
         val cT = collapsedTree
         val lI = levelIndex
 
-        //levelIndex[index] points to leftmost node at level index of the tree
-        return cT.fastSlice(lI[(lI.size - 1)], cT.size).contains(hash)
+        //levelIndex[index] points to leftmost node at level index of the tree.
+        val leafsIndex = lI[(lI.size - 1)]
+        return cT.fastSlice(leafsIndex, cT.size).contains(hash)
     }
 
     fun getTransactionId(hash: Hash): Int {
@@ -35,7 +36,8 @@ interface MerkleTree : Hashing,
         val lI = levelIndex
 
         //levelIndex[index] points to leftmost node at level index of the tree.
-        return cT.fastSlice(lI[(lI.size - 1)], cT.size).indexOf(hash)
+        val leafsIndex = lI[(lI.size - 1)]
+        return cT.fastSlice(leafsIndex, cT.size).indexOf(hash) + leafsIndex
     }
 
 
@@ -102,7 +104,7 @@ interface MerkleTree : Hashing,
         val lI = levelIndex
         val tStart = lI[lI.size - 1]
         //Check if collapsedTree is empty.
-        //Check last level is the same size as coinbase + data.
+        //Check last level is the same size has primary + data.
         if (cT.isNotEmpty() && cT.size - tStart == data.size + 1) {
             //Check all transactions in last level match provided.
             if (checkAllTransactionsPresent(tStart, primary, data, cT)) {

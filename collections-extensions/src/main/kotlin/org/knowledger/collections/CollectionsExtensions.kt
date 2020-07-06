@@ -68,7 +68,7 @@ fun <T : Comparable<T>> Iterable<T>.toSortedList(): SortedList<T> =
 fun <T> List<T>.fastSlice(from: Int, toExclusive: Int): List<T> =
     ArrayList<T>(toExclusive - from).apply {
         for (i in from until toExclusive) {
-            this[i] = this@fastSlice[i]
+            add(this@fastSlice[i])
         }
     }
 
@@ -99,6 +99,13 @@ inline fun <T, reified R> List<T>.mapToArray(
         transform(this[it])
     }
 
+inline fun <reified T> Array<out T>.fastPrefixAdd(prefix: T): Array<T> {
+    val result = Array(size + 1) {
+        this[(it + size - 1) % size]
+    }
+    result[0] = prefix
+    return result
+}
 
 inline fun <T, reified R> Array<out T>.mapToArray(
     transform: (T) -> R
@@ -114,7 +121,7 @@ inline fun <T, reified R> Array<out T>.mapAndPrefixAdd(
         callsInPlace(transform, kind = InvocationKind.AT_LEAST_ONCE)
     }
     val result = Array(size + 1) {
-        transform(this[it - 1 % size])
+        transform(this[(it + size - 1) % size])
     }
     result[0] = transform(toAdd)
     return result
@@ -133,34 +140,6 @@ inline fun <T, reified R> Array<out T>.mapAndSuffixAdd(
     return result
 }
 
-
-inline fun <T, reified R> Array<out T>.mapAndPrefixAdd(
-    transform: (T) -> R, vararg toAdd: T
-): Array<R> {
-    contract {
-        callsInPlace(transform, kind = InvocationKind.AT_LEAST_ONCE)
-    }
-    return Array(size + toAdd.size) {
-        when (it) {
-            in toAdd.indices -> transform(toAdd[it])
-            else -> transform(this[it - toAdd.size])
-        }
-    }
-}
-
-inline fun <T, reified R> Array<out T>.mapAndSuffixAdd(
-    transform: (T) -> R, vararg toAdd: T
-): Array<R> {
-    contract {
-        callsInPlace(transform, kind = InvocationKind.AT_LEAST_ONCE)
-    }
-    return Array(size + toAdd.size) {
-        when (it) {
-            in indices -> transform(this[it])
-            else -> transform(toAdd[it - size])
-        }
-    }
-}
 
 fun <T> List<T>.filterByIndex(
     function: (Int) -> Boolean

@@ -107,8 +107,7 @@ data class MerkleTreeImpl(
     }
 
     private fun buildNewLayer(
-        previousTreeLayer: Array<Hash>,
-        count: Int
+        previousTreeLayer: Array<Hash>, count: Int
     ): Array<Hash> {
         val treeLayer = Array(count) { Hash.emptyHash }
         var j = 0
@@ -130,7 +129,7 @@ data class MerkleTreeImpl(
         return treeLayer
     }
 
-    override fun buildFromCoinbase(primary: Hashing) {
+    override fun buildFromPrimary(primary: Hashing) {
         var accumulate = primary.hash
         var i = levelIndex.size - 1
         var j = levelIndex[i]

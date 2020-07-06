@@ -48,5 +48,5 @@ interface MutableMerkleTree : MerkleTree {
     /**
      * Rebuild the first spine of the [MerkleTree] with a new [primary].
      */
-    fun buildFromCoinbase(primary: Hashing)
+    fun buildFromPrimary(primary: Hashing)
 }
