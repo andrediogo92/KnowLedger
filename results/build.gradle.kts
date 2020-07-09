@@ -8,4 +8,8 @@ basePlugin {
     packageName = "org.knowledger.ledger.results"
 }
 
+dependencies {
+    api(Libs.kotlinResult)
+}
+
 version = "0.2"
