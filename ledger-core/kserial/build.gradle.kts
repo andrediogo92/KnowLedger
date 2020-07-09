@@ -12,4 +12,5 @@ serialPlugin {
 
 dependencies {
     implementation(project(":ledger-core:data"))
+    implementation(project(":base64-extensions"))
 }
