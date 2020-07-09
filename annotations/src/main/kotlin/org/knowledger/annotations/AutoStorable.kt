@@ -1,3 +1,3 @@
-package pt.um.masb.annotations
+package org.knowledger.annotations
 
 annotation class AutoStorable(val entityName: String)
