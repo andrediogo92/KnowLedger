@@ -1,10 +1,10 @@
-package pt.um.masb.generation
+package org.knowledger.generation
 
 import com.google.auto.service.AutoService
 import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.TypeSpec
-import pt.um.masb.annotations.AutoStorable
-import pt.um.masb.generation.Options.KAPT_KOTLIN_GENERATED_OPTION_NAME
+import org.knowledger.annotations.AutoStorable
+import org.knowledger.generation.Options.KAPT_KOTLIN_GENERATED_OPTION_NAME
 import java.io.File
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.ProcessingEnvironment
