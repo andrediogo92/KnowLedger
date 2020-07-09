@@ -44,6 +44,11 @@ class DelegatedSortedList<E : Comparable<E>> internal constructor(
         }
     }
 
+    override operator fun plus(list: SortedList<E>): DelegatedSortedList<E> =
+        DelegatedSortedList(delegate).apply {
+            addAll(list)
+        }
+
     override operator fun plusAssign(element: E) {
         val insertionIndex: Int = delegate.binarySearch(element)
         if (insertionIndex < 0)

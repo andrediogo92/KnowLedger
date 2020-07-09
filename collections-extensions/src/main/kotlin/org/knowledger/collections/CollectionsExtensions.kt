@@ -72,6 +72,18 @@ fun <T> List<T>.fastSlice(from: Int, toExclusive: Int): List<T> =
         }
     }
 
+/**
+ * Similar to [kotlin.collections.slice] but unsafe.
+ * Builds an exactly sized [Array] in place with elements from [from] index
+ * up until [toExclusive] index.
+ * Does no bounds checking whatsoever.
+ */
+inline fun <reified T> Array<T>.fastSlice(from: Int, toExclusive: Int): Array<T> =
+    Array(toExclusive - from) {
+        this@fastSlice[it + from]
+    }
+
+
 inline fun <T, R : Comparable<R>> Iterable<T>.mapSorted(map: (T) -> R): SortedList<R> =
     DelegatedSortedList(map(map))
 
@@ -81,9 +93,6 @@ inline fun <reified T> Sequence<T>.toSizedArray(i: Int): Array<T> {
         iter.next()
     }
 }
-
-operator fun <T : Comparable<T>> SortedList<T>.plus(other: SortedList<T>): MutableSortedList<T> =
-    DelegatedSortedList(initial = this).also { it.addAll(other) }
 
 inline fun <reified T> Iterable<T>.toSizedArray(i: Int): Array<T> {
     val iter = iterator()

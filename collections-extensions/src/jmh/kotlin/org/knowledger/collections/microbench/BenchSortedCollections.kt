@@ -1,5 +1,6 @@
 package org.knowledger.collections.microbench
 
+import org.knowledger.collections.fastSlice
 import org.knowledger.collections.toSortedList
 import org.knowledger.testing.core.random
 import org.knowledger.testing.ledger.SmallData
@@ -19,7 +20,7 @@ open class BenchSortedCollections {
     private fun extractArray(state: SortedCollectionState, extractSize: Int): Array<SmallData> {
         val minBound = random.randomInt(state.totalSize - extractSize)
         val maxBound = minBound + extractSize
-        return state.base.sliceArray(minBound until maxBound)
+        return state.base.fastSlice(minBound, maxBound)
     }
 
     @Warmup(
