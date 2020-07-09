@@ -8,6 +8,7 @@ import org.knowledger.plugin.docs.DocsOnlyPluginExtension
 open class BaseJVMPluginExtension(
     override var packageName: String = "org.knowledger",
     override var library: Boolean = true,
+    override var experimentalContracts: Boolean = false,
     override var experimentalOptIn: Boolean = false,
     override var requiresOptIn: Boolean = false
 ) : DocsOnlyPluginExtension(),

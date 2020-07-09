@@ -34,6 +34,9 @@ private fun KotlinCompile.applyOptIn(extension: OptIn) {
     if (extension.requiresOptIn) {
         kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.RequiresOptIn"
     }
+    if (extension.experimentalContracts) {
+        kotlinOptions.freeCompilerArgs += "-Xopt-in=kotlin.contracts.ExperimentalContracts"
+    }
 }
 
 private fun TaskContainer.applyJunit() {
