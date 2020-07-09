@@ -8,9 +8,6 @@ import org.knowledger.ledger.core.base.hash.Hasher
 interface HashSerializable : Hashable {
     fun serialize(encoder: BinaryFormat): ByteArray
 
-    override fun digest(c: Hasher, encoder: BinaryFormat): Hash =
-        c.applyHash(serialize(encoder))
-
-    fun approximateSize(encoder: BinaryFormat): Long =
-        serialize(encoder).size.toLong()
+    override fun digest(hasher: Hasher, encoder: BinaryFormat): Hash =
+        hasher.applyHash(serialize(encoder))
 }

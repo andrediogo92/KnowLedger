@@ -6,21 +6,17 @@ fun String.hashFromHexString(): Hash =
     Hash(bytesFromHexString())
 
 fun String.bytesFromHexString(): ByteArray {
-    val len = length
-
     // "111" is not a valid hex encoding.
-    require(len % 2 == 0) { "hexBinary needs to be even-length: $this" }
+    require(length % 2 == 0) { "hexBinary needs to be even-length: $this" }
 
-    val out = ByteArray(len / 2)
+    val out = ByteArray(length / 2)
 
-    var i = 0
-    while (i < len) {
+    for (i in 0 until length step 2) {
         val h = this[i].hexToBin()
         val l = this[i + 1].hexToBin()
         require(!(h == -1 || l == -1)) { "contains illegal character for hexBinary: $this" }
 
         out[i / 2] = (h * 16 + l).toByte()
-        i += 2
     }
 
     return out

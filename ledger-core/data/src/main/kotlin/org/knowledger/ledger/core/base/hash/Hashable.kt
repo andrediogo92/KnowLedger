@@ -12,5 +12,5 @@ interface Hashable {
      * through the use of a [Hasher] instance and
      * a [BinaryFormat] encoder.
      */
-    fun digest(c: Hasher, encoder: BinaryFormat): Hash
+    fun digest(hasher: Hasher, encoder: BinaryFormat): Hash
 }
