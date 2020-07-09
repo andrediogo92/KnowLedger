@@ -18,7 +18,6 @@ import org.knowledger.ledger.database.StorageElement
  */
 interface Storable<in T> {
     fun store(
-        toStore: T,
-        session: NewInstanceSession
+        toStore: T, session: NewInstanceSession
     ): StorageElement
 }

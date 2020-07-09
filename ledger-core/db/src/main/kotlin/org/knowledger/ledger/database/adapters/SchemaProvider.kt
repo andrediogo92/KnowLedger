@@ -7,7 +7,10 @@ import org.knowledger.ledger.database.StorageType
  * persisent storage. It's properties must abide by possible
  * types defined by [StorageType].
  */
-interface SchemaProvider {
+interface SchemaProvider : Comparable<SchemaProvider> {
     val id: String
     val properties: Map<String, StorageType>
+
+    override fun compareTo(other: SchemaProvider): Int =
+        id.compareTo(other.id)
 }
