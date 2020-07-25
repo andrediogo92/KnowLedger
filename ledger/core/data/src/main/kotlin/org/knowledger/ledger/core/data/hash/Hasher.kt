@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.base.hash
+package org.knowledger.ledger.core.data.hash
 
 
 /**

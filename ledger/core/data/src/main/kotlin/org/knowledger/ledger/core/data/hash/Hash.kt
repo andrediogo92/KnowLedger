@@ -1,7 +1,7 @@
-package org.knowledger.ledger.core.base.hash
+package org.knowledger.ledger.core.data.hash
 
-import org.knowledger.ledger.core.base.data.ByteEncodable
-import org.knowledger.ledger.core.base.data.Difficulty
+import org.knowledger.ledger.core.data.ByteEncodable
+import org.knowledger.ledger.core.data.Difficulty
 import java.math.BigInteger
 
 /**

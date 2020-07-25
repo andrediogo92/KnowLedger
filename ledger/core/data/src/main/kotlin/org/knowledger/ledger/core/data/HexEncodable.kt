@@ -1,7 +1,7 @@
-package org.knowledger.ledger.core.base.data
+package org.knowledger.ledger.core.data
 
-import org.knowledger.ledger.core.base.hash.Hash
-import org.knowledger.ledger.core.base.hash.toHexString
+import org.knowledger.ledger.core.data.hash.Hash
+import org.knowledger.ledger.core.data.hash.toHexString
 
 fun ByteEncodable.toHexString(): String =
     bytes.toHexString()

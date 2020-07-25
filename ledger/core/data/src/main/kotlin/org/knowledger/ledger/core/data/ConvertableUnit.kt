@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.base.data
+package org.knowledger.ledger.core.data
 
 
 interface ConvertableUnit<T, in U : PhysicalUnit> {

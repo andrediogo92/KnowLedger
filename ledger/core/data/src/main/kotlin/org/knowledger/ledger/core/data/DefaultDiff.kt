@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.base.data
+package org.knowledger.ledger.core.data
 
 import java.math.BigDecimal
 import java.math.MathContext

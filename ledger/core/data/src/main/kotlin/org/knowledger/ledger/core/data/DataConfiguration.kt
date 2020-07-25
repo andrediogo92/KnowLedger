@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.base.config
+package org.knowledger.ledger.core.data
 
 object DataConfiguration {
     const val OTHER_BASE = 40L

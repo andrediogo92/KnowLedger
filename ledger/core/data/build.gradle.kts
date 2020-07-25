@@ -5,7 +5,7 @@ plugins {
 
 serialPlugin {
     inlineClasses = true
-    packageName = "org.knowledger.ledger.core.base"
-    module = "ledger-core/data"
+    packageName = "org.knowledger.ledger.core.data"
+    module = "ledger/core/data"
     requiresOptIn = true
 }

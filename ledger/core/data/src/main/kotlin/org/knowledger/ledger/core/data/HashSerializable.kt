@@ -1,9 +1,9 @@
-package org.knowledger.ledger.core.base.serial
+package org.knowledger.ledger.core.data
 
 import kotlinx.serialization.BinaryFormat
-import org.knowledger.ledger.core.base.hash.Hash
-import org.knowledger.ledger.core.base.hash.Hashable
-import org.knowledger.ledger.core.base.hash.Hasher
+import org.knowledger.ledger.core.data.hash.Hash
+import org.knowledger.ledger.core.data.hash.Hashable
+import org.knowledger.ledger.core.data.hash.Hasher
 
 interface HashSerializable : Hashable {
     fun serialize(encoder: BinaryFormat): ByteArray

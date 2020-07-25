@@ -1,4 +1,4 @@
-package org.knowledger.ledger.core.base.hash
+package org.knowledger.ledger.core.data.hash
 
 private val hexCode = "0123456789ABCDEF".toCharArray()
 
