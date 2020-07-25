@@ -1,8 +1,8 @@
 package org.knowledger.base64
 
-import org.knowledger.ledger.core.base.data.ByteEncodable
-import org.knowledger.ledger.core.base.data.Difficulty
-import org.knowledger.ledger.core.base.hash.Hash
+import org.knowledger.ledger.core.data.ByteEncodable
+import org.knowledger.ledger.core.data.Difficulty
+import org.knowledger.ledger.core.data.hash.Hash
 import java.math.BigInteger
 import java.security.Key
 import java.util.*

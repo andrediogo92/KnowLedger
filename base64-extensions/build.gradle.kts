@@ -12,5 +12,5 @@ basePlugin {
 }
 
 dependencies {
-    implementation(project(":ledger-core:data"))
+    implementation(project(":ledger:core:data"))
 }
