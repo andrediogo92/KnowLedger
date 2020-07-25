@@ -7,13 +7,13 @@ version = "0.2"
 
 docsPlugin {
     inlineClasses = true
-    module = "ledger-orient"
+    module = "ledger/orient"
 }
 
 dependencies {
     implementation(project(":collections-extensions"))
-    implementation(project(":ledger-core:db"))
-    implementation(project(":ledger-core:data"))
+    implementation(project(":ledger:core:db"))
+    implementation(project(":ledger:core:data"))
 
     Libs.orientDB.forEach(::implementation)
 }

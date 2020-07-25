@@ -7,9 +7,9 @@ import org.knowledger.collections.mapMutable
 import org.knowledger.collections.mapMutableList
 import org.knowledger.collections.mapMutableSet
 import org.knowledger.collections.mapToSet
-import org.knowledger.ledger.core.base.data.Difficulty
-import org.knowledger.ledger.core.base.data.Payout
-import org.knowledger.ledger.core.base.hash.Hash
+import org.knowledger.ledger.core.data.Difficulty
+import org.knowledger.ledger.core.data.Payout
+import org.knowledger.ledger.core.data.hash.Hash
 import org.knowledger.ledger.database.NewInstanceSession
 import org.knowledger.ledger.database.StorageBytes
 import org.knowledger.ledger.database.StorageElement
@@ -20,7 +20,6 @@ import java.math.BigInteger
 data class DocumentElement internal constructor(
     val elem: OElement
 ) : StorageElement, OElement by elem {
-
     override val identity: StorageID
         get() = DocumentID(elem.identity)
 
@@ -40,29 +39,18 @@ data class DocumentElement internal constructor(
             elem.unload<OElement>()
         }
 
-    override fun getDifficultyProperty(
-        name: String
-    ): Difficulty =
+    override fun getDifficultyProperty(name: String): Difficulty =
         Difficulty(
-            BigInteger(
-                elem.getProperty<OBlob>(name).toStream()
-            )
+            BigInteger(elem.getProperty<OBlob>(name).toStream())
         )
 
-
-    override fun getPayoutProperty(
-        name: String
-    ): Payout =
+    override fun getPayoutProperty(name: String): Payout =
         Payout(elem.getProperty(name))
 
-    override fun getHashProperty(
-        name: String
-    ): Hash =
+    override fun getHashProperty(name: String): Hash =
         Hash(elem.getProperty(name))
 
-    override fun getHashList(
-        name: String
-    ): List<Hash> =
+    override fun getHashList(name: String): List<Hash> =
         elem.getProperty<List<ByteArray>>(name)
             .map(::Hash)
 
@@ -70,37 +58,29 @@ data class DocumentElement internal constructor(
         elem.getProperty<List<ByteArray>>(name)
             .mapMutableList(::Hash)
 
-    override fun getHashSet(
-        name: String
-    ): Set<Hash> =
+    override fun getHashSet(name: String): Set<Hash> =
         elem.getProperty<Set<ByteArray>>(name)
             .mapToSet(::Hash).toSet()
 
-    override fun getMutableHashSet(
-        name: String
-    ): MutableSet<Hash> =
+    override fun getMutableHashSet(name: String): MutableSet<Hash> =
         elem.getProperty<Set<ByteArray>>(name)
             .mapMutableSet(::Hash)
 
-
-    override fun getStorageBytes(
-        name: String
-    ): StorageBytes =
+    override fun getStorageBytes(name: String): StorageBytes =
         DocumentBytes(elem.getProperty(name))
 
-    override fun getElementList(
-        name: String
-    ): List<StorageElement> =
+
+    override fun getElementList(name: String): List<StorageElement> =
         elem.getProperty<List<OElement>>(name)
             .map(::DocumentElement)
 
-    override fun getMutableElementList(name: String): MutableList<StorageElement> =
+    override fun getMutableElementList(
+        name: String
+    ): MutableList<StorageElement> =
         elem.getProperty<List<OElement>>(name)
             .mapMutableList(::DocumentElement)
 
-    override fun getElementListById(
-        name: String
-    ): List<StorageID> =
+    override fun getElementListById(name: String): List<StorageID> =
         elem.getProperty<List<ORID>>(name)
             .map(::DocumentID)
 
@@ -111,22 +91,15 @@ data class DocumentElement internal constructor(
             .mapMutableList(::DocumentID)
 
 
-    override fun getElementSet(
-        name: String
-    ): Set<StorageElement> =
+    override fun getElementSet(name: String): Set<StorageElement> =
         elem.getProperty<Set<OElement>>(name)
             .mapToSet(::DocumentElement)
 
-    override fun getMutableElementSet(
-        name: String
-    ): MutableSet<StorageElement> =
+    override fun getMutableElementSet(name: String): MutableSet<StorageElement> =
         elem.getProperty<Set<OElement>>(name)
             .mapMutableSet(::DocumentElement)
 
-
-    override fun getElementSetById(
-        name: String
-    ): Set<StorageID> =
+    override fun getElementSetById(name: String): Set<StorageID> =
         elem.getProperty<Set<ORID>>(name)
             .mapToSet(::DocumentID)
 
@@ -167,183 +140,144 @@ data class DocumentElement internal constructor(
             .mapMutable(::DocumentID)
 
 
-    override fun getLinked(
-        name: String
-    ): StorageElement =
+    override fun getLinked(name: String): StorageElement =
         DocumentElement(elem.getProperty(name))
 
-    override fun getLinkedById(
-        name: String
-    ): StorageID =
+    override fun getLinkedById(name: String): StorageID =
         DocumentID(elem.getProperty(name))
 
 
-    override fun <T> getStorageProperty(
-        name: String
-    ): T =
+    override fun <T> getStorageProperty(name: String): T =
         elem.getProperty(name)
 
 
     override fun setDifficultyProperty(
-        name: String,
-        difficulty: Difficulty,
+        name: String, difficulty: Difficulty,
         session: NewInstanceSession
-    ): StorageElement =
-        apply {
-            val bytes = session.newInstance(
-                difficulty.difficulty.toByteArray()
-            ) as DocumentBytes
-            elem.setProperty(
-                name,
-                bytes.blob
-            )
-        }
+    ): StorageElement = apply {
+        val bytes = session.newInstance(
+            difficulty.bytes
+        ) as DocumentBytes
+        elem.setProperty(name, bytes.blob)
+    }
+
+    override fun setDifficultyPropertyFromBytes(
+        name: String, difficulty: StorageBytes
+    ): StorageElement = apply {
+        difficulty as DocumentBytes
+        elem.setProperty(name, difficulty.blob)
+    }
 
     override fun setHashProperty(
         name: String, hash: Hash
-    ): StorageElement =
-        apply {
-            elem.setProperty(name, hash.bytes)
-        }
+    ): StorageElement = apply {
+        elem.setProperty(name, hash.bytes)
+    }
 
     override fun setPayoutProperty(
         name: String, payout: Payout
-    ): StorageElement =
-        apply {
-            elem.setProperty(name, payout.payout)
-        }
+    ): StorageElement = apply {
+        elem.setProperty(name, payout.payout)
+    }
 
 
     override fun setElementList(
         name: String, property: List<StorageElement>
-    ): StorageElement =
-        apply {
-            elem.setProperty(
-                name,
-                property.map {
-                    (it as DocumentElement).elem
-                }
-            )
-        }
+    ): StorageElement = apply {
+        elem.setProperty(name, property.map {
+            (it as DocumentElement).elem
+        })
+    }
 
     override fun setElementListById(
         name: String, property: List<StorageID>
-    ): StorageElement =
-        apply {
-            elem.setProperty(
-                name,
-                property.map {
-                    (it as DocumentID).id
-                }
-            )
-        }
+    ): StorageElement = apply {
+        elem.setProperty(name, property.map {
+            (it as DocumentID).id
+        })
+    }
 
     override fun setElementSet(
         name: String, property: Set<StorageElement>
-    ): StorageElement =
-        apply {
-            elem.setProperty(
-                name,
-                property.mapToSet {
-                    (it as DocumentElement).elem
-                }
-            )
-        }
+    ): StorageElement = apply {
+        elem.setProperty(name, property.mapToSet {
+            (it as DocumentElement).elem
+        })
+    }
 
     override fun setElementSetById(
         name: String, property: Set<StorageID>
-    ): StorageElement =
-        apply {
-            elem.setProperty(
-                name,
-                property.mapToSet {
-                    (it as DocumentID).id
-                }
-            )
-        }
-
+    ): StorageElement = apply {
+        elem.setProperty(name, property.mapToSet {
+            (it as DocumentID).id
+        })
+    }
 
     override fun setElementMap(
         name: String, property: Map<String, StorageElement>
-    ): StorageElement =
-        apply {
-            elem.setProperty(name, property.mapValues {
-                (it.value as DocumentElement).elem
-            })
-        }
+    ): StorageElement = apply {
+        elem.setProperty(name, property.mapValues {
+            (it.value as DocumentElement).elem
+        })
+    }
 
     override fun setElementMapById(
         name: String, property: Map<String, StorageID>
-    ): StorageElement =
-        apply {
-            elem.setProperty(name, property.mapValues {
-                (it.value as DocumentID).id
-            })
-        }
+    ): StorageElement = apply {
+        elem.setProperty(name, property.mapValues {
+            (it.value as DocumentID).id
+        })
+    }
 
 
     override fun setHashList(
         name: String, hashes: List<Hash>
-    ): StorageElement =
-        apply {
-            elem.setProperty(
-                name,
-                hashes.map(Hash::bytes)
-            )
-        }
+    ): StorageElement = apply {
+        elem.setProperty(name, hashes.map(Hash::bytes))
+    }
 
     override fun setHashSet(
         name: String, hashes: Set<Hash>
-    ): StorageElement =
-        apply {
-            elem.setProperty(
-                name,
-                hashes.mapToSet(Hash::bytes)
-            )
-        }
+    ): StorageElement = apply {
+        elem.setProperty(name, hashes.mapToSet(Hash::bytes))
+    }
+
 
     override fun setLinkedID(
         name: String, linked: StorageID
-    ): StorageElement =
-        apply {
-            linked as DocumentID
-            elem.setProperty(name, linked.id)
-        }
+    ): StorageElement = apply {
+        linked as DocumentID
+        elem.setProperty(name, linked.id)
+    }
 
     override fun setLinked(
         name: String, linked: StorageElement
-    ): StorageElement =
-        apply {
-            linked as DocumentElement
-            elem.setProperty(name, linked.elem)
-        }
+    ): StorageElement = apply {
+        linked as DocumentElement
+        elem.setProperty(name, linked.elem)
+    }
 
     override fun <T : Any> setLinked(
-        name: String,
-        storable: Storable<T>,
-        element: T,
-        session: NewInstanceSession
-    ): StorageElement =
-        apply {
-            val stored = storable.store(
-                element, session
-            ) as DocumentElement
-            elem.setProperty(name, stored.elem)
-        }
+        name: String, storable: Storable<T>,
+        element: T, session: NewInstanceSession
+    ): StorageElement = apply {
+        val stored = storable.store(
+            element, session
+        ) as DocumentElement
+        elem.setProperty(name, stored.elem)
+    }
 
     override fun <T> setStorageProperty(
         name: String, property: T
-    ): StorageElement =
-        apply {
-            elem.setProperty(name, property)
-        }
+    ): StorageElement = apply {
+        elem.setProperty(name, property)
+    }
 
     override fun setStorageBytes(
         name: String, property: StorageBytes
-    ): StorageElement =
-        apply {
-            val blob = property as DocumentBytes
-            elem.setProperty(name, blob.blob)
-        }
+    ): StorageElement = apply {
+        property as DocumentBytes
+        elem.setProperty(name, property.blob)
+    }
 
 }

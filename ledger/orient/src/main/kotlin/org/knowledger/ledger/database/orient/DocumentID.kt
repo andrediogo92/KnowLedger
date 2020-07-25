@@ -12,4 +12,6 @@ data class DocumentID internal constructor(
         get() = DocumentElement(id.getRecord())
     override val bytes: StorageBytes
         get() = DocumentBytes(id.getRecord())
+    override val key: String
+        get() = id.toString()
 }
