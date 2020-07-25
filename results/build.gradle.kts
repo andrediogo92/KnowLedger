@@ -5,7 +5,8 @@ plugins {
 
 basePlugin {
     module = "results"
-    packageName = "org.knowledger.ledger.results"
+    packageName = "org.knowledger.ledger.storage.results"
+    experimentalContracts = true
 }
 
 dependencies {

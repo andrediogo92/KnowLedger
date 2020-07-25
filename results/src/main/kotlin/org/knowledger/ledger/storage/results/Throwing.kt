@@ -1,4 +1,10 @@
-package org.knowledger.ledger.results
+package org.knowledger.ledger.storage.results
+
+import com.github.michaelbull.result.Err
+import com.github.michaelbull.result.get
+import com.github.michaelbull.result.onFailure
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 private class HardFailureException(
     cause: String, exception: Exception
@@ -56,3 +62,18 @@ private tailrec fun Failable.PropagatedFailure.extractException(): Exception? =
 
 fun Failure.unwrap(): Nothing =
     throw failable.unwrap()
+
+fun <T : Failure> Err<T>.unwrapFailure(): Nothing =
+    error.unwrap()
+
+fun <T : Any, U : Failure> Outcome<T, U>.unwrapFailure(): T =
+    onFailure { it.unwrap() }.get()!!
+
+inline fun <T : Failable, R : Failure> T.propagate(
+    cons: (String, Failable) -> R
+): R {
+    contract {
+        callsInPlace(cons, InvocationKind.EXACTLY_ONCE)
+    }
+    return cons(this.javaClass.simpleName, this)
+}
