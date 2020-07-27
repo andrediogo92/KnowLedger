@@ -11,13 +11,13 @@ import org.junit.jupiter.api.Test
 import org.knowledger.base64.base64Encoded
 import org.knowledger.collections.fastPrefixAdd
 import org.knowledger.collections.mapToArray
-import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.crypto.storage.MerkleTreeFactory
 import org.knowledger.ledger.crypto.storage.MerkleTreeFactoryImpl
 import org.knowledger.testing.core.applyHashInPairs
 import org.knowledger.testing.core.defaultHasher
 import org.knowledger.testing.core.random
+import org.knowledger.testing.core.randomHash
 import org.tinylog.kotlin.Logger
 import kotlin.math.min
 
@@ -29,8 +29,7 @@ class TestMerkleTree {
     private val factory: MerkleTreeFactory = MerkleTreeFactoryImpl()
 
     class EmptyHashing : Hashing {
-        override val hash: Hash =
-            Hash(random.randomByteArray(32))
+        override val hash: Hash = randomHash()
     }
 
     private val size = 24
