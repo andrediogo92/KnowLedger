@@ -60,6 +60,22 @@ private tailrec fun Failable.PropagatedFailure.extractException(): Exception? =
         else -> null
     }
 
+
+inline fun <T, R : Failure> tryOrConvertToFailure(
+    function: () -> Outcome<T, R>,
+    failureConstructor: (Exception) -> R
+): Outcome<T, R> {
+    contract {
+        callsInPlace(function, InvocationKind.EXACTLY_ONCE)
+        callsInPlace(failureConstructor, InvocationKind.AT_MOST_ONCE)
+    }
+    return try {
+        function()
+    } catch (e: Exception) {
+        failureConstructor(e).err()
+    }
+}
+
 fun Failure.unwrap(): Nothing =
     throw failable.unwrap()
 
