@@ -3,16 +3,16 @@ package org.knowledger.ledger.storage.serial
 import kotlinx.serialization.Encoder
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationStrategy
+import org.knowledger.ledger.core.serial.compositeEncode
 import org.knowledger.ledger.crypto.serial.PublicKeySerializer
-import org.knowledger.ledger.data.PhysicalData
-import org.knowledger.ledger.serial.compositeEncode
+import org.knowledger.ledger.storage.PhysicalData
 import org.knowledger.ledger.storage.transaction.Transaction
 import java.security.PublicKey
 
 internal object TransactionSerializationStrategy : SerializationStrategy<Transaction> {
-    val physicalDataSerializer: SerializationStrategy<PhysicalData> =
+    private val physicalDataSerializer: SerializationStrategy<PhysicalData> =
         PhysicalData.serializer()
-    val publicKeySerializer: SerializationStrategy<PublicKey>
+    private val publicKeySerializer: SerializationStrategy<PublicKey>
         get() = PublicKeySerializer
 
 

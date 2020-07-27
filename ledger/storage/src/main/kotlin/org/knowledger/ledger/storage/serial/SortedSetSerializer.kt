@@ -1,4 +1,4 @@
-package org.knowledger.ledger.serial
+package org.knowledger.ledger.storage.serial
 
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.Decoder
@@ -15,7 +15,8 @@ import java.util.*
 internal class SortedSetSerializer<T>(
     private val valueSerializer: KSerializer<T>
 ) : KSerializer<SortedSet<T>> {
-    override val descriptor = TreeSetDescriptor(valueSerializer.descriptor)
+    override val descriptor =
+        TreeSetDescriptor(valueSerializer.descriptor)
 
 
     private fun patch(decoder: Decoder, old: TreeSet<T>): SortedSet<T> {

@@ -1,4 +1,4 @@
-package org.knowledger.ledger.serial
+package org.knowledger.ledger.storage.serial
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.DeserializationStrategy
@@ -10,10 +10,12 @@ import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.modules.SerialModule
-import org.knowledger.ledger.results.Failable
-import org.knowledger.ledger.results.Outcome
-import org.knowledger.ledger.results.deadCode
-import org.knowledger.ledger.results.Failure as CoreFailure
+import org.knowledger.ledger.storage.results.Failable
+import org.knowledger.ledger.storage.results.Outcome
+import org.knowledger.ledger.storage.results.deadCode
+import org.knowledger.ledger.storage.results.err
+import org.knowledger.ledger.storage.results.ok
+import org.knowledger.ledger.storage.results.Failure as CoreFailure
 
 sealed class LedgerSerializer {
 
@@ -61,14 +63,14 @@ class LedgerTextSerializerBuilder {
                         prettyPrint = prettyPrint
                     ), context = module as SerialModule
                 )
-                Outcome.Ok(LedgerSerializer.Text(encoder!!))
+                LedgerSerializer.Text(encoder!!).ok()
             }
-            module == null && encoder == null -> Outcome.Error(
-                LedgerSerializer.Failure.NoEncoderSupplied(module, encoder)
-            )
-            encoder != null -> Outcome.Ok(
-                LedgerSerializer.Text(encoder!!)
-            )
+            module == null && encoder == null ->
+                LedgerSerializer.Failure.NoEncoderSupplied(
+                    module, encoder
+                ).err()
+            encoder != null ->
+                LedgerSerializer.Text(encoder!!).ok()
             else -> deadCode()
         }
 }
@@ -85,14 +87,14 @@ class LedgerBinarySerializerBuilder {
                     encodeDefaults = false,
                     context = module as SerialModule
                 )
-                Outcome.Ok(LedgerSerializer.Binary(encoder!!))
+                LedgerSerializer.Binary(encoder!!).ok()
             }
-            module == null && encoder == null -> Outcome.Error(
-                LedgerSerializer.Failure.NoEncoderSupplied(module, encoder)
-            )
-            encoder != null -> Outcome.Ok(
-                LedgerSerializer.Binary(encoder!!)
-            )
+            module == null && encoder == null ->
+                LedgerSerializer.Failure.NoEncoderSupplied(
+                    module, encoder
+                ).err()
+            encoder != null ->
+                LedgerSerializer.Binary(encoder!!).ok()
             else -> deadCode()
         }
 }

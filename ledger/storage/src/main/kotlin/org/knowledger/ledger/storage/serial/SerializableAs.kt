@@ -1,4 +1,4 @@
-package org.knowledger.ledger.serial
+package org.knowledger.ledger.storage.serial
 
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
@@ -62,7 +62,7 @@ interface SerializableAs<T> {
     fun decodeTransaction(transaction: T): ImmutableTransaction =
         decode(ImmutableTransaction.serializer(), transaction)
 
-    fun decodeTransactionsSet(transactions: T): SortedList<ImmutableTransaction> =
+    fun decodeTransactionsSorted(transactions: T): SortedList<ImmutableTransaction> =
         decode(
             SortedListSerializer(ImmutableTransaction.serializer()),
             transactions

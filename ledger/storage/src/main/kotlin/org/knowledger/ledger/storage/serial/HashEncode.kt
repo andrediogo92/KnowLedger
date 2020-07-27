@@ -1,4 +1,4 @@
-package org.knowledger.ledger.serial
+package org.knowledger.ledger.storage.serial
 
 import kotlinx.serialization.CompositeDecoder
 import kotlinx.serialization.CompositeEncoder

@@ -6,19 +6,17 @@ import kotlinx.serialization.PrimitiveKind
 import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationStrategy
 import org.knowledger.ledger.core.serial.PayoutSerializer
+import org.knowledger.ledger.core.serial.compositeEncode
 import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.serial.EncodedPublicKeySerializer
-import org.knowledger.ledger.data.Payout
-import org.knowledger.ledger.serial.HashEncode
-import org.knowledger.ledger.serial.SortedListSerializer
-import org.knowledger.ledger.serial.compositeEncode
+import org.knowledger.ledger.storage.Payout
 import org.knowledger.ledger.storage.witness.Witness
 
 internal object WitnessSerializationStrategy : SerializationStrategy<Witness>,
                                                HashEncode {
-    val encodedPublicKeySerializer: SerializationStrategy<EncodedPublicKey>
+    private val encodedPublicKeySerializer: SerializationStrategy<EncodedPublicKey>
         get() = EncodedPublicKeySerializer
-    val payoutSerializer: SerializationStrategy<Payout>
+    private val payoutSerializer: SerializationStrategy<Payout>
         get() = PayoutSerializer
     private val transactionOutputsSerializer =
         SortedListSerializer(TransactionOutputSerializer)
@@ -38,8 +36,7 @@ internal object WitnessSerializationStrategy : SerializationStrategy<Witness>,
                 descriptor = previousWitnessIndex
             )
             element(
-                elementName = "previousCoinbase",
-                descriptor = hashDescriptor
+                elementName = "previousCoinbase", descriptor = hashDescriptor
             )
             element(
                 elementName = "payout",

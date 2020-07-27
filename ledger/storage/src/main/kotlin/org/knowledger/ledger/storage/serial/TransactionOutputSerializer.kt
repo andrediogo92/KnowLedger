@@ -6,17 +6,14 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.PrimitiveDescriptor
 import kotlinx.serialization.PrimitiveKind
 import kotlinx.serialization.SerialDescriptor
-import kotlinx.serialization.Serializer
 import org.knowledger.ledger.core.serial.PayoutSerializer
-import org.knowledger.ledger.data.Payout
-import org.knowledger.ledger.serial.HashEncode
-import org.knowledger.ledger.serial.compositeEncode
+import org.knowledger.ledger.core.serial.compositeEncode
+import org.knowledger.ledger.storage.Payout
 import org.knowledger.ledger.storage.TransactionOutput
 
-@Serializer(forClass = TransactionOutput::class)
 object TransactionOutputSerializer : KSerializer<TransactionOutput>,
                                      HashEncode {
-    val payoutSerializer: KSerializer<Payout>
+    private val payoutSerializer: KSerializer<Payout>
         get() = PayoutSerializer
 
     override val descriptor: SerialDescriptor =
