@@ -1,30 +1,28 @@
-package org.knowledger.ledger.storage
+package org.knowledger.ledger.storage.cache
 
 import org.knowledger.ledger.database.StorageElement
-import org.knowledger.ledger.database.StorageID
-import org.knowledger.ledger.results.Outcome
-import org.knowledger.ledger.service.results.UpdateFailure
+import org.knowledger.ledger.storage.results.Outcome
+import org.knowledger.ledger.storage.results.UpdateFailure
+import org.knowledger.ledger.storage.results.err
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 internal inline fun StorageAware.commonUpdate(
-    runUpdate: (StorageElement) -> Outcome<StorageID, UpdateFailure>
-): Outcome<StorageID, UpdateFailure> {
+    runUpdate: (StorageElement) -> Outcome<StorageElement, UpdateFailure>
+): Outcome<StorageElement, UpdateFailure> {
     contract {
         callsInPlace(runUpdate, InvocationKind.AT_MOST_ONCE)
     }
+    val id = id
     return if (id == null) {
-        Outcome.Error(
-            UpdateFailure.NotYetStored
-        )
+        UpdateFailure.NotYetStored.err()
     } else {
-        runUpdate(id!!.element)
+        runUpdate(id)
     }
 }
 
-
 @Suppress("UNCHECKED_CAST")
-internal fun <T> Array<StoragePairs<*>>.replace(
+internal fun <T : Any> Array<StoragePairs<*>>.replaceUnchecked(
     index: Int, element: T
 ) {
     (this[index] as StoragePairs<T>).replace(element)
@@ -44,3 +42,5 @@ internal inline fun <T, R : StorageAware> T.convertToStorageAware(
 }
 
 
+@Suppress("UNCHECKED_CAST")
+internal fun <T, R : StorageAware> T.convertToStorageAware(): R = this as R
