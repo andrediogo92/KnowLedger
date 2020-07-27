@@ -1,20 +1,24 @@
-package org.knowledger.ledger.service.results
+package org.knowledger.ledger.storage.results
 
-import org.knowledger.ledger.results.Failable
-import org.knowledger.ledger.results.Failure
+import org.knowledger.ledger.core.data.LedgerContract
 
-
-sealed class UpdateFailure : Failure {
-    object NotYetStored : UpdateFailure() {
+/**
+ * Result class representing loading of [LedgerContract] classes
+ * from the database.
+ */
+sealed class LoadFailure : Failure {
+    class NonExistentData(
+        cause: String
+    ) : LoadFailure() {
         override val failable: Failable.LightFailure =
             Failable.LightFailure(
-                "Element has not yet been persisted first."
+                cause
             )
     }
 
-    class FailedToSave(
+    class UnrecognizedDataType(
         cause: String
-    ) : UpdateFailure() {
+    ) : LoadFailure() {
         override val failable: Failable.LightFailure =
             Failable.LightFailure(
                 cause
@@ -24,7 +28,7 @@ sealed class UpdateFailure : Failure {
     class UnknownFailure(
         cause: String,
         exception: Exception?
-    ) : UpdateFailure() {
+    ) : LoadFailure() {
         override val failable: Failable.HardFailure =
             Failable.HardFailure(cause, exception)
     }
@@ -32,7 +36,7 @@ sealed class UpdateFailure : Failure {
     class Propagated(
         pointOfFailure: String,
         failable: Failable
-    ) : UpdateFailure() {
+    ) : LoadFailure() {
         override val failable: Failable.PropagatedFailure =
             Failable.PropagatedFailure(pointOfFailure, failable)
     }

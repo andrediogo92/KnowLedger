@@ -1,51 +1,7 @@
-package org.knowledger.ledger.results
+package org.knowledger.ledger.storage.results
 
 import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.database.results.QueryFailure
-import org.knowledger.ledger.service.handles.LedgerHandle
-import org.knowledger.ledger.service.results.LedgerFailure
-import org.knowledger.ledger.service.results.LoadFailure
-import kotlin.contracts.InvocationKind
-import kotlin.contracts.contract
-
-//---------------------------------------
-//Into Handle Result
-//---------------------------------------
-
-fun LoadFailure.intoHandle(): LedgerHandle.Failure =
-    when (this) {
-        is LoadFailure.UnrecognizedDataType ->
-            failable.propagate(LedgerHandle.Failure::Propagated)
-        is LoadFailure.NonExistentData ->
-            failable.propagate(LedgerHandle.Failure::Propagated)
-        is LoadFailure.UnknownFailure ->
-            LedgerHandle.Failure.UnknownFailure(
-                failable.cause, failable.exception
-            )
-        is LoadFailure.Propagated ->
-            LedgerHandle.Failure.Propagated(
-                "LoadFailure -> ${failable.pointOfFailure}",
-                failable.inner
-            )
-    }
-
-fun LedgerFailure.intoHandle(): LedgerHandle.Failure =
-    when (this) {
-        is LedgerFailure.NonExistentData ->
-            failable.propagate(LedgerHandle.Failure::Propagated)
-        is LedgerFailure.NoKnownStorageAdapter ->
-            failable.propagate(LedgerHandle.Failure::Propagated)
-        is LedgerFailure.UnknownFailure ->
-            LedgerHandle.Failure.UnknownFailure(
-                failable.cause, failable.exception
-            )
-        is LedgerFailure.Propagated ->
-            LedgerHandle.Failure.Propagated(
-                "LoadFailure -> ${failable.pointOfFailure}",
-                failable.inner
-            )
-
-    }
 
 
 //---------------------------------------
@@ -89,7 +45,10 @@ fun QueryFailure.intoLedger(): LedgerFailure =
 fun DataFailure.intoLoad(): LoadFailure =
     when (this) {
         is DataFailure.UnknownFailure ->
-            LoadFailure.UnknownFailure(failable.cause, failable.exception)
+            LoadFailure.UnknownFailure(
+                failable.cause,
+                failable.exception
+            )
         is DataFailure.UnrecognizedDataType ->
             failable.propagate(LoadFailure::Propagated)
         is DataFailure.UnrecognizedUnit ->
@@ -111,7 +70,10 @@ fun DataFailure.intoLoad(): LoadFailure =
 fun LedgerFailure.intoLoad(): LoadFailure =
     when (this) {
         is LedgerFailure.UnknownFailure ->
-            LoadFailure.UnknownFailure(failable.cause, failable.exception)
+            LoadFailure.UnknownFailure(
+                failable.cause,
+                failable.exception
+            )
         is LedgerFailure.NonExistentData ->
             LoadFailure.NonExistentData(failable.cause)
         is LedgerFailure.NoKnownStorageAdapter ->
@@ -127,7 +89,10 @@ fun LedgerFailure.intoLoad(): LoadFailure =
 fun QueryFailure.intoLoad(): LoadFailure =
     when (this) {
         is QueryFailure.UnknownFailure ->
-            LoadFailure.UnknownFailure(failable.cause, failable.exception)
+            LoadFailure.UnknownFailure(
+                failable.cause,
+                failable.exception
+            )
         is QueryFailure.NonExistentData ->
             LoadFailure.NonExistentData(failable.cause)
         is QueryFailure.Propagated ->
@@ -189,12 +154,3 @@ fun QueryFailure.intoData(): DataFailure =
                 failable
             )
     }
-
-private inline fun <T : Failable, R : Failure> T.propagate(
-    cons: (String, Failable) -> R
-): R {
-    contract {
-        callsInPlace(cons, InvocationKind.EXACTLY_ONCE)
-    }
-    return cons(this.javaClass.simpleName, this)
-}

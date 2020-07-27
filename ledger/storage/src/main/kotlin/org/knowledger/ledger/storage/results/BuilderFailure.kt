@@ -1,4 +1,4 @@
-package org.knowledger.ledger.results
+package org.knowledger.ledger.storage.results
 
 sealed class BuilderFailure : Failure {
     class ParameterUninitialized(
@@ -28,6 +28,9 @@ sealed class BuilderFailure : Failure {
         failable: Failable
     ) : BuilderFailure() {
         override val failable: Failable.PropagatedFailure =
-            Failable.PropagatedFailure(pointOfFailure, failable)
+            Failable.PropagatedFailure(
+                pointOfFailure,
+                failable
+            )
     }
 }

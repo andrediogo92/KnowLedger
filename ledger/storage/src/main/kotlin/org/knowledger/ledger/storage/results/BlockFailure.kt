@@ -1,9 +1,7 @@
-package org.knowledger.ledger.service.results
+package org.knowledger.ledger.storage.results
 
 import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.crypto.Hash
-import org.knowledger.ledger.results.Failable
-import org.knowledger.ledger.results.Failure
 
 
 sealed class BlockFailure : Failure {
