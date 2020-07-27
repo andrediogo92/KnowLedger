@@ -13,7 +13,7 @@ docsPlugin {
 
 dependencies {
     implementation(project(":annotations"))
-    implementation(project(":ledger-core"))
+    implementation(project(":ledger:core"))
 
     implementation(Libs.kotlinPoet)
     implementation(Libs.autoService)
