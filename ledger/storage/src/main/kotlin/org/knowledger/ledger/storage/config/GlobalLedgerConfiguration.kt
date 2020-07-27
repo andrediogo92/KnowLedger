@@ -1,4 +1,4 @@
-package org.knowledger.ledger.config
+package org.knowledger.ledger.storage.config
 
 import java.math.BigDecimal
 import java.math.BigInteger
