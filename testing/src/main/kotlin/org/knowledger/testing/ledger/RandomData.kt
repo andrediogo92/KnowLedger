@@ -5,8 +5,8 @@ package org.knowledger.testing.ledger
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import org.knowledger.ledger.core.base.data.LedgerData
-import org.knowledger.ledger.core.base.data.SelfInterval
+import org.knowledger.ledger.core.data.LedgerData
+import org.knowledger.ledger.core.data.SelfInterval
 import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.testing.core.random
@@ -23,10 +23,9 @@ data class RandomData(
         stringFactor: Int, size: Int,
         index: Long = random.randomLong()
     ) : this(
-        index = index,
-        randomLongs = random.randomLongs().take(size).toList(),
-        randomStrings = random.randomStrings(stringFactor).take(size).toList(),
-        randomHashes = random.random256Hashes().take(size).toList()
+        random.randomLongs().take(size).toList(),
+        random.randomStrings(stringFactor).take(size).toList(),
+        random.random256Hashes().take(size).toList(), index
     )
 
     override fun clone(): LedgerData =

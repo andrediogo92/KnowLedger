@@ -10,8 +10,11 @@ serialPlugin {
 }
 
 dependencies {
-    implementation(project(":ledger-core"))
+    implementation(project(":base64-extensions"))
+    implementation(project(":collections-extensions"))
+    implementation(project(":results"))
+    implementation(project(":ledger:storage"))
     implementation(Libs.commonsRNG)
 }
 
-version = "0.2"
+version = "0.3"

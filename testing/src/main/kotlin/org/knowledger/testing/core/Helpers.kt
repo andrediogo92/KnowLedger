@@ -1,15 +1,19 @@
 package org.knowledger.testing.core
 
+import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.testing.ledger.RandomData
 
+typealias DataGenerator = () -> LedgerData
 
 val random: TestRandom = TestRandom()
+val defaultHasher: Hashers = Hashers.DEFAULT_HASHER
 
-fun applyHashInPairs(
-    crypter: Hashers,
-    hashes: Array<Hash>
-): Hash {
+fun randomData(): LedgerData =
+    RandomData(5, 5)
+
+fun applyHashInPairs(hashers: Hashers, hashes: Array<Hash>): Hash {
     var previousHashes = hashes
     var newHashes: Array<Hash>
     var levelIndex = hashes.size
@@ -17,7 +21,7 @@ fun applyHashInPairs(
         if (levelIndex % 2 == 0) {
             levelIndex /= 2
             newHashes = Array(levelIndex) {
-                crypter.applyHash(
+                hashers.applyHash(
                     previousHashes[it * 2] + previousHashes[it * 2 + 1]
                 )
             }
@@ -26,11 +30,11 @@ fun applyHashInPairs(
             levelIndex++
             newHashes = Array(levelIndex) {
                 if (it != levelIndex - 1) {
-                    crypter.applyHash(
+                    hashers.applyHash(
                         previousHashes[it * 2] + previousHashes[it * 2 + 1]
                     )
                 } else {
-                    crypter.applyHash(
+                    hashers.applyHash(
                         previousHashes[it * 2] + previousHashes[it * 2]
                     )
                 }
@@ -38,5 +42,5 @@ fun applyHashInPairs(
         }
         previousHashes = newHashes
     }
-    return crypter.applyHash(previousHashes[0] + previousHashes[1])
+    return hashers.applyHash(previousHashes[0] + previousHashes[1])
 }
