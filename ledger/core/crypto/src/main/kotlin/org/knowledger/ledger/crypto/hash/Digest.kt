@@ -1,7 +1,8 @@
-package org.knowledger.ledger.core.data.hash
+package org.knowledger.ledger.crypto.hash
 
 import org.knowledger.ledger.core.data.Tag
-import org.knowledger.ledger.core.data.toHexString
+import org.knowledger.ledger.core.data.hash.Hash
+import org.knowledger.ledger.crypto.Hashers
 import org.tinylog.kotlin.Logger
 import java.lang.reflect.ParameterizedType
 import java.math.BigDecimal
@@ -12,8 +13,8 @@ import java.util.*
 import kotlin.collections.ArrayDeque
 
 private data class DigestState(
-    var field: String, var clazz: Class<*>,
-    var state: State, var type: String = "",
+    var field: ByteArray, var clazz: Class<*>,
+    var state: State, var type: ByteArray = byteArrayOf(),
     var params: Array<Class<*>>? = null
 ) {
     enum class State {
@@ -25,13 +26,13 @@ private data class DigestState(
 
     internal fun enumDigest(): DigestState =
         apply {
-            type = "${clazz.toGenericString()}${clazz.enumConstants.joinToString()}"
+            type = "${clazz.toGenericString()}${clazz.enumConstants.joinToString()}".toByteArray()
             state = State.Processed
         }
 
     internal fun primitiveDigest(): DigestState =
         apply {
-            type = clazz.canonicalName
+            type = clazz.canonicalName.toByteArray()
             state = State.Processed
         }
 
@@ -44,17 +45,18 @@ private data class DigestState(
             false
         }
 
-    internal fun applyDigest(hasher: Hasher): Tag =
-        hasher.applyHash(type)
+    internal fun applyDigest(hashers: Hashers): Tag =
+        hashers.applyHash(type)
 
     internal fun markArray() {
         state = State.Composite
-        type = "[]"
+        //"[]" in UTF-8
+        type = byteArrayOf(0x5b, 0x5d)
     }
 
     internal fun markExpand() {
         state = State.Composite
-        type = ""
+        type = byteArrayOf()
     }
 
     internal fun markCycle() {
@@ -64,7 +66,7 @@ private data class DigestState(
 
 
     internal fun compact(tag: Tag) {
-        type = tag.toHexString()
+        type = tag.bytes
     }
 
 
@@ -74,10 +76,10 @@ private data class DigestState(
 
         other as DigestState
 
-        if (field != other.field) return false
+        if (!field.contentEquals(other.field)) return false
         if (clazz != other.clazz) return false
         if (state != other.state) return false
-        if (type != other.type) return false
+        if (!type.contentEquals(other.type)) return false
         if (params != null) {
             if (other.params == null) return false
             if (!params!!.contentEquals(other.params!!)) return false
@@ -96,7 +98,7 @@ private data class DigestState(
     }
 
     companion object {
-        val map: Map<Class<*>, () -> String> = mapOf(
+        val map: Map<Class<*>, () -> ByteArray> = mapOf(
             BigDecimal::class.java to Companion::digestBigDecimal,
             BigInteger::class.java to Companion::digestBigInteger,
             String::class.java to Companion::digestString,
@@ -106,45 +108,64 @@ private data class DigestState(
             Hash::class.java to Companion::digestHash
         )
 
-        private fun digestCycle(): String =
-            "8340e244-8735-451d-bfea-40d0599dba22"
+        private fun digestCycle(): ByteArray =
+            ByteArray(32)
 
-        private fun digestBigDecimal(): String =
-            "290d85d2-d360-443e-8269-b75d04a6ee87"
+        private fun digestBigDecimal(): ByteArray =
+            ByteArray(32).also {
+                it[31] = 0x7F
+            }
 
-        private fun digestBigInteger(): String =
-            "fefe9f33-8423-4597-b4ff-7820a177da2c"
+        private fun digestBigInteger(): ByteArray =
+            ByteArray(32).also {
+                it[31] = -0x7F
+            }
 
-        private fun digestUUID(): String =
-            "6de7f88d-f334-48c5-9252-7d256febc1e1"
+        private fun digestUUID(): ByteArray =
+            ByteArray(32).also {
+                it[31] = 0x7F
+                it[30] = 0x7F
+            }
 
-        private fun digestString(): String =
-            "d2777356-9e71-44a5-bb68-20e345eb83cb"
+        private fun digestString(): ByteArray =
+            ByteArray(32).also {
+                it[31] = -0x80
+                it[30] = -0x80
+            }
 
 
-        private fun digestPrivateKey(): String =
-            "f39c7e6a-6e0a-4c13-b9d1-8c7434820559"
+        private fun digestPrivateKey(): ByteArray =
+            ByteArray(32).also {
+                it[31] = 0x2C
+                it[30] = 0x2C
+            }
 
-        private fun digestPublicKey(): String =
-            "5e2fc0c1-7ae8-438a-81d1-16203f3e2be7"
+        private fun digestPublicKey(): ByteArray =
+            ByteArray(32).also {
+                it[31] = -0x2C
+                it[30] = -0x2C
+            }
 
-        private fun digestHash(): String =
-            "bc32c035-d7be-44ad-b2f9-95fa945e9e55"
+        private fun digestHash(): ByteArray =
+            ByteArray(32).also {
+                it[31] = 0x1D
+                it[30] = 0x3E
+            }
     }
 }
 
 
-fun <T : Any> T.classDigest(hasher: Hasher): Tag =
-    javaClass.classDigest(hasher)
+fun <T : Any> T.classDigest(hashers: Hashers): Tag =
+    javaClass.classDigest(hashers)
 
 
 @OptIn(ExperimentalStdlibApi::class)
-fun <T : Any> Class<in T>.classDigest(hasher: Hasher): Tag {
+fun <T : Any> Class<in T>.classDigest(hashers: Hashers): Tag {
     if (isInterface) {
         throw ClassCastException("Can't resolve fields of interface type: $canonicalName")
     }
     val states: ArrayDeque<DigestState> = ArrayDeque()
-    states.addLast(DigestState("", this, DigestState.State.FirstPass))
+    states.addLast(DigestState(byteArrayOf(), this, DigestState.State.FirstPass))
     //Fill up states by breadth first search until all leaves have been resolved.
     while (states[0].state == DigestState.State.FirstPass) {
         levelPass(states, states.takeWhile { it.state == DigestState.State.FirstPass })
@@ -155,26 +176,23 @@ fun <T : Any> Class<in T>.classDigest(hasher: Hasher): Tag {
             feed.addLast(states.removeFirst())
         }
 
-        compactLevel(hasher, states, feed)
+        compactLevel(hashers, states, feed)
         feed.clear()
     }
-    return hasher.applyHash(states.removeFirst().type)
+    return hashers.applyHash(states.removeFirst().type)
 }
 
 @ExperimentalStdlibApi
 private fun compactLevel(
-    hasher: Hasher,
+    hashers: Hashers,
     feedback: ArrayDeque<DigestState>,
     states: ArrayDeque<DigestState>
 ) {
-    val type = StringBuilder()
+    val builder = StringBuilder()
     states.forEach {
-        type.append(it.field)
-        type.append(it.type)
+        builder.append(it.field).append(it.type)
     }
-    feedback[0].compact(
-        hasher.applyHash(type.toString())
-    )
+    feedback[0].compact(hashers.applyHash(builder.toString()))
 }
 
 /**
@@ -193,9 +211,8 @@ private fun levelPass(
                 digestState.markArray()
                 feedback.addFirst(
                     DigestState(
-                        clazz = digestState.clazz.componentType,
-                        field = "",
-                        state = DigestState.State.FirstPass
+                        byteArrayOf(), digestState.clazz.componentType,
+                        DigestState.State.FirstPass
                     )
                 )
             }
@@ -223,43 +240,29 @@ private fun expandFields(
         digestState.primitiveDigest()
     } else {
         digestState.markExpand()
-        digestState
-            .clazz
-            .declaredFields
+        digestState.clazz.declaredFields
             .filter { it.name != "Companion" }
             .forEach { field ->
                 if (field.type == digestState.clazz) {
                     states.addFirst(
                         DigestState(
-                            field = field.name,
-                            clazz = digestState.clazz,
-                            state = DigestState.State.Processed
+                            field.name.toByteArray(), digestState.clazz, DigestState.State.Processed
                         ).also { it.markCycle() }
                     )
                 } else {
                     when (field.genericType) {
-                        is ParameterizedType -> {
-                            states.addFirst(
-                                DigestState(
-                                    field = field.name,
-                                    clazz = field.type,
-                                    params = (field.genericType as ParameterizedType)
-                                        .actualTypeArguments
-                                        .map { it as Class<*> }
-                                        .toTypedArray(),
-                                    state = DigestState.State.FirstPass
-                                )
+                        is ParameterizedType -> states.addFirst(
+                            DigestState(
+                                field.name.toByteArray(), field.type,
+                                DigestState.State.FirstPass, byteArrayOf(),
+                                (field.genericType as ParameterizedType).actualTypeArguments
+                                    .map { it as Class<*> }
+                                    .toTypedArray()
                             )
-                        }
-                        else -> {
-                            states.addFirst(
-                                DigestState(
-                                    field = field.name,
-                                    clazz = field.type,
-                                    state = DigestState.State.FirstPass
-                                )
-                            )
-                        }
+                        )
+                        else -> states.addFirst(
+                            DigestState(field.name.toByteArray(), field.type, DigestState.State.FirstPass)
+                        )
                     }
 
                 }
@@ -267,5 +270,5 @@ private fun expandFields(
     }
 }
 
-inline fun <reified T : Any> classDigest(hasher: Hasher): Tag =
-    T::class.java.classDigest(hasher)
+inline fun <reified T : Any> classDigest(hashers: Hashers): Tag =
+    T::class.java.classDigest(hashers)

@@ -3,8 +3,9 @@ package org.knowledger.ledger.core.adapters
 import kotlinx.serialization.KSerializer
 import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.core.data.LedgerData
-import org.knowledger.ledger.core.data.hash.classDigest
+import org.knowledger.ledger.core.tryOrDataUnknownFailure
 import org.knowledger.ledger.crypto.hash.Hashers
+import org.knowledger.ledger.crypto.hash.classDigest
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.storage.results.Outcome
@@ -17,20 +18,18 @@ import org.knowledger.ledger.storage.results.err
  * The hashed id is based on the class name extracted via reflection.
  */
 abstract class AbstractStorageAdapter<T : LedgerData>(
-    val clazz: Class<out T>,
-    hasher: Hashers
+    val clazz: Class<out T>, hashers: Hashers
 ) : StorageAdapter<T> {
     override val id: String =
-        clazz.classDigest(hasher).base64Encoded()
+        clazz.classDigest(hashers).base64Encoded()
 
     abstract val serializer: KSerializer<T>
 
     protected inline fun <T : LedgerData> commonLoad(
-        document: StorageElement,
-        tName: String,
+        document: StorageElement, tName: String,
         loader: StorageElement.() -> Outcome<T, DataFailure>
-    ): Outcome<T, DataFailure> {
-        return try {
+    ): Outcome<T, DataFailure> =
+        tryOrDataUnknownFailure {
             val name = document.schema
             if (name != null) {
                 if (tName == name) {
@@ -45,10 +44,5 @@ abstract class AbstractStorageAdapter<T : LedgerData>(
                     "Schema not existent for: ${document.json}"
                 ).err()
             }
-        } catch (e: Exception) {
-            DataFailure.UnknownFailure(
-                e.message ?: "", e
-            ).err()
         }
-    }
 }
