@@ -1,5 +1,6 @@
-package org.knowledger.ledger.storage
+package org.knowledger.ledger.storage.mutations
 
+import org.knowledger.ledger.storage.TransactionOutput
 import org.knowledger.ledger.storage.witness.Witness
 
 
