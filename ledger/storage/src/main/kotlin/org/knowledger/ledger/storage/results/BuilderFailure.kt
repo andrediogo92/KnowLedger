@@ -1,5 +1,8 @@
 package org.knowledger.ledger.storage.results
 
+import org.knowledger.ledger.results.Failable
+import org.knowledger.ledger.results.Failure
+
 sealed class BuilderFailure : Failure {
     class ParameterUninitialized(
         cause: String

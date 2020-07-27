@@ -17,12 +17,22 @@ class DelegatedSortedList<E : Comparable<E>> internal constructor(
     }
 
     override fun add(element: E): Boolean {
-        this += element
-        return true
+        val insertionIndex: Int = delegate.binarySearch(element)
+        return if (insertionIndex < 0) {
+            //Invert the inverted insertion point
+            delegate.add(-insertionIndex - 1, element)
+            true
+        } else {
+            false
+        }
     }
 
     override fun add(index: Int, element: E) {
-        this += element
+        val insertionIndex: Int = delegate.binarySearch(element)
+        if (-insertionIndex - 1 == index) {
+            //Invert the inverted insertion point
+            delegate.add(index, element)
+        }
     }
 
     override fun addAll(index: Int, elements: Collection<E>): Boolean =
@@ -49,13 +59,6 @@ class DelegatedSortedList<E : Comparable<E>> internal constructor(
             addAll(list)
         }
 
-    override operator fun plusAssign(element: E) {
-        val insertionIndex: Int = delegate.binarySearch(element)
-        if (insertionIndex < 0)
-        //Invert the inverted insertion point
-            delegate.add(-insertionIndex - 1, element)
-    }
-
     override fun remove(element: E): Boolean {
         val removeIndex: Int = delegate.binarySearch(element)
         return if (removeIndex >= 0) {
@@ -79,14 +82,8 @@ class DelegatedSortedList<E : Comparable<E>> internal constructor(
     override fun removeAll(elements: Collection<E>): Boolean =
         elements.all(this::remove)
 
-    override operator fun minus(element: E): DelegatedSortedList<E> =
-        apply {
-            this -= element
-        }
-
-    override operator fun minusAssign(element: E) {
-        remove(element)
-    }
+    override operator fun minus(list: SortedList<E>): DelegatedSortedList<E> =
+        apply { removeAll(list) }
 
     override operator fun get(index: Int): E {
         return delegate[index]
@@ -106,4 +103,18 @@ class DelegatedSortedList<E : Comparable<E>> internal constructor(
     override fun hashCode(): Int {
         return delegate.hashCode()
     }
+
+    override fun replace(element: E): Boolean =
+        delegate.binarySearch(element).let { index ->
+            if (index >= 0) {
+                delegate[index] = element
+                true
+            } else false
+        }
+
+    override fun replaceAt(index: Int, element: E): Boolean =
+        if (delegate[index] == element) {
+            delegate[index] = element
+            true
+        } else false
 }

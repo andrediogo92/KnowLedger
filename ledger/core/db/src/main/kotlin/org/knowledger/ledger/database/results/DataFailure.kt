@@ -1,7 +1,7 @@
 package org.knowledger.ledger.database.results
 
-import org.knowledger.ledger.storage.results.Failable
-import org.knowledger.ledger.storage.results.Failure
+import org.knowledger.ledger.results.Failable
+import org.knowledger.ledger.results.Failure
 
 
 sealed class DataFailure : Failure {

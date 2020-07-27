@@ -1,4 +1,4 @@
-package org.knowledger.ledger.storage.results
+package org.knowledger.ledger.results
 
 /**
  * Failable is a simple error class that distinguishes

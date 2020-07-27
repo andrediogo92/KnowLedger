@@ -1,9 +1,9 @@
 package org.knowledger.ledger.storage.cache
 
 import org.knowledger.ledger.database.StorageElement
-import org.knowledger.ledger.storage.results.Outcome
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.err
 import org.knowledger.ledger.storage.results.UpdateFailure
-import org.knowledger.ledger.storage.results.err
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 

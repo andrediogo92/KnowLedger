@@ -3,18 +3,13 @@ version = "0.3"
 plugins {
     kotlin("jvm")
     id(Plugins.serial)
-    id(Plugins.jmh)
 }
 
 serialPlugin {
-    packageName = "org.knowledger.ledger"
-    module = "ledger"
+    packageName = "org.knowledger.ledger.storage"
+    module = "ledger/storage"
+    requiresOptIn = true
     experimentalContracts = true
-}
-
-jmh {
-    duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
-    isIncludeTests = true
 }
 
 dependencies {
@@ -22,9 +17,7 @@ dependencies {
     implementation(project(":base64-extensions"))
     implementation(project(":collections-extensions"))
     implementation(project(":results"))
-    api(project(":ledger:storage"))
-    implementation(project(":ledger:orient"))
+    api(project(":ledger:core"))
 
-    jmhImplementation(Libs.jmh)
     testImplementation(project(":testing"))
 }

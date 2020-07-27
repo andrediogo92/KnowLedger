@@ -8,8 +8,8 @@ import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.classDigest
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.results.DataFailure
-import org.knowledger.ledger.storage.results.Outcome
-import org.knowledger.ledger.storage.results.err
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.err
 
 /**
  * An abstract storage adapter automatically provides a unique hashed

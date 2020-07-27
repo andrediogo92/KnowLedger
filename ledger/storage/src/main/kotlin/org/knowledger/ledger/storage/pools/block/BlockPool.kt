@@ -1,11 +1,11 @@
 package org.knowledger.ledger.storage.pools.block
 
 import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.storage.LedgerContract
 import org.knowledger.ledger.storage.MutableBlock
 import org.knowledger.ledger.storage.MutableBlockHeader
 import org.knowledger.ledger.storage.results.BlockFailure
-import org.knowledger.ledger.storage.results.Outcome
 
 internal interface BlockPool : LedgerContract {
     val blocks: Set<MutableBlock>

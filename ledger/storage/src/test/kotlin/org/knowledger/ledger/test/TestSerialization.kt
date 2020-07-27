@@ -11,10 +11,10 @@ import org.knowledger.collections.SortedList
 import org.knowledger.collections.toSortedListFromPreSorted
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.immutableCopy
+import org.knowledger.ledger.results.unwrapFailure
 import org.knowledger.ledger.storage.Transaction
 import org.knowledger.ledger.storage.block.ImmutableBlock
 import org.knowledger.ledger.storage.immutableCopy
-import org.knowledger.ledger.storage.results.unwrapFailure
 import org.knowledger.ledger.storage.serial.ledgerBinarySerializer
 import org.knowledger.ledger.storage.serial.ledgerTextSerializer
 import org.knowledger.ledger.storage.transaction.ImmutableTransaction

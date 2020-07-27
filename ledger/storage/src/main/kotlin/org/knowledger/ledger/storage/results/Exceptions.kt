@@ -1,6 +1,8 @@
 package org.knowledger.ledger.storage.results
 
 import org.knowledger.ledger.database.results.QueryFailure
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.tryOrConvertToFailure
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 

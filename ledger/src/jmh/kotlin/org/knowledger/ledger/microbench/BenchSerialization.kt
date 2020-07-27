@@ -23,23 +23,15 @@ import java.util.concurrent.TimeUnit
 @Fork(1)
 open class BenchSerialization {
     @Benchmark
-    fun serializationByPrettySerializer(
+    fun `encode block`(
         state: SerializationState, blackhole: Blackhole
     ) {
         blackhole.consume(
             state.binarySerializer.encodeBlock(state.block)
         )
     }
-
-    @Benchmark
-    fun serializationByByteSerializer(
-        state: SerializationState, blackhole: Blackhole
-    ) {
-        blackhole.consume(
-            state.binarySerializer.encodeCompactBlock(state.block)
-        )
-    }
 }
+
 
 
 

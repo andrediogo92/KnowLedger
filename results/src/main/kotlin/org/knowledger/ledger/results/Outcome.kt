@@ -1,4 +1,4 @@
-package org.knowledger.ledger.storage.results
+package org.knowledger.ledger.results
 
 import com.github.michaelbull.result.Err
 import com.github.michaelbull.result.Ok

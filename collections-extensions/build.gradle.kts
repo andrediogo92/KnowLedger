@@ -12,7 +12,7 @@ basePlugin {
 jmh {
     jvmArgs.plusAssign("-Xms1024m")
     jvmArgs.plusAssign("-Xmx2048m")
-    duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
+    duplicateClassesStrategy = DuplicatesStrategy.WARN
     isIncludeTests = true
 }
 
@@ -22,4 +22,4 @@ dependencies {
 }
 
 
-version = "0.2"
+version = "0.3"

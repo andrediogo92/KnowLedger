@@ -1,14 +1,14 @@
 package org.knowledger.ledger.storage.pools.block
 
 import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.err
+import org.knowledger.ledger.results.ok
 import org.knowledger.ledger.storage.ChainId
 import org.knowledger.ledger.storage.MutableBlock
 import org.knowledger.ledger.storage.MutableBlockHeader
 import org.knowledger.ledger.storage.pools.transaction.TransactionPool
 import org.knowledger.ledger.storage.results.BlockFailure
-import org.knowledger.ledger.storage.results.Outcome
-import org.knowledger.ledger.storage.results.err
-import org.knowledger.ledger.storage.results.ok
 
 internal data class BlockPoolImpl(
     internal val chainId: ChainId,

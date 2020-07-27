@@ -1,6 +1,8 @@
 package org.knowledger.ledger.storage.results
 
 import org.knowledger.ledger.core.data.LedgerContract
+import org.knowledger.ledger.results.Failable
+import org.knowledger.ledger.results.Failure
 
 /**
  * Result class representing loading of [LedgerContract] classes

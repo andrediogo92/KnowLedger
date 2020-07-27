@@ -10,12 +10,12 @@ import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonConfiguration
 import kotlinx.serialization.modules.SerialModule
-import org.knowledger.ledger.storage.results.Failable
-import org.knowledger.ledger.storage.results.Outcome
+import org.knowledger.ledger.results.Failable
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.err
+import org.knowledger.ledger.results.ok
 import org.knowledger.ledger.storage.results.deadCode
-import org.knowledger.ledger.storage.results.err
-import org.knowledger.ledger.storage.results.ok
-import org.knowledger.ledger.storage.results.Failure as CoreFailure
+import org.knowledger.ledger.results.Failure as CoreFailure
 
 sealed class LedgerSerializer {
 
