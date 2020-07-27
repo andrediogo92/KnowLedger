@@ -9,11 +9,10 @@ import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.storage.BlockParams
 import org.knowledger.ledger.storage.CoinbaseParams
 import org.knowledger.ledger.storage.HashSerializable
-import org.knowledger.ledger.storage.Tag
 import org.knowledger.ledger.storage.serial.ChainIdBuilderSerializationStrategy
 
 internal data class ChainIdBuilder(
-    val ledgerHash: Hash, val tag: Tag,
+    val ledgerHash: Hash, val tag: Hash,
     val blockParams: BlockParams,
     val coinbaseParams: CoinbaseParams
 ) : HashSerializable {

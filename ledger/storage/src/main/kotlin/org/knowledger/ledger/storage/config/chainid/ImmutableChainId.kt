@@ -3,12 +3,11 @@ package org.knowledger.ledger.storage.config.chainid
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.storage.BlockParams
 import org.knowledger.ledger.storage.CoinbaseParams
-import org.knowledger.ledger.storage.Tag
 
 data class ImmutableChainId(
     override val hash: Hash,
     override val ledgerHash: Hash,
-    override val tag: Tag,
+    override val tag: Hash,
     override val blockParams: BlockParams,
     override val coinbaseParams: CoinbaseParams
 ) : ChainId {

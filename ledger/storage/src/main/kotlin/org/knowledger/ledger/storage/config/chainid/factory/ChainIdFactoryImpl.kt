@@ -7,13 +7,12 @@ import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.storage.BlockParams
 import org.knowledger.ledger.storage.ChainId
 import org.knowledger.ledger.storage.CoinbaseParams
-import org.knowledger.ledger.storage.Tag
 import org.knowledger.ledger.storage.config.chainid.ChainIdBuilder
 import org.knowledger.ledger.storage.config.chainid.ImmutableChainId
 
 internal class ChainIdFactoryImpl : ChainIdFactory {
     private fun generateChainHandleHash(
-        ledgerHash: Hash, tag: Tag,
+        ledgerHash: Hash, tag: Hash,
         hasher: Hashers, encoder: BinaryFormat,
         blockParams: BlockParams, coinbaseParams: CoinbaseParams
     ): Hash = ChainIdBuilder(
@@ -21,14 +20,14 @@ internal class ChainIdFactoryImpl : ChainIdFactory {
     ).calculateHash(hasher, encoder)
 
     override fun create(
-        hash: Hash, ledgerHash: Hash, tag: Tag,
+        hash: Hash, ledgerHash: Hash, tag: Hash,
         blockParams: BlockParams, coinbaseParams: CoinbaseParams
     ): ImmutableChainId = ImmutableChainId(
         hash, ledgerHash, tag, blockParams, coinbaseParams
     )
 
     override fun create(
-        ledgerHash: Hash, tag: Tag,
+        ledgerHash: Hash, tag: Hash,
         hasher: Hashers, encoder: BinaryFormat,
         blockParams: BlockParams, coinbaseParams: CoinbaseParams
     ): ImmutableChainId = create(

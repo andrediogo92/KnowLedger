@@ -1,7 +1,6 @@
 package org.knowledger.ledger.crypto.hash
 
-import org.knowledger.ledger.core.data.Tag
-import org.knowledger.ledger.core.data.hash.Hash
+import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.Hashers
 import org.tinylog.kotlin.Logger
 import java.lang.reflect.ParameterizedType
@@ -45,7 +44,7 @@ private data class DigestState(
             false
         }
 
-    internal fun applyDigest(hashers: Hashers): Tag =
+    internal fun applyDigest(hashers: Hashers): Hash =
         hashers.applyHash(type)
 
     internal fun markArray() {
@@ -65,7 +64,7 @@ private data class DigestState(
     }
 
 
-    internal fun compact(tag: Tag) {
+    internal fun compact(tag: Hash) {
         type = tag.bytes
     }
 
@@ -155,12 +154,12 @@ private data class DigestState(
 }
 
 
-fun <T : Any> T.classDigest(hashers: Hashers): Tag =
+fun <T : Any> T.classDigest(hashers: Hashers): Hash =
     javaClass.classDigest(hashers)
 
 
 @OptIn(ExperimentalStdlibApi::class)
-fun <T : Any> Class<in T>.classDigest(hashers: Hashers): Tag {
+fun <T : Any> Class<in T>.classDigest(hashers: Hashers): Hash {
     if (isInterface) {
         throw ClassCastException("Can't resolve fields of interface type: $canonicalName")
     }
@@ -270,5 +269,5 @@ private fun expandFields(
     }
 }
 
-inline fun <reified T : Any> classDigest(hashers: Hashers): Tag =
+inline fun <reified T : Any> classDigest(hashers: Hashers): Hash =
     T::class.java.classDigest(hashers)
