@@ -1,43 +1,30 @@
 package org.knowledger.ledger.adapters
 
-import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
-import org.knowledger.ledger.data.LedgerData
-import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
+import org.knowledger.collections.SortedList
+import org.knowledger.ledger.adapters.service.ServiceStorageAdapter
 import org.knowledger.ledger.database.adapters.SchemaProvider
-import org.knowledger.ledger.service.adapters.ChainHandleStorageAdapter
-import org.knowledger.ledger.service.adapters.PoolTransactionStorageAdapter
-import org.knowledger.ledger.service.adapters.TransactionPoolStorageAdapter
-import org.knowledger.ledger.service.adapters.TransactionWithBlockHashStorageLoadable
-import org.knowledger.ledger.storage.adapters.BlockHeaderStorageAdapter
-import org.knowledger.ledger.storage.adapters.BlockStorageAdapter
-import org.knowledger.ledger.storage.adapters.CoinbaseStorageAdapter
-import org.knowledger.ledger.storage.adapters.MerkleTreeStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionOutputStorageAdapter
-import org.knowledger.ledger.storage.adapters.TransactionStorageAdapter
-import org.knowledger.ledger.storage.adapters.WitnessStorageAdapter
+import org.knowledger.ledger.service.handles.ChainHandle
+import org.knowledger.ledger.storage.*
 
 internal interface AdapterCollection {
-    //Storage Adapters
-    val blockStorageAdapter: BlockStorageAdapter
-    val blockHeaderStorageAdapter: BlockHeaderStorageAdapter
-    val coinbaseStorageAdapter: CoinbaseStorageAdapter
-    val merkleTreeStorageAdapter: MerkleTreeStorageAdapter
-    val physicalDataStorageAdapter: PhysicalDataStorageAdapter
-    val transactionStorageAdapter: TransactionStorageAdapter
-    val transactionOutputStorageAdapter: TransactionOutputStorageAdapter
-    val transactionWithBlockHashStorageLoadable: TransactionWithBlockHashStorageLoadable
-    val witnessStorageAdapter: WitnessStorageAdapter
-
-    //Service Adapters
-    val poolTransactionStorageAdapter: PoolTransactionStorageAdapter
-    val transactionPoolStorageAdapter: TransactionPoolStorageAdapter
-    val chainHandleStorageAdapter: ChainHandleStorageAdapter
-
-    //Data Adapters
-    val dataAdapters: Set<AbstractStorageAdapter<out LedgerData>>
-
-    val defaultSchemas: MutableSet<SchemaProvider>
-
-    val allSchemaProviders: Set<SchemaProvider>
-        get() = defaultSchemas + dataAdapters
+    val blockStorageAdapter: LedgerStorageAdapter<MutableBlock>
+    val blockHeaderStorageAdapter: LedgerStorageAdapter<MutableBlockHeader>
+    val blockParamsStorageAdapter: LedgerStorageAdapter<BlockParams>
+    val blockPoolStorageAdapter: LedgerStorageAdapter<MutableBlockPool>
+    val chainIdStorageAdapter: LedgerStorageAdapter<ChainId>
+    val chainHandleStorageAdapter: ServiceStorageAdapter<ChainHandle>
+    val coinbaseStorageAdapter: LedgerStorageAdapter<MutableCoinbase>
+    val coinbaseHeaderStorageAdapter: LedgerStorageAdapter<MutableCoinbaseHeader>
+    val coinbaseParamsStorageAdapter: LedgerStorageAdapter<CoinbaseParams>
+    val identityStorageAdapter: LedgerStorageAdapter<Identity>
+    val ledgerIdStorageAdapter: LedgerStorageAdapter<LedgerId>
+    val ledgerParamsStorageAdapter: LedgerStorageAdapter<LedgerParams>
+    val merkleTreeStorageAdapter: LedgerStorageAdapter<MutableMerkleTree>
+    val physicalDataStorageAdapter: LedgerStorageAdapter<PhysicalData>
+    val poolTransactionStorageAdapter: LedgerStorageAdapter<PoolTransaction>
+    val transactionStorageAdapter: LedgerStorageAdapter<MutableTransaction>
+    val transactionOutputStorageAdapter: LedgerStorageAdapter<TransactionOutput>
+    val transactionPoolStorageAdapter: LedgerStorageAdapter<MutableTransactionPool>
+    val witnessStorageAdapter: LedgerStorageAdapter<MutableWitness>
+    val defaultSchemas: SortedList<SchemaProvider>
 }
