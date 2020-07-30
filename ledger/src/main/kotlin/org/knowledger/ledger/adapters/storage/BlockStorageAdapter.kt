@@ -67,9 +67,9 @@ internal class BlockStorageAdapter : LedgerStorageAdapter<MutableBlock> {
                     val merkleTree = context.merkleTreeStorageAdapter.load(
                         ledgerHash, merkleTreeElem, context
                     ).bind()
+                    val transactionAdapter = context.transactionStorageAdapter
                     val transactions = transactionsElem.map {
-                        val adapter = context.transactionStorageAdapter
-                        adapter.load(ledgerHash, it, context)
+                        transactionAdapter.load(ledgerHash, it, context)
                     }.combine().bind()
                     context.blockFactory.create(
                         blockHeader, coinbase, merkleTree,

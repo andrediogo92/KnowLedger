@@ -59,9 +59,9 @@ internal class CoinbaseStorageAdapter : LedgerStorageAdapter<MutableCoinbase> {
                     val merkleTree = context.merkleTreeStorageAdapter.load(
                         ledgerHash, merkleTree, context
                     ).bind()
+                    val witnessAdapter = context.witnessStorageAdapter
                     val witnesses = witnesses.map {
-                        val adapter = context.witnessStorageAdapter
-                        adapter.load(ledgerHash, element, context)
+                        witnessAdapter.load(ledgerHash, element, context)
                     }.combine().bind()
                     context.coinbaseFactory.create(
                         merkleTree = merkleTree, coinbaseHeader = coinbaseHeader,
