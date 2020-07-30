@@ -1,4 +1,4 @@
-package org.knowledger.ledger.adapters.storage
+package org.knowledger.ledger.adapters.pools
 
 import com.github.michaelbull.result.binding
 import com.github.michaelbull.result.combine
