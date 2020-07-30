@@ -1,7 +1,7 @@
 package org.knowledger.ledger.serial
 
 import kotlinx.serialization.KSerializer
-import org.knowledger.ledger.data.DataFormula
+import org.knowledger.ledger.storage.DataFormula
 import kotlin.reflect.KClass
 
 internal data class FormulaSerializerPair<T : DataFormula> constructor(

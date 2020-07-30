@@ -1,7 +1,7 @@
 package org.knowledger.ledger.serial
 
 import kotlinx.serialization.KSerializer
-import org.knowledger.ledger.data.LedgerData
+import org.knowledger.ledger.storage.LedgerData
 import kotlin.reflect.KClass
 
 internal data class DataSerializerPair<T : LedgerData> constructor(
