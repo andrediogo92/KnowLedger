@@ -1,26 +1,26 @@
-package org.knowledger.ledger.service.adapters
+package org.knowledger.ledger.adapters.service
 
+import com.github.michaelbull.result.map
+import org.knowledger.ledger.adapters.StorageLoadable
 import org.knowledger.ledger.crypto.Hash
-import org.knowledger.ledger.data.adapters.PhysicalDataStorageAdapter
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.results.Outcome
-import org.knowledger.ledger.results.mapSuccess
-import org.knowledger.ledger.results.tryOrLoadUnknownFailure
-import org.knowledger.ledger.service.results.LoadFailure
+import org.knowledger.ledger.service.PersistenceContext
 import org.knowledger.ledger.service.transactions.TransactionWithBlockHash
-import org.knowledger.ledger.storage.adapters.StorageLoadable
+import org.knowledger.ledger.storage.results.LoadFailure
+import org.knowledger.ledger.storage.results.tryOrLoadUnknownFailure
 
-internal class TransactionWithBlockHashStorageLoadable(
-    val physicalDataStorageAdapter: PhysicalDataStorageAdapter
-) : StorageLoadable<TransactionWithBlockHash> {
+internal class TransactionWithBlockHashStorageLoadable :
+    StorageLoadable<TransactionWithBlockHash> {
     override fun load(
-        ledgerHash: Hash, element: StorageElement
+        ledgerHash: Hash, element: StorageElement,
+        context: PersistenceContext
     ): Outcome<TransactionWithBlockHash, LoadFailure> =
         tryOrLoadUnknownFailure {
             val txDataElement = element.getLinked("txData")
-            physicalDataStorageAdapter
-                .load(ledgerHash, txDataElement)
-                .mapSuccess { txData ->
+            context.physicalDataStorageAdapter
+                .load(ledgerHash, txDataElement, context)
+                .map { txData ->
                     val txBlockHash = element.getHashProperty("txBlockHash")
                     val txHash = element.getHashProperty("txHash")
                     val txIndex = element.getStorageProperty<Int>("txIndex")
