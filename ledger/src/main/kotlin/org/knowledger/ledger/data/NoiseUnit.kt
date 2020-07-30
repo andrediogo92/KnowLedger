@@ -1,6 +1,6 @@
 package org.knowledger.ledger.data
 
-import org.knowledger.ledger.core.base.data.PhysicalUnit
+import org.knowledger.ledger.core.data.PhysicalUnit
 import org.knowledger.ledger.data.NoiseUnit.Rms
 import org.knowledger.ledger.data.NoiseUnit.dBSPL
 

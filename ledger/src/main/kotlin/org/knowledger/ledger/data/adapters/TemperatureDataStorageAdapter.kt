@@ -2,8 +2,8 @@ package org.knowledger.ledger.data.adapters
 
 import kotlinx.serialization.KSerializer
 import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
+import org.knowledger.ledger.core.tryOrDataUnknownFailure
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.TemperatureData
 import org.knowledger.ledger.data.TemperatureUnit
 import org.knowledger.ledger.database.NewInstanceSession
@@ -11,11 +11,14 @@ import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.results.Outcome
-import org.knowledger.ledger.results.tryOrDataUnknownFailure
+import org.knowledger.ledger.results.err
+import org.knowledger.ledger.results.ok
+import org.knowledger.ledger.storage.LedgerData
 
-class TemperatureDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<TemperatureData>(
-    TemperatureData::class.java,
-    hasher
+class TemperatureDataStorageAdapter(
+    hasher: Hashers
+) : AbstractStorageAdapter<TemperatureData>(
+    TemperatureData::class.java, hasher
 ) {
     override val serializer: KSerializer<TemperatureData>
         get() = TemperatureData.serializer()
@@ -28,23 +31,18 @@ class TemperatureDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<Te
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement =
-        (toStore as TemperatureData).let {
-            session
-                .newInstance(id)
-                .setStorageProperty(
-                    "temperature",
-                    it.temperature
-                ).setStorageProperty(
-                    "unit",
-                    when (it.unit) {
-                        TemperatureUnit.Celsius -> TemperatureUnit.Celsius.ordinal
-                        TemperatureUnit.Fahrenheit -> TemperatureUnit.Fahrenheit.ordinal
-                        TemperatureUnit.Kelvin -> TemperatureUnit.Kelvin.ordinal
-                        TemperatureUnit.Rankine -> TemperatureUnit.Rankine.ordinal
-                    }
-                )
-        }
+    ): StorageElement = (toStore as TemperatureData).let {
+        session.newInstance(id)
+            .setStorageProperty("temperature", it.temperature)
+            .setStorageProperty(
+                "unit", when (it.unit) {
+                    TemperatureUnit.Celsius -> TemperatureUnit.Celsius.ordinal
+                    TemperatureUnit.Fahrenheit -> TemperatureUnit.Fahrenheit.ordinal
+                    TemperatureUnit.Kelvin -> TemperatureUnit.Kelvin.ordinal
+                    TemperatureUnit.Rankine -> TemperatureUnit.Rankine.ordinal
+                }
+            )
+    }
 
 
     override fun load(
@@ -60,18 +58,14 @@ class TemperatureDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<Te
                 else -> null
             }
             if (unit == null) {
-                Outcome.Error<DataFailure>(
-                    DataFailure.UnrecognizedUnit(
-                        "Unit is not one of the expected: $prop"
-                    )
-                )
+                DataFailure.UnrecognizedUnit(
+                    "Unit is not one of the expected: $prop"
+                ).err()
             } else {
-                Outcome.Ok(
-                    TemperatureData(
-                        element.getStorageProperty("temperature"),
-                        unit
-                    )
-                )
+                TemperatureData(
+                    element.getStorageProperty("temperature"),
+                    unit
+                ).ok()
             }
         }
 

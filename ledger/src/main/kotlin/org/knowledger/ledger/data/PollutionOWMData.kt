@@ -3,6 +3,8 @@ package org.knowledger.ledger.data
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.knowledger.ledger.storage.LedgerData
+import org.knowledger.ledger.storage.SelfInterval
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -45,38 +47,29 @@ data class PollutionOWMData(
 
 
     constructor(
-        unit: String,
-        parameter: String,
-        value: Double,
-        data: List<List<Double>>,
-        city: String = "",
-        citySeqNum: Int = 1
+        unit: String, parameter: String,
+        value: Double, data: List<List<Double>>,
+        city: String = "", citySeqNum: Int = 1
     ) : this(
-        unit,
-        when (parameter) {
+        unit, when (parameter) {
             "O3" -> PollutionType.O3
             "UV" -> PollutionType.UV
             "CO" -> PollutionType.CO
             "SO2" -> PollutionType.SO2
             "NO2" -> PollutionType.NO2
             else -> PollutionType.NA
-        },
-        when (parameter) {
+        }, when (parameter) {
             "O3", "UV" -> value
             else -> -99.0
-        },
-        when (parameter) {
+        }, when (parameter) {
             "CO", "SO2", "NO2" -> data.map {
                 it.toList()
             }.toList()
             else -> emptyList()
-        },
-        city,
-        citySeqNum
+        }, city, citySeqNum
     )
 
-    override fun clone(): PollutionOWMData =
-        copy()
+    override fun clone(): PollutionOWMData = copy()
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
@@ -94,10 +87,8 @@ data class PollutionOWMData(
         }
     }
 
-    private fun calculateDiffPollution(
-        previous: PollutionOWMData
-    ): BigDecimal {
-        TODO()
+    private fun calculateDiffPollution(previous: PollutionOWMData): BigDecimal {
+        return BigDecimal.ONE
     }
 
 }

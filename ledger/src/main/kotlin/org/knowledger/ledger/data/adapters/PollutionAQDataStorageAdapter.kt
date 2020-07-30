@@ -3,7 +3,6 @@ package org.knowledger.ledger.data.adapters
 import kotlinx.serialization.KSerializer
 import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.PollutionAQData
 import org.knowledger.ledger.data.PollutionType
 import org.knowledger.ledger.database.NewInstanceSession
@@ -11,10 +10,12 @@ import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.err
+import org.knowledger.ledger.results.ok
+import org.knowledger.ledger.storage.LedgerData
 
 class PollutionAQDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<PollutionAQData>(
-    PollutionAQData::class.java,
-    hasher
+    PollutionAQData::class.java, hasher
 ) {
     override val serializer: KSerializer<PollutionAQData>
         get() = PollutionAQData.serializer()
@@ -32,20 +33,18 @@ class PollutionAQDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<Po
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement =
-        (toStore as PollutionAQData).let {
-            session
-                .newInstance(id)
-                .setStorageProperty("lastUpdated", it.lastUpdated)
-                .setStorageProperty("unit", it.unit)
-                //Byte encode the enum.
-                .setStorageProperty(
-                    "parameter", when (it.parameter) {
-                        PollutionType.PM25 -> PollutionType.PM25.ordinal
-                        PollutionType.PM10 -> PollutionType.PM10.ordinal
-                        PollutionType.SO2 -> PollutionType.SO2.ordinal
-                        PollutionType.NO2 -> PollutionType.NO2.ordinal
-                        PollutionType.O3 -> PollutionType.O3.ordinal
+    ): StorageElement = (toStore as PollutionAQData).let {
+        session.newInstance(id)
+            .setStorageProperty("lastUpdated", it.lastUpdated)
+            .setStorageProperty("unit", it.unit)
+            //Byte encode the enum.
+            .setStorageProperty(
+                "parameter", when (it.parameter) {
+                    PollutionType.PM25 -> PollutionType.PM25.ordinal
+                    PollutionType.PM10 -> PollutionType.PM10.ordinal
+                    PollutionType.SO2 -> PollutionType.SO2.ordinal
+                    PollutionType.NO2 -> PollutionType.NO2.ordinal
+                    PollutionType.O3 -> PollutionType.O3.ordinal
                         PollutionType.CO -> PollutionType.CO.ordinal
                         PollutionType.BC -> PollutionType.BC.ordinal
                         PollutionType.NA -> PollutionType.NA.ordinal
@@ -75,23 +74,18 @@ class PollutionAQDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<Po
                 else -> null
             }
             if (param == null) {
-                Outcome.Error<DataFailure>(
-                    DataFailure.UnrecognizedUnit(
-                        "Parameter is not one of the expected types: $prop"
-                    )
-                )
+                DataFailure.UnrecognizedUnit(
+                    "Parameter is not one of the expected types: $prop"
+                ).err()
             } else {
-                Outcome.Ok(
-                    PollutionAQData(
-                        getStorageProperty("lastUpdated"),
-                        getStorageProperty("unit"),
-                        param,
-                        getStorageProperty("value"),
-                        getStorageProperty("sourceName"),
-                        getStorageProperty("city"),
-                        getStorageProperty("citySeqNum")
-                    )
-                )
+                PollutionAQData(
+                    getStorageProperty("lastUpdated"),
+                    getStorageProperty("unit"), param,
+                    getStorageProperty("value"),
+                    getStorageProperty("sourceName"),
+                    getStorageProperty("city"),
+                    getStorageProperty("citySeqNum")
+                ).ok()
             }
         }
 

@@ -1,6 +1,6 @@
 package org.knowledger.ledger.data
 
-import org.knowledger.ledger.core.base.data.PhysicalUnit
+import org.knowledger.ledger.core.data.PhysicalUnit
 
 /**
  * Two luminosity units considered:

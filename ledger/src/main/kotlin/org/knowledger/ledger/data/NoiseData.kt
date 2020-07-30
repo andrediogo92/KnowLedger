@@ -1,12 +1,15 @@
 @file:UseSerializers(BigDecimalSerializer::class)
+
 package org.knowledger.ledger.data
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import org.knowledger.ledger.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.serial.BigDecimalSerializer
+import org.knowledger.ledger.storage.LedgerData
+import org.knowledger.ledger.storage.SelfInterval
+import org.knowledger.ledger.storage.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -31,15 +34,12 @@ data class NoiseData(
     val peakOrBase: BigDecimal,
     val unit: NoiseUnit
 ) : LedgerData {
-    override fun clone(): NoiseData =
-        copy()
+    override fun clone(): NoiseData = copy()
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
 
-    override fun calculateDiff(
-        previous: SelfInterval
-    ): BigDecimal =
+    override fun calculateDiff(previous: SelfInterval): BigDecimal =
         when (previous) {
             is NoiseData -> calculateDiffNoise(previous)
             else -> throw InvalidClassException(
@@ -51,24 +51,10 @@ data class NoiseData(
         }
 
 
-    private fun calculateDiffNoise(
-        previous: NoiseData
-    ): BigDecimal {
-        val newN =
-            noiseLevel
-                .add(peakOrBase)
-                .abs()
-        val oldN =
-            previous
-                .noiseLevel
-                .add(previous.peakOrBase)
-                .abs()
-        return newN
-            .subtract(oldN)
-            .divide(
-                oldN,
-                GLOBALCONTEXT
-            )
+    private fun calculateDiffNoise(previous: NoiseData): BigDecimal {
+        val newN = noiseLevel.add(peakOrBase).abs()
+        val oldN = previous.noiseLevel.add(previous.peakOrBase).abs()
+        return newN.subtract(oldN).divide(oldN, GLOBALCONTEXT)
     }
 
 }

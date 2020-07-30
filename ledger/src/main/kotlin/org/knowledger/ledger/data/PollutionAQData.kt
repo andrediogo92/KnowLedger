@@ -3,6 +3,8 @@ package org.knowledger.ledger.data
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.knowledger.ledger.storage.LedgerData
+import org.knowledger.ledger.storage.SelfInterval
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -25,8 +27,7 @@ data class PollutionAQData(
         parameter: String, value: Double,
         sourceName: String
     ) : this(
-        lastUpdated, unit,
-        when (parameter) {
+        lastUpdated, unit, when (parameter) {
             "pm25" -> PollutionType.PM25
             "pm10" -> PollutionType.PM10
             "co" -> PollutionType.CO
@@ -45,8 +46,7 @@ data class PollutionAQData(
         sourceName: String, city: String,
         citySeqNum: Int
     ) : this(
-        lastUpdated, unit,
-        when (parameter) {
+        lastUpdated, unit, when (parameter) {
             "pm25" -> PollutionType.PM25
             "pm10" -> PollutionType.PM10
             "co" -> PollutionType.CO
@@ -59,16 +59,13 @@ data class PollutionAQData(
         city, citySeqNum
     )
 
-    override fun clone(): PollutionAQData =
-        copy()
+    override fun clone(): PollutionAQData = copy()
 
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
 
-    override fun calculateDiff(
-        previous: SelfInterval
-    ): BigDecimal {
+    override fun calculateDiff(previous: SelfInterval): BigDecimal {
         return if (previous is PollutionAQData) {
             calculateDiffPollution(previous)
         } else {
@@ -81,10 +78,8 @@ data class PollutionAQData(
         }
     }
 
-    private fun calculateDiffPollution(
-        previous: PollutionAQData
-    ): BigDecimal {
-        TODO()
+    private fun calculateDiffPollution(previous: PollutionAQData): BigDecimal {
+        return BigDecimal.ONE
     }
 
 }

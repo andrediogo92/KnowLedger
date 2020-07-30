@@ -1,12 +1,15 @@
 @file:UseSerializers(BigDecimalSerializer::class)
+
 package org.knowledger.ledger.data
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import org.knowledger.ledger.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.serial.BigDecimalSerializer
+import org.knowledger.ledger.storage.LedgerData
+import org.knowledger.ledger.storage.SelfInterval
+import org.knowledger.ledger.storage.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -22,15 +25,12 @@ data class TemperatureData(
     val temperature: BigDecimal,
     val unit: TemperatureUnit
 ) : LedgerData {
-    override fun clone(): TemperatureData =
-        copy()
+    override fun clone(): TemperatureData = copy()
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
 
-    override fun calculateDiff(
-        previous: SelfInterval
-    ): BigDecimal =
+    override fun calculateDiff(previous: SelfInterval): BigDecimal =
         when (previous) {
             is TemperatureData -> calculateDiffTemp(previous)
             else -> throw InvalidClassException(
@@ -46,8 +46,7 @@ data class TemperatureData(
         previous: TemperatureData
     ): BigDecimal {
         val oldT = previous.unit.convertTo(
-            previous.temperature,
-            TemperatureUnit.Celsius
+            previous.temperature, TemperatureUnit.Celsius
         )
         return unit.convertTo(temperature, TemperatureUnit.Celsius)
             .subtract(oldT)

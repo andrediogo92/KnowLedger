@@ -1,12 +1,15 @@
 @file:UseSerializers(BigDecimalSerializer::class)
+
 package org.knowledger.ledger.data
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import org.knowledger.ledger.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.serial.BigDecimalSerializer
+import org.knowledger.ledger.storage.LedgerData
+import org.knowledger.ledger.storage.SelfInterval
+import org.knowledger.ledger.storage.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -23,8 +26,7 @@ data class HumidityData(
     val humidity: BigDecimal,
     val unit: HumidityUnit
 ) : LedgerData {
-    override fun clone(): HumidityData =
-        copy()
+    override fun clone(): HumidityData = copy()
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
@@ -47,15 +49,13 @@ data class HumidityData(
             newH = humidity
             oldH = previous.humidity
         } else {
-            newH = unit.convertTo(humidity, HumidityUnit.KilogramsByKilograms)
-            oldH = previous.unit.convertTo(humidity, HumidityUnit.KilogramsByKilograms)
+            newH = unit.convertTo(
+                humidity, HumidityUnit.KilogramsByKilograms
+            )
+            oldH = previous.unit.convertTo(
+                humidity, HumidityUnit.KilogramsByKilograms
+            )
         }
-        return newH.subtract(oldH)
-            .divide(oldH, GLOBALCONTEXT)
+        return newH.subtract(oldH).divide(oldH, GLOBALCONTEXT)
     }
-
-    override fun toString(): String {
-        return "HumidityData(hum=$humidity, unit=$unit)"
-    }
-
 }

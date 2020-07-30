@@ -3,6 +3,8 @@ package org.knowledger.ledger.data
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.knowledger.ledger.storage.LedgerData
+import org.knowledger.ledger.storage.SelfInterval
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -96,8 +98,7 @@ data class TrafficIncidentData(
             }
         }
 
-    override fun clone(): TrafficIncidentData =
-        copy()
+    override fun clone(): TrafficIncidentData = copy()
 
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
@@ -117,9 +118,7 @@ data class TrafficIncidentData(
         }
     }
 
-    private fun calculateDiffTraffic(
-        previous: TrafficIncidentData
-    ): BigDecimal {
-        TODO()
+    private fun calculateDiffTraffic(previous: TrafficIncidentData): BigDecimal {
+        return BigDecimal.ONE
     }
 }

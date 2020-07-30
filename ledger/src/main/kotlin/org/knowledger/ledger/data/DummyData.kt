@@ -1,15 +1,14 @@
 package org.knowledger.ledger.data
 
 import kotlinx.serialization.BinaryFormat
-import kotlinx.serialization.SerialName
 import org.knowledger.ledger.serial.DummyDataSerializer
+import org.knowledger.ledger.storage.LedgerData
+import org.knowledger.ledger.storage.SelfInterval
 import java.math.BigDecimal
 
 /**
  * Dummy value type used for the origin block.
  */
-@SerialName("DummyData")
-@PublishedApi
 internal object DummyData : LedgerData {
     override fun clone(): DummyData = this
 

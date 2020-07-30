@@ -1,8 +1,8 @@
 package org.knowledger.ledger.data
 
-import org.knowledger.ledger.config.GlobalLedgerConfiguration.GLOBALCONTEXT
-import org.knowledger.ledger.core.base.data.ConvertableUnit
-import org.knowledger.ledger.core.base.data.PhysicalUnit
+import org.knowledger.ledger.core.data.ConvertableUnit
+import org.knowledger.ledger.core.data.PhysicalUnit
+import org.knowledger.ledger.storage.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import java.math.BigDecimal
 
 

@@ -3,7 +3,6 @@ package org.knowledger.ledger.data.adapters
 import kotlinx.serialization.KSerializer
 import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.data.NoiseData
 import org.knowledger.ledger.data.NoiseUnit
 import org.knowledger.ledger.database.NewInstanceSession
@@ -11,10 +10,12 @@ import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.err
+import org.knowledger.ledger.results.ok
+import org.knowledger.ledger.storage.LedgerData
 
 class NoiseDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<NoiseData>(
-    NoiseData::class.java,
-    hasher
+    NoiseData::class.java, hasher
 ) {
     override val serializer: KSerializer<NoiseData>
         get() = NoiseData.serializer()
@@ -28,19 +29,17 @@ class NoiseDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<NoiseDat
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement =
-        (toStore as NoiseData).let {
-            session
-                .newInstance(id)
-                .setStorageProperty("noiseLevel", it.noiseLevel)
-                .setStorageProperty("peakOrBase", it.peakOrBase)
-                .setStorageProperty(
-                    "unit", when (it.unit) {
-                        NoiseUnit.dBSPL -> NoiseUnit.dBSPL.ordinal.toByte()
-                        NoiseUnit.Rms -> NoiseUnit.Rms.ordinal.toByte()
-                    }
-                )
-        }
+    ): StorageElement = (toStore as NoiseData).let {
+        session.newInstance(id)
+            .setStorageProperty("noiseLevel", it.noiseLevel)
+            .setStorageProperty("peakOrBase", it.peakOrBase)
+            .setStorageProperty(
+                "unit", when (it.unit) {
+                    NoiseUnit.dBSPL -> NoiseUnit.dBSPL.ordinal.toByte()
+                    NoiseUnit.Rms -> NoiseUnit.Rms.ordinal.toByte()
+                }
+            )
+    }
 
 
     override fun load(
@@ -54,19 +53,15 @@ class NoiseDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<NoiseDat
                 else -> null
             }
             if (unit == null) {
-                Outcome.Error<DataFailure>(
-                    DataFailure.UnrecognizedUnit(
-                        "Unit is not one of the expected: $prop"
-                    )
-                )
+                DataFailure.UnrecognizedUnit(
+                    "Unit is not one of the expected: $prop"
+                ).err()
             } else {
-                Outcome.Ok(
-                    NoiseData(
-                        getStorageProperty("noiseLevel"),
-                        getStorageProperty("peakOrBase"),
-                        unit
-                    )
-                )
+                NoiseData(
+                    getStorageProperty("noiseLevel"),
+                    getStorageProperty("peakOrBase"),
+                    unit
+                ).ok()
             }
         }
 

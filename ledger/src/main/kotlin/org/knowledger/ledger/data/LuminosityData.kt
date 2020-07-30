@@ -5,8 +5,10 @@ import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import org.knowledger.ledger.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import org.knowledger.ledger.core.serial.BigDecimalSerializer
+import org.knowledger.ledger.storage.LedgerData
+import org.knowledger.ledger.storage.SelfInterval
+import org.knowledger.ledger.storage.config.GlobalLedgerConfiguration.GLOBALCONTEXT
 import java.io.InvalidClassException
 import java.math.BigDecimal
 
@@ -22,15 +24,12 @@ data class LuminosityData(
     val luminosity: BigDecimal,
     val unit: LuminosityUnit
 ) : LedgerData {
-    override fun clone(): LuminosityData =
-        copy()
+    override fun clone(): LuminosityData = copy()
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.dump(serializer(), this)
 
-    override fun calculateDiff(
-        previous: SelfInterval
-    ): BigDecimal =
+    override fun calculateDiff(previous: SelfInterval): BigDecimal =
         when (previous) {
             is LuminosityData -> calculateDiffLum(previous)
             else -> throw InvalidClassException(
@@ -41,17 +40,7 @@ data class LuminosityData(
             )
         }
 
-    private fun calculateDiffLum(
-        previous: LuminosityData
-    ): BigDecimal =
+    private fun calculateDiffLum(previous: LuminosityData): BigDecimal =
         luminosity.subtract(previous.luminosity)
-            .divide(
-                previous.luminosity,
-                GLOBALCONTEXT
-            )
-
-
-    override fun toString(): String {
-        return "LuminosityData(lum = $luminosity, unit = $unit)"
-    }
+            .divide(previous.luminosity, GLOBALCONTEXT)
 }

@@ -5,16 +5,17 @@ import org.knowledger.ledger.core.adapters.AbstractStorageAdapter
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.data.HumidityData
 import org.knowledger.ledger.data.HumidityUnit
-import org.knowledger.ledger.data.LedgerData
 import org.knowledger.ledger.database.NewInstanceSession
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.results.err
+import org.knowledger.ledger.results.ok
+import org.knowledger.ledger.storage.LedgerData
 
 class HumidityDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<HumidityData>(
-    HumidityData::class.java,
-    hasher
+    HumidityData::class.java, hasher
 ) {
     override val serializer: KSerializer<HumidityData>
         get() = HumidityData.serializer()
@@ -27,19 +28,17 @@ class HumidityDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<Humid
 
     override fun store(
         toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement =
-        (toStore as HumidityData).let {
-            session
-                .newInstance(id)
-                .setStorageProperty("humidity", it.humidity)
-                .setStorageProperty(
-                    "unit", when (it.unit) {
-                        HumidityUnit.GramsByKilograms -> HumidityUnit.GramsByKilograms.ordinal
-                        HumidityUnit.KilogramsByKilograms -> HumidityUnit.KilogramsByKilograms.ordinal
-                        HumidityUnit.Relative -> HumidityUnit.Relative.ordinal
-                    }
-                )
-        }
+    ): StorageElement = (toStore as HumidityData).let {
+        session.newInstance(id)
+            .setStorageProperty("humidity", it.humidity)
+            .setStorageProperty(
+                "unit", when (it.unit) {
+                    HumidityUnit.GramsByKilograms -> HumidityUnit.GramsByKilograms.ordinal
+                    HumidityUnit.KilogramsByKilograms -> HumidityUnit.KilogramsByKilograms.ordinal
+                    HumidityUnit.Relative -> HumidityUnit.Relative.ordinal
+                }
+            )
+    }
 
     override fun load(
         element: StorageElement
@@ -53,18 +52,13 @@ class HumidityDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<Humid
                 else -> null
             }
             if (unit == null) {
-                Outcome.Error<DataFailure>(
-                    DataFailure.UnrecognizedUnit(
-                        "HUnit is not one of the expected: $prop"
-                    )
-                )
+                DataFailure.UnrecognizedUnit(
+                    "HUnit is not one of the expected: $prop"
+                ).err()
             } else {
-                Outcome.Ok(
-                    HumidityData(
-                        getStorageProperty("humidity"),
-                        unit
-                    )
-                )
+                HumidityData(
+                    getStorageProperty("humidity"), unit
+                ).ok()
             }
         }
 
