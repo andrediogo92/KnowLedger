@@ -21,6 +21,8 @@ dependencies {
     api(project(":ledger:core:data"))
     api(project(":ledger:core:db"))
     api(project(":ledger:core:kserial"))
+    api(Libs.datetime)
+    api(Libs.uuid)
 
     testImplementation(project(":testing"))
 }

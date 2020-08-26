@@ -10,6 +10,8 @@ basePlugin {
 }
 
 jmh {
+    jmhVersion = "1.24"
+    resultFormat = "CSV"
     jvmArgs.plusAssign("-Xms1024m")
     jvmArgs.plusAssign("-Xmx2048m")
     duplicateClassesStrategy = DuplicatesStrategy.WARN

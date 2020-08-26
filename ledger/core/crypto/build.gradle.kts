@@ -6,6 +6,8 @@ plugins {
 serialPlugin {
     packageName = "org.knowledger.ledger.crypto"
     module = "ledger/core/crypto"
+    requiresOptIn = true
+    experimentalOptIn = true
 }
 
 dependencies {

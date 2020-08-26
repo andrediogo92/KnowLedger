@@ -10,9 +10,12 @@ serialPlugin {
     packageName = "org.knowledger.ledger"
     module = "ledger"
     experimentalContracts = true
+    inlineClasses = true
 }
 
 jmh {
+    jmhVersion = "1.24"
+    resultFormat = "CSV"
     duplicateClassesStrategy = DuplicatesStrategy.EXCLUDE
     isIncludeTests = true
 }

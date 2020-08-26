@@ -12,9 +12,8 @@ basePlugin {
 dependencies {
     //Project dependencies
     implementation(project(":ledger"))
-    implementation(project(":ledger-core"))
+    implementation(project(":ledger:core"))
     implementation(project(":agent"))
-    implementation(project(":agent-core"))
 
     Libs.jade.forEach(::implementation)
 

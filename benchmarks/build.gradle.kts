@@ -18,7 +18,6 @@ jmh {
 dependencies {
     //JMH dependencies
     jmhImplementation(project(":ledger"))
-    jmhImplementation(project(":ledger-core"))
     jmhImplementation(project(":agent"))
     jmhImplementation(Libs.jmh)
 
