@@ -5,3 +5,10 @@ include(
     "ledger:core:crypto", "ledger:core:data", "ledger:core:db", "ledger:core:kserial",
     "ledger:orient", "ledger:storage", "generation", "results", "testing"
 )
+
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        jcenter()
+    }
+}
