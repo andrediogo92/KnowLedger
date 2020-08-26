@@ -1,88 +1,46 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package org.knowledger.ledger.core
 
 import kotlinx.serialization.BinaryFormat
 import org.knowledger.ledger.core.data.HashSerializable
 import org.knowledger.ledger.core.data.hash.Hash
 import org.knowledger.ledger.core.data.hash.toHexString
+import org.knowledger.ledger.crypto.EncodedKey
+import org.knowledger.ledger.crypto.EncodedPrivateKey
+import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.EncodedSignature
-import java.security.Key
-import java.security.PrivateKey
-import java.security.PublicKey
-import java.security.Signature
+import org.knowledger.ledger.crypto.toPrivateKey
+import org.knowledger.ledger.crypto.toPublicKey
 
-private val dsa: Signature =
-    Signature.getInstance(
-        "ECDSA",
-        "BC"
-    )
-
-/**
- * Signs the [data]'s byte encoding using the [encoder].
- * Returns the generated signature as a [ByteArray].
- */
-fun PrivateKey.generateSignature(
-    data: HashSerializable,
-    encoder: BinaryFormat
-): EncodedSignature =
-    applyECDSASig(
-        data.serialize(encoder)
-    )
-
-
-/**
- * Applies ECDSA Signature and returns the result (as [ByteArray]).
- */
-fun PrivateKey.applyECDSASig(
-    input: String
-): EncodedSignature =
-    applyECDSASig(
-        input.toByteArray()
-    )
-
-
-/**
- * Applies ECDSA Signature and returns the result (as [ByteArray]).
- */
-fun PrivateKey.applyECDSASig(
-    input: ByteArray
-): EncodedSignature =
-    with(dsa) {
-        initSign(this@applyECDSASig)
-        update(input)
-        EncodedSignature(sign())
-    }
+fun EncodedPrivateKey.generateSignature(
+    data: HashSerializable, encoder: BinaryFormat,
+): EncodedSignature = toPrivateKey().generateSignature(data, encoder)
 
 /**
  * Verifies a [String] signature.
  */
 fun EncodedSignature.verifyECDSASig(
-    publicKey: PublicKey,
-    data: String
-): Boolean =
-    this.verifyECDSASig(
-        publicKey,
-        data.toByteArray()
-    )
+    publicKey: EncodedPublicKey, data: String,
+): Boolean = verifyECDSASig(publicKey, data.toByteArray())
 
 
 /**
  * Verifies a [ByteArray] signature.
  */
 fun EncodedSignature.verifyECDSASig(
-    publicKey: PublicKey,
-    data: ByteArray
-): Boolean =
-    with(dsa) {
-        initVerify(publicKey)
-        update(data)
-        verify(bytes)
-    }
+    publicKey: EncodedPublicKey, data: ByteArray,
+): Boolean = with(dsa) {
+    initVerify(publicKey.toPublicKey())
+    update(data)
+    verify(bytes)
+}
 
-fun Key.toHexString(): String = encoded.toHexString()
+fun EncodedKey.toHexString(): String = bytes.toHexString()
 
-fun Key.truncatedHexString(size: Int = Hash.TRUNC): String =
-    if (encoded.size > size) {
-        encoded.sliceArray(0 until size).toHexString()
+fun EncodedKey.truncatedHexString(size: Int = Hash.TRUNC): String =
+    if (bytes.size > size) {
+        bytes.sliceArray(0 until size).toHexString()
     } else {
-        encoded.toHexString()
+        bytes.toHexString()
     }
