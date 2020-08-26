@@ -1,18 +1,20 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package org.knowledger.ledger.core.serial
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PrimitiveDescriptor
-import kotlinx.serialization.PrimitiveKind
-import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import org.knowledger.ledger.core.data.Payout
 
 @Serializer(forClass = Payout::class)
 object PayoutSerializer : KSerializer<Payout> {
     override val descriptor: SerialDescriptor =
-        PrimitiveDescriptor("Payout", PrimitiveKind.STRING)
+        PrimitiveSerialDescriptor("Payout", PrimitiveKind.STRING)
 
     override fun deserialize(decoder: Decoder): Payout =
         Payout(decoder.decodeSerializableValue(BigDecimalSerializer))

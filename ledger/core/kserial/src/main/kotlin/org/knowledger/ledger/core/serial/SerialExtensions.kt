@@ -1,11 +1,11 @@
 package org.knowledger.ledger.core.serial
 
-import kotlinx.serialization.CompositeDecoder
-import kotlinx.serialization.CompositeEncoder
-import kotlinx.serialization.Decoder
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.encoding.CompositeDecoder
+import kotlinx.serialization.encoding.CompositeEncoder
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 

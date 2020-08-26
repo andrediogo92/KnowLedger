@@ -1,15 +1,26 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package org.knowledger.ledger.core.serial
 
-import kotlinx.serialization.*
-import java.time.Instant
+import kotlinx.datetime.Instant
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlin.properties.Delegates
 
 @Serializer(forClass = Instant::class)
 object InstantSerializer : KSerializer<Instant> {
     override val descriptor: SerialDescriptor =
-        SerialDescriptor("instant") {
-            val seconds = PrimitiveDescriptor("seconds", PrimitiveKind.LONG)
-            val nanos = PrimitiveDescriptor("nanos", PrimitiveKind.LONG)
+        buildClassSerialDescriptor("instant") {
+            val seconds = PrimitiveSerialDescriptor("seconds", PrimitiveKind.LONG)
+            val nanos = PrimitiveSerialDescriptor("nanos", PrimitiveKind.LONG)
             element(elementName = seconds.serialName, descriptor = seconds)
             element(elementName = nanos.serialName, descriptor = nanos)
         }
@@ -18,31 +29,21 @@ object InstantSerializer : KSerializer<Instant> {
         compositeDecode(decoder) {
             var seconds: Long by Delegates.notNull()
             var nanos: Int by Delegates.notNull()
-            loop@ while (true) {
+            while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
-                    CompositeDecoder.READ_DONE -> break@loop
-                    0 -> seconds = decodeLongElement(
-                        descriptor, i
-                    )
-                    1 -> nanos = decodeIntElement(
-                        descriptor, i
-                    )
+                    DECODE_DONE -> break
+                    0 -> seconds = decodeLongElement(descriptor, i)
+                    1 -> nanos = decodeIntElement(descriptor, i)
                     else -> throw SerializationException("Unknown index $i")
                 }
             }
-            Instant.ofEpochSecond(seconds, nanos.toLong())
+            Instant.fromEpochSeconds(seconds, nanos.toLong())
         }
 
-    override fun serialize(
-        encoder: Encoder, value: Instant
-    ) {
+    override fun serialize(encoder: Encoder, value: Instant) {
         compositeEncode(encoder) {
-            encodeLongElement(
-                descriptor, 0, value.epochSecond
-            )
-            encodeIntElement(
-                descriptor, 1, value.nano
-            )
+            encodeLongElement(descriptor, 0, value.epochSeconds)
+            encodeIntElement(descriptor, 1, value.nanosecondsOfSecond)
         }
     }
 }

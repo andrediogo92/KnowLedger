@@ -1,18 +1,20 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package org.knowledger.ledger.core.serial
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PrimitiveDescriptor
-import kotlinx.serialization.PrimitiveKind
-import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.math.BigDecimal
 
 @Serializer(forClass = BigDecimal::class)
 object BigDecimalSerializer : KSerializer<BigDecimal> {
     override val descriptor: SerialDescriptor =
-        PrimitiveDescriptor("BigDecimal", PrimitiveKind.STRING)
+        PrimitiveSerialDescriptor("BigDecimal", PrimitiveKind.STRING)
 
     override fun deserialize(decoder: Decoder): BigDecimal =
         BigDecimal(decoder.decodeString())

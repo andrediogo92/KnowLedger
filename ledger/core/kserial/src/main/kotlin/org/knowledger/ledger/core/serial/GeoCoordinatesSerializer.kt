@@ -1,30 +1,30 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package org.knowledger.ledger.core.serial
 
-import kotlinx.serialization.CompositeDecoder
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import org.knowledger.ledger.core.data.GeoCoords
 import java.math.BigDecimal
 
 @Serializer(forClass = GeoCoords::class)
 object GeoCoordinatesSerializer : KSerializer<GeoCoords> {
     override val descriptor: SerialDescriptor =
-        SerialDescriptor("GeoCoordinates") {
+        buildClassSerialDescriptor("GeoCoordinates") {
             element(
-                elementName = "latitude",
-                descriptor = BigDecimalSerializer.descriptor
+                elementName = "latitude", descriptor = BigDecimalSerializer.descriptor
             )
             element(
-                elementName = "longitude",
-                descriptor = BigDecimalSerializer.descriptor
+                elementName = "longitude", descriptor = BigDecimalSerializer.descriptor
             )
             element(
-                elementName = "altitude",
-                descriptor = BigDecimalSerializer.descriptor,
+                elementName = "altitude", descriptor = BigDecimalSerializer.descriptor,
                 isOptional = true
             )
         }
@@ -34,18 +34,12 @@ object GeoCoordinatesSerializer : KSerializer<GeoCoords> {
             lateinit var latitude: BigDecimal
             lateinit var longitude: BigDecimal
             var altitude: BigDecimal? = null
-            loop@ while (true) {
+            while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
-                    CompositeDecoder.READ_DONE -> break@loop
-                    0 -> latitude = decodeSerializableElement(
-                        descriptor, i, BigDecimalSerializer
-                    )
-                    1 -> longitude = decodeSerializableElement(
-                        descriptor, i, BigDecimalSerializer
-                    )
-                    2 -> altitude = decodeSerializableElement(
-                        descriptor, i, BigDecimalSerializer
-                    )
+                    DECODE_DONE -> break
+                    0 -> latitude = decodeSerializableElement(descriptor, i, BigDecimalSerializer)
+                    1 -> longitude = decodeSerializableElement(descriptor, i, BigDecimalSerializer)
+                    2 -> altitude = decodeSerializableElement(descriptor, i, BigDecimalSerializer)
                     else -> throw SerializationException("Unknown index $i")
                 }
             }

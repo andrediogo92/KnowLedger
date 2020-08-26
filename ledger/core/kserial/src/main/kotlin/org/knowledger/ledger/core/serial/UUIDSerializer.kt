@@ -1,15 +1,26 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package org.knowledger.ledger.core.serial
 
-import kotlinx.serialization.*
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.Serializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import java.util.*
 import kotlin.properties.Delegates
 
 @Serializer(forClass = UUID::class)
 object UUIDSerializer : KSerializer<UUID> {
     override val descriptor: SerialDescriptor =
-        SerialDescriptor("UUID") {
-            val higher = PrimitiveDescriptor("higher", PrimitiveKind.LONG)
-            val lower = PrimitiveDescriptor("lower", PrimitiveKind.LONG)
+        buildClassSerialDescriptor("UUID") {
+            val higher = PrimitiveSerialDescriptor("higher", PrimitiveKind.LONG)
+            val lower = PrimitiveSerialDescriptor("lower", PrimitiveKind.LONG)
             element(elementName = higher.serialName, descriptor = higher)
             element(elementName = lower.serialName, descriptor = lower)
         }
@@ -18,9 +29,9 @@ object UUIDSerializer : KSerializer<UUID> {
         compositeDecode(decoder) {
             var higher by Delegates.notNull<Long>()
             var lower by Delegates.notNull<Long>()
-            loop@ while (true) {
+            while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
-                    CompositeDecoder.READ_DONE -> break@loop
+                    DECODE_DONE -> break
                     0 -> higher = decodeLongElement(descriptor, i)
                     1 -> lower = decodeLongElement(descriptor, i)
                     else -> throw SerializationException("Unknown index $i")
