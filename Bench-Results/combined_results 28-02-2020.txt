@@ -1,6 +1,0 @@
-Benchmark                                            Mode  Cnt     Score    Error  Units
-BenchLargeSignatures.largeSignatures                thrpt  150     3.563 ±  0.015  ops/s
-BenchLargeSignatures.mediumSignatures               thrpt  150    15.666 ±  0.254  ops/s
-BenchLargeSignatures.smallSignatures                thrpt  150    25.090 ±  0.071  ops/s
-BenchSerialization.serializationByByteSerializer    thrpt  250   918.410 ± 31.162  ops/s
-BenchSerialization.serializationByPrettySerializer  thrpt  250  1827.618 ± 44.399  ops/s

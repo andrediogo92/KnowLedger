@@ -1,9 +1,0 @@
-Benchmark                                   Mode  Cnt       Score        Error  Units
-BenchSortedCollections.benchLargeList      thrpt   25      28.293 ±      0.443  ops/s
-BenchSortedCollections.benchLargeSet       thrpt   25      12.605 ±      0.283  ops/s
-BenchSortedCollections.benchMediumList     thrpt   25    5275.522 ±    317.118  ops/s
-BenchSortedCollections.benchMediumSet      thrpt   25    5408.975 ±    408.804  ops/s
-BenchSortedCollections.benchSmallList      thrpt   25  945772.343 ±  64776.532  ops/s
-BenchSortedCollections.benchSmallSet       thrpt   25  839839.325 ± 137624.958  ops/s
-BenchSortedCollections.benchVeryLargeList  thrpt    8       1.923 ±      0.072  ops/s
-BenchSortedCollections.benchVeryLargeSet   thrpt    8       0.542 ±      0.032  ops/s
