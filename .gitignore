@@ -43,3 +43,7 @@ hs_err_pid*
 # Ignore Jade Run Stuff
 /agent/APDescription.txt
 /agent/MTPs-Container.txt
+
+# Ignore Rust builds
+**/target/
+**/plotly_kaleido/
