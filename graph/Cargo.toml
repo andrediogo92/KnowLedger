@@ -1,0 +1,15 @@
+[package]
+name = "graph"
+version = "0.1.0"
+authors = ["André Diogo <redan.blue27@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+plotly = { version = "0.6", features = ["kaleido"] }
+plotly_kaleido = "0.2.0"
+csv = "1.1"
+serde = { version = "1", features = ["derive"] }
+glob = "0.3"
+chrono = "0.4"
