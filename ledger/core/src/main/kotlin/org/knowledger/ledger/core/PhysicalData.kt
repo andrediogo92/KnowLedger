@@ -1,4 +1,5 @@
 @file:UseSerializers(GeoCoordinatesSerializer::class)
+@file:Suppress("EXPERIMENTAL_API_USAGE")
 
 package org.knowledger.ledger.core
 
@@ -13,7 +14,6 @@ import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
 import org.knowledger.ledger.core.serial.GeoCoordinatesSerializer
 import java.math.BigDecimal
-import java.time.Instant
 
 /**
  * Physical value is the main class in which to store ledger value.
@@ -35,27 +35,27 @@ data class PhysicalData(
         copy(millis = millis, coords = coords, data = data.clone())
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(serializer(), this)
+        encoder.encodeToByteArray(serializer(), this)
 
     constructor(
-        geoCoords: GeoCoords, data: LedgerData
-    ) : this(Instant.now().toEpochMilli(), geoCoords, data)
+        geoCoords: GeoCoords, data: LedgerData,
+    ) : this(nowUTC().toEpochMilliseconds(), geoCoords, data)
 
     constructor(
         lat: BigDecimal, lng: BigDecimal,
-        data: LedgerData
-    ) : this(Instant.now().toEpochMilli(), GeoCoords(lat, lng), data)
+        data: LedgerData,
+    ) : this(nowUTC().toEpochMilliseconds(), GeoCoords(lat, lng), data)
 
     constructor(
         instant: Instant, lat: BigDecimal,
-        lng: BigDecimal, data: LedgerData
-    ) : this(instant.toEpochMilli(), GeoCoords(lat, lng), data)
+        lng: BigDecimal, data: LedgerData,
+    ) : this(instant.toEpochMilliseconds(), GeoCoords(lat, lng), data)
 
     constructor(
         instant: Instant, lat: BigDecimal,
         lng: BigDecimal, alt: BigDecimal,
-        data: LedgerData
-    ) : this(instant.toEpochMilli(), GeoCoords(lat, lng, alt), data)
+        data: LedgerData,
+    ) : this(instant.toEpochMilliseconds(), GeoCoords(lat, lng, alt), data)
 
     override fun compareTo(other: PhysicalData): Int =
         millis.compareTo(other.millis)

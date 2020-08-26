@@ -1,9 +1,6 @@
 package org.knowledger.ledger.core
 
-import java.time.Instant
-import java.time.temporal.ChronoUnit
+import kotlinx.datetime.Clock
 
-fun Instant.secondsFrom(instant: Instant): Long =
-    until(instant, ChronoUnit.SECONDS)
-
-fun Instant.secondsFromNow(): Long = secondsFrom(Instant.now())
+fun nowUTC(): Instant =
+    Clock.System.now()
