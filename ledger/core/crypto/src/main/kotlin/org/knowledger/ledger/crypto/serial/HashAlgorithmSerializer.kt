@@ -1,12 +1,15 @@
+@file:Suppress("EXPERIMENTAL_API_USAGE")
+
 package org.knowledger.ledger.crypto.serial
 
-import kotlinx.serialization.CompositeDecoder.Companion.READ_DONE
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PrimitiveDescriptor
-import kotlinx.serialization.PrimitiveKind
-import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.CompositeDecoder.Companion.DECODE_DONE
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import org.knowledger.ledger.core.serial.compositeDecode
 import org.knowledger.ledger.core.serial.compositeEncode
 import org.knowledger.ledger.crypto.hash.Hashers
@@ -15,45 +18,32 @@ import kotlin.properties.Delegates
 
 object HashAlgorithmSerializer : KSerializer<Hashers> {
     override val descriptor: SerialDescriptor =
-        SerialDescriptor("HashAlgorithm") {
-            val digestLength = PrimitiveDescriptor("digestLength", PrimitiveKind.INT)
-            val algorithm = PrimitiveDescriptor("algorithm", PrimitiveKind.STRING)
-            val providerName = PrimitiveDescriptor("providerName", PrimitiveKind.STRING)
-            val providerVersion = PrimitiveDescriptor("providerVersion", PrimitiveKind.DOUBLE)
-            element(elementName = digestLength.serialName, descriptor = digestLength)
+        buildClassSerialDescriptor("HashAlgorithm") {
+            val hashSize = PrimitiveSerialDescriptor("digestLength", PrimitiveKind.INT)
+            val algorithm = PrimitiveSerialDescriptor("algorithm", PrimitiveKind.STRING)
+            element(elementName = hashSize.serialName, descriptor = hashSize)
             element(elementName = algorithm.serialName, descriptor = algorithm)
-            element(elementName = providerName.serialName, descriptor = providerName)
-            element(elementName = providerVersion.serialName, descriptor = providerVersion)
         }
 
     override fun deserialize(decoder: Decoder): Hashers =
         compositeDecode(decoder) {
-            var digestLength by Delegates.notNull<Int>()
+            var hashSize by Delegates.notNull<Int>()
             lateinit var algorithm: String
-            lateinit var providerName: String
-            var providerVersion by Delegates.notNull<Double>()
-            loop@ while (true) {
+            while (true) {
                 when (val i = decodeElementIndex(descriptor)) {
-                    READ_DONE -> break@loop
-                    0 -> digestLength = decodeIntElement(descriptor, i)
+                    DECODE_DONE -> break
+                    0 -> hashSize = decodeIntElement(descriptor, i)
                     1 -> algorithm = decodeStringElement(descriptor, i)
-                    2 -> providerName = decodeStringElement(descriptor, i)
-                    3 -> providerVersion = decodeDoubleElement(descriptor, i)
                 }
             }
-            Hashers.checkAlgorithms(
-                digestLength, algorithm, providerName, providerVersion
-            ) ?: throw NoSuchHasherRegistered(
-                digestLength, algorithm, providerName, providerVersion
-            )
+            Hashers.checkAlgorithms(hashSize, algorithm) ?: throw NoSuchHasherRegistered(hashSize,
+                                                                                         algorithm)
         }
 
     override fun serialize(encoder: Encoder, value: Hashers) {
         compositeEncode(encoder) {
-            encodeIntElement(descriptor, 0, value.digester.digestLength)
-            encodeStringElement(descriptor, 1, value.digester.algorithm)
-            encodeStringElement(descriptor, 2, value.digester.provider.name)
-            encodeDoubleElement(descriptor, 3, value.digester.provider.version)
+            encodeIntElement(descriptor, 0, value.hashSize)
+            encodeStringElement(descriptor, 1, value.algorithmTag)
         }
     }
 }

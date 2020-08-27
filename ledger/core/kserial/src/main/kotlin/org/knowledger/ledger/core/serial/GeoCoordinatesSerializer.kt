@@ -17,12 +17,8 @@ import java.math.BigDecimal
 object GeoCoordinatesSerializer : KSerializer<GeoCoords> {
     override val descriptor: SerialDescriptor =
         buildClassSerialDescriptor("GeoCoordinates") {
-            element(
-                elementName = "latitude", descriptor = BigDecimalSerializer.descriptor
-            )
-            element(
-                elementName = "longitude", descriptor = BigDecimalSerializer.descriptor
-            )
+            element(elementName = "latitude", descriptor = BigDecimalSerializer.descriptor)
+            element(elementName = "longitude", descriptor = BigDecimalSerializer.descriptor)
             element(
                 elementName = "altitude", descriptor = BigDecimalSerializer.descriptor,
                 isOptional = true

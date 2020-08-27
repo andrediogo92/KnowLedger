@@ -4,9 +4,7 @@ import kotlinx.serialization.Serializable
 import org.knowledger.ledger.crypto.serial.EncodedPrivateKeySerializer
 
 @Serializable(with = EncodedPrivateKeySerializer::class)
-data class EncodedPrivateKey(
-    override val bytes: ByteArray,
-) : EncodedKey {
+data class EncodedPrivateKey(override val bytes: ByteArray) : EncodedKey {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is EncodedPrivateKey) return false

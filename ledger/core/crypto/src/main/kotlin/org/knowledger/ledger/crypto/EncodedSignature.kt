@@ -5,9 +5,7 @@ import org.knowledger.ledger.core.data.ByteEncodable
 import org.knowledger.ledger.crypto.serial.EncodedSignatureSerializer
 
 @Serializable(with = EncodedSignatureSerializer::class)
-data class EncodedSignature(
-    override val bytes: ByteArray
-) : ByteEncodable {
+data class EncodedSignature(override val bytes: ByteArray) : ByteEncodable {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is EncodedSignature) return false
