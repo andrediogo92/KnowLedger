@@ -1,35 +1,23 @@
 package org.knowledger.ledger.storage.pools.block
 
+import org.knowledger.collections.SortedList
+import org.knowledger.collections.searchBy
 import org.knowledger.ledger.crypto.Hash
-import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.storage.ChainId
 import org.knowledger.ledger.storage.LedgerContract
 import org.knowledger.ledger.storage.MutableBlock
-import org.knowledger.ledger.storage.MutableBlockHeader
-import org.knowledger.ledger.storage.results.BlockFailure
 
-internal interface BlockPool : LedgerContract {
-    val blocks: Set<MutableBlock>
+interface BlockPool : LedgerContract {
+    val chainId: ChainId
+    val blocks: SortedList<MutableBlock>
 
-    val firstUnconfirmed: MutableBlock?
-        get() = blocks.firstOrNull()
+    val firstUnconfirmed: MutableBlock? get() = blocks.firstOrNull()
 
-    val firstUnconfirmedNotFull: MutableBlock?
-        get() = blocks.firstOrNull {
-            !it.full
-        }
+    val firstUnconfirmedNotFull: MutableBlock? get() = blocks.firstOrNull { !it.full }
 
-    val current: MutableBlock?
-        get() = blocks.lastOrNull()
+    val current: MutableBlock? get() = blocks.lastOrNull()
 
 
     operator fun get(hash: Hash): MutableBlock? =
-        blocks.firstOrNull {
-            it.blockHeader.hash == hash
-        }
-
-    fun refresh(hash: Hash): Outcome<MutableBlockHeader, BlockFailure>
-
-    operator fun plusAssign(block: MutableBlock)
-
-    operator fun minusAssign(block: MutableBlock)
+        blocks.searchBy(hash) { it.blockHeader.hash }
 }
