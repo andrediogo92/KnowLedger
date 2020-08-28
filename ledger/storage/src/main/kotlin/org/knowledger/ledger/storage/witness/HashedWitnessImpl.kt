@@ -22,18 +22,13 @@ internal data class HashedWitnessImpl(
     override val mutableTransactionOutputs: MutableSortedList<TransactionOutput>
         get() = _transactionOutputs
 
-    override val payout: Payout
-        get() = _payout
+    override val payout: Payout get() = _payout
 
-    override val hash
-        get() = _hash
+    override val hash get() = _hash
 
-    override val index: Int
-        get() = _index
+    override val index: Int get() = _index
 
-    override fun addToPayout(
-        transactionOutput: TransactionOutput
-    ) {
+    override fun addToPayout(transactionOutput: TransactionOutput) {
         _transactionOutputs.add(transactionOutput)
         _payout += transactionOutput.payout
     }

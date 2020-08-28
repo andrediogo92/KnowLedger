@@ -1,6 +1,7 @@
 package org.knowledger.ledger.storage.witness
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.storage.serial.WitnessSerializationStrategy
 
@@ -9,6 +10,7 @@ interface HashedWitness : Comparable<HashedWitness>,
     override fun compareTo(other: HashedWitness): Int =
         publicKey.compareTo(other.publicKey)
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(WitnessSerializationStrategy, this as Witness)
+        encoder.encodeToByteArray(WitnessSerializationStrategy, this as Witness)
 }

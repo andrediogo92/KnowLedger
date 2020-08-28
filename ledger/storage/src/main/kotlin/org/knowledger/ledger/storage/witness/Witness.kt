@@ -1,6 +1,7 @@
 package org.knowledger.ledger.storage.witness
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import org.knowledger.collections.SortedList
 import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.Hash
@@ -18,6 +19,7 @@ interface Witness : HashSerializable, LedgerContract {
     val payout: Payout
     val transactionOutputs: SortedList<TransactionOutput>
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(WitnessSerializationStrategy, this)
+        encoder.encodeToByteArray(WitnessSerializationStrategy, this)
 }

@@ -34,9 +34,7 @@ internal class StorageAwareWitnessImpl(
         }
     }
 
-    override fun equals(other: Any?): Boolean =
-        witness == other
+    override fun equals(other: Any?): Boolean = witness == other
 
-    override fun hashCode(): Int =
-        witness.hashCode()
+    override fun hashCode(): Int = witness.hashCode()
 }

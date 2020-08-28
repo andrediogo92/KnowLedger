@@ -1,6 +1,7 @@
 package org.knowledger.ledger.storage.witness.factory
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import org.knowledger.collections.MutableSortedList
 import org.knowledger.collections.mutableSortedListOf
 import org.knowledger.collections.toMutableSortedListFromPreSorted
@@ -16,103 +17,70 @@ import org.knowledger.ledger.storage.witness.HashedWitnessImpl
 import org.knowledger.ledger.storage.witness.WitnessImpl
 import org.knowledger.ledger.storage.witness.Witness as UnhashedWitness
 
+@OptIn(ExperimentalSerializationApi::class)
 internal class HashedWitnessFactory : WitnessFactory {
     private fun generateHash(
-        witness: UnhashedWitness, hasher: Hashers,
-        encoder: BinaryFormat
+        witness: UnhashedWitness, hasher: Hashers, encoder: BinaryFormat,
     ): Hash = witness.calculateHash(hasher, encoder)
 
     private fun generateHash(
-        publicKey: EncodedPublicKey,
-        previousWitnessIndex: Int,
-        previousCoinbase: Hash, payout: Payout,
-        transactionOutputs: MutableSortedList<TransactionOutput>,
-        hasher: Hashers, encoder: BinaryFormat
+        publicKey: EncodedPublicKey, previousWitnessIndex: Int, previousCoinbase: Hash,
+        payout: Payout, transactionOutputs: MutableSortedList<TransactionOutput>,
+        hasher: Hashers, encoder: BinaryFormat,
     ): Hash = generateHash(
-        WitnessImpl(
-            publicKey, previousWitnessIndex,
-            previousCoinbase, payout,
-            transactionOutputs
-        ), hasher, encoder
+        WitnessImpl(publicKey, previousWitnessIndex, previousCoinbase, payout, transactionOutputs),
+        hasher, encoder
     )
 
 
     override fun create(
-        publicKey: EncodedPublicKey,
-        previousWitnessIndex: Int,
-        previousCoinbase: Hash,
-        transactionOutput: TransactionOutput,
-        hasher: Hashers, encoder: BinaryFormat
-    ): HashedWitnessImpl =
-        create(
-            publicKey, previousWitnessIndex, previousCoinbase,
-            transactionOutput.payout,
-            mutableSortedListOf(transactionOutput),
-            hasher, encoder
-        )
+        publicKey: EncodedPublicKey, previousWitnessIndex: Int, previousCoinbase: Hash,
+        transactionOutput: TransactionOutput, hasher: Hashers, encoder: BinaryFormat,
+    ): HashedWitnessImpl = create(
+        publicKey, previousWitnessIndex, previousCoinbase, transactionOutput.payout,
+        mutableSortedListOf(transactionOutput), hasher, encoder
+    )
 
     override fun create(
-        publicKey: EncodedPublicKey,
-        previousWitnessIndex: Int,
-        previousCoinbase: Hash, payout: Payout,
-        transactionOutputs: MutableSortedList<TransactionOutput>,
-        hasher: Hashers, encoder: BinaryFormat
+        publicKey: EncodedPublicKey, previousWitnessIndex: Int, previousCoinbase: Hash,
+        payout: Payout, transactionOutputs: MutableSortedList<TransactionOutput>,
+        hasher: Hashers, encoder: BinaryFormat,
     ): HashedWitnessImpl {
         val hash = generateHash(
-            publicKey, previousWitnessIndex,
-            previousCoinbase, payout, transactionOutputs,
-            hasher, encoder
+            publicKey, previousWitnessIndex, previousCoinbase, payout,
+            transactionOutputs, hasher, encoder
         )
         return create(
-            publicKey = publicKey,
-            previousWitnessIndex = previousWitnessIndex,
-            previousCoinbase = previousCoinbase,
-            payout = payout, transactionOutputs = transactionOutputs,
-            hash = hash
+            publicKey, previousWitnessIndex, previousCoinbase, payout, transactionOutputs, hash
         )
     }
 
     override fun create(
-        publicKey: EncodedPublicKey,
-        previousWitnessIndex: Int,
-        previousCoinbase: Hash, payout: Payout,
-        transactionOutputs: MutableSortedList<TransactionOutput>,
-        hash: Hash, index: Int
-    ): HashedWitnessImpl =
-        HashedWitnessImpl(
-            publicKey = publicKey,
-            previousWitnessIndex = previousWitnessIndex,
-            previousCoinbase = previousCoinbase, _payout = payout,
-            _transactionOutputs = transactionOutputs, _hash = hash,
-            _index = index
-        )
+        publicKey: EncodedPublicKey, previousWitnessIndex: Int, previousCoinbase: Hash,
+        payout: Payout, transactionOutputs: MutableSortedList<TransactionOutput>,
+        hash: Hash, index: Int,
+    ): HashedWitnessImpl = HashedWitnessImpl(
+        publicKey, previousWitnessIndex, previousCoinbase,
+        payout, transactionOutputs, hash, index
+    )
 
     override fun create(
-        publicKey: EncodedPublicKey,
-        previousWitnessIndex: Int,
-        previousCoinbase: Hash, payout: Payout,
-        transactionOutputs: MutableSortedList<TransactionOutput>,
-        hash: Hash
-    ): HashedWitnessImpl =
-        HashedWitnessImpl(
-            publicKey = publicKey,
-            previousWitnessIndex = previousWitnessIndex,
-            previousCoinbase = previousCoinbase, _payout = payout,
-            _transactionOutputs = transactionOutputs, _hash = hash
-        )
+        publicKey: EncodedPublicKey, previousWitnessIndex: Int, previousCoinbase: Hash,
+        payout: Payout, transactionOutputs: MutableSortedList<TransactionOutput>, hash: Hash,
+    ): HashedWitnessImpl = HashedWitnessImpl(
+        publicKey, previousWitnessIndex, previousCoinbase, payout, transactionOutputs, hash
+    )
 
     override fun create(
-        witness: UnhashedWitness, hasher: Hashers,
-        encoder: BinaryFormat
-    ): HashedWitnessImpl = with(witness) {
-        val hash = generateHash(
-            this, hasher, encoder
-        )
-        create(
-            publicKey, previousWitnessIndex, previousCoinbase, payout,
-            transactionOutputs.toMutableSortedListFromPreSorted(), hash
-        )
-    }
+        witness: UnhashedWitness, hasher: Hashers, encoder: BinaryFormat,
+    ): HashedWitnessImpl =
+        with(witness) {
+            val hash = generateHash(this, hasher, encoder)
+            create(
+                publicKey, previousWitnessIndex, previousCoinbase, payout,
+                transactionOutputs.toMutableSortedListFromPreSorted(), hash
+            )
+        }
 
     override fun create(witness: Witness): HashedWitnessImpl =
         with(witness) {
