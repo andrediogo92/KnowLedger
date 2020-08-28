@@ -1,6 +1,7 @@
 package org.knowledger.ledger.core.data.hash
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 
 /**
  * Indicates capability to produce
@@ -12,5 +13,6 @@ interface Hashable {
      * through the use of a [Hasher] instance and
      * a [BinaryFormat] encoder.
      */
+    @OptIn(ExperimentalSerializationApi::class)
     fun digest(hasher: Hasher, encoder: BinaryFormat): Hash
 }

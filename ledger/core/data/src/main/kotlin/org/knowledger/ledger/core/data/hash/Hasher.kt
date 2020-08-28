@@ -34,7 +34,7 @@ interface Hasher {
      * Returns whether the [Hash] supplied in [id] matches this
      * [Hasher]'s own [Hasher.id]
      */
-    fun checkForCrypter(id: Hash): Boolean =
+    fun checkForHasher(id: Hash): Boolean =
         id == this.id
 
 }
