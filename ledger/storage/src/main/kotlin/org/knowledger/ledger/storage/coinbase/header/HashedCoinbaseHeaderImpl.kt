@@ -12,25 +12,19 @@ internal data class HashedCoinbaseHeaderImpl(
     private var _blockheight: Long,
     private var _difficulty: Difficulty,
     private var _extraNonce: Long,
-    override val coinbaseParams: CoinbaseParams
+    override val coinbaseParams: CoinbaseParams,
 ) : MutableHashedCoinbaseHeader {
-    override val hash: Hash
-        get() = _hash
+    override val hash: Hash get() = _hash
 
-    override val merkleRoot: Hash
-        get() = _merkleRoot
+    override val merkleRoot: Hash get() = _merkleRoot
 
-    override val payout: Payout
-        get() = _payout
+    override val payout: Payout get() = _payout
 
-    override val blockheight: Long
-        get() = _blockheight
+    override val blockheight: Long get() = _blockheight
 
-    override val difficulty: Difficulty
-        get() = _difficulty
+    override val difficulty: Difficulty get() = _difficulty
 
-    override val extraNonce: Long
-        get() = _extraNonce
+    override val extraNonce: Long get() = _extraNonce
 
 
     override fun addToPayout(payout: Payout) {
@@ -50,9 +44,7 @@ internal data class HashedCoinbaseHeaderImpl(
     }
 
 
-    override fun markForMining(
-        blockheight: Long, difficulty: Difficulty
-    ) {
+    override fun markForMining(blockheight: Long, difficulty: Difficulty) {
         _blockheight = blockheight
         _difficulty = difficulty
     }

@@ -22,5 +22,5 @@ data class ImmutableCoinbaseHeader(
     override val blockheight: Long,
     override val difficulty: Difficulty,
     override val extraNonce: Long,
-    override val coinbaseParams: ImmutableCoinbaseParams
+    override val coinbaseParams: ImmutableCoinbaseParams,
 ) : HashedCoinbaseHeader

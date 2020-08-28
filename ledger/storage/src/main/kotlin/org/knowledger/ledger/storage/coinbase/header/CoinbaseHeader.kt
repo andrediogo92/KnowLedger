@@ -1,6 +1,7 @@
 package org.knowledger.ledger.storage.coinbase.header
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.storage.CoinbaseParams
 import org.knowledger.ledger.storage.Difficulty
@@ -16,8 +17,7 @@ import org.knowledger.ledger.storage.serial.CoinbaseHeaderSerializationStrategy
  * The coinbase will be continually updated to reflect
  * changes to the block.
  */
-interface CoinbaseHeader : HashSerializable,
-                           LedgerContract {
+interface CoinbaseHeader : HashSerializable, LedgerContract {
     val merkleRoot: Hash
     val payout: Payout
 
@@ -28,7 +28,8 @@ interface CoinbaseHeader : HashSerializable,
 
     val coinbaseParams: CoinbaseParams
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(CoinbaseHeaderSerializationStrategy, this)
+        encoder.encodeToByteArray(CoinbaseHeaderSerializationStrategy, this)
 }
 

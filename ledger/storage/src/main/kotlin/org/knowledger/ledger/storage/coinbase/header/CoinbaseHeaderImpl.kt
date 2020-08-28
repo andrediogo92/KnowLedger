@@ -12,7 +12,7 @@ internal data class CoinbaseHeaderImpl(
     override val blockheight: Long,
     override val difficulty: Difficulty,
     override val extraNonce: Long,
-    override val coinbaseParams: CoinbaseParams
+    override val coinbaseParams: CoinbaseParams,
 ) : CoinbaseHeader {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

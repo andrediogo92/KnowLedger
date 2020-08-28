@@ -8,19 +8,17 @@ import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 
 internal class StorageAwareCoinbaseHeaderImpl(
-    override val coinbaseHeader: MutableHashedCoinbaseHeader
-) : MutableHashedCoinbaseHeader by coinbaseHeader,
-    StorageAwareCoinbaseHeader {
+    override val coinbaseHeader: MutableHashedCoinbaseHeader,
+) : MutableHashedCoinbaseHeader by coinbaseHeader, StorageAwareCoinbaseHeader {
     override var id: StorageElement? = null
-    override val invalidated: Array<StoragePairs<*>> =
-        arrayOf(
-            StoragePairs.LinkedHash("hash"),
-            StoragePairs.LinkedHash("merkleRoot"),
-            StoragePairs.Native("payout"),
-            StoragePairs.Native("blockheight"),
-            StoragePairs.LinkedDifficulty("difficulty"),
-            StoragePairs.Native("extraNonce")
-        )
+    override val invalidated: Array<StoragePairs<*>> = arrayOf(
+        StoragePairs.LinkedHash("hash"),
+        StoragePairs.LinkedHash("merkleRoot"),
+        StoragePairs.Native("payout"),
+        StoragePairs.Native("blockheight"),
+        StoragePairs.LinkedDifficulty("difficulty"),
+        StoragePairs.Native("extraNonce")
+    )
 
     override fun addToPayout(payout: Payout) {
         coinbaseHeader.addToPayout(payout)
@@ -58,9 +56,7 @@ internal class StorageAwareCoinbaseHeaderImpl(
         }
     }
 
-    override fun equals(other: Any?): Boolean =
-        coinbaseHeader == other
+    override fun equals(other: Any?): Boolean = coinbaseHeader == other
 
-    override fun hashCode(): Int =
-        coinbaseHeader.hashCode()
+    override fun hashCode(): Int = coinbaseHeader.hashCode()
 }
