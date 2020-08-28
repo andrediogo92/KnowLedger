@@ -1,9 +1,8 @@
-package org.knowledger.ledger.test
+package org.knowledger.ledger.storage.test
 
 import assertk.assertThat
 import assertk.assertions.containsOnly
 import assertk.assertions.isEqualTo
-import kotlinx.serialization.UnstableDefault
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -31,18 +30,15 @@ import org.knowledger.testing.storage.generateChainId
 import org.knowledger.testing.storage.generateCoinbaseParams
 import org.knowledger.testing.storage.generateXTransactions
 
-@UnstableDefault
 class TestSerialization {
-    private val id = arrayOf(
-        Identity("test1"),
-        Identity("test2")
-    )
+    private val id = arrayOf(Identity("test1"), Identity("test2"))
 
     //Cache coinbase params to avoid repeated digest of formula calculations.
     private val coinbaseParams = generateCoinbaseParams()
 
     private val chainId = generateChainId(
-        ledgerHash = random.randomHash(), adapter = RandomDataSchema(), coinbaseParams = coinbaseParams
+        ledgerHash = random.randomHash(), adapter = RandomDataSchema(),
+        coinbaseParams = coinbaseParams
     )
 
 
@@ -143,9 +139,8 @@ class TestSerialization {
 
     @Nested
     inner class Blocks {
-        private val block: ImmutableBlock = generateBlockWithChain(
-            testTransactions, chainId
-        ).immutableCopy()
+        private val block: ImmutableBlock =
+            generateBlockWithChain(testTransactions, chainId).immutableCopy()
 
 
         @Test
