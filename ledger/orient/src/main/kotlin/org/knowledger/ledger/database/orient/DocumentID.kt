@@ -6,12 +6,9 @@ import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageID
 
 data class DocumentID internal constructor(
-    internal val id: ORID
+    internal val id: ORID,
 ) : ORID by id, StorageID {
-    override val element: StorageElement
-        get() = DocumentElement(id.getRecord())
-    override val bytes: StorageBytes
-        get() = DocumentBytes(id.getRecord())
-    override val key: String
-        get() = id.toString()
+    override val element: StorageElement get() = DocumentElement(id.getRecord())
+    override val bytes: StorageBytes get() = DocumentBytes(id.getRecord())
+    override val key: String get() = id.toString()
 }

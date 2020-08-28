@@ -9,10 +9,10 @@ data class OrientDatabaseInfo(
     internal val databaseMode: DatabaseMode = DatabaseMode.EMBEDDED,
     internal val databaseType: DatabaseType = DatabaseType.LOCAL,
     internal val path: String = "./db",
+    internal val user: String = "admin",
+    internal val password: String = "admin",
     internal val options: OrientConfig =
         OrientConfig.DEFAULT,
-    internal val user: String = "admin",
-    internal val password: String = "admin"
 ) {
     val config: OrientDBConfig = if (options == OrientConfig.DEFAULT) {
         OrientDBConfig.defaultConfig()

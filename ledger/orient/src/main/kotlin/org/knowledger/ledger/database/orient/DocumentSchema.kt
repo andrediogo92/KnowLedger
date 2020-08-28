@@ -7,19 +7,13 @@ import org.knowledger.ledger.database.SchemaProperty
 import org.knowledger.ledger.database.StorageType
 
 data class DocumentSchema internal constructor(
-    internal val clazz: OClass
+    internal val clazz: OClass,
 ) : ManagedSchema {
     override fun addCluster(clusterName: String) =
-        apply {
-            clazz.addCluster(clusterName)
-        }
+        apply { clazz.addCluster(clusterName) }
 
-    override fun createProperty(
-        key: String, value: StorageType
-    ): SchemaProperty =
-        DocumentProperty(
-            clazz.createProperty(key, value.toOType())
-        )
+    override fun createProperty(key: String, value: StorageType): SchemaProperty =
+        DocumentProperty(clazz.createProperty(key, value.toOType()))
 
     override fun dropProperty(key: String) =
         clazz.dropProperty(key)

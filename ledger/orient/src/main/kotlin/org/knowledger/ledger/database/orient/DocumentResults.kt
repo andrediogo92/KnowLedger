@@ -6,7 +6,6 @@ import org.knowledger.ledger.database.StorageResults
 import java.util.*
 import java.util.function.Consumer
 
-@Suppress("EXPERIMENTAL_FEATURE_WARNING")
 internal inline class DocumentResults(
     internal val results: OResultSet
 ) : StorageResults {

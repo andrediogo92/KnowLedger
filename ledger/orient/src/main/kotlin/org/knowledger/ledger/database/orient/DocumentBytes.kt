@@ -8,15 +8,10 @@ data class DocumentBytes internal constructor(
     internal val blob: OBlob
 ) : StorageBytes, OBlob by blob {
 
-    override val bytes: ByteArray
-        get() = blob.toStream()
+    override val bytes: ByteArray get() = blob.toStream()
 
-    override fun toOutputStream(bos: ByteArrayOutputStream) =
-        blob.toOutputStream(bos)
+    override fun toOutputStream(bos: ByteArrayOutputStream) = blob.toOutputStream(bos)
 
-    override fun discard(): StorageBytes =
-        apply {
-            blob.unload<OBlob>()
-        }
+    override fun discard(): StorageBytes = apply { blob.unload<OBlob>() }
 }
 

@@ -3,8 +3,6 @@ plugins {
     id(Plugins.docs)
 }
 
-version = "0.2"
-
 docsPlugin {
     inlineClasses = true
     module = "ledger/orient"
