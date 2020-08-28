@@ -5,62 +5,61 @@ import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.crypto.hash.Hashers
 
 fun MerkleTree.immutableCopy(): ImmutableMerkleTree =
-    ImmutableMerkleTree(
-        hashers = hashers, collapsedTree = collapsedTree,
-        levelIndex = levelIndex
-    )
+    ImmutableMerkleTree(hashers, collapsedTree, levelIndex)
 
-@Suppress("NAME_SHADOWING")
 internal fun loopUpVerification(
-    index: Int, hash: Hash, level: Int,
-    hasher: Hashers, collapsedTree: List<Hash>,
-    levelIndex: List<Int>
+    startIndex: Int, startHash: Hash, startLevel: Int, hashers: Hashers,
+    collapsedTree: List<Hash>, levelIndex: List<Int>,
 ): Boolean {
-    var res: Boolean = hash == collapsedTree[index]
-    var index = index
-    var level = level
-    var hash: Hash
-    while (res && index != 0) {
-        val delta = index - levelIndex[level]
-
-        //Is a left leaf
-        hash = if (delta % 2 == 0) {
-
-            //Is an edge case left leaf
-            if (index + 1 == collapsedTree.size ||
-                (level + 1 != levelIndex.size &&
-                        index + 1 == levelIndex[level + 1])
-            ) {
-                hasher.applyHash(
-                    collapsedTree[index] + collapsedTree[index]
-                )
-            } else {
-                hasher.applyHash(
-                    collapsedTree[index] + collapsedTree[index + 1]
-                )
-            }
-        }
-
-        //Is a right leaf
-        else {
-            hasher.applyHash(
-                collapsedTree[index - 1] + collapsedTree[index]
-            )
-        }
+    var hash: Hash = startHash
+    var level = startLevel
+    var delta = (startIndex - levelIndex[level])
+    var index: Int = startIndex
+    var res = hash == collapsedTree[index]
+    //Test all parents upwards starting from supplied index.
+    while (level > 0 && res) {
+        //Calculate the parent hash for level - 1
+        hash = calculateHashOfParentInLevel(delta, index, level, collapsedTree, levelIndex, hashers)
         level--
+        //Difference to the start of the level for parent
+        delta /= 2
+        //Determine the index of the parent
+        index = levelIndex[level] + delta
 
-        //Index of parent is at the start of the last level
-        // + the distance from start of this level / 2
-        index = levelIndex[level] + (delta / 2)
+        //Determine current hash matches hash at index
         res = hash == collapsedTree[index]
+
     }
     return res
 }
 
+internal fun calculateHashOfParentInLevel(
+    deltaFromLevel: Int, currentIndex: Int, currentLevel: Int,
+    collapsedTree: List<Hash>, levelIndex: List<Int>, hashers: Hashers,
+): Hash =
+    //Is a left leaf
+    if (deltaFromLevel % 2 == 0) {
+
+
+        //Is an edge case left leaf
+        if (currentIndex + 1 == collapsedTree.size ||
+            (currentLevel + 1 != levelIndex.size &&
+             currentIndex + 1 == levelIndex[currentLevel + 1])
+        ) {
+            hashers.applyHash(collapsedTree[currentIndex] + collapsedTree[currentIndex])
+        } else {
+            hashers.applyHash(collapsedTree[currentIndex] + collapsedTree[currentIndex + 1])
+        }
+    }
+
+    //Is a right leaf
+    else {
+        hashers.applyHash(collapsedTree[currentIndex - 1] + collapsedTree[currentIndex])
+    }
+
 @Suppress("NAME_SHADOWING")
 internal fun loopUpAllVerification(
-    level: Int, hasher: Hashers,
-    collapsedTree: List<Hash>, levelIndex: List<Int>
+    level: Int, hashers: Hashers, collapsedTree: List<Hash>, levelIndex: List<Int>,
 ): Boolean {
     var res = true
 
@@ -68,42 +67,23 @@ internal fun loopUpAllVerification(
     //starting at the second to last.
     //We already checked the last level immediately
     //against the values provided.
+    var hash: Hash
     var level = level
-    while (level >= 0) {
+    while (level >= 0 && res) {
         var i = levelIndex[level]
-        while (i < levelIndex[level + 1]) {
+        while (i < levelIndex[level + 1] && res) {
 
             //Delta is level index difference + current index + difference
             //to current level index.
             //It checks out to exactly the left child leaf of any node.
+            val delta = levelIndex[level + 1] + (2 * i) - (2 * levelIndex[level])
 
-            val delta = levelIndex[level + 1] - levelIndex[level] + i + (i - levelIndex[level])
+            hash = calculateHashOfParentFromLeftLeaf(
+                delta, level, collapsedTree, levelIndex, hashers
+            )
 
-            //Either the child is the last leaf in the next level, or is the last leaf.
-            //Since we know delta points to left leafs both these conditions mean
-            //edge case leafs.
-            if ((level + 2 != levelIndex.size && delta + 1 == levelIndex[level + 2])
-                || delta + 1 == collapsedTree.size
-            ) {
-                if (collapsedTree[i] != hasher.applyHash(
-                        collapsedTree[delta] + collapsedTree[delta]
-                    )
-                ) {
-                    res = false
-                    break
-                }
-            }
+            res = collapsedTree[i] == hash
 
-            //Then it's a regular left leaf.
-            else {
-                if (collapsedTree[i] != hasher.applyHash(
-                        collapsedTree[delta] + collapsedTree[delta + 1]
-                    )
-                ) {
-                    res = false
-                    break
-                }
-            }
             i += 1
         }
         level -= 1
@@ -111,18 +91,34 @@ internal fun loopUpAllVerification(
     return res
 }
 
+fun calculateHashOfParentFromLeftLeaf(
+    deltaFromLevel: Int, level: Int, collapsedTree: List<Hash>,
+    levelIndex: List<Int>, hashers: Hashers,
+): Hash =
+//Either the child is the last leaf in the next level,
+//or is the last leaf of the tree in an uneven tree.
+//Since we know delta points to left leafs both these conditions mean
+    //edge case left leafs.
+    if ((level + 2 < levelIndex.size && deltaFromLevel + 1 == levelIndex[level + 2])
+        || deltaFromLevel + 1 == collapsedTree.size
+    ) {
+        hashers.applyHash(collapsedTree[deltaFromLevel] + collapsedTree[deltaFromLevel])
+    }
+
+    //Then it's a regular left leaf.
+    else {
+        hashers.applyHash(collapsedTree[deltaFromLevel] + collapsedTree[deltaFromLevel + 1])
+    }
+
 
 internal fun checkAllTransactionsPresent(
-    start: Int, primary: Hashing, data: Array<out Hashing>,
-    collapsedTree: List<Hash>
-): Boolean =
-    collapsedTree[start] == primary.hash && checkAllTransactionsPresent(
-        start + 1, data, collapsedTree
-    )
+    start: Int, primary: Hashing, data: Array<out Hashing>, collapsedTree: List<Hash>,
+): Boolean = collapsedTree[start] == primary.hash &&
+             checkAllTransactionsPresent(start + 1, data, collapsedTree)
 
 
 internal fun checkAllTransactionsPresent(
-    start: Int, data: Array<out Hashing>, collapsedTree: List<Hash>
+    start: Int, data: Array<out Hashing>, collapsedTree: List<Hash>,
 ): Boolean {
     val hashed = data.map(Hashing::hash)
     var i = 0

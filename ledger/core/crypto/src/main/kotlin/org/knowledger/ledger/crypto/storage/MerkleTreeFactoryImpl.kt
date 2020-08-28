@@ -6,40 +6,22 @@ import org.knowledger.ledger.crypto.hash.Hashers
 
 class MerkleTreeFactoryImpl : MerkleTreeFactory {
     override fun create(
-        hasher: Hashers,
-        collapsedTree: List<Hash>,
-        levelIndex: List<Int>
-    ): MerkleTreeImpl = MerkleTreeImpl(
-        hashers = hasher,
-        _collapsedTree = collapsedTree.toMutableList(),
-        _levelIndex = levelIndex.toMutableList()
-    )
-
-    override fun create(
-        merkleTree: MerkleTree
-    ): MerkleTreeImpl = create(
-        merkleTree.hashers, merkleTree.collapsedTree,
-        merkleTree.levelIndex
-    )
-
-    override fun create(
-        merkleTree: MutableMerkleTree
-    ): MerkleTreeImpl = create(
-        hasher = merkleTree.hashers,
-        collapsedTree = merkleTree.collapsedTree,
-        levelIndex = merkleTree.levelIndex
-    )
-
-    override fun create(
-        hasher: Hashers, data: Array<out Hashing>
+        hasher: Hashers, collapsedTree: List<Hash>, levelIndex: List<Int>,
     ): MerkleTreeImpl =
-        MerkleTreeImpl(hashers = hasher).also {
-            it.rebuildMerkleTree(data)
-        }
+        MerkleTreeImpl(hasher, collapsedTree.toMutableList(), levelIndex.toMutableList())
+
+    override fun create(merkleTree: MerkleTree): MerkleTreeImpl =
+        create(merkleTree.hashers, merkleTree.collapsedTree, merkleTree.levelIndex)
+
+    override fun create(merkleTree: MutableMerkleTree): MerkleTreeImpl =
+        create(merkleTree as MerkleTree)
+
+    override fun create(hasher: Hashers, data: Array<out Hashing>): MerkleTreeImpl =
+        create(hasher).also { it.rebuildMerkleTree(data) }
 
     override fun create(
-        hasher: Hashers, primary: Hashing, data: Array<out Hashing>
-    ): MerkleTreeImpl = MerkleTreeImpl(hasher).also {
+        hasher: Hashers, primary: Hashing, data: Array<out Hashing>,
+    ): MerkleTreeImpl = create(hasher).also {
         it.rebuildMerkleTree(primary, data)
     }
 
