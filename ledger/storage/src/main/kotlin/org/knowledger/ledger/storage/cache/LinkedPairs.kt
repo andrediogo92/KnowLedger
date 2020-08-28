@@ -2,6 +2,8 @@ package org.knowledger.ledger.storage.cache
 
 import org.knowledger.ledger.storage.AdapterIds
 
-internal interface LinkedPairs {
+interface LinkedPairs {
+    val key: String
+    val element: Any
     val adapterId: AdapterIds
 }

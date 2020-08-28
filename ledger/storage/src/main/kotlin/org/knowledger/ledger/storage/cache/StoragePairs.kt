@@ -11,11 +11,9 @@ sealed class StoragePairs<T : Any> {
     internal var value: T? = null
     private var dirty: Boolean = false
 
-    val element: T
-        get() = value!!
+    val element: T get() = value!!
 
-    val invalidated: Boolean
-        get() = dirty
+    val invalidated: Boolean get() = dirty
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -26,9 +24,7 @@ sealed class StoragePairs<T : Any> {
         return true
     }
 
-    override fun hashCode(): Int {
-        return key.hashCode()
-    }
+    override fun hashCode(): Int = key.hashCode()
 
     fun replace(new: T) {
         value = new
@@ -51,45 +47,45 @@ sealed class StoragePairs<T : Any> {
 
     data class LinkedList<T : Comparable<T>>(
         override val key: String,
-        override val adapterId: AdapterIds
+        override val adapterId: AdapterIds,
     ) : LinkedPairs, StoragePairs<MutableSortedList<T>>()
 
-    data class LinkedSet<T>(
+    data class LinkedSet<T : Any>(
         override val key: String,
-        override val adapterId: AdapterIds
+        override val adapterId: AdapterIds,
     ) : LinkedPairs, StoragePairs<MutableSet<T>>()
 
     data class Linked<T : Any>(
         override val key: String,
-        override val adapterId: AdapterIds
+        override val adapterId: AdapterIds,
     ) : LinkedPairs, StoragePairs<T>()
 
     data class Blob(
-        override val key: String
+        override val key: String,
     ) : StoragePairs<ByteArray>()
 
     data class LinkedHash(
-        override val key: String
+        override val key: String,
     ) : StoragePairs<Hash>()
 
     data class HashList(
-        override val key: String
+        override val key: String,
     ) : StoragePairs<List<Hash>>()
 
     data class HashSet(
-        override val key: String
+        override val key: String,
     ) : StoragePairs<Set<Hash>>()
 
     data class LinkedPayout(
-        override val key: String
+        override val key: String,
     ) : StoragePairs<Payout>()
 
     data class LinkedDifficulty(
-        override val key: String
+        override val key: String,
     ) : StoragePairs<Difficulty>()
 
     data class Native(
-        override val key: String
+        override val key: String,
     ) : StoragePairs<Any>()
 
 }
