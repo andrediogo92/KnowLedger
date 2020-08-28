@@ -1,16 +1,18 @@
 package org.knowledger.ledger.storage.transaction
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
+import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.EncodedSignature
 import org.knowledger.ledger.storage.PhysicalData
-import java.security.PublicKey
 
 internal data class SignedTransactionImpl(
-    override val publicKey: PublicKey,
+    override val publicKey: EncodedPublicKey,
     override val data: PhysicalData,
     // This is to identify unequivocally an agent.
-    override val signature: EncodedSignature
+    override val signature: EncodedSignature,
 ) : SignedTransaction {
+    @OptIn(ExperimentalSerializationApi::class)
     override fun processTransaction(encoder: BinaryFormat): Boolean {
         return verifySignature(encoder)
     }

@@ -1,18 +1,19 @@
 package org.knowledger.ledger.storage.transaction
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
+import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.EncodedSignature
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.storage.PhysicalData
-import java.security.PublicKey
 
 internal data class HashedTransactionImpl(
-    override val publicKey: PublicKey,
+    override val publicKey: EncodedPublicKey,
     override val data: PhysicalData,
     override val signature: EncodedSignature,
     private var _hash: Hash,
     private var cachedSize: Int,
-    private var _index: Int = -1
+    private var _index: Int = -1,
 ) : MutableHashedTransaction {
     override val approximateSize: Int
         get() = cachedSize
@@ -36,6 +37,7 @@ internal data class HashedTransactionImpl(
         cachedSize = size
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun processTransaction(encoder: BinaryFormat): Boolean {
         return verifySignature(encoder)
     }

@@ -1,15 +1,17 @@
 package org.knowledger.ledger.storage.transaction
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import org.knowledger.ledger.core.verifyECDSASig
 import org.knowledger.ledger.crypto.EncodedSignature
 import org.knowledger.ledger.storage.serial.TransactionSerializationStrategy
 
+@OptIn(ExperimentalSerializationApi::class)
 interface SignedTransaction : Transaction {
     val signature: EncodedSignature
 
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(TransactionSerializationStrategy, this)
+        encoder.encodeToByteArray(TransactionSerializationStrategy, this)
 
     /**
      * Verifies the value we signed hasn't been

@@ -1,21 +1,21 @@
 package org.knowledger.ledger.storage.transaction
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
+import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.storage.HashSerializable
 import org.knowledger.ledger.storage.LedgerContract
 import org.knowledger.ledger.storage.PhysicalData
 import org.knowledger.ledger.storage.serial.TransactionSerializationStrategy
-import java.security.PublicKey
 
-interface Transaction : HashSerializable, LedgerContract,
-                        Comparable<Transaction> {
+interface Transaction : HashSerializable, LedgerContract, Comparable<Transaction> {
     // Agent's pub key.
-    val publicKey: PublicKey
+    val publicKey: EncodedPublicKey
     val data: PhysicalData
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(TransactionSerializationStrategy, this)
+        encoder.encodeToByteArray(TransactionSerializationStrategy, this)
 
-    override fun compareTo(other: Transaction): Int =
-        data.compareTo(other.data)
+    override fun compareTo(other: Transaction): Int = data.compareTo(other.data)
 }

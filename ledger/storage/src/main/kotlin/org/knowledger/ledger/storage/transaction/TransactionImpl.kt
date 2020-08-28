@@ -1,12 +1,12 @@
 package org.knowledger.ledger.storage.transaction
 
+import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.storage.PhysicalData
-import java.security.PublicKey
 
 internal data class TransactionImpl(
     // Agent's pub key.
-    override val publicKey: PublicKey,
-    override val data: PhysicalData
+    override val publicKey: EncodedPublicKey,
+    override val data: PhysicalData,
 ) : Transaction {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
