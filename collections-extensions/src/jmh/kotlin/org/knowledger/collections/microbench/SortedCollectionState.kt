@@ -13,7 +13,5 @@ open class SortedCollectionState {
     val totalSize = veryLargeSize * 2
 
 
-    var base: Array<SmallData> = Array(totalSize) {
-        SmallData()
-    }
+    var base: Array<SmallData> = Array(totalSize) { SmallData() }
 }

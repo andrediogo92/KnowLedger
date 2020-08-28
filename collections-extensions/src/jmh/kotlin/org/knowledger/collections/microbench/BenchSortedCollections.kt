@@ -23,108 +23,60 @@ open class BenchSortedCollections {
         return state.base.fastSlice(minBound, maxBound)
     }
 
-    @Warmup(
-        iterations = 10, time = 50,
-        timeUnit = TimeUnit.MILLISECONDS, batchSize = 1
-    )
-    @Measurement(
-        iterations = 25, time = 50,
-        timeUnit = TimeUnit.MILLISECONDS, batchSize = 1
-    )
+    @Warmup(iterations = 10, time = 50, timeUnit = TimeUnit.MILLISECONDS, batchSize = 1)
+    @Measurement(iterations = 25, time = 50, timeUnit = TimeUnit.MILLISECONDS, batchSize = 1)
     @Benchmark
     fun benchSmallList(state: SortedCollectionState) {
         extractArray(state, state.smallSize).toSortedList()
     }
 
 
-    @Warmup(
-        iterations = 10, time = 150,
-        timeUnit = TimeUnit.MILLISECONDS, batchSize = 1
-    )
-    @Measurement(
-        iterations = 25, time = 150,
-        timeUnit = TimeUnit.MILLISECONDS, batchSize = 1
-    )
+    @Warmup(iterations = 10, time = 150, timeUnit = TimeUnit.MILLISECONDS, batchSize = 1)
+    @Measurement(iterations = 25, time = 150, timeUnit = TimeUnit.MILLISECONDS, batchSize = 1)
     @Benchmark
     fun benchMediumList(state: SortedCollectionState) {
         extractArray(state, state.mediumSize).toSortedList()
     }
 
-    @Warmup(
-        iterations = 10, time = 1,
-        timeUnit = TimeUnit.SECONDS, batchSize = 1
-    )
-    @Measurement(
-        iterations = 25, time = 1,
-        timeUnit = TimeUnit.SECONDS, batchSize = 1
-    )
+    @Warmup(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS, batchSize = 1)
+    @Measurement(iterations = 25, time = 1, timeUnit = TimeUnit.SECONDS, batchSize = 1)
     @Benchmark
     fun benchLargeList(state: SortedCollectionState) {
         extractArray(state, state.largeSize).toSortedList()
     }
 
-    @Warmup(
-        iterations = 3, time = 10,
-        timeUnit = TimeUnit.SECONDS, batchSize = 1
-    )
-    @Measurement(
-        iterations = 8, time = 10,
-        timeUnit = TimeUnit.SECONDS, batchSize = 1
-    )
+    @Warmup(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS, batchSize = 1)
+    @Measurement(iterations = 8, time = 10, timeUnit = TimeUnit.SECONDS, batchSize = 1)
     @Benchmark
     fun benchVeryLargeList(state: SortedCollectionState) {
         extractArray(state, state.veryLargeSize).toSortedList()
     }
 
 
-    @Warmup(
-        iterations = 10, time = 50,
-        timeUnit = TimeUnit.MILLISECONDS, batchSize = 1
-    )
-    @Measurement(
-        iterations = 25, time = 50,
-        timeUnit = TimeUnit.MILLISECONDS, batchSize = 1
-    )
+    @Warmup(iterations = 10, time = 50, timeUnit = TimeUnit.MILLISECONDS, batchSize = 1)
+    @Measurement(iterations = 25, time = 50, timeUnit = TimeUnit.MILLISECONDS, batchSize = 1)
     @Benchmark
     fun benchSmallSet(state: SortedCollectionState) {
         extractArray(state, state.smallSize).toSortedSet()
     }
 
 
-    @Warmup(
-        iterations = 10, time = 150,
-        timeUnit = TimeUnit.MILLISECONDS, batchSize = 1
-    )
-    @Measurement(
-        iterations = 25, time = 150,
-        timeUnit = TimeUnit.MILLISECONDS, batchSize = 1
-    )
+    @Warmup(iterations = 10, time = 150, timeUnit = TimeUnit.MILLISECONDS, batchSize = 1)
+    @Measurement(iterations = 25, time = 150, timeUnit = TimeUnit.MILLISECONDS, batchSize = 1)
     @Benchmark
     fun benchMediumSet(state: SortedCollectionState) {
         extractArray(state, state.mediumSize).toSortedSet()
     }
 
-    @Warmup(
-        iterations = 10, time = 1,
-        timeUnit = TimeUnit.SECONDS, batchSize = 1
-    )
-    @Measurement(
-        iterations = 25, time = 1,
-        timeUnit = TimeUnit.SECONDS, batchSize = 1
-    )
+    @Warmup(iterations = 10, time = 1, timeUnit = TimeUnit.SECONDS, batchSize = 1)
+    @Measurement(iterations = 25, time = 1, timeUnit = TimeUnit.SECONDS, batchSize = 1)
     @Benchmark
     fun benchLargeSet(state: SortedCollectionState) {
         extractArray(state, state.largeSize).toSortedSet()
     }
 
-    @Warmup(
-        iterations = 3, time = 10,
-        timeUnit = TimeUnit.SECONDS, batchSize = 1
-    )
-    @Measurement(
-        iterations = 8, time = 10,
-        timeUnit = TimeUnit.SECONDS, batchSize = 1
-    )
+    @Warmup(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS, batchSize = 1)
+    @Measurement(iterations = 8, time = 10, timeUnit = TimeUnit.SECONDS, batchSize = 1)
     @Benchmark
     fun benchVeryLargeSet(state: SortedCollectionState) {
         extractArray(state, state.veryLargeSize).toSortedSet()
