@@ -7,13 +7,12 @@ import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 
 internal data class StorageAwareMerkleTreeImpl(
-    override val merkleTree: MutableMerkleTree
+    override val merkleTree: MutableMerkleTree,
 ) : MutableMerkleTree by merkleTree, StorageAwareMerkleTree {
-    override val invalidated: Array<StoragePairs<*>> =
-        arrayOf(
-            StoragePairs.HashList("collapsedTree"),
-            StoragePairs.Native("levelIndexes")
-        )
+    override val invalidated: Array<StoragePairs<*>> = arrayOf(
+        StoragePairs.HashList("collapsedTree"),
+        StoragePairs.Native("levelIndexes")
+    )
 
     override var id: StorageElement? = null
 
@@ -32,9 +31,7 @@ internal data class StorageAwareMerkleTreeImpl(
         }
     }
 
-    override fun equals(other: Any?): Boolean =
-        merkleTree == other
+    override fun equals(other: Any?): Boolean = merkleTree == other
 
-    override fun hashCode(): Int =
-        merkleTree.hashCode()
+    override fun hashCode(): Int = merkleTree.hashCode()
 }

@@ -9,43 +9,27 @@ import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.MutableMerkleTree
 
 internal class StorageAwareMerkleTreeFactory(
-    private val merkleTreeFactory: MerkleTreeFactory = MerkleTreeFactoryImpl()
+    private val merkleTreeFactory: MerkleTreeFactory = MerkleTreeFactoryImpl(),
 ) : MerkleTreeFactory {
-    private fun createSA(
-        merkleTree: MutableMerkleTree
-    ): StorageAwareMerkleTreeImpl =
-        StorageAwareMerkleTreeImpl(merkleTree = merkleTree)
+    private fun createSA(merkleTree: MutableMerkleTree): StorageAwareMerkleTreeImpl =
+        StorageAwareMerkleTreeImpl(merkleTree)
 
     override fun create(
-        hasher: Hashers, collapsedTree: List<Hash>,
-        levelIndex: List<Int>
-    ): MutableMerkleTree = createSA(
-        merkleTreeFactory.create(hasher, collapsedTree, levelIndex)
-    )
-
-    override fun create(
-        merkleTree: MerkleTree
+        hasher: Hashers, collapsedTree: List<Hash>, levelIndex: List<Int>,
     ): MutableMerkleTree =
-        createSA(
-            merkleTreeFactory.create(merkleTree)
-        )
+        createSA(merkleTreeFactory.create(hasher, collapsedTree, levelIndex))
 
-    override fun create(
-        merkleTree: MutableMerkleTree
-    ): MutableMerkleTree =
+    override fun create(merkleTree: MerkleTree): MutableMerkleTree =
         createSA(merkleTreeFactory.create(merkleTree))
 
-    override fun create(
-        hasher: Hashers,
-        data: Array<out Hashing>
-    ): MutableMerkleTree =
+    override fun create(merkleTree: MutableMerkleTree): MutableMerkleTree =
+        createSA(merkleTreeFactory.create(merkleTree))
+
+    override fun create(hasher: Hashers, data: Array<out Hashing>): MutableMerkleTree =
         createSA(merkleTreeFactory.create(hasher, data))
 
     override fun create(
-        hasher: Hashers,
-        primary: Hashing,
-        data: Array<out Hashing>
-    ): MutableMerkleTree = createSA(
-        merkleTreeFactory.create(hasher, primary, data)
-    )
+        hasher: Hashers, primary: Hashing, data: Array<out Hashing>,
+    ): MutableMerkleTree =
+        createSA(merkleTreeFactory.create(hasher, primary, data))
 }
