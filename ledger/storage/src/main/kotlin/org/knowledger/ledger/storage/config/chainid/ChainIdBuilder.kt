@@ -3,6 +3,7 @@
 package org.knowledger.ledger.storage.config.chainid
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.UseSerializers
 import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.crypto.Hash
@@ -13,9 +14,9 @@ import org.knowledger.ledger.storage.serial.ChainIdBuilderSerializationStrategy
 
 internal data class ChainIdBuilder(
     val ledgerHash: Hash, val tag: Hash,
-    val blockParams: BlockParams,
-    val coinbaseParams: CoinbaseParams
+    val blockParams: BlockParams, val coinbaseParams: CoinbaseParams,
 ) : HashSerializable {
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(ChainIdBuilderSerializationStrategy, this)
+        encoder.encodeToByteArray(ChainIdBuilderSerializationStrategy, this)
 }

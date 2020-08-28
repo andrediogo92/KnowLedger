@@ -9,7 +9,7 @@ data class ImmutableChainId(
     override val ledgerHash: Hash,
     override val tag: Hash,
     override val blockParams: BlockParams,
-    override val coinbaseParams: CoinbaseParams
+    override val coinbaseParams: CoinbaseParams,
 ) : ChainId {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
