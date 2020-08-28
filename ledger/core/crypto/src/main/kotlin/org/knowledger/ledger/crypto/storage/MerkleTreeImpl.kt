@@ -1,6 +1,6 @@
 package org.knowledger.ledger.crypto.storage
 
-import org.knowledger.collections.mapAndPrefixAdd
+import org.knowledger.collections.fastPrefixAdd
 import org.knowledger.collections.mapToArray
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.Hashing
@@ -8,48 +8,65 @@ import org.knowledger.ledger.crypto.hash.Hashers
 
 data class MerkleTreeImpl(
     override val hashers: Hashers,
-    internal val _collapsedTree: MutableList<Hash> = mutableListOf(),
-    internal val _levelIndex: MutableList<Int> = mutableListOf()
+    internal val _collapsedTree: MutableList<Hash>,
+    internal val _levelIndex: MutableList<Int>,
 ) : MutableMerkleTree {
-    override val collapsedTree: List<Hash>
-        get() = _collapsedTree
-    override val levelIndex: List<Int>
-        get() = _levelIndex
+    override val collapsedTree: List<Hash> get() = _collapsedTree
+    override val levelIndex: List<Int> get() = _levelIndex
 
 
     override fun changeHasher(hasher: Hashers) {
         TODO("not implemented")
     }
 
-    override fun buildDiff(diff: Array<out Hashing>, diffIndexes: Array<Int>) {
+    override fun applyMultiDiff(diff: Array<out Hashing>, diffIndexes: Array<Int>) {
         TODO("not implemented")
+    }
+
+    override fun fastAddSingle(element: Hashing, index: Int): Boolean =
+        if (evenBase && index + levelIndex[levelIndex.size - 1] == collapsedTree.size) {
+            _collapsedTree.add(element.hash)
+            applySingleDiff(element, index)
+            true
+        } else {
+            false
+        }
+
+    override fun applySingleDiff(diff: Hashing, diffIndex: Int) {
+        var hash = diff.hash
+        var level = levelIndex.size - 1
+        var delta = diffIndex
+        var index: Int = levelIndex[level] + delta
+        _collapsedTree[index] = hash
+        //Test all parents upwards starting from supplied index.
+        while (level > 0) {
+            //Calculate the parent hash for level - 1
+            hash = calculateHashOfParentInLevel(delta, index, level, collapsedTree, levelIndex,
+                                                hashers)
+            level--
+            //Difference to the start of the level for parent
+            delta /= 2
+            //Determine the index of the parent
+            index = levelIndex[level] + delta
+
+            //Determine current hash matches hash at index
+            _collapsedTree[index] = hash
+        }
     }
 
     override fun rebuildMerkleTree(data: Array<out Hashing>) {
         _collapsedTree.clear()
         _levelIndex.clear()
         val treeLayers = mutableListOf<Array<Hash>>()
-        treeLayers.add(
-            data.mapToArray(Hashing::hash)
-        )
+        treeLayers.add(data.mapToArray(Hashing::hash))
         buildLoop(treeLayers)
     }
 
-    override fun rebuildMerkleTree(
-        primary: Hashing, data: Array<out Hashing>
-    ) {
-        _collapsedTree.clear()
-        _levelIndex.clear()
-        val treeLayers: MutableList<Array<Hash>> = mutableListOf()
-        treeLayers.add(
-            data.mapAndPrefixAdd(Hashing::hash, primary)
-        )
-        buildLoop(treeLayers)
+    override fun rebuildMerkleTree(primary: Hashing, data: Array<out Hashing>) {
+        rebuildMerkleTree(data.fastPrefixAdd(primary))
     }
 
-    private fun buildLoop(
-        treeLayers: MutableList<Array<Hash>>
-    ) {
+    private fun buildLoop(treeLayers: MutableList<Array<Hash>>) {
         var i = 0
         //Next layer's node count for depth-1
         var count = (treeLayers[i].size / 2) + (treeLayers[i].size % 2)
@@ -68,9 +85,8 @@ data class MerkleTreeImpl(
                     hashers.applyHash(left + right)
                 )
                 _levelIndex.add(0)
-                treeLayers.reverse()
                 count = 1
-                for (s in treeLayers) {
+                for (s in treeLayers.asReversed()) {
                     _levelIndex.add(count)
                     _collapsedTree.addAll(s)
                     count += s.size
@@ -81,11 +97,7 @@ data class MerkleTreeImpl(
             //that means we started at the root.
             1 -> {
                 val root = treeLayers[i][0]
-                _collapsedTree.add(
-                    hashers.applyHash(
-                        root + root
-                    )
-                )
+                _collapsedTree.add(hashers.applyHash(root + root))
                 _levelIndex.add(0)
                 _collapsedTree.add(root)
                 _levelIndex.add(1)
@@ -106,40 +118,25 @@ data class MerkleTreeImpl(
             get() = "${super.message}: penultimate level was $size in size."
     }
 
-    private fun buildNewLayer(
-        previousTreeLayer: Array<Hash>, count: Int
-    ): Array<Hash> {
+    private fun buildNewLayer(previousTreeLayer: Array<Hash>, count: Int): Array<Hash> {
         val treeLayer = Array(count) { Hash.emptyHash }
         var j = 0
         var i = 1
         //While we're inside the bounds of this layer, calculate two by two the hashId.
         while (i < previousTreeLayer.size) {
-            treeLayer[j] = hashers.applyHash(
-                previousTreeLayer[i - 1] + previousTreeLayer[i]
-            )
+            treeLayer[j] = hashers.applyHash(previousTreeLayer[i - 1] + previousTreeLayer[i])
             i += 2
             j += 1
         }
         //If we're still in the layer, there's one left, it's grouped and hashed with itself.
         if (j < treeLayer.size) {
-            treeLayer[j] = hashers.applyHash(
-                previousTreeLayer[i - 1] + previousTreeLayer[i - 1]
-            )
+            treeLayer[j] = hashers.applyHash(previousTreeLayer[i - 1] + previousTreeLayer[i - 1])
         }
         return treeLayer
     }
 
     override fun buildFromPrimary(primary: Hashing) {
-        var accumulate = primary.hash
-        var i = levelIndex.size - 1
-        var j = levelIndex[i]
-        _collapsedTree[j] = accumulate
-        while (i > 0) {
-            accumulate = hashers.applyHash(accumulate + collapsedTree[j + 1])
-            i -= 1
-            j = levelIndex[i]
-            _collapsedTree[j] = accumulate
-        }
+        applySingleDiff(primary, 0)
     }
 
     override fun equals(other: Any?): Boolean {

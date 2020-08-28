@@ -7,8 +7,7 @@ import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.crypto.hash.Hashers
 
-interface MerkleTree : Hashing,
-                       LedgerContract {
+interface MerkleTree : Hashing, LedgerContract {
     val collapsedTree: List<Hash>
     val levelIndex: List<Int>
     val hashers: Hashers
@@ -16,8 +15,9 @@ interface MerkleTree : Hashing,
     /**
      * The root hash, defined as the first hash of the [collapsedTree].
      */
-    override val hash: Hash
-        get() = collapsedTree[0]
+    override val hash: Hash get() = collapsedTree[0]
+
+    val evenBase: Boolean get() = (collapsedTree.size - levelIndex[levelIndex.size - 1]) % 2 == 0
 
 
     fun hasTransaction(hash: Hash): Boolean {
@@ -51,10 +51,7 @@ interface MerkleTree : Hashing,
         val lI = levelIndex
         return getTransactionId(hash).let { i ->
             if (i != -1) {
-                loopUpVerification(
-                    i, hash, lI.size - 1,
-                    hashers, collapsedTree, lI
-                )
+                loopUpVerification(i, hash, lI.size - 1, hashers, collapsedTree, lI)
             } else false
         }
     }
@@ -66,9 +63,7 @@ interface MerkleTree : Hashing,
      * Takes the [data] transactions in the block and returns whether
      * the entire [MerkleTree] matches against the transaction [data].
      */
-    fun verifyBlockTransactions(
-        data: Array<out Hashing>
-    ): Boolean {
+    fun verifyBlockTransactions(data: Array<out Hashing>): Boolean {
         //Cache lists in case they are synthetic properties
         val cT = collapsedTree
         val lI = levelIndex
@@ -96,9 +91,7 @@ interface MerkleTree : Hashing,
      * transactions in the block and returns whether the entire
      * [MerkleTree] matches against the transaction [data] + [primary].
      */
-    fun verifyBlockTransactions(
-        primary: Hashing, data: Array<out Hashing>
-    ): Boolean {
+    fun verifyBlockTransactions(primary: Hashing, data: Array<out Hashing>): Boolean {
         //Cache lists in case they are synthetic properties
         val cT = collapsedTree
         val lI = levelIndex

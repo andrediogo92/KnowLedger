@@ -12,6 +12,6 @@ import org.knowledger.ledger.crypto.serial.HashAlgorithmSerializer
 @Serializable
 data class ImmutableMerkleTree(
     override val hashers: Hashers,
-    override val collapsedTree: List<Hash> = listOf(),
-    override val levelIndex: List<Int> = listOf()
+    override val collapsedTree: List<Hash>,
+    override val levelIndex: List<Int>,
 ) : MerkleTree
