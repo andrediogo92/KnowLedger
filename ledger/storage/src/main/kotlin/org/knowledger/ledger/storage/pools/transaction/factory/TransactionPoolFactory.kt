@@ -8,12 +8,7 @@ import org.knowledger.ledger.storage.PoolTransaction
 import org.knowledger.ledger.storage.TransactionPool
 
 interface TransactionPoolFactory : CloningFactory<MutableTransactionPool> {
-    fun create(
-        chainId: ChainId,
-        txs: MutableSortedList<PoolTransaction>
-    ): MutableTransactionPool
+    fun create(chainId: ChainId, txs: MutableSortedList<PoolTransaction>): MutableTransactionPool
 
-    fun create(
-        pool: TransactionPool
-    ): MutableTransactionPool
+    fun create(pool: TransactionPool): MutableTransactionPool
 }

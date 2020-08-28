@@ -7,15 +7,13 @@ import org.knowledger.ledger.storage.cache.StoragePairs
 
 internal class PoolTransactionImpl(
     override val transaction: MutableTransaction,
-    override val inBlock: Boolean
+    override val inBlock: Boolean,
 ) : StorageAwarePoolTransaction {
     override var id: StorageElement? = null
-    override val invalidated: Array<StoragePairs<*>> =
-        arrayOf(
-            StoragePairs.Linked<MutableTransaction>(
-                "transaction", AdapterIds.Transaction
-            ), StoragePairs.Native("confirmed")
-        )
+    override val invalidated: Array<StoragePairs<*>> = arrayOf(
+        StoragePairs.Linked<MutableTransaction>("transaction", AdapterIds.Transaction),
+        StoragePairs.Native("confirmed")
+    )
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -9,28 +9,20 @@ import org.knowledger.ledger.storage.TransactionPool
 import org.knowledger.ledger.storage.pools.transaction.TransactionPoolImpl
 
 internal class TransactionPoolFactoryImpl(
-    private val poolTransactionFactory: PoolTransactionFactory
+    private val poolTransactionFactory: PoolTransactionFactory,
 ) : TransactionPoolFactory {
     override fun create(
-        chainId: ChainId,
-        txs: MutableSortedList<PoolTransaction>
+        chainId: ChainId, txs: MutableSortedList<PoolTransaction>,
     ): TransactionPoolImpl =
         TransactionPoolImpl(
-            poolTransactionFactory = poolTransactionFactory,
-            chainId = chainId, mutableTransactions = txs
+            poolTransactionFactory, chainId, txs
         )
 
-    override fun create(
-        pool: TransactionPool
-    ): TransactionPoolImpl = with(pool) {
-        create(
-            chainId = chainId,
-            txs = transactions.toMutableSortedListFromPreSorted()
-        )
-    }
+    override fun create(pool: TransactionPool): TransactionPoolImpl =
+        with(pool) {
+            create(chainId, transactions.toMutableSortedListFromPreSorted())
+        }
 
-    override fun create(
-        other: MutableTransactionPool
-    ): TransactionPoolImpl =
+    override fun create(other: MutableTransactionPool): TransactionPoolImpl =
         create(other as TransactionPool)
 }

@@ -10,15 +10,13 @@ import org.knowledger.ledger.storage.pools.transaction.factory.PoolTransactionFa
 internal class TransactionPoolImpl(
     private val poolTransactionFactory: PoolTransactionFactory,
     override val chainId: ChainId,
-    override val mutableTransactions: MutableSortedList<PoolTransaction>
+    override val mutableTransactions: MutableSortedList<PoolTransaction>,
 ) : MutableTransactionPool {
     override val transactions: SortedList<PoolTransaction>
         get() = mutableTransactions
 
     override fun invalidate(hash: Hash) {
-        mutableTransactions.removeIf {
-            it.transaction.hash == hash
-        }
+        mutableTransactions.removeIf { it.transaction.hash == hash }
     }
 
     override operator fun plusAssign(transaction: MutableTransaction) {
@@ -26,9 +24,7 @@ internal class TransactionPoolImpl(
     }
 
     override operator fun minusAssign(transaction: MutableTransaction) {
-        mutableTransactions.removeIf {
-            it.transaction.hash == transaction.hash
-        }
+        mutableTransactions.removeIf { it.transaction.hash == transaction.hash }
     }
 }
 

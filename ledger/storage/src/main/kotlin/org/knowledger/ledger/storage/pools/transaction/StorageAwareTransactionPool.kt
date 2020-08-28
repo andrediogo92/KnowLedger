@@ -9,30 +9,33 @@ import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 
 internal data class StorageAwareTransactionPool(
-    internal val transactionPool: TransactionPoolImpl
+    internal val transactionPool: TransactionPoolImpl,
 ) : StorageAware, MutableTransactionPool by transactionPool {
-    override val invalidated: Array<StoragePairs<*>> =
-        arrayOf(
-            StoragePairs.LinkedList<PoolTransaction>(
-                "transactions", AdapterIds.PoolTransaction
-            )
-        )
+    override val invalidated: Array<StoragePairs<*>> = arrayOf(
+        StoragePairs.LinkedList<PoolTransaction>("transactions", AdapterIds.PoolTransaction)
+    )
 
     override var id: StorageElement? = null
 
     override fun invalidate(hash: Hash) {
         transactionPool.invalidate(hash)
-        invalidated.replaceUnchecked(0, mutableTransactions)
+        if (id != null) {
+            invalidated.replaceUnchecked(0, mutableTransactions)
+        }
     }
 
     override fun minusAssign(transaction: MutableTransaction) {
         transactionPool -= transaction
-        invalidated.replaceUnchecked(0, mutableTransactions)
+        if (id != null) {
+            invalidated.replaceUnchecked(0, mutableTransactions)
+        }
     }
 
     override fun plusAssign(transaction: MutableTransaction) {
         transactionPool += transaction
-        invalidated.replaceUnchecked(0, mutableTransactions)
+        if (id != null) {
+            invalidated.replaceUnchecked(0, mutableTransactions)
+        }
     }
 
 

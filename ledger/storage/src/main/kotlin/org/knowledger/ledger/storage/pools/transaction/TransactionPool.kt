@@ -11,36 +11,21 @@ interface TransactionPool : LedgerContract {
     val transactions: SortedList<PoolTransaction>
     val chainId: ChainId
     val notInBlock: SortedList<MutableTransaction>
-        get() = transactions.filter {
-            !it.inBlock
-        }.mapSorted {
-            it.transaction
-        }
+        get() = transactions.filter { !it.inBlock }.mapSorted(PoolTransaction::transaction)
 
     val inBlock: SortedList<MutableTransaction>
-        get() = transactions.filter {
-            it.inBlock
-        }.mapSorted {
-            it.transaction
-        }
+        get() = transactions.filter { it.inBlock }.mapSorted(PoolTransaction::transaction)
 
-    val firstNotInBlock: MutableTransaction?
-        get() = notInBlock.firstOrNull()
+    val firstNotInBlock: MutableTransaction? get() = notInBlock.firstOrNull()
 
 
-    fun isNotInBlock(hash: Hash): Boolean = notInBlock.any {
-        it.hash == hash
-    }
+    fun isNotInBlock(hash: Hash): Boolean = notInBlock.any { it.hash == hash }
 
-    fun isInBlock(hash: Hash): Boolean = inBlock.any {
-        it.hash == hash
-    }
+    fun isInBlock(hash: Hash): Boolean = inBlock.any { it.hash == hash }
 
     operator fun get(transaction: MutableTransaction): PoolTransaction? =
         get(transaction.hash)
 
     operator fun get(hash: Hash): PoolTransaction? =
-        transactions.firstOrNull {
-            it.transaction.hash == hash
-        }
+        transactions.firstOrNull { it.transaction.hash == hash }
 }
