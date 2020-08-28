@@ -3,6 +3,7 @@
 package org.knowledger.ledger.storage.transaction.output
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
@@ -21,8 +22,9 @@ data class ImmutableTransactionOutput(
     override val txIndex: Int,
     override val tx: Hash
 ) : TransactionOutput {
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(serializer(), this)
+        encoder.encodeToByteArray(serializer(), this)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

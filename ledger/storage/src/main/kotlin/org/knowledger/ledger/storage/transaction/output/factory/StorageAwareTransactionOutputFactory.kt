@@ -6,27 +6,16 @@ import org.knowledger.ledger.storage.transaction.output.StorageAwareTransactionO
 import org.knowledger.ledger.storage.transaction.output.TransactionOutput
 
 internal class StorageAwareTransactionOutputFactory(
-    private val factory: TransactionOutputFactory = TransactionOutputFactoryImpl()
+    private val factory: TransactionOutputFactory = TransactionOutputFactoryImpl(),
 ) : TransactionOutputFactory {
-    private fun createSA(
-        transactionOutput: TransactionOutput
-    ): StorageAwareTransactionOutputImpl =
+    private fun createSA(transactionOutput: TransactionOutput): StorageAwareTransactionOutputImpl =
         StorageAwareTransactionOutputImpl(transactionOutput)
 
     override fun create(
-        payout: Payout, prevTxBlock: Hash,
-        prevTxIndex: Int, prevTx: Hash,
-        txIndex: Int, tx: Hash
+        payout: Payout, prevTxBlock: Hash, prevTxIndex: Int, prevTx: Hash, txIndex: Int, tx: Hash,
     ): StorageAwareTransactionOutputImpl =
-        createSA(
-            factory.create(
-                payout, prevTxBlock, prevTxIndex,
-                prevTx, txIndex, tx
-            )
-        )
+        createSA(factory.create(payout, prevTxBlock, prevTxIndex, prevTx, txIndex, tx))
 
-    override fun create(
-        other: TransactionOutput
-    ): StorageAwareTransactionOutputImpl =
+    override fun create(other: TransactionOutput): StorageAwareTransactionOutputImpl =
         createSA(factory.create(other))
 }

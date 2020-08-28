@@ -7,21 +7,10 @@ import org.knowledger.ledger.storage.transaction.output.ImmutableTransactionOutp
 
 internal class TransactionOutputFactoryImpl : TransactionOutputFactory {
     override fun create(
-        payout: Payout, prevTxBlock: Hash,
-        prevTxIndex: Int, prevTx: Hash,
-        txIndex: Int, tx: Hash
+        payout: Payout, prevTxBlock: Hash, prevTxIndex: Int, prevTx: Hash, txIndex: Int, tx: Hash,
     ): ImmutableTransactionOutput =
-        ImmutableTransactionOutput(
-            payout, prevTxBlock, prevTxIndex,
-            prevTx, txIndex, tx
-        )
+        ImmutableTransactionOutput(payout, prevTxBlock, prevTxIndex, prevTx, txIndex, tx)
 
-    override fun create(
-        other: TransactionOutput
-    ): ImmutableTransactionOutput = with(other) {
-        create(
-            payout, prevTxBlock, prevTxIndex,
-            prevTx, txIndex, tx
-        )
-    }
+    override fun create(other: TransactionOutput): ImmutableTransactionOutput =
+        with(other) { create(payout, prevTxBlock, prevTxIndex, prevTx, txIndex, tx) }
 }

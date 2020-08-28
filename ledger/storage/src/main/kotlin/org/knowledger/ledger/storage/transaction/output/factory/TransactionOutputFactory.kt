@@ -7,8 +7,6 @@ import org.knowledger.ledger.storage.transaction.output.TransactionOutput
 
 interface TransactionOutputFactory : CloningFactory<TransactionOutput> {
     fun create(
-        payout: Payout, prevTxBlock: Hash,
-        prevTxIndex: Int, prevTx: Hash,
-        txIndex: Int, tx: Hash
+        payout: Payout, prevTxBlock: Hash, prevTxIndex: Int, prevTx: Hash, txIndex: Int, tx: Hash,
     ): TransactionOutput
 }
