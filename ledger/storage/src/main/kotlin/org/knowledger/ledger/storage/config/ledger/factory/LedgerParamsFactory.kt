@@ -6,7 +6,6 @@ import org.knowledger.ledger.storage.LedgerParams
 
 interface LedgerParamsFactory : CloningFactory<LedgerParams> {
     fun create(
-        hasher: Hash, recalculationTime: Long = 1228800000,
-        recalculationTrigger: Int = 2048
+        hasher: Hash, recalculationTime: Long = 1228800000, recalculationTrigger: Int = 2048,
     ): LedgerParams
 }

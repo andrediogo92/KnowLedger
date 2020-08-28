@@ -6,14 +6,10 @@ import org.knowledger.ledger.storage.config.ledger.ImmutableLedgerParams
 
 internal class LedgerParamsFactoryImpl : LedgerParamsFactory {
     override fun create(
-        hasher: Hash, recalculationTime: Long,
-        recalculationTrigger: Int
-    ): ImmutableLedgerParams = ImmutableLedgerParams(
-        hasher, recalculationTime, recalculationTrigger
-    )
+        hasher: Hash, recalculationTime: Long, recalculationTrigger: Int,
+    ): ImmutableLedgerParams =
+        ImmutableLedgerParams(hasher, recalculationTime, recalculationTrigger)
 
     override fun create(other: LedgerParams): ImmutableLedgerParams =
-        with(other) {
-            create(hashers, recalculationTime, recalculationTrigger)
-        }
+        with(other) { create(hashers, recalculationTime, recalculationTrigger) }
 }

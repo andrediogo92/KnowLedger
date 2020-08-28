@@ -13,7 +13,7 @@ import org.knowledger.ledger.crypto.Hash
 data class ImmutableLedgerParams(
     override val hashers: Hash,
     override val recalculationTime: Long,
-    override val recalculationTrigger: Int
+    override val recalculationTrigger: Int,
 ) : LedgerParams {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
