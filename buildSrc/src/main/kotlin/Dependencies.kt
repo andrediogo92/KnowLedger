@@ -3,23 +3,25 @@ object Versions {
     const val autoService = "1.0-rc7"
     const val bouncyCastle = "1.66"
     const val commons = "1.3"
-    const val dokka = "0.10.1"
+    const val datetime = "0.1.0"
+    const val dokka = "1.4.0-rc"
     const val eclipsePaho = "1.2.4"
     const val jade = "4.5.0"
     const val jadeMisc = "2.8.0"
-    const val jdk = "1.8"
-    const val jdkV = 8
-    const val jmh = "1.23"
+    const val jdk = "11"
+    const val jdkV = 11
+    const val jmh = "1.25.1"
     const val jmhPlugin = "0.5.0"
     const val jUnit = "5.6.2"
     const val jUnitRunner = "1.6.2"
-    const val kotlin = "1.3.72"
-    const val koin = "2.1.5"
+    const val kotlin = "1.4.0"
+    const val koin = "2.1.6"
     const val kotlinPoet = "1.6.0"
-    const val kotlinResult = "1.1.7"
+    const val kotlinResult = "1.1.8"
     const val orientDB = "3.0.32"
-    const val serial = "0.20.0"
+    const val serial = "1.0.0-RC"
     const val tinylog = "2.1.2"
+    const val uuid = "0.2.2"
 }
 
 object Libs {
@@ -33,6 +35,8 @@ object Libs {
         "org.bouncycastle:bcprov-jdk15on:${Versions.bouncyCastle}"
 
     const val commonsRNG = "org.apache.commons:commons-rng-simple:${Versions.commons}"
+
+    const val datetime = "org.jetbrains.kotlinx:kotlinx-datetime:${Versions.datetime}"
 
     const val dokkaPlugin =
         "org.jetbrains.dokka:dokka-gradle-plugin:${Versions.dokka}"
@@ -74,7 +78,7 @@ object Libs {
     )
 
     val serialization = listOf(
-        "org.jetbrains.kotlinx:kotlinx-serialization-runtime:${Versions.serial}",
+        "org.jetbrains.kotlinx:kotlinx-serialization-core:${Versions.serial}",
         "org.jetbrains.kotlinx:kotlinx-serialization-cbor:${Versions.serial}"
     )
 
@@ -82,6 +86,8 @@ object Libs {
         "org.tinylog:tinylog-api-kotlin:${Versions.tinylog}",
         "org.tinylog:tinylog-impl:${Versions.tinylog}"
     )
+
+    const val uuid = "com.benasher44:uuid:${Versions.uuid}"
 
 }
 

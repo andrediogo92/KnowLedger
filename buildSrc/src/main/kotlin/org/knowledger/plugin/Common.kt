@@ -49,12 +49,10 @@ private fun TaskContainer.applyJunit() {
 
 
 internal fun Project.addCommonDependencies() {
-    addBarebonesDependencies()
     dependencies {
-        Libs.tinylog.forEach(::implementation)
-
+        Libs.tinylog.forEach { implementation(it) }
         testImplementation(Libs.assertK)
         testImplementation(Libs.jUnitApi)
-        Libs.jUnitRuntime.forEach(::testRuntimeOnly)
+        Libs.jUnitRuntime.forEach { testRuntimeOnly(it) }
     }
 }

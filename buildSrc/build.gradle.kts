@@ -1,6 +1,4 @@
 repositories {
-    mavenCentral()
-    google()
     jcenter()
 }
 
@@ -14,17 +12,13 @@ kotlinDslPluginOptions {
 
 dependencies {
     val kotlinVersion by extra {
-        "1.3.72"
+        "1.4.0"
     }
-    val dokkaVersion by extra {
-        "0.10.1"
-    }
-    val dokkaPlugin by extra {
-        "org.jetbrains.dokka:dokka-gradle-plugin:${dokkaVersion}"
-    }
-
+//    val dokkaVersion by extra {
+//       "1.4.0-rc"
+//    }
     implementation(kotlin("gradle-plugin", kotlinVersion))
-    implementation(dokkaPlugin)
+//    implementation("org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion")
     implementation(gradleApi())
     implementation(localGroovy())
 }

@@ -1,16 +1,12 @@
 package org.knowledger.plugin
 
-import Plugins
 import Versions
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.kotlin.dsl.DependencyHandlerScope
-import org.gradle.kotlin.dsl.dependencies
 import org.gradle.kotlin.dsl.get
-import org.gradle.kotlin.dsl.kotlin
 import org.gradle.kotlin.dsl.withType
-import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.knowledger.plugin.docs.DocsOnlyPluginExtension
 import java.io.File
@@ -35,23 +31,34 @@ inline fun TaskContainer.onKotlinCompile(
     }
 }
 
+
 internal fun TaskContainer.addDokkaTask(
     extension: ModuleNameProvider,
     buildDir: File
 ) {
-    withType<DokkaTask> {
-        configureDokka(extension, buildDir)
-    }
+//    named("dokkaHtml", DokkaTask::class.java).configure {
+//        configureDokka(extension, buildDir)
+//    }
 }
 
+/*
 private fun DokkaTask.configureDokka(
     extension: ModuleNameProvider, buildDir: File
 ) {
-    outputFormat = "html"
+
     outputDirectory = "$buildDir/javadoc"
 
-    configuration {
-        moduleName = extension.module
+    dokkaSourceSets {
+        configureEach {
+            moduleDisplayName = extension.module
+
+            // List of files with module and package documentation
+            // https://kotlinlang.org/docs/reference/kotlin-doc.html#module-and-package-documentation
+            includes = listOf("packages.md", "extra.md")
+
+            // List of files or directories containing sample code (referenced with @sample tags)
+            samples = listOf("samples/basic.kt", "samples/advanced.kt")
+        }
 
         jdkVersion = Versions.jdkV
 
@@ -73,6 +80,7 @@ private fun DokkaTask.configureDokka(
         }
     }
 }
+*/
 
 fun KotlinCompile.configureKotlin(extension: HasInlineClasses) {
     if (extension.inlineClasses) {
@@ -82,14 +90,9 @@ fun KotlinCompile.configureKotlin(extension: HasInlineClasses) {
 }
 
 
-internal fun Project.addBarebonesDependencies() {
-    dependencies {
-        implementation(kotlin("stdlib", Versions.kotlin))
-    }
-}
 
 internal fun Project.addDocsPlugin() {
-    plugins.apply(Plugins.dokka)
+//    plugins.apply(Plugins.dokka)
 }
 
 internal fun DependencyHandlerScope.implementation(
