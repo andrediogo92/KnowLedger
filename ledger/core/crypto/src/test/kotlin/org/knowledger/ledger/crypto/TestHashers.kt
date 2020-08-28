@@ -10,8 +10,8 @@ import org.tinylog.Logger
 
 class TestHashers {
     val test = "testByteArray".toByteArray()
-    val fixed32 = ByteArray(32) { it.toByte() }
-    val fixed64 = ByteArray(64) { it.toByte() }
+    val fixed32 = ByteArray(32, Int::toByte)
+    val fixed64 = ByteArray(64, Int::toByte)
 
     private fun logOutputs(algorithm: String, test: String, expected: String) {
         Logger.debug {

@@ -7,45 +7,30 @@ import org.knowledger.base64.base64Encoded
 import org.knowledger.testing.core.applyHashInPairs
 import org.knowledger.testing.core.defaultHasher
 import org.knowledger.testing.core.random
-import org.knowledger.testing.core.randomHash
 import org.tinylog.kotlin.Logger
 
 
 class TestHashingPairs {
-    private val crypter = defaultHasher
-    private val hashSize = 16
+    private val hashers = defaultHasher
     private val minBound = 12
-    private val randomHashes = Array(random.randomInt(minBound) + 8) {
-        randomHash(hashSize)
-    }
+    private val randomHashes = Array(random.randomInt(minBound) + 8) { random.randomHash(hashers) }
 
 
     @Test
     fun `pair crypting balanced`() {
-        val expected = crypter.applyHash(
-            crypter.applyHash(
-                crypter.applyHash(
-                    randomHashes[0] + randomHashes[1]
-                ) + crypter.applyHash(
-                    randomHashes[2] + randomHashes[3]
-                )
-            ) + crypter.applyHash(
-                crypter.applyHash(
-                    randomHashes[4] + randomHashes[5]
-                ) + crypter.applyHash(
-                    randomHashes[6] + randomHashes[7]
-                )
-            )
+        val expectedFirst = hashers.applyHash(randomHashes[0] + randomHashes[1])
+        val expectedSecond = hashers.applyHash(randomHashes[2] + randomHashes[3])
+        val expectedThird = hashers.applyHash(randomHashes[4] + randomHashes[5])
+        val expectedFourth = hashers.applyHash(randomHashes[6] + randomHashes[7])
+        val expected = hashers.applyHash(
+            hashers.applyHash(expectedFirst + expectedSecond) +
+            hashers.applyHash(expectedThird + expectedFourth)
         )
 
-        val test = applyHashInPairs(
-            crypter, arrayOf(
-                randomHashes[0], randomHashes[1],
-                randomHashes[2], randomHashes[3],
-                randomHashes[4], randomHashes[5],
-                randomHashes[6], randomHashes[7]
-            )
-        )
+        val test = applyHashInPairs(hashers, arrayOf(
+            randomHashes[0], randomHashes[1], randomHashes[2], randomHashes[3],
+            randomHashes[4], randomHashes[5], randomHashes[6], randomHashes[7],
+        ))
 
         Logger.debug {
             """
@@ -61,29 +46,18 @@ class TestHashingPairs {
 
     @Test
     fun `pair crypting unbalanced`() {
-        val expected = crypter.applyHash(
-            crypter.applyHash(
-                crypter.applyHash(
-                    randomHashes[0] + randomHashes[1]
-                ) + crypter.applyHash(
-                    randomHashes[2] + randomHashes[3]
-                )
-            ) + crypter.applyHash(
-                crypter.applyHash(
-                    randomHashes[4] + randomHashes[5]
-                ) + crypter.applyHash(
-                    randomHashes[4] + randomHashes[5]
-                )
-            )
+        val expectedFirst = hashers.applyHash(randomHashes[0] + randomHashes[1])
+        val expectedSecond = hashers.applyHash(randomHashes[2] + randomHashes[3])
+        val expectedThird = hashers.applyHash(randomHashes[4] + randomHashes[5])
+        val expected = hashers.applyHash(
+            hashers.applyHash(expectedFirst + expectedSecond) +
+            hashers.applyHash(expectedThird + expectedThird)
         )
 
-        val test = applyHashInPairs(
-            crypter, arrayOf(
-                randomHashes[0], randomHashes[1],
-                randomHashes[2], randomHashes[3],
-                randomHashes[4], randomHashes[5]
-            )
-        )
+        val test = applyHashInPairs(hashers, arrayOf(
+            randomHashes[0], randomHashes[1], randomHashes[2],
+            randomHashes[3], randomHashes[4], randomHashes[5]
+        ))
 
         Logger.info {
             """
