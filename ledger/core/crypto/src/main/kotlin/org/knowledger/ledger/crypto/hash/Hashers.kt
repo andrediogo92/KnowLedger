@@ -1,11 +1,23 @@
 package org.knowledger.ledger.crypto.hash
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.cbor.Cbor
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.knowledger.ledger.core.data.hash.Hasher
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.Hashers
-import org.knowledger.ledger.crypto.hash.Hashers.*
+import org.knowledger.ledger.crypto.hash.Hashers.Blake2b256Hasher
+import org.knowledger.ledger.crypto.hash.Hashers.Blake2b512Hasher
+import org.knowledger.ledger.crypto.hash.Hashers.Blake2s256Hasher
+import org.knowledger.ledger.crypto.hash.Hashers.Haraka256Hasher
+import org.knowledger.ledger.crypto.hash.Hashers.Haraka512Hasher
+import org.knowledger.ledger.crypto.hash.Hashers.Keccak256Hasher
+import org.knowledger.ledger.crypto.hash.Hashers.Keccak512Hasher
+import org.knowledger.ledger.crypto.hash.Hashers.SHA256Hasher
+import org.knowledger.ledger.crypto.hash.Hashers.SHA3256Hasher
+import org.knowledger.ledger.crypto.hash.Hashers.SHA3512Hasher
+import org.knowledger.ledger.crypto.hash.Hashers.SHA512Hasher
 import org.knowledger.ledger.crypto.serial.HashAlgorithmSerializer
 import java.security.MessageDigest
 import java.security.Security
@@ -27,15 +39,13 @@ import java.security.Security
  * 11. 512-bit custom Keccak as per BouncyCastle's
  * custom Keccak parameters -> [Keccak512Hasher]
  */
-sealed class Hashers(algorithmTag: String) : Hasher {
-    val digester: MessageDigest by lazy {
-        MessageDigest.getInstance(
-            algorithmTag
-        )
-    }
+@Serializable(HashAlgorithmSerializer::class)
+sealed class Hashers(val algorithmTag: String) : Hasher {
+    val digester: MessageDigest by lazy { MessageDigest.getInstance(algorithmTag) }
 
+    @OptIn(ExperimentalSerializationApi::class)
     override val id: Hash by lazy {
-        applyHash(Cbor.dump(HashAlgorithmSerializer, this))
+        applyHash(Cbor.encodeToByteArray(HashAlgorithmSerializer, this))
     }
 
 
@@ -43,61 +53,54 @@ sealed class Hashers(algorithmTag: String) : Hasher {
         Hash(digester.digest(input))
 
 
-    override val hashSize: Int by lazy {
-        digester.digestLength
-    }
+    override val hashSize: Int by lazy { digester.digestLength }
 
-    private fun checkAlgorithm(
-        digestLength: Int, algorithm: String,
-        providerName: String, providerVersion: Double
-    ): Boolean = digestLength == hashSize &&
-            algorithm == digester.algorithm &&
-            providerName == digester.provider.name &&
-            providerVersion == digester.provider.version
+    private fun checkAlgorithm(digestLength: Int, algorithm: String): Boolean =
+        digestLength == hashSize && algorithm == algorithmTag
 
 
     object SHA3256Hasher : Hashers("SHA3-256") {
-        override val hashSize: Int = BYTE_SIZE_256
+        override val hashSize = BYTE_SIZE_256
     }
 
     object SHA3512Hasher : Hashers("SHA3-512") {
-        override val hashSize: Int = BYTE_SIZE_512
+        override val hashSize = BYTE_SIZE_512
     }
 
     object Haraka256Hasher : Hashers("HARAKA-256") {
-        override val hashSize: Int = BYTE_SIZE_256
+        override val hashSize = BYTE_SIZE_256
     }
 
     object Haraka512Hasher : Hashers("HARAKA-512") {
-        override val hashSize: Int = BYTE_SIZE_512
+        override val hashSize = BYTE_SIZE_512
     }
 
     object Blake2b256Hasher : Hashers("BLAKE2B-256") {
-        override val hashSize: Int = BYTE_SIZE_256
+        override val hashSize = BYTE_SIZE_256
     }
 
     object Blake2b512Hasher : Hashers("BLAKE2B-512") {
-        override val hashSize: Int = BYTE_SIZE_512
+        override val hashSize = BYTE_SIZE_512
     }
 
     object Blake2s256Hasher : Hashers("BLAKE2S-256") {
-        override val hashSize: Int = BYTE_SIZE_256
+        override val hashSize = BYTE_SIZE_256
     }
 
     object SHA256Hasher : Hashers("SHA-256") {
-        override val hashSize: Int = BYTE_SIZE_256
+        override val hashSize = BYTE_SIZE_256
     }
 
     object SHA512Hasher : Hashers("SHA-512") {
-        override val hashSize: Int = BYTE_SIZE_512
+        override val hashSize = BYTE_SIZE_512
     }
 
     object Keccak256Hasher : Hashers("KECCAK-256") {
-        override val hashSize: Int = BYTE_SIZE_256
+        override val hashSize = BYTE_SIZE_256
     }
 
     object Keccak512Hasher : Hashers("KECCAK-512") {
-        override val hashSize: Int = BYTE_SIZE_512
+        override val hashSize = BYTE_SIZE_512
     }
 
 
@@ -109,9 +112,7 @@ sealed class Hashers(algorithmTag: String) : Hasher {
         init {
             //Ensure Bouncy Castle Crypto provider is present
             if (Security.getProvider("BC") == null) {
-                Security.addProvider(
-                    BouncyCastleProvider()
-                )
+                Security.addProvider(BouncyCastleProvider())
             }
         }
 
@@ -122,47 +123,33 @@ sealed class Hashers(algorithmTag: String) : Hasher {
          * Throws [NoSuchHasherRegistered] if no matching [Hashers]
          * instance is present.
          */
-        fun getHasher(hash: Hash): Hashers =
-            when {
-                SHA3256Hasher.checkForCrypter(hash) -> SHA3256Hasher
-                SHA3512Hasher.checkForCrypter(hash) -> SHA3512Hasher
-                Haraka256Hasher.checkForCrypter(hash) -> Haraka256Hasher
-                Haraka512Hasher.checkForCrypter(hash) -> Haraka512Hasher
-                Blake2b256Hasher.checkForCrypter(hash) -> Blake2b256Hasher
-                Blake2b512Hasher.checkForCrypter(hash) -> Blake2b512Hasher
-                Blake2s256Hasher.checkForCrypter(hash) -> Blake2s256Hasher
-                SHA256Hasher.checkForCrypter(hash) -> SHA256Hasher
-                SHA512Hasher.checkForCrypter(hash) -> SHA512Hasher
-                Keccak256Hasher.checkForCrypter(hash) -> Keccak256Hasher
-                Keccak512Hasher.checkForCrypter(hash) -> Keccak512Hasher
-                else -> throw NoSuchHasherRegistered(hash)
-            }
+        fun getHasher(hash: Hash): Hashers = when {
+            SHA3256Hasher.checkForHasher(hash) -> SHA3256Hasher
+            SHA3512Hasher.checkForHasher(hash) -> SHA3512Hasher
+            Haraka256Hasher.checkForHasher(hash) -> Haraka256Hasher
+            Haraka512Hasher.checkForHasher(hash) -> Haraka512Hasher
+            Blake2b256Hasher.checkForHasher(hash) -> Blake2b256Hasher
+            Blake2b512Hasher.checkForHasher(hash) -> Blake2b512Hasher
+            Blake2s256Hasher.checkForHasher(hash) -> Blake2s256Hasher
+            SHA256Hasher.checkForHasher(hash) -> SHA256Hasher
+            SHA512Hasher.checkForHasher(hash) -> SHA512Hasher
+            Keccak256Hasher.checkForHasher(hash) -> Keccak256Hasher
+            Keccak512Hasher.checkForHasher(hash) -> Keccak512Hasher
+            else -> throw NoSuchHasherRegistered(hash)
+        }
 
         /**
          * Checks one of the available algorithms matches
          * the provided parameters.
          * Returns the digest algorithm class from [Hashers]
          * implementers, if one such exists, that explicitly
-         * matches in [digestLength], internal [algorithm] name,
-         * [providerName] and [providerVersion] as specified
-         * in Java Security API for [MessageDigest].
+         * matches in [digestLength] and [algorithm] tag.
          */
-        fun checkAlgorithms(
-            digestLength: Int, algorithm: String,
-            providerName: String, providerVersion: Double
-        ): Hashers? =
+        fun checkAlgorithms(digestLength: Int, algorithm: String): Hashers? =
             arrayOf(
-                SHA256Hasher, SHA512Hasher,
-                SHA3256Hasher, SHA3512Hasher,
-                Haraka256Hasher, Haraka512Hasher,
-                Blake2b256Hasher, Blake2b512Hasher,
-                Blake2s256Hasher, Keccak256Hasher,
-                Keccak512Hasher
-            ).find {
-                it.checkAlgorithm(
-                    digestLength, algorithm,
-                    providerName, providerVersion
-                )
-            }
+                SHA256Hasher, SHA512Hasher, SHA3256Hasher, SHA3512Hasher,
+                Haraka256Hasher, Haraka512Hasher, Blake2b256Hasher, Blake2b512Hasher,
+                Blake2s256Hasher, Keccak256Hasher, Keccak512Hasher
+            ).find { it.checkAlgorithm(digestLength, algorithm) }
     }
 }

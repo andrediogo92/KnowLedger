@@ -1,4 +1,4 @@
-@file:UseSerializers(HashSerializer::class, HashAlgorithmSerializer::class)
+@file:UseSerializers(HashSerializer::class)
 
 package org.knowledger.ledger.crypto.data
 
@@ -10,7 +10,6 @@ import org.knowledger.ledger.core.data.hash.Hash
 import org.knowledger.ledger.core.serial.HashSerializer
 import org.knowledger.ledger.crypto.Hashers
 import org.knowledger.ledger.crypto.hash.classDigest
-import org.knowledger.ledger.crypto.serial.HashAlgorithmSerializer
 import java.math.BigDecimal
 import java.math.MathContext
 
