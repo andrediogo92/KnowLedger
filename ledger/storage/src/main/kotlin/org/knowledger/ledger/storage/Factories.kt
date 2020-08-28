@@ -9,6 +9,7 @@ import org.knowledger.ledger.storage.config.block.factory.BlockParamsFactory
 import org.knowledger.ledger.storage.config.chainid.factory.ChainIdFactory
 import org.knowledger.ledger.storage.config.coinbase.factory.CoinbaseParamsFactory
 import org.knowledger.ledger.storage.config.ledger.factory.LedgerParamsFactory
+import org.knowledger.ledger.storage.pools.block.BlockPoolFactory
 import org.knowledger.ledger.storage.pools.transaction.factory.PoolTransactionFactory
 import org.knowledger.ledger.storage.pools.transaction.factory.TransactionPoolFactory
 import org.knowledger.ledger.storage.transaction.factory.TransactionFactory
@@ -34,6 +35,7 @@ interface Factories {
 
 
     //Pool class factories
+    val blockPoolFactory: BlockPoolFactory
     val poolTransactionFactory: PoolTransactionFactory
     val transactionPoolFactory: TransactionPoolFactory
 }

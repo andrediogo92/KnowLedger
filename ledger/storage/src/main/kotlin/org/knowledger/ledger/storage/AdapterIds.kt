@@ -10,7 +10,6 @@ enum class AdapterIds {
     CoinbaseHeader,
     CoinbaseParams,
     Identity,
-    LedgerConfig,
     LedgerData,
     LedgerId,
     LedgerParams,

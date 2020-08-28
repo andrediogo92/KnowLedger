@@ -2,7 +2,6 @@ package org.knowledger.ledger.storage
 
 import org.knowledger.ledger.core.PhysicalData
 import org.knowledger.ledger.core.data.DataFormula
-import org.knowledger.ledger.core.data.DefaultDiff
 import org.knowledger.ledger.core.data.Difficulty
 import org.knowledger.ledger.core.data.GeoCoords
 import org.knowledger.ledger.core.data.HashSerializable
@@ -10,6 +9,7 @@ import org.knowledger.ledger.core.data.LedgerContract
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.data.SelfInterval
+import org.knowledger.ledger.crypto.data.DefaultDiff
 import org.knowledger.ledger.crypto.service.Identity
 import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.ledger.crypto.storage.MutableMerkleTree
@@ -27,6 +27,8 @@ import org.knowledger.ledger.storage.config.block.BlockParams
 import org.knowledger.ledger.storage.config.chainid.ChainId
 import org.knowledger.ledger.storage.config.coinbase.CoinbaseParams
 import org.knowledger.ledger.storage.config.ledger.LedgerParams
+import org.knowledger.ledger.storage.pools.block.BlockPool
+import org.knowledger.ledger.storage.pools.block.MutableBlockPool
 import org.knowledger.ledger.storage.pools.transaction.MutableTransactionPool
 import org.knowledger.ledger.storage.pools.transaction.PoolTransaction
 import org.knowledger.ledger.storage.pools.transaction.TransactionPool
@@ -52,6 +54,7 @@ typealias PhysicalData = PhysicalData
 //Primary Data Structures
 typealias Block = Block
 typealias BlockHeader = HashedBlockHeader
+typealias BlockPool = BlockPool
 typealias Coinbase = Coinbase
 typealias CoinbaseHeader = HashedCoinbaseHeader
 typealias MerkleTree = MerkleTree
@@ -74,6 +77,7 @@ typealias LedgerParams = LedgerParams
 //Primary Mutable Structures
 typealias MutableBlock = MutableBlock
 typealias MutableBlockHeader = MutableHashedBlockHeader
+typealias MutableBlockPool = MutableBlockPool
 typealias MutableCoinbase = MutableCoinbase
 typealias MutableCoinbaseHeader = MutableHashedCoinbaseHeader
 typealias MutableMerkleTree = MutableMerkleTree

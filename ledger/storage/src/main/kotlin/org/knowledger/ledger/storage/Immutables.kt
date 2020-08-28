@@ -14,82 +14,46 @@ import org.knowledger.ledger.storage.transaction.ImmutableTransaction
 import org.knowledger.ledger.storage.transaction.output.ImmutableTransactionOutput
 import org.knowledger.ledger.storage.witness.ImmutableWitness
 
-fun Block.immutableCopy(): ImmutableBlock =
-    ImmutableBlock(
-        immutableTransactions = transactions
-            .map { it.immutableCopy() }
-            .toMutableSortedListFromPreSorted(),
-        coinbase = coinbase.immutableCopy(),
-        blockHeader = blockHeader.immutableCopy(),
-        merkleTree = merkleTree.immutableCopy(),
-        approximateSize = approximateSize
-    )
+fun Block.immutableCopy(): ImmutableBlock = ImmutableBlock(
+    blockHeader.immutableCopy(), coinbase.immutableCopy(), merkleTree.immutableCopy(),
+    transactions.map(Transaction::immutableCopy).toMutableSortedListFromPreSorted(),
+    approximateSize
+)
 
-fun BlockHeader.immutableCopy(): ImmutableBlockHeader =
-    ImmutableBlockHeader(
-        chainHash = chainHash, merkleRoot = merkleRoot,
-        previousHash = previousHash, blockParams = blockParams.immutableCopy(),
-        seconds = seconds, nonce = nonce, hash = hash
-    )
+fun BlockHeader.immutableCopy(): ImmutableBlockHeader = ImmutableBlockHeader(
+    chainHash, hash, merkleRoot, previousHash, blockParams.immutableCopy(), seconds, nonce
+)
 
 fun BlockParams.immutableCopy(): ImmutableBlockParams =
-    ImmutableBlockParams(
-        blockLength = blockLength, blockMemorySize = blockMemorySize
-    )
+    ImmutableBlockParams(blockLength, blockMemorySize)
 
 fun ChainId.immutableCopy(): ImmutableChainId =
     ImmutableChainId(hash, ledgerHash, tag, blockParams, coinbaseParams)
 
-fun Coinbase.immutableCopy(): ImmutableCoinbase =
-    ImmutableCoinbase(
-        coinbaseHeader = coinbaseHeader.immutableCopy(),
-        immutableWitnesses = witnesses
-            .map { it.immutableCopy() }
-            .toMutableSortedListFromPreSorted(),
-        merkleTree = merkleTree.immutableCopy()
-    )
+fun Coinbase.immutableCopy(): ImmutableCoinbase = ImmutableCoinbase(
+    coinbaseHeader.immutableCopy(), merkleTree.immutableCopy(),
+    witnesses.map(Witness::immutableCopy).toMutableSortedListFromPreSorted(),
+)
 
-fun CoinbaseParams.immutableCopy(): ImmutableCoinbaseParams =
-    ImmutableCoinbaseParams(
-        hashSize = hashSize, timeIncentive = timeIncentive,
-        valueIncentive = valueIncentive, baseIncentive = baseIncentive,
-        dividingThreshold = dividingThreshold, formula = formula
-    )
+fun CoinbaseParams.immutableCopy(): ImmutableCoinbaseParams = ImmutableCoinbaseParams(
+    hashSize, timeIncentive, valueIncentive, baseIncentive, dividingThreshold, formula
+)
 
-fun CoinbaseHeader.immutableCopy(): ImmutableCoinbaseHeader =
-    ImmutableCoinbaseHeader(
-        hash = hash, payout = payout,
-        coinbaseParams = coinbaseParams.immutableCopy(),
-        merkleRoot = merkleRoot, difficulty = difficulty,
-        blockheight = blockheight, extraNonce = extraNonce
-    )
+fun CoinbaseHeader.immutableCopy(): ImmutableCoinbaseHeader = ImmutableCoinbaseHeader(
+    hash, merkleRoot, payout, blockheight, difficulty,
+    extraNonce, coinbaseParams.immutableCopy(),
+)
 
 fun LedgerParams.immutableCopy(): ImmutableLedgerParams =
-    ImmutableLedgerParams(
-        hashers = hashers, recalculationTime = recalculationTime,
-        recalculationTrigger = recalculationTrigger
-    )
+    ImmutableLedgerParams(hashers, recalculationTime, recalculationTrigger)
 
 fun Transaction.immutableCopy(): ImmutableTransaction =
-    ImmutableTransaction(
-        hash = hash, signature = signature,
-        publicKey = publicKey, data = data,
-        approximateSize = approximateSize
-    )
+    ImmutableTransaction(hash, signature, publicKey, data, approximateSize)
 
 fun TransactionOutput.immutableCopy(): ImmutableTransactionOutput =
-    ImmutableTransactionOutput(
-        payout = payout, prevTxBlock = prevTxBlock,
-        prevTxIndex = prevTxIndex, prevTx = prevTx,
-        txIndex = txIndex, tx = tx
-    )
+    ImmutableTransactionOutput(payout, prevTxBlock, prevTxIndex, prevTx, txIndex, tx)
 
-fun Witness.immutableCopy(): ImmutableWitness =
-    ImmutableWitness(
-        hash = hash, publicKey = publicKey,
-        previousWitnessIndex = previousWitnessIndex,
-        previousCoinbase = previousCoinbase, payout = payout,
-        immutableTransactionOutputs = transactionOutputs
-            .map { it.immutableCopy() }
-            .toMutableSortedListFromPreSorted()
-    )
+fun Witness.immutableCopy(): ImmutableWitness = ImmutableWitness(
+    hash, publicKey, previousWitnessIndex, previousCoinbase, payout,
+    transactionOutputs.map(TransactionOutput::immutableCopy).toMutableSortedListFromPreSorted()
+)

@@ -20,6 +20,8 @@ import org.knowledger.ledger.storage.config.coinbase.factory.StorageAwareCoinbas
 import org.knowledger.ledger.storage.config.ledger.factory.LedgerParamsFactory
 import org.knowledger.ledger.storage.config.ledger.factory.StorageAwareLedgerParamsFactory
 import org.knowledger.ledger.storage.merkletree.StorageAwareMerkleTreeFactory
+import org.knowledger.ledger.storage.pools.block.BlockPoolFactory
+import org.knowledger.ledger.storage.pools.block.BlockPoolFactoryImpl
 import org.knowledger.ledger.storage.pools.transaction.factory.PoolTransactionFactory
 import org.knowledger.ledger.storage.pools.transaction.factory.PoolTransactionFactoryImpl
 import org.knowledger.ledger.storage.pools.transaction.factory.TransactionPoolFactory
@@ -44,19 +46,15 @@ internal class StorageAwareFactories : Factories {
         StorageAwareTransactionOutputFactory()
     override val witnessFactory: WitnessFactory =
         StorageAwareWitnessFactory()
-    override val coinbaseFactory: CoinbaseFactory =
-        StorageAwareCoinbaseFactory(
-            CoinbaseFactoryImpl(
-                coinbaseHeaderFactory, merkleTreeFactory, witnessFactory
-            )
+    override val coinbaseFactory: CoinbaseFactory = StorageAwareCoinbaseFactory(
+        CoinbaseFactoryImpl(coinbaseHeaderFactory, merkleTreeFactory, witnessFactory)
+    )
+    override val blockFactory: BlockFactory = StorageAwareBlockFactory(
+        BlockFactoryImpl(
+            coinbaseFactory, coinbaseHeaderFactory, transactionFactory,
+            blockHeaderFactory, merkleTreeFactory
         )
-    override val blockFactory: BlockFactory =
-        StorageAwareBlockFactory(
-            BlockFactoryImpl(
-                coinbaseFactory, transactionFactory,
-                blockHeaderFactory, merkleTreeFactory
-            )
-        )
+    )
 
 
     override val blockParamsFactory: BlockParamsFactory =
@@ -69,6 +67,8 @@ internal class StorageAwareFactories : Factories {
         StorageAwareLedgerParamsFactory()
 
 
+    override val blockPoolFactory: BlockPoolFactory =
+        BlockPoolFactoryImpl()
     override val poolTransactionFactory: PoolTransactionFactory =
         PoolTransactionFactoryImpl()
     override val transactionPoolFactory: TransactionPoolFactory =

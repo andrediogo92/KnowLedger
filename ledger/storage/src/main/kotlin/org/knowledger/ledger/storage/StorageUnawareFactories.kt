@@ -18,6 +18,8 @@ import org.knowledger.ledger.storage.config.coinbase.factory.CoinbaseParamsFacto
 import org.knowledger.ledger.storage.config.coinbase.factory.CoinbaseParamsFactoryImpl
 import org.knowledger.ledger.storage.config.ledger.factory.LedgerParamsFactory
 import org.knowledger.ledger.storage.config.ledger.factory.LedgerParamsFactoryImpl
+import org.knowledger.ledger.storage.pools.block.BlockPoolFactory
+import org.knowledger.ledger.storage.pools.block.BlockPoolFactoryImpl
 import org.knowledger.ledger.storage.pools.transaction.factory.PoolTransactionFactory
 import org.knowledger.ledger.storage.pools.transaction.factory.PoolTransactionFactoryImpl
 import org.knowledger.ledger.storage.pools.transaction.factory.TransactionPoolFactory
@@ -30,27 +32,39 @@ import org.knowledger.ledger.storage.witness.factory.HashedWitnessFactory
 import org.knowledger.ledger.storage.witness.factory.WitnessFactory
 
 internal class StorageUnawareFactories : Factories {
-    override val blockHeaderFactory: BlockHeaderFactory = HashedBlockHeaderFactory()
-    override val coinbaseHeaderFactory: CoinbaseHeaderFactory = HashedCoinbaseHeaderFactory()
-    override val merkleTreeFactory: MerkleTreeFactory = MerkleTreeFactoryImpl()
-    override val transactionFactory: TransactionFactory = HashedTransactionFactory()
-    override val transactionOutputFactory: TransactionOutputFactory = TransactionOutputFactoryImpl()
+    override val blockHeaderFactory: BlockHeaderFactory =
+        HashedBlockHeaderFactory()
+    override val coinbaseHeaderFactory: CoinbaseHeaderFactory =
+        HashedCoinbaseHeaderFactory()
+    override val merkleTreeFactory: MerkleTreeFactory =
+        MerkleTreeFactoryImpl()
+    override val transactionFactory: TransactionFactory =
+        HashedTransactionFactory()
+    override val transactionOutputFactory: TransactionOutputFactory =
+        TransactionOutputFactoryImpl()
     override val witnessFactory: WitnessFactory = HashedWitnessFactory()
     override val coinbaseFactory: CoinbaseFactory = CoinbaseFactoryImpl(
         coinbaseHeaderFactory, merkleTreeFactory, witnessFactory
     )
     override val blockFactory: BlockFactory = BlockFactoryImpl(
-        coinbaseFactory, transactionFactory, blockHeaderFactory, merkleTreeFactory
+        coinbaseFactory, coinbaseHeaderFactory, transactionFactory,
+        blockHeaderFactory, merkleTreeFactory
     )
 
 
-    override val blockParamsFactory: BlockParamsFactory = BlockParamsFactoryImpl()
+    override val blockParamsFactory: BlockParamsFactory =
+        BlockParamsFactoryImpl()
     override val chainIdFactory: ChainIdFactory = ChainIdFactoryImpl()
-    override val coinbaseParamsFactory: CoinbaseParamsFactory = CoinbaseParamsFactoryImpl()
-    override val ledgerParamsFactory: LedgerParamsFactory = LedgerParamsFactoryImpl()
+    override val coinbaseParamsFactory: CoinbaseParamsFactory =
+        CoinbaseParamsFactoryImpl()
+    override val ledgerParamsFactory: LedgerParamsFactory =
+        LedgerParamsFactoryImpl()
 
 
-    override val poolTransactionFactory: PoolTransactionFactory = PoolTransactionFactoryImpl()
-    override val transactionPoolFactory: TransactionPoolFactory
-        get() = TransactionPoolFactoryImpl(poolTransactionFactory)
+    override val blockPoolFactory: BlockPoolFactory =
+        BlockPoolFactoryImpl()
+    override val poolTransactionFactory: PoolTransactionFactory =
+        PoolTransactionFactoryImpl()
+    override val transactionPoolFactory: TransactionPoolFactory =
+        TransactionPoolFactoryImpl(poolTransactionFactory)
 }
