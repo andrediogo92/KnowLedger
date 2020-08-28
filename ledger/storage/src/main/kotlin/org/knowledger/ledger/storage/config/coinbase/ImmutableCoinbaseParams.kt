@@ -3,6 +3,7 @@
 package org.knowledger.ledger.storage.config.coinbase
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
@@ -17,10 +18,11 @@ data class ImmutableCoinbaseParams(
     override val valueIncentive: Long,
     override val baseIncentive: Long,
     override val dividingThreshold: Long,
-    override val formula: Hash
+    override val formula: Hash,
 ) : CoinbaseParams {
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(serializer(), this)
+        encoder.encodeToByteArray(serializer(), this)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

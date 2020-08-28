@@ -11,6 +11,6 @@ interface CoinbaseParamsFactory : CloningFactory<CoinbaseParams> {
     fun create(
         hashSize: Int, timeIncentive: Long = 5, valueIncentive: Long = 2,
         baseIncentive: Long = 3, dividingThreshold: Long = 100000,
-        formula: Hash = classDigest<DefaultDiff>(Hashers.SHA3512Hasher)
+        formula: Hash = classDigest<DefaultDiff>(Hashers.SHA3512Hasher),
     ): CoinbaseParams
 }

@@ -17,31 +17,23 @@ interface CoinbaseParams : HashSerializable, LedgerContract {
     val dividingThreshold: Long
     val formula: Hash
 
-    private fun getTimeDelta(
-        dt: PhysicalData, dt2: PhysicalData
-    ): BigDecimal {
+    private fun getTimeDelta(dt: PhysicalData, dt2: PhysicalData): BigDecimal {
         val stamp1 = BigDecimal(dt.millis)
         val stamp2 = BigDecimal(dt2.millis)
-        return stamp1.subtract(stamp2).divide(
-            stamp1, GlobalLedgerConfiguration.GLOBALCONTEXT
-        )
+        return stamp1.subtract(stamp2).divide(stamp1, GlobalLedgerConfiguration.GLOBALCONTEXT)
     }
 
 
-    fun calculatePayout(
-        dt: PhysicalData, dt2: PhysicalData, formula: DataFormula
-    ): Payout = formula.calculateDiff(
-        baseIncentive, timeIncentive, getTimeDelta(dt, dt2),
-        valueIncentive, dt.calculateDiff(dt2.data), dt.dataConstant,
-        dividingThreshold,
-        GlobalLedgerConfiguration.GLOBALCONTEXT
-    )
+    fun calculatePayout(dt: PhysicalData, dt2: PhysicalData, formula: DataFormula): Payout =
+        formula.calculateDiff(
+            baseIncentive, timeIncentive, getTimeDelta(dt, dt2), valueIncentive,
+            dt.calculateDiff(dt2.data), dt.dataConstant, dividingThreshold,
+            GlobalLedgerConfiguration.GLOBALCONTEXT
+        )
 
-    fun calculatePayout(
-        dt: PhysicalData, formula: DataFormula
-    ): Payout = formula.calculateDiff(
-        baseIncentive, timeIncentive, BigDecimal.ONE, valueIncentive,
-        BigDecimal.ONE, dt.data.dataConstant, dividingThreshold,
-        GlobalLedgerConfiguration.GLOBALCONTEXT
-    )
+    fun calculatePayout(dt: PhysicalData, formula: DataFormula): Payout =
+        formula.calculateDiff(
+            baseIncentive, timeIncentive, BigDecimal.ONE, valueIncentive, BigDecimal.ONE,
+            dt.data.dataConstant, dividingThreshold, GlobalLedgerConfiguration.GLOBALCONTEXT
+        )
 }

@@ -5,20 +5,17 @@ import org.knowledger.ledger.storage.CoinbaseParams
 import org.knowledger.ledger.storage.config.coinbase.StorageAwareCoinbaseParamsImpl
 
 internal class StorageAwareCoinbaseParamsFactory(
-    private val factory: CoinbaseParamsFactory = CoinbaseParamsFactoryImpl()
+    private val factory: CoinbaseParamsFactory = CoinbaseParamsFactoryImpl(),
 ) : CoinbaseParamsFactory {
-    private fun createSA(
-        coinbaseParams: CoinbaseParams
-    ): StorageAwareCoinbaseParamsImpl =
+    private fun createSA(coinbaseParams: CoinbaseParams): StorageAwareCoinbaseParamsImpl =
         StorageAwareCoinbaseParamsImpl(coinbaseParams)
 
     override fun create(
         hashSize: Int, timeIncentive: Long, valueIncentive: Long,
-        baseIncentive: Long, dividingThreshold: Long, formula: Hash
+        baseIncentive: Long, dividingThreshold: Long, formula: Hash,
     ): StorageAwareCoinbaseParamsImpl = createSA(
         factory.create(
-            hashSize, timeIncentive, valueIncentive,
-            baseIncentive, dividingThreshold, formula
+            hashSize, timeIncentive, valueIncentive, baseIncentive, dividingThreshold, formula
         )
     )
 
