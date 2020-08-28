@@ -1,5 +1,3 @@
-version = "0.3"
-
 plugins {
     kotlin("jvm")
     id(Plugins.serial)

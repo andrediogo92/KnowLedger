@@ -3,8 +3,6 @@ plugins {
     id(Plugins.serial)
 }
 
-version = "0.3"
-
 serialPlugin {
     packageName = "org.knowledger.ledger.core.serial"
     module = "ledger/core/kserial"

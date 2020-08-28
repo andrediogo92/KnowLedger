@@ -8,6 +8,7 @@ serialPlugin {
     module = "ledger/core/crypto"
     requiresOptIn = true
     experimentalOptIn = true
+    experimentalContracts = true
 }
 
 dependencies {

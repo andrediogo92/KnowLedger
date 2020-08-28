@@ -31,3 +31,7 @@ dependencies {
     jmhImplementation(Libs.jmh)
     testImplementation(project(":testing"))
 }
+
+subprojects {
+    version = this.version
+}

@@ -1,6 +1,3 @@
-version = "0.3"
-
-
 plugins {
     kotlin("jvm")
     id(Plugins.serial)
@@ -25,8 +22,4 @@ dependencies {
     api(Libs.uuid)
 
     testImplementation(project(":testing"))
-}
-
-subprojects {
-    version = this.version
 }

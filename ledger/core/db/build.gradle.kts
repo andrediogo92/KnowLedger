@@ -4,7 +4,6 @@ plugins {
 }
 
 serialPlugin {
-    inlineClasses = true
     packageName = "org.knowledger.ledger.database"
     module = "ledger/core/db"
 }
