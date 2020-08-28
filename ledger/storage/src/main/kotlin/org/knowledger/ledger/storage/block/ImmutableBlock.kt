@@ -21,7 +21,7 @@ data class ImmutableBlock(
     override val merkleTree: ImmutableMerkleTree,
     @SerialName("transactions")
     internal val immutableTransactions: SortedList<ImmutableTransaction>,
-    override val approximateSize: Int
+    override val approximateSize: Int,
 ) : Block {
     @Suppress("UNCHECKED_CAST")
     override val transactions: SortedList<Transaction>

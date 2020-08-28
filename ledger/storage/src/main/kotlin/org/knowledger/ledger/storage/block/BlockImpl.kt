@@ -17,7 +17,8 @@ internal data class BlockImpl(
     override val coinbase: MutableCoinbase,
     override val merkleTree: MutableMerkleTree,
     override val mutableTransactions: MutableSortedList<MutableTransaction>,
-    internal var cachedSize: Int = mutableTransactions.map { it.approximateSize }.sum()
+    internal var cachedSize: Int =
+        mutableTransactions.map(MutableTransaction::approximateSize).sum(),
 ) : MutableBlock, LedgerContract {
 
     @Suppress("UNCHECKED_CAST")
@@ -27,8 +28,7 @@ internal data class BlockImpl(
     /**
      * @return Binary serialized size of transactions.
      */
-    override val approximateSize: Int
-        get() = cachedSize
+    override val approximateSize: Int get() = cachedSize
 
     override fun newExtraNonce() {
         coinbase.coinbaseHeader.newNonce()
@@ -37,24 +37,21 @@ internal data class BlockImpl(
     }
 
     override fun recalculateCachedSize() {
-        cachedSize = mutableTransactions.map { it.approximateSize }.sum()
+        cachedSize = mutableTransactions.map(MutableTransaction::approximateSize).sum()
     }
 
-    override fun plus(transaction: MutableTransaction): Boolean {
-        if (!checkBlockFull(transaction)) {
-            mutableTransactions.add(transaction)
+    override fun plus(transaction: MutableTransaction): Boolean =
+        if (mutableTransactions.add(transaction)) {
             mutableTransactions.indexed()
             cachedSize = approximateSize + transaction.approximateSize
             Logger.debug {
                 "Transaction Successfully added to Block ${blockHeader.hash}"
             }
-            return true
+            true
+        } else {
+            Logger.debug { "Duplicate Transaction ${transaction.hash}" }
+            false
         }
-        Logger.debug {
-            "Transaction failed to process. Block full at $approximateSize bytes, size ${transactions.size}."
-        }
-        return false
-    }
 
     override fun markForMining(blockheight: Long, difficulty: Difficulty) {
         coinbase.coinbaseHeader.markForMining(blockheight, difficulty)
@@ -62,9 +59,7 @@ internal data class BlockImpl(
 
 
     override fun updateHashes() {
-        merkleTree.rebuildMerkleTree(
-            coinbase.coinbaseHeader, mutableTransactions.toTypedArray()
-        )
+        merkleTree.rebuildMerkleTree(coinbase.coinbaseHeader, mutableTransactions.toTypedArray())
         blockHeader.updateMerkleRoot(merkleTree.hash)
     }
 

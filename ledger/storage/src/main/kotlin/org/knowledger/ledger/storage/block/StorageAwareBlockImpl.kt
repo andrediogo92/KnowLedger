@@ -11,19 +11,14 @@ import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 
 internal class StorageAwareBlockImpl(
-    override val block: MutableBlock
+    override val block: MutableBlock,
 ) : MutableBlock by block, StorageAwareBlock {
     override var id: StorageElement? = null
     override val invalidated: Array<StoragePairs<*>> = arrayOf(
-        StoragePairs.Linked<MutableBlockHeader>(
-            "blockHeader", AdapterIds.BlockHeader
-        ), StoragePairs.Linked<MutableCoinbase>(
-            "coinbase", AdapterIds.Coinbase
-        ), StoragePairs.Linked<MutableMerkleTree>(
-            "merkleTree", AdapterIds.MerkleTree
-        ), StoragePairs.LinkedList<MutableTransaction>(
-            "transactions", AdapterIds.Transaction
-        )
+        StoragePairs.Linked<MutableBlockHeader>("blockHeader", AdapterIds.BlockHeader),
+        StoragePairs.Linked<MutableCoinbase>("coinbase", AdapterIds.Coinbase),
+        StoragePairs.Linked<MutableMerkleTree>("merkleTree", AdapterIds.MerkleTree),
+        StoragePairs.LinkedList<MutableTransaction>("transactions", AdapterIds.Transaction)
     )
 
     override fun newExtraNonce() {
@@ -58,9 +53,7 @@ internal class StorageAwareBlockImpl(
         }
     }
 
-    override fun equals(other: Any?): Boolean =
-        block == other
+    override fun equals(other: Any?): Boolean = block == other
 
-    override fun hashCode(): Int =
-        block.hashCode()
+    override fun hashCode(): Int = block.hashCode()
 }

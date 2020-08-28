@@ -8,12 +8,12 @@ import org.knowledger.ledger.storage.LedgerContract
 import org.knowledger.ledger.storage.MerkleTree
 import org.knowledger.ledger.storage.Transaction
 
-interface Block : Sizeable, LedgerContract {
+interface Block : Sizeable, LedgerContract, Comparable<Block> {
     val miningReady: Boolean
         get() {
             val blockParams = blockHeader.blockParams
             return transactions.size >= blockParams.blockLength / 4 ||
-                    approximateSize >= blockParams.blockMemorySize / 2
+                   approximateSize >= blockParams.blockMemorySize / 2
         }
 
     val full: Boolean
@@ -44,8 +44,8 @@ interface Block : Sizeable, LedgerContract {
     }
 
     fun verifyTransactions(): Boolean =
-        merkleTree.verifyBlockTransactions(
-            coinbase.coinbaseHeader, transactions.toTypedArray()
-        )
+        merkleTree.verifyBlockTransactions(coinbase.coinbaseHeader, transactions.toTypedArray())
 
+    override fun compareTo(other: Block): Int =
+        other.blockHeader.hash.compareTo(blockHeader.hash)
 }
