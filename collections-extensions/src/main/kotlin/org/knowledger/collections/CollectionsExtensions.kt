@@ -1,23 +1,14 @@
 package org.knowledger.collections
 
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashMap
-import kotlin.collections.LinkedHashSet
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-fun <T : Comparable<T>> emptySortedList(): SortedList<T> =
-    DelegatedSortedList()
+fun <T : Comparable<T>> emptySortedList(): SortedList<T> = DelegatedSortedList()
 
-fun <T : Comparable<T>> mutableSortedListOf(
-    vararg elements: T
-): MutableSortedList<T> =
+fun <T : Comparable<T>> mutableSortedListOf(vararg elements: T): MutableSortedList<T> =
     elements.asIterable().toMutableSortedList()
 
-fun <T : Comparable<T>> sortedListOf(
-    vararg elements: T
-): SortedList<T> =
+fun <T : Comparable<T>> sortedListOf(vararg elements: T): SortedList<T> =
     elements.asIterable().toSortedList()
 
 fun <T : Comparable<T>> Sequence<T>.toMutableSortedListFromPreSorted(): MutableSortedList<T> =
@@ -25,10 +16,6 @@ fun <T : Comparable<T>> Sequence<T>.toMutableSortedListFromPreSorted(): MutableS
 
 fun <T : Comparable<T>> Iterable<T>.toMutableSortedListFromPreSorted(): MutableSortedList<T> =
     DelegatedSortedList(delegate = toMutableList())
-
-fun <T : Comparable<T>> List<T>.toMutableSortedListFromPreSorted(): MutableSortedList<T> =
-    asIterable().toMutableSortedListFromPreSorted()
-
 
 fun <T : Comparable<T>> Array<T>.toMutableSortedList(): MutableSortedList<T> =
     asIterable().toMutableSortedList()
@@ -46,9 +33,6 @@ fun <T : Comparable<T>> Sequence<T>.toSortedListFromPreSorted(): SortedList<T> =
 fun <T : Comparable<T>> Iterable<T>.toSortedListFromPreSorted(): SortedList<T> =
     DelegatedSortedList(delegate = toMutableList())
 
-fun <T : Comparable<T>> List<T>.toSortedListFromPreSorted(): SortedList<T> =
-    asIterable().toSortedListFromPreSorted()
-
 
 fun <T : Comparable<T>> Array<T>.toSortedList(): SortedList<T> =
     asIterable().toSortedList()
@@ -58,6 +42,10 @@ fun <T : Comparable<T>> Sequence<T>.toSortedList(): SortedList<T> =
 
 fun <T : Comparable<T>> Iterable<T>.toSortedList(): SortedList<T> =
     DelegatedSortedList(initial = this)
+
+inline fun <T : Comparable<T>, R : Comparable<R>> SortedList<T>.searchBy(
+    key: R, crossinline selector: (T) -> R,
+): T? = getOrNull(binarySearchBy(key = key, selector = selector))
 
 /**
  * Similar to [kotlin.collections.slice] but unsafe.
@@ -83,30 +71,37 @@ inline fun <reified T> Array<T>.fastSlice(from: Int, toExclusive: Int): Array<T>
         this@fastSlice[it + from]
     }
 
+inline fun <T, R : Comparable<R>> Sequence<T>.mapSorted(map: (T) -> R): SortedList<R> =
+    asIterable().mapSorted(map)
+
 
 inline fun <T, R : Comparable<R>> Iterable<T>.mapSorted(map: (T) -> R): SortedList<R> =
     DelegatedSortedList(map(map))
 
 inline fun <reified T> Sequence<T>.toSizedArray(i: Int): Array<T> {
     val iter = iterator()
-    return Array(i) {
-        iter.next()
-    }
+    return Array(i) { iter.next() }
 }
 
 inline fun <reified T> Iterable<T>.toSizedArray(i: Int): Array<T> {
     val iter = iterator()
-    return Array(i) {
-        iter.next()
-    }
+    return Array(i) { iter.next() }
 }
 
-inline fun <T, reified R> List<T>.mapToArray(
-    transform: (T) -> R
-): Array<R> =
-    Array(size) {
-        transform(this[it])
+inline fun <T, reified R> List<T>.mapToArray(transform: (T) -> R): Array<R> {
+    contract {
+        callsInPlace(transform, InvocationKind.UNKNOWN)
     }
+    return Array(size) { transform(this[it]) }
+}
+
+inline fun <T, reified R> Array<out T>.mapToArray(transform: (T) -> R): Array<R> {
+    contract {
+        callsInPlace(transform, InvocationKind.UNKNOWN)
+    }
+    return Array(size) { transform(this[it]) }
+}
+
 
 inline fun <reified T> Array<out T>.fastPrefixAdd(prefix: T): Array<T> {
     val result = Array(size + 1) {
@@ -116,76 +111,64 @@ inline fun <reified T> Array<out T>.fastPrefixAdd(prefix: T): Array<T> {
     return result
 }
 
-inline fun <T, reified R> Array<out T>.mapToArray(
-    transform: (T) -> R
-): Array<R> =
-    Array(size) {
-        transform(this[it])
-    }
-
-inline fun <T, reified R> Array<out T>.mapAndPrefixAdd(
-    transform: (T) -> R, toAdd: T
-): Array<R> {
+inline fun <T, reified R> Array<out T>.mapAndPrefixAdd(transform: (T) -> R, toAdd: T): Array<R> {
     contract {
         callsInPlace(transform, kind = InvocationKind.AT_LEAST_ONCE)
     }
-    val result = Array(size + 1) {
-        transform(this[(it + size - 1) % size])
-    }
+    val result = Array(size + 1) { transform(this[(it + size - 1) % size]) }
     result[0] = transform(toAdd)
     return result
 }
 
-inline fun <T, reified R> Array<out T>.mapAndSuffixAdd(
-    transform: (T) -> R, toAdd: T
-): Array<R> {
+inline fun <T, reified R> Array<out T>.mapAndSuffixAdd(transform: (T) -> R, toAdd: T): Array<R> {
     contract {
         callsInPlace(transform, kind = InvocationKind.AT_LEAST_ONCE)
     }
-    val result = Array(size + 1) {
-        transform(this[it % size])
-    }
+    val result = Array(size + 1) { transform(this[it % size]) }
     result[size] = transform(toAdd)
     return result
 }
 
 
-fun <T> List<T>.filterByIndex(
-    function: (Int) -> Boolean
-): List<T> {
+inline fun <T> List<T>.filterByIndex(predicate: (Int) -> Boolean): List<T> {
+    contract {
+        callsInPlace(predicate, InvocationKind.UNKNOWN)
+    }
     val mutList = ArrayList<T>(size / 2)
-    var i = 0
-    while (i < size) {
-        if (function(i)) {
-            mutList += this[i]
+    forEachIndexed { i, elem ->
+        if (predicate(i)) {
+            mutList += elem
         }
-        i++
     }
     return mutList
 }
 
-fun <T> Iterable<T>.filterByIndex(
-    function: (Int) -> Boolean
-): List<T> =
-    iterator().filterByIndex(function)
+inline fun <T> Sequence<T>.filterByIndex(predicate: (Int) -> Boolean): List<T> =
+    asIterable().filterByIndex(predicate)
 
-fun <T> Iterator<T>.filterByIndex(
-    function: (Int) -> Boolean
-): List<T> {
-    val mutList = mutableListOf<T>()
-    var i = 0
-    while (hasNext()) {
-        if (function(i)) {
-            mutList += next()
-        }
-        i++
+
+inline fun <T> Iterable<T>.filterByIndex(predicate: (Int) -> Boolean): List<T> {
+    contract {
+        callsInPlace(predicate, InvocationKind.UNKNOWN)
     }
-    return mutList
+    return with(iterator()) {
+        val mutList = mutableListOf<T>()
+        var i = 0
+        while (hasNext()) {
+            if (predicate(i)) {
+                mutList += next()
+            }
+            i++
+        }
+        mutList
+    }
 }
 
-fun <E> MutableIterable<E>.removeByUnique(
-    predicate: (E) -> Boolean
-): Boolean {
+
+inline fun <E> MutableIterable<E>.removeByUnique(predicate: (E) -> Boolean): Boolean {
+    contract {
+        callsInPlace(predicate, InvocationKind.UNKNOWN)
+    }
     val it = iterator()
     while (it.hasNext()) {
         if (predicate(it.next())) {
@@ -197,88 +180,64 @@ fun <E> MutableIterable<E>.removeByUnique(
 }
 
 
-fun <T> Sequence<T>.filterByIndex(
-    function: (Int) -> Boolean
-): List<T> =
-    iterator().filterByIndex(function)
-
-
-inline fun <T, R> Collection<T>.mapMutableList(
-    map: (T) -> R
-): MutableList<R> =
-    ArrayList<R>(size).also { al ->
-        forEach {
-            al += map(it)
-        }
+inline fun <T, R> Collection<T>.mapMutableList(map: (T) -> R): MutableList<R> {
+    contract {
+        callsInPlace(map, InvocationKind.UNKNOWN)
     }
+    val list = ArrayList<R>(size)
+    forEach { list += map(it) }
+    return list
+}
 
-inline fun <T, R> Collection<T>.mapMutableSet(
-    map: (T) -> R
-): MutableSet<R> =
-    LinkedHashSet<R>(size).also { lhs ->
-        forEach {
-            lhs += map(it)
-        }
+inline fun <T, R> Collection<T>.mapMutableSet(map: (T) -> R): MutableSet<R> {
+    contract {
+        callsInPlace(map, InvocationKind.UNKNOWN)
     }
+    val set = LinkedHashSet<R>(size)
+    forEach { set += map(it) }
+    return set
+}
 
-inline fun <T, R, S> Map<T, R>.mapMutable(
-    map: (R) -> S
-): MutableMap<T, S> =
-    LinkedHashMap<T, S>(size).also { lhm ->
-        forEach {
-            lhm[it.key] = map(it.value)
-        }
+inline fun <T, R, S> Map<T, R>.mapMutable(map: (R) -> S): MutableMap<T, S> {
+    contract {
+        callsInPlace(map, InvocationKind.UNKNOWN)
     }
+    val hashMap = LinkedHashMap<T, S>(size)
 
-
-inline fun <T, R> Collection<T>.mapToSet(
-    map: (T) -> R
-): Set<R> =
-    LinkedHashSet<R>(size).also { lhs ->
-        forEach {
-            lhs += map(it)
-        }
+    forEach {
+        hashMap[it.key] = map(it.value)
     }
-
-inline fun <T, R> Collection<T>.mapToSortedSet(
-    map: (T) -> R
-): SortedSet<R> =
-    mapTo(TreeSet()) {
-        map(it)
-    }
+    return hashMap
+}
 
 
-inline fun <T> Collection<T>.copy(
-    clone: (T) -> T
-): List<T> =
+inline fun <T, R> Collection<T>.mapToSet(map: (T) -> R): Set<R> =
+    mapMutableSet(map)
+
+
+inline fun <T> Collection<T>.copy(clone: (T) -> T): List<T> =
     map(clone)
 
-inline fun <T> Collection<T>.copyMutableList(
-    clone: (T) -> T
-): MutableList<T> =
+inline fun <T> Collection<T>.copyMutableList(clone: (T) -> T): MutableList<T> =
     mapMutableList(clone)
 
-inline fun <T> Collection<T>.copySet(
-    clone: (T) -> T
-): Set<T> =
+inline fun <T> Collection<T>.copySet(clone: (T) -> T): Set<T> =
     mapToSet(clone)
 
-inline fun <T> Collection<T>.copyMutableSet(
-    clone: (T) -> T
-): MutableSet<T> =
+inline fun <T> Collection<T>.copyMutableSet(clone: (T) -> T): MutableSet<T> =
     mapMutableSet(clone)
 
-inline fun <T> Collection<T>.copySortedSet(
-    clone: (T) -> T
-): SortedSet<T> =
-    mapToSortedSet(clone)
-
-inline fun <T : Comparable<T>> Collection<T>.copySortedList(
-    clone: (T) -> T
-): SortedList<T> =
+inline fun <T : Comparable<T>> Collection<T>.copySortedList(clone: (T) -> T): SortedList<T> =
     map(clone).toSortedListFromPreSorted()
 
 inline fun <T : Comparable<T>> Collection<T>.copyMutableSortedList(
-    clone: (T) -> T
+    clone: (T) -> T,
 ): MutableSortedList<T> =
     map(clone).toMutableSortedListFromPreSorted()
+
+/**
+ * If the provided boolean is true, execute the block and return true.
+ * Otherwise short-circuits immediately.
+ */
+inline infix fun Boolean.andDo(block: () -> Unit): Boolean =
+    this && true.also { block() }

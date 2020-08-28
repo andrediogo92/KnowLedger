@@ -7,9 +7,8 @@ package org.knowledger.collections
  * Collections are removed by single removing each element.
  */
 class DelegatedSortedList<E : Comparable<E>> internal constructor(
-    private val delegate: MutableList<E>
-) : MutableSortedList<E>,
-    MutableList<E> by delegate {
+    private val delegate: MutableList<E>,
+) : MutableSortedList<E>, MutableList<E> by delegate {
     constructor() : this(mutableListOf())
 
     constructor(initial: Iterable<E>) : this() {
@@ -18,13 +17,12 @@ class DelegatedSortedList<E : Comparable<E>> internal constructor(
 
     override fun add(element: E): Boolean {
         val insertionIndex: Int = delegate.binarySearch(element)
-        return if (insertionIndex < 0) {
+        if (insertionIndex < 0) {
             //Invert the inverted insertion point
             delegate.add(-insertionIndex - 1, element)
-            true
-        } else {
-            false
+            return true
         }
+        return false
     }
 
     override fun add(index: Int, element: E) {
@@ -45,38 +43,33 @@ class DelegatedSortedList<E : Comparable<E>> internal constructor(
 
     override fun addWithIndex(element: E): Int {
         val insertionIndex: Int = delegate.binarySearch(element)
-        return if (insertionIndex < 0) {
+        if (insertionIndex < 0) {
             //Invert the inverted insertion point
             delegate.add(-insertionIndex - 1, element)
-            -insertionIndex - 1
-        } else {
-            -1
+            return -insertionIndex - 1
         }
+        return -1
     }
 
     override operator fun plus(list: SortedList<E>): DelegatedSortedList<E> =
-        DelegatedSortedList(delegate).apply {
-            addAll(list)
-        }
+        DelegatedSortedList(delegate).apply { addAll(list) }
 
     override fun remove(element: E): Boolean {
         val removeIndex: Int = delegate.binarySearch(element)
-        return if (removeIndex >= 0) {
+        if (removeIndex >= 0) {
             delegate.removeAt(removeIndex)
-            true
-        } else {
-            false
+            return true
         }
+        return false
     }
 
     override fun removeWithIndex(element: E): Int {
         val removeIndex = delegate.binarySearch(element)
-        return if (removeIndex >= 0) {
+        if (removeIndex >= 0) {
             delegate.removeAt(removeIndex)
-            removeIndex
-        } else {
-            -1
+            return removeIndex
         }
+        return -1
     }
 
     override fun removeAll(elements: Collection<E>): Boolean =
@@ -84,10 +77,6 @@ class DelegatedSortedList<E : Comparable<E>> internal constructor(
 
     override operator fun minus(list: SortedList<E>): DelegatedSortedList<E> =
         apply { removeAll(list) }
-
-    override operator fun get(index: Int): E {
-        return delegate[index]
-    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -108,13 +97,22 @@ class DelegatedSortedList<E : Comparable<E>> internal constructor(
         delegate.binarySearch(element).let { index ->
             if (index >= 0) {
                 delegate[index] = element
-                true
-            } else false
+                return true
+            }
+            false
         }
 
-    override fun replaceAt(index: Int, element: E): Boolean =
-        if (delegate[index] == element) {
+    override fun replaceAt(index: Int, element: E): Boolean {
+        if (index < 0) return false
+        val lower = maxOf(0, index - 1)
+        val upper = minOf(index + 1, size - 1)
+        if (delegate[index] != element &&
+            (lower == index || delegate[lower] < delegate[index]) &&
+            (upper == index || delegate[upper] > delegate[index])
+        ) {
             delegate[index] = element
-            true
-        } else false
+            return true
+        }
+        return false
+    }
 }
