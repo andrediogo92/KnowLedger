@@ -14,9 +14,7 @@ class TestRandom {
         randomByteArray(size).decodeToString()
 
     fun randomStrings(size: Int): Sequence<String> =
-        generateSequence {
-            randomByteArray(size).decodeToString()
-        }
+        generateSequence { randomByteArray(size).decodeToString() }
 
     fun randomHash(hashers: Hashers = defaultHasher): Hash =
         hashers.applyHash(randomByteArray(hashers.hashSize))

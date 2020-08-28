@@ -3,8 +3,10 @@
 package org.knowledger.testing.ledger
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
+import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
 import org.knowledger.ledger.core.serial.HashSerializer
@@ -19,23 +21,19 @@ data class RandomData(
     val randomHashes: List<Hash>,
     val index: Long = random.randomLong()
 ) : LedgerData, Comparable<RandomData> {
-    constructor(
-        stringFactor: Int, size: Int,
-        index: Long = random.randomLong()
-    ) : this(
+    constructor(stringFactor: Int, size: Int, index: Long = random.randomLong()) : this(
         random.randomLongs().take(size).toList(),
-        random.randomStrings(stringFactor).take(size).toList(),
+        random.randomByteArrays(stringFactor).map(ByteArray::base64Encoded).take(size).toList(),
         random.random256Hashes().take(size).toList(), index
     )
 
-    override fun clone(): LedgerData =
-        copy()
+    override fun clone(): LedgerData = copy()
 
-    override fun calculateDiff(previous: SelfInterval): BigDecimal =
-        BigDecimal.ONE
+    override fun calculateDiff(previous: SelfInterval): BigDecimal = BigDecimal.ONE
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        ByteArray(0)
+        encoder.encodeToByteArray(serializer(), this)
 
     override fun compareTo(other: RandomData): Int =
         index.compareTo(other.index)

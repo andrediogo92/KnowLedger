@@ -10,8 +10,7 @@ typealias DataGenerator = () -> LedgerData
 val random: TestRandom = TestRandom()
 val defaultHasher: Hashers = Hashers.DEFAULT_HASHER
 
-fun randomData(): LedgerData =
-    RandomData(5, 5)
+fun randomData(): LedgerData = RandomData(15, 15)
 
 fun applyHashInPairs(hashers: Hashers, hashes: Array<Hash>): Hash {
     var previousHashes = hashes
@@ -20,23 +19,17 @@ fun applyHashInPairs(hashers: Hashers, hashes: Array<Hash>): Hash {
     while (levelIndex > 2) {
         if (levelIndex % 2 == 0) {
             levelIndex /= 2
-            newHashes = Array(levelIndex) {
-                hashers.applyHash(
-                    previousHashes[it * 2] + previousHashes[it * 2 + 1]
-                )
+            newHashes = Array(levelIndex) { index ->
+                hashers.applyHash(previousHashes[index * 2] + previousHashes[index * 2 + 1])
             }
         } else {
             levelIndex /= 2
             levelIndex++
-            newHashes = Array(levelIndex) {
-                if (it != levelIndex - 1) {
-                    hashers.applyHash(
-                        previousHashes[it * 2] + previousHashes[it * 2 + 1]
-                    )
+            newHashes = Array(levelIndex) { index ->
+                if (index != levelIndex - 1) {
+                    hashers.applyHash(previousHashes[index * 2] + previousHashes[index * 2 + 1])
                 } else {
-                    hashers.applyHash(
-                        previousHashes[it * 2] + previousHashes[it * 2]
-                    )
+                    hashers.applyHash(previousHashes[index * 2] + previousHashes[index * 2])
                 }
             }
         }

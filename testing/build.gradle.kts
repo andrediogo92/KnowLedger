@@ -7,6 +7,7 @@ serialPlugin {
     packageName = "org.knowledger.ledger.testing"
     module = "testing"
     requiresOptIn = true
+    experimentalContracts = true
 }
 
 dependencies {
