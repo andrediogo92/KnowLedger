@@ -2,14 +2,13 @@ package org.knowledger.ledger.storage.serial
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialFormat
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.StringFormat
-import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonConfiguration
-import kotlinx.serialization.modules.SerialModule
+import kotlinx.serialization.modules.SerializersModule
 import org.knowledger.ledger.results.Failable
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.err
@@ -17,30 +16,28 @@ import org.knowledger.ledger.results.ok
 import org.knowledger.ledger.storage.results.deadCode
 import org.knowledger.ledger.results.Failure as CoreFailure
 
+@OptIn(ExperimentalSerializationApi::class)
 sealed class LedgerSerializer {
 
-    data class Text(
-        val serializer: StringFormat
-    ) : LedgerSerializer(), SerializableAs<String> {
+    data class Text(val serializer: StringFormat) : LedgerSerializer(), SerializableAs<String> {
         override fun <R> encode(strategy: SerializationStrategy<R>, element: R): String =
-            serializer.stringify(strategy, element)
+            serializer.encodeToString(strategy, element)
 
         override fun <R> decode(strategy: DeserializationStrategy<R>, element: String): R =
-            serializer.parse(strategy, element)
+            serializer.decodeFromString(strategy, element)
     }
 
-    data class Binary(
-        val serializer: BinaryFormat
-    ) : LedgerSerializer(), SerializableAs<ByteArray> {
+    data class Binary(val serializer: BinaryFormat) : LedgerSerializer(),
+                                                      SerializableAs<ByteArray> {
         override fun <R> encode(strategy: SerializationStrategy<R>, element: R): ByteArray =
-            serializer.dump(strategy, element)
+            serializer.encodeToByteArray(strategy, element)
 
         override fun <R> decode(strategy: DeserializationStrategy<R>, element: ByteArray): R =
-            serializer.load(strategy, element)
+            serializer.decodeFromByteArray(strategy, element)
     }
 
     sealed class Failure : CoreFailure {
-        class NoEncoderSupplied(module: SerialModule?, encoder: SerialFormat?) : Failure() {
+        class NoEncoderSupplied(module: SerializersModule?, encoder: SerialFormat?) : Failure() {
             override val failable: Failable =
                 Failable.LightFailure(
                     "Module or Encoder not supplied: Module -> $module, Encoder -> $encoder"
@@ -49,52 +46,49 @@ sealed class LedgerSerializer {
     }
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 class LedgerTextSerializerBuilder {
     var encoder: StringFormat? = null
-    var prettyPrint: Boolean = false
-    var module: SerialModule? = null
+    var shouldPrettyPrint: Boolean = false
+    var module: SerializersModule? = null
 
-    @OptIn(UnstableDefault::class)
     fun build(): Outcome<LedgerSerializer.Text, LedgerSerializer.Failure> =
         when {
             module != null && encoder == null -> {
-                encoder = Json(
-                    configuration = JsonConfiguration(
-                        prettyPrint = prettyPrint
-                    ), context = module as SerialModule
-                )
+                encoder = Json {
+                    prettyPrint = shouldPrettyPrint
+                    serializersModule = module as SerializersModule
+                }
+
                 LedgerSerializer.Text(encoder!!).ok()
             }
-            module == null && encoder == null ->
-                LedgerSerializer.Failure.NoEncoderSupplied(
-                    module, encoder
-                ).err()
             encoder != null ->
                 LedgerSerializer.Text(encoder!!).ok()
+            module == null && encoder == null ->
+                LedgerSerializer.Failure.NoEncoderSupplied(module, encoder).err()
             else -> deadCode()
         }
 }
 
 
+@OptIn(ExperimentalSerializationApi::class)
 class LedgerBinarySerializerBuilder {
     var encoder: BinaryFormat? = null
-    var module: SerialModule? = null
+    var module: SerializersModule? = null
 
     fun build(): Outcome<LedgerSerializer.Binary, LedgerSerializer.Failure> =
         when {
             module != null && encoder == null -> {
-                encoder = Cbor(
-                    encodeDefaults = false,
-                    context = module as SerialModule
-                )
+                encoder = Cbor {
+                    encodeDefaults = false
+                    serializersModule = module as SerializersModule
+                }
                 LedgerSerializer.Binary(encoder!!).ok()
             }
-            module == null && encoder == null ->
-                LedgerSerializer.Failure.NoEncoderSupplied(
-                    module, encoder
-                ).err()
             encoder != null ->
                 LedgerSerializer.Binary(encoder!!).ok()
+            module == null && encoder == null ->
+                LedgerSerializer.Failure.NoEncoderSupplied(module, encoder).err()
             else -> deadCode()
         }
 }

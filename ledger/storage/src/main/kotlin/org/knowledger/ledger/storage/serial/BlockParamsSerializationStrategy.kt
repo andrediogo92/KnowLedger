@@ -1,8 +1,8 @@
 package org.knowledger.ledger.storage.serial
 
-import kotlinx.serialization.Encoder
-import kotlinx.serialization.SerialDescriptor
 import kotlinx.serialization.SerializationStrategy
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Encoder
 import org.knowledger.ledger.storage.BlockParams
 import org.knowledger.ledger.storage.config.block.ImmutableBlockParams
 import org.knowledger.ledger.storage.immutableCopy

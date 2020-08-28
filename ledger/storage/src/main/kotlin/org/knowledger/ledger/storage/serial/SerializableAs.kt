@@ -2,7 +2,7 @@ package org.knowledger.ledger.storage.serial
 
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
-import kotlinx.serialization.builtins.list
+import kotlinx.serialization.builtins.ListSerializer
 import org.knowledger.collections.SortedList
 import org.knowledger.ledger.crypto.storage.ImmutableMerkleTree
 import org.knowledger.ledger.storage.block.ImmutableBlock
@@ -38,7 +38,7 @@ interface SerializableAs<T> {
         encode(SortedListSerializer(ImmutableTransaction.serializer()), transactions)
 
     fun encodeTransactions(transactions: Iterable<ImmutableTransaction>): T =
-        encode(ImmutableTransaction.serializer().list, transactions.toList())
+        encode(ListSerializer(ImmutableTransaction.serializer()), transactions.toList())
 
     fun encodeWitness(witness: ImmutableWitness): T =
         encode(ImmutableWitness.serializer(), witness)
@@ -69,7 +69,7 @@ interface SerializableAs<T> {
         )
 
     fun decodeTransactions(transactions: T): Iterable<ImmutableTransaction> =
-        decode(ImmutableTransaction.serializer().list, transactions)
+        decode(ListSerializer(ImmutableTransaction.serializer()), transactions)
 
     fun decodeWitness(witness: T): ImmutableWitness =
         decode(ImmutableWitness.serializer(), witness)
