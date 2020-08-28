@@ -17,6 +17,7 @@ object EncodedPublicKeySerializer : KSerializer<EncodedPublicKey> {
     override fun deserialize(decoder: Decoder): EncodedPublicKey =
         EncodedPublicKey(decoder.decodeString().base64Decoded())
 
-    override fun serialize(encoder: Encoder, value: EncodedPublicKey) =
+    override fun serialize(encoder: Encoder, value: EncodedPublicKey) {
         encoder.encodeString(value.base64Encoded())
+    }
 }

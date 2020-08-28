@@ -1,7 +1,6 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package org.knowledger.ledger.crypto.serial
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
@@ -16,6 +15,7 @@ import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.crypto.hash.NoSuchHasherRegistered
 import kotlin.properties.Delegates
 
+@OptIn(ExperimentalSerializationApi::class)
 object HashAlgorithmSerializer : KSerializer<Hashers> {
     override val descriptor: SerialDescriptor =
         buildClassSerialDescriptor("HashAlgorithm") {
@@ -36,8 +36,9 @@ object HashAlgorithmSerializer : KSerializer<Hashers> {
                     1 -> algorithm = decodeStringElement(descriptor, i)
                 }
             }
-            Hashers.checkAlgorithms(hashSize, algorithm) ?: throw NoSuchHasherRegistered(hashSize,
-                                                                                         algorithm)
+            Hashers.checkAlgorithms(
+                hashSize, algorithm
+            ) ?: throw NoSuchHasherRegistered(hashSize, algorithm)
         }
 
     override fun serialize(encoder: Encoder, value: Hashers) {

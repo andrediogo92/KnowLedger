@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package org.knowledger.ledger.crypto.serial
 
 import kotlinx.serialization.KSerializer
@@ -19,6 +17,7 @@ object EncodedPrivateKeySerializer : KSerializer<EncodedPrivateKey> {
     override fun deserialize(decoder: Decoder): EncodedPrivateKey =
         EncodedPrivateKey(decoder.decodeString().base64Decoded())
 
-    override fun serialize(encoder: Encoder, value: EncodedPrivateKey) =
+    override fun serialize(encoder: Encoder, value: EncodedPrivateKey) {
         encoder.encodeString(value.base64Encoded())
+    }
 }

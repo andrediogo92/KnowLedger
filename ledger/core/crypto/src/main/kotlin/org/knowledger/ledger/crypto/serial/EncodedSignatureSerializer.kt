@@ -17,6 +17,7 @@ object EncodedSignatureSerializer : KSerializer<EncodedSignature> {
     override fun deserialize(decoder: Decoder): EncodedSignature =
         EncodedSignature(decoder.decodeString().base64Decoded())
 
-    override fun serialize(encoder: Encoder, value: EncodedSignature) =
+    override fun serialize(encoder: Encoder, value: EncodedSignature) {
         encoder.encodeString(value.base64Encoded())
+    }
 }
