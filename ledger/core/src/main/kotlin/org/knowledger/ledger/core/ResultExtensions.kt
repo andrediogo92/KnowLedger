@@ -5,10 +5,7 @@ import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.tryOrConvertToFailure
 
 inline fun <T> tryOrDataUnknownFailure(
-    function: () -> Outcome<T, DataFailure>
-): Outcome<T, DataFailure> =
-    tryOrConvertToFailure(function) { exception ->
-        DataFailure.UnknownFailure(
-            exception.message ?: "", exception
-        )
-    }
+    function: () -> Outcome<T, DataFailure>,
+): Outcome<T, DataFailure> = tryOrConvertToFailure(function) { exception ->
+    DataFailure.UnknownFailure(exception.message ?: "", exception)
+}

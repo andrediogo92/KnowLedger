@@ -18,31 +18,25 @@ import org.knowledger.ledger.results.err
  * The hashed id is based on the class name extracted via reflection.
  */
 abstract class AbstractStorageAdapter<T : LedgerData>(
-    val clazz: Class<out T>, hashers: Hashers
+    val clazz: Class<out T>, hashers: Hashers,
 ) : StorageAdapter<T> {
-    override val id: String =
-        clazz.classDigest(hashers).base64Encoded()
+    override val id: String = clazz.classDigest(hashers).base64Encoded()
 
     abstract val serializer: KSerializer<T>
 
     protected inline fun <T : LedgerData> commonLoad(
         document: StorageElement, tName: String,
-        loader: StorageElement.() -> Outcome<T, DataFailure>
-    ): Outcome<T, DataFailure> =
-        tryOrDataUnknownFailure {
-            val name = document.schema
-            if (name != null) {
-                if (tName == name) {
-                    loader(document)
-                } else {
-                    DataFailure.UnexpectedClass(
-                        "Got document with unexpected class: $name"
-                    ).err()
-                }
+        loader: StorageElement.() -> Outcome<T, DataFailure>,
+    ): Outcome<T, DataFailure> = tryOrDataUnknownFailure {
+        val name = document.schema
+        if (name != null) {
+            if (tName == name) {
+                loader(document)
             } else {
-                DataFailure.NonRegisteredSchema(
-                    "Schema not existent for: ${document.json}"
-                ).err()
+                DataFailure.UnexpectedClass("Got document with unexpected class: $name").err()
             }
+        } else {
+            DataFailure.NonRegisteredSchema("Schema not existent for: ${document.json}").err()
         }
+    }
 }

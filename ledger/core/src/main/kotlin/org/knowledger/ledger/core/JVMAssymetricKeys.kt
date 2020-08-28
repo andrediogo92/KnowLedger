@@ -1,24 +1,21 @@
-@file:Suppress("EXPERIMENTAL_API_USAGE")
-
 package org.knowledger.ledger.core
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import org.knowledger.ledger.core.data.HashSerializable
 import org.knowledger.ledger.crypto.EncodedSignature
 import java.security.PrivateKey
 import java.security.Signature
 
-internal val dsa: Signature =
-    Signature.getInstance("ECDSA", "BC")
+internal val dsa: Signature = Signature.getInstance("ECDSA", "BC")
 
 
 /**
  * Signs the [data]'s byte encoding using the [encoder].
  * Returns the generated signature as a [ByteArray].
  */
-fun PrivateKey.generateSignature(
-    data: HashSerializable, encoder: BinaryFormat,
-): EncodedSignature =
+@OptIn(ExperimentalSerializationApi::class)
+fun PrivateKey.generateSignature(data: HashSerializable, encoder: BinaryFormat): EncodedSignature =
     applyECDSASig(data.serialize(encoder))
 
 

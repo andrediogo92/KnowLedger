@@ -1,9 +1,9 @@
 @file:UseSerializers(GeoCoordinatesSerializer::class)
-@file:Suppress("EXPERIMENTAL_API_USAGE")
 
 package org.knowledger.ledger.core
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
 import org.knowledger.ledger.core.data.DataCategory
@@ -26,14 +26,13 @@ import java.math.BigDecimal
 data class PhysicalData(
     val millis: Long,
     val coords: GeoCoords,
-    val data: LedgerData
-) : HashSerializable, Cloneable,
-    DataCategory by data, SelfInterval by data,
-    Comparable<PhysicalData>,
-    LedgerContract {
+    val data: LedgerData,
+) : HashSerializable, Cloneable, DataCategory by data, SelfInterval by data,
+    Comparable<PhysicalData>, LedgerContract {
     public override fun clone(): PhysicalData =
         copy(millis = millis, coords = coords, data = data.clone())
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
         encoder.encodeToByteArray(serializer(), this)
 
@@ -42,19 +41,15 @@ data class PhysicalData(
     ) : this(nowUTC().toEpochMilliseconds(), geoCoords, data)
 
     constructor(
-        lat: BigDecimal, lng: BigDecimal,
-        data: LedgerData,
+        lat: BigDecimal, lng: BigDecimal, data: LedgerData,
     ) : this(nowUTC().toEpochMilliseconds(), GeoCoords(lat, lng), data)
 
     constructor(
-        instant: Instant, lat: BigDecimal,
-        lng: BigDecimal, data: LedgerData,
+        instant: Instant, lat: BigDecimal, lng: BigDecimal, data: LedgerData,
     ) : this(instant.toEpochMilliseconds(), GeoCoords(lat, lng), data)
 
     constructor(
-        instant: Instant, lat: BigDecimal,
-        lng: BigDecimal, alt: BigDecimal,
-        data: LedgerData,
+        instant: Instant, lat: BigDecimal, lng: BigDecimal, alt: BigDecimal, data: LedgerData,
     ) : this(instant.toEpochMilliseconds(), GeoCoords(lat, lng, alt), data)
 
     override fun compareTo(other: PhysicalData): Int =
