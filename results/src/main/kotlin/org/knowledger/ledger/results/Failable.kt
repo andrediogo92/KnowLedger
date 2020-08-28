@@ -17,29 +17,20 @@ sealed class Failable {
      * Reserved for direct irrecoverable errors.
      * [HardFailure] cam wrap exceptions.
      */
-    data class HardFailure(
-        override val cause: String,
-        val exception: Exception?
-    ) : Failable()
+    data class HardFailure(override val cause: String, val exception: Exception?) : Failable()
 
     /**
      * Used for recoverable errors.
      */
-    data class LightFailure(
-        override val cause: String
-    ) : Failable()
+    data class LightFailure(override val cause: String) : Failable()
 
     /**
      * Reserved for indirect errors propagated
      * by some internal result.
      * Cause will be prefixed by the [pointOfFailure] supplied.
      */
-    data class PropagatedFailure(
-        val pointOfFailure: String,
-        val inner: Failable
-    ) : Failable() {
-        override val cause: String
-            get() = "$pointOfFailure :>: ${inner.cause}"
+    data class PropagatedFailure(val pointOfFailure: String, val inner: Failable) : Failable() {
+        override val cause: String get() = "$pointOfFailure :>: ${inner.cause}"
 
     }
 }

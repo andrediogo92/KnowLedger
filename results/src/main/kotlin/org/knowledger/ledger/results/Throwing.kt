@@ -7,7 +7,7 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 private class HardFailureException(
-    cause: String, exception: Exception
+    cause: String, exception: Exception,
 ) : Exception(cause, exception) {
     override fun fillInStackTrace(): Throwable = this
 }
@@ -23,8 +23,7 @@ private fun Failable.HardFailure.hardUnwrap(): Exception =
         lightUnwrap()
     }
 
-private fun Failable.lightUnwrap(): Exception =
-    FailureException(cause)
+private fun Failable.lightUnwrap(): Exception = FailureException(cause)
 
 private fun Failable.unwrap(): Exception =
     when (this) {
@@ -35,21 +34,12 @@ private fun Failable.unwrap(): Exception =
 
 private fun Failable.PropagatedFailure.propagateUnwrap(): Exception =
     when (inner) {
-        is Failable.HardFailure -> {
-            if (inner.exception != null) {
-                HardFailureException(cause, inner.exception)
-            } else {
-                lightUnwrap()
-            }
-        }
-        is Failable.PropagatedFailure -> {
-            val extracted = extractException()
-            if (extracted != null) {
-                HardFailureException(cause, extracted)
-            } else {
-                lightUnwrap()
-            }
-        }
+        is Failable.HardFailure -> inner.exception?.let { exception ->
+            HardFailureException(cause, exception)
+        } ?: lightUnwrap()
+        is Failable.PropagatedFailure -> extractException()?.let { exception ->
+            HardFailureException(cause, exception)
+        } ?: lightUnwrap()
         is Failable.LightFailure -> lightUnwrap()
     }
 
@@ -62,8 +52,7 @@ private tailrec fun Failable.PropagatedFailure.extractException(): Exception? =
 
 
 inline fun <T, R : Failure> tryOrConvertToFailure(
-    function: () -> Outcome<T, R>,
-    failureConstructor: (Exception) -> R
+    function: () -> Outcome<T, R>, failureConstructor: (Exception) -> R,
 ): Outcome<T, R> {
     contract {
         callsInPlace(function, InvocationKind.EXACTLY_ONCE)
@@ -71,23 +60,19 @@ inline fun <T, R : Failure> tryOrConvertToFailure(
     }
     return try {
         function()
-    } catch (e: Exception) {
-        failureConstructor(e).err()
+    } catch (exception: Exception) {
+        failureConstructor(exception).err()
     }
 }
 
-fun Failure.unwrap(): Nothing =
-    throw failable.unwrap()
+fun Failure.unwrap(): Nothing = throw failable.unwrap()
 
-fun <T : Failure> Err<T>.unwrapFailure(): Nothing =
-    error.unwrap()
+fun <T : Failure> Err<T>.unwrapFailure(): Nothing = error.unwrap()
 
 fun <T : Any, U : Failure> Outcome<T, U>.unwrapFailure(): T =
-    onFailure { it.unwrap() }.get()!!
+    onFailure(Failure::unwrap).get()!!
 
-inline fun <T : Failable, R : Failure> T.propagate(
-    cons: (String, Failable) -> R
-): R {
+inline fun <T : Failable, R : Failure> T.propagate(cons: (String, Failable) -> R): R {
     contract {
         callsInPlace(cons, InvocationKind.EXACTLY_ONCE)
     }
