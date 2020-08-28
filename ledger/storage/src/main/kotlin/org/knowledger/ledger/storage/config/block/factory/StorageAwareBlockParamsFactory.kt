@@ -4,7 +4,7 @@ import org.knowledger.ledger.storage.BlockParams
 import org.knowledger.ledger.storage.config.block.StorageAwareBlockParamsImpl
 
 internal class StorageAwareBlockParamsFactory(
-    private val factory: BlockParamsFactory = BlockParamsFactoryImpl()
+    private val factory: BlockParamsFactory = BlockParamsFactoryImpl(),
 ) : BlockParamsFactory {
     private fun createSA(blockParams: BlockParams): StorageAwareBlockParamsImpl =
         StorageAwareBlockParamsImpl(blockParams)
