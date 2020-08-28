@@ -1,6 +1,7 @@
 package org.knowledger.ledger.storage.block.header.factory
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.storage.BlockHeader
@@ -9,13 +10,12 @@ import org.knowledger.ledger.storage.MutableBlockHeader
 import org.knowledger.ledger.storage.block.header.StorageAwareBlockHeaderImpl
 import org.knowledger.ledger.storage.block.header.BlockHeader as UnhashedBlockHeader
 
+@OptIn(ExperimentalSerializationApi::class)
 internal class StorageAwareBlockHeaderFactory(
     private val factory: BlockHeaderFactory = HashedBlockHeaderFactory()
 ) : BlockHeaderFactory {
 
-    private fun createSA(
-        blockHeader: MutableBlockHeader
-    ): StorageAwareBlockHeaderImpl =
+    private fun createSA(blockHeader: MutableBlockHeader): StorageAwareBlockHeaderImpl =
         StorageAwareBlockHeaderImpl(blockHeader)
 
     override fun create(
@@ -24,13 +24,11 @@ internal class StorageAwareBlockHeaderFactory(
         createSA(factory.create(blockHeader, hasher, encoder))
 
     override fun create(
-        chainHash: Hash, previousHash: Hash, blockParams: BlockParams,
-        hasher: Hashers, encoder: BinaryFormat, merkleRoot: Hash,
-        seconds: Long, nonce: Long
+        chainHash: Hash, previousHash: Hash, blockParams: BlockParams, hasher: Hashers,
+        encoder: BinaryFormat, merkleRoot: Hash, seconds: Long, nonce: Long,
     ): StorageAwareBlockHeaderImpl = createSA(
         factory.create(
-            chainHash, previousHash, blockParams, hasher,
-            encoder, merkleRoot, seconds, nonce
+            chainHash, previousHash, blockParams, hasher, encoder, merkleRoot, seconds, nonce
         )
     )
 
@@ -38,19 +36,12 @@ internal class StorageAwareBlockHeaderFactory(
         chainHash: Hash, hash: Hash, previousHash: Hash, blockParams: BlockParams,
         merkleRoot: Hash, seconds: Long, nonce: Long
     ): StorageAwareBlockHeaderImpl = createSA(
-        factory.create(
-            chainHash, hash, previousHash, blockParams,
-            merkleRoot, seconds, nonce
-        )
+        factory.create(chainHash, hash, previousHash, blockParams, merkleRoot, seconds, nonce)
     )
 
-    override fun create(
-        blockHeader: BlockHeader
-    ): StorageAwareBlockHeaderImpl =
+    override fun create(blockHeader: BlockHeader): StorageAwareBlockHeaderImpl =
         createSA(factory.create(blockHeader))
 
-    override fun create(
-        other: MutableBlockHeader
-    ): StorageAwareBlockHeaderImpl =
+    override fun create(other: MutableBlockHeader): StorageAwareBlockHeaderImpl =
         createSA(factory.create(other))
 }

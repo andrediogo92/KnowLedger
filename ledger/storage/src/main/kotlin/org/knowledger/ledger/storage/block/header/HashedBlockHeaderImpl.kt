@@ -10,22 +10,17 @@ internal data class HashedBlockHeaderImpl(
     private var _previousHash: Hash,
     override val blockParams: BlockParams,
     private var _seconds: Long,
-    private var _nonce: Long
+    private var _nonce: Long,
 ) : MutableHashedBlockHeader {
-    override val previousHash: Hash
-        get() = _previousHash
+    override val previousHash: Hash get() = _previousHash
 
-    override val hash: Hash
-        get() = _hash
+    override val hash: Hash get() = _hash
 
-    override val merkleRoot: Hash
-        get() = _merkleRoot
+    override val merkleRoot: Hash get() = _merkleRoot
 
-    override val seconds: Long
-        get() = _seconds
+    override val seconds: Long get() = _seconds
 
-    override val nonce: Long
-        get() = _nonce
+    override val nonce: Long get() = _nonce
 
 
     override fun updateHash(hash: Hash) {

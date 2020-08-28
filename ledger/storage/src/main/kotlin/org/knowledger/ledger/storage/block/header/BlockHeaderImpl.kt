@@ -9,7 +9,7 @@ internal data class BlockHeaderImpl(
     override val previousHash: Hash,
     override val blockParams: BlockParams,
     override val seconds: Long,
-    override val nonce: Long
+    override val nonce: Long,
 ) : BlockHeader {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

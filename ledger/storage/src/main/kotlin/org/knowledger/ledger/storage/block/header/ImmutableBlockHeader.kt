@@ -18,5 +18,5 @@ data class ImmutableBlockHeader(
     override val previousHash: Hash,
     override val blockParams: ImmutableBlockParams,
     override val seconds: Long,
-    override val nonce: Long
+    override val nonce: Long,
 ) : HashedBlockHeader
