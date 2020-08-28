@@ -13,9 +13,7 @@ inline fun <T> tryOrLedgerUnknownFailure(
     function: () -> Outcome<T, LedgerFailure>
 ): Outcome<T, LedgerFailure> =
     tryOrConvertToFailure(function) { exception ->
-        LedgerFailure.UnknownFailure(
-            exception.message ?: "", exception
-        )
+        LedgerFailure.UnknownFailure(exception.message ?: "", exception)
     }
 
 
@@ -23,18 +21,14 @@ inline fun <T> tryOrLoadUnknownFailure(
     function: () -> Outcome<T, LoadFailure>
 ): Outcome<T, LoadFailure> =
     tryOrConvertToFailure(function) { exception ->
-        LoadFailure.UnknownFailure(
-            exception.message ?: "", exception
-        )
+        LoadFailure.UnknownFailure(exception.message ?: "", exception)
     }
 
 inline fun <T> tryOrUpdateUnknownFailure(
     function: () -> Outcome<T, UpdateFailure>
 ): Outcome<T, UpdateFailure> =
     tryOrConvertToFailure(function) { exception ->
-        UpdateFailure.UnknownFailure(
-            exception.message ?: "", exception
-        )
+        UpdateFailure.UnknownFailure(exception.message ?: "", exception)
     }
 
 
@@ -42,9 +36,7 @@ inline fun <T> tryOrQueryUnknownFailure(
     function: () -> Outcome<T, QueryFailure>
 ): Outcome<T, QueryFailure> =
     tryOrConvertToFailure(function) { exception ->
-        QueryFailure.UnknownFailure(
-            exception.message ?: "", exception
-        )
+        QueryFailure.UnknownFailure(exception.message ?: "", exception)
     }
 
 /**
