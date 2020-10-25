@@ -1,6 +1,6 @@
 package org.knowledger.testing.logging
 
-import org.knowledger.base64.base64Encoded
+import org.knowledger.encoding.base64.base64Encoded
 import org.tinylog.kotlin.Logger
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract

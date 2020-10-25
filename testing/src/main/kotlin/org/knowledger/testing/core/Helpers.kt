@@ -3,14 +3,11 @@ package org.knowledger.testing.core
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.testing.ledger.RandomData
 
 typealias DataGenerator = () -> LedgerData
 
 val random: TestRandom = TestRandom()
 val defaultHasher: Hashers = Hashers.DEFAULT_HASHER
-
-fun randomData(): LedgerData = RandomData(15, 15)
 
 fun applyHashInPairs(hashers: Hashers, hashes: Array<Hash>): Hash {
     var previousHashes = hashes

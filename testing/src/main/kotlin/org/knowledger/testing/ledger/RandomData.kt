@@ -6,7 +6,7 @@ import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
-import org.knowledger.base64.base64Encoded
+import org.knowledger.encoding.base64.base64Encoded
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.data.SelfInterval
 import org.knowledger.ledger.core.serial.HashSerializer
@@ -19,9 +19,9 @@ data class RandomData(
     val randomLongs: List<Long>,
     val randomStrings: List<String>,
     val randomHashes: List<Hash>,
-    val index: Long = random.randomLong()
+    val index: Long = random.nextLong(),
 ) : LedgerData, Comparable<RandomData> {
-    constructor(stringFactor: Int, size: Int, index: Long = random.randomLong()) : this(
+    constructor(stringFactor: Int, size: Int, index: Long = random.nextLong()) : this(
         random.randomLongs().take(size).toList(),
         random.randomByteArrays(stringFactor).map(ByteArray::base64Encoded).take(size).toList(),
         random.random256Hashes().take(size).toList(), index

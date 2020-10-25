@@ -8,15 +8,13 @@ import kotlinx.serialization.StringFormat
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
-import org.knowledger.base64.base64DecodedToHash
 import org.knowledger.collections.MutableSortedList
 import org.knowledger.collections.mutableSortedListOf
 import org.knowledger.collections.toMutableSortedList
+import org.knowledger.ledger.core.adapters.HashSchemaProvider
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.hash.classDigest
 import org.knowledger.ledger.crypto.service.Identity
-import org.knowledger.ledger.database.adapters.SchemaProvider
 import org.knowledger.ledger.storage.BlockParams
 import org.knowledger.ledger.storage.ChainId
 import org.knowledger.ledger.storage.CoinbaseParams
@@ -37,8 +35,8 @@ import org.knowledger.ledger.storage.transaction.ImmutableTransaction
 import org.knowledger.testing.core.DataGenerator
 import org.knowledger.testing.core.defaultHasher
 import org.knowledger.testing.core.random
-import org.knowledger.testing.core.randomData
 import org.knowledger.testing.ledger.RandomData
+import org.knowledger.testing.ledger.randomData
 import java.math.BigDecimal
 
 fun defaultJson(serializersModule: SerializersModule): StringFormat =
@@ -75,7 +73,7 @@ fun generateBlockParams(
 fun generateCoinbaseParams(
     hashSize: Int = defaultHasher.hashSize, timeIncentive: Long = 5, valueIncentive: Long = 2,
     baseIncentive: Long = 3, dividingThreshold: Long = 100000,
-    formula: Hash = classDigest<DefaultDiff>(Hashers.SHA3512Hasher),
+    formula: Hash = DefaultDiff(defaultHasher).hash,
     factories: Factories = defaultFactories,
 ): CoinbaseParams = factories.coinbaseParamsFactory.create(
     hashSize, timeIncentive, valueIncentive, baseIncentive, dividingThreshold, formula
@@ -88,12 +86,12 @@ fun generateLedgerParams(
     factories.ledgerParamsFactory.create(hashers, recalculationTime, recalculationTrigger)
 
 fun generateChainId(
-    ledgerHash: Hash, adapter: SchemaProvider, factories: Factories = defaultFactories,
+    ledgerHash: Hash, adapter: HashSchemaProvider, factories: Factories = defaultFactories,
     blockParams: BlockParams = generateBlockParams(),
     coinbaseParams: CoinbaseParams = generateCoinbaseParams(),
     hashers: Hashers = defaultHasher, encoder: BinaryFormat = defaultCbor,
 ): ChainId = factories.chainIdFactory.create(
-    adapter.id.base64DecodedToHash(), ledgerHash, hashers, encoder, blockParams, coinbaseParams
+    ledgerHash, adapter.tag, adapter.hash, hashers, encoder, blockParams, coinbaseParams
 )
 
 fun immutableTransactionGenerator(
@@ -107,7 +105,7 @@ internal fun transactionGenerator(
     id: Array<Identity>, factories: Factories = defaultFactories, hashers: Hashers = defaultHasher,
     encoder: BinaryFormat = defaultCbor, generator: DataGenerator = ::randomData,
 ): Sequence<MutableTransaction> = generateSequence {
-    val index = random.randomInt(id.size)
+    val index = random.nextInt(id.size)
     factories.transactionFactory.create(
         id[index].privateKey, id[index].publicKey, PhysicalData(
             GeoCoords(BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.ZERO), generator()
@@ -133,7 +131,7 @@ fun generateXTransactions(
         .take(size).toMutableSortedList()
 
 fun generateBlock(
-    ts: MutableSortedList<MutableTransaction>, ledgerHash: Hash, adapter: SchemaProvider,
+    ts: MutableSortedList<MutableTransaction>, ledgerHash: Hash, adapter: HashSchemaProvider,
     factories: Factories = defaultFactories, hashers: Hashers = defaultHasher,
     encoder: BinaryFormat = defaultCbor,
 ): MutableBlock =
@@ -184,7 +182,7 @@ fun generateBlockWithChain(
         hashers, coinbase.coinbaseHeader, ts.toTypedArray()
     )
     val blockHeader = factories.blockHeaderFactory.create(
-        chainHash, Hash(random.randomByteArray(32)), blockParams, hashers, encoder, merkle.hash
+        chainHash, Hash(random.nextBytes(32)), blockParams, hashers, encoder, merkle.hash
     )
     return factories.blockFactory.create(blockHeader, coinbase, merkle, ts.indexed())
 }

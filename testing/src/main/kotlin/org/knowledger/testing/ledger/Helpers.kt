@@ -1,7 +1,8 @@
 package org.knowledger.testing.ledger
 
 import com.github.michaelbull.result.onFailure
-import org.knowledger.base64.base64Encoded
+import org.knowledger.encoding.base64.base64Encoded
+import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.database.ManagedSession
@@ -94,3 +95,5 @@ fun StringBuilder.appendByLine(toPrint: Collection<String>): StringBuilder =
 
 fun <T, U : Failure> Outcome<T, U>.failOnError(): Outcome<T, U> =
     onFailure(Failure::unwrap)
+
+fun randomData(): LedgerData = RandomData(15, 15)
