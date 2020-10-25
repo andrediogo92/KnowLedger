@@ -1,4 +1,4 @@
-package org.knowledger.ledger.database.orient
+package org.knowledger.database.orient
 
 import com.orientechnologies.orient.core.id.ORID
 import com.orientechnologies.orient.core.metadata.schema.OClass
@@ -21,6 +21,8 @@ import java.math.BigInteger
 data class DocumentElement internal constructor(
     val elem: OElement,
 ) : StorageElement, OElement by elem {
+    override fun clone(): DocumentElement = DocumentElement(elem.copy())
+
     override val identity: StorageID get() = DocumentID(elem.identity)
 
     override val json: String get() = elem.toJSON()

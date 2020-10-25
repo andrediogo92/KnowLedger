@@ -1,4 +1,4 @@
-package org.knowledger.ledger.database.orient
+package org.knowledger.database.orient
 
 import com.orientechnologies.orient.core.db.OrientDB
 import org.knowledger.ledger.database.ManagedDatabase
