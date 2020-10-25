@@ -3,10 +3,21 @@ package org.knowledger.collections
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-fun <T : Comparable<T>> emptySortedList(): SortedList<T> = DelegatedSortedList()
+fun <T> emptySortedList(comparator: Comparator<T>): SortedList<T> =
+    DelegatedSortedList(comparator)
+
+fun <T : Comparable<T>> emptySortedList(): SortedList<T> =
+    emptySortedList { o1, o2 -> o1.compareTo(o2) }
+
+fun <T> mutableSortedListOf(
+    comparator: Comparator<T>, vararg elements: T,
+): MutableSortedList<T> = elements.asIterable().toMutableSortedList(comparator)
 
 fun <T : Comparable<T>> mutableSortedListOf(vararg elements: T): MutableSortedList<T> =
     elements.asIterable().toMutableSortedList()
+
+fun <T> sortedListOf(comparator: Comparator<T>, vararg elements: T): SortedList<T> =
+    elements.asIterable().toSortedList(comparator)
 
 fun <T : Comparable<T>> sortedListOf(vararg elements: T): SortedList<T> =
     elements.asIterable().toSortedList()
@@ -15,7 +26,11 @@ fun <T : Comparable<T>> Sequence<T>.toMutableSortedListFromPreSorted(): MutableS
     asIterable().toMutableSortedListFromPreSorted()
 
 fun <T : Comparable<T>> Iterable<T>.toMutableSortedListFromPreSorted(): MutableSortedList<T> =
-    DelegatedSortedList(delegate = toMutableList())
+    toMutableSortedListFromPreSorted { o1, o2 -> o1.compareTo(o2) }
+
+fun <T : Any> Iterable<T>.toMutableSortedListFromPreSorted(
+    comparator: Comparator<T>,
+): MutableSortedList<T> = DelegatedSortedList(comparator, toMutableList())
 
 fun <T : Comparable<T>> Array<T>.toMutableSortedList(): MutableSortedList<T> =
     asIterable().toMutableSortedList()
@@ -23,15 +38,21 @@ fun <T : Comparable<T>> Array<T>.toMutableSortedList(): MutableSortedList<T> =
 fun <T : Comparable<T>> Sequence<T>.toMutableSortedList(): MutableSortedList<T> =
     asIterable().toMutableSortedList()
 
+fun <T> Iterable<T>.toMutableSortedList(comparator: Comparator<T>): MutableSortedList<T> =
+    DelegatedSortedList(comparator, this)
+
 fun <T : Comparable<T>> Iterable<T>.toMutableSortedList(): MutableSortedList<T> =
-    DelegatedSortedList(initial = this)
+    toMutableSortedList { o1, o2 -> o1.compareTo(o2) }
 
 
 fun <T : Comparable<T>> Sequence<T>.toSortedListFromPreSorted(): SortedList<T> =
     asIterable().toSortedListFromPreSorted()
 
 fun <T : Comparable<T>> Iterable<T>.toSortedListFromPreSorted(): SortedList<T> =
-    DelegatedSortedList(delegate = toMutableList())
+    toSortedListFromPreSorted { o1, o2 -> o1.compareTo(o2) }
+
+fun <T> Iterable<T>.toSortedListFromPreSorted(comparator: Comparator<T>): SortedList<T> =
+    DelegatedSortedList(comparator, toMutableList())
 
 
 fun <T : Comparable<T>> Array<T>.toSortedList(): SortedList<T> =
@@ -41,9 +62,16 @@ fun <T : Comparable<T>> Sequence<T>.toSortedList(): SortedList<T> =
     asIterable().toSortedList()
 
 fun <T : Comparable<T>> Iterable<T>.toSortedList(): SortedList<T> =
-    DelegatedSortedList(initial = this)
+    toSortedList { o1, o2 -> o1.compareTo(o2) }
 
-inline fun <T : Comparable<T>, R : Comparable<R>> SortedList<T>.searchBy(
+fun <T> Iterable<T>.toSortedList(comparator: Comparator<T>): SortedList<T> =
+    DelegatedSortedList(comparator, this)
+
+
+fun <T> SortedList<T>.binarySearch(element: T): Int =
+    binarySearch(element, comparator)
+
+inline fun <T : Comparable<T>, R : Comparable<R>> SortedList<T>.searchAndGet(
     key: R, crossinline selector: (T) -> R,
 ): T? = getOrNull(binarySearchBy(key = key, selector = selector))
 
@@ -76,7 +104,7 @@ inline fun <T, R : Comparable<R>> Sequence<T>.mapSorted(map: (T) -> R): SortedLi
 
 
 inline fun <T, R : Comparable<R>> Iterable<T>.mapSorted(map: (T) -> R): SortedList<R> =
-    DelegatedSortedList(map(map))
+    map(map).toSortedList()
 
 inline fun <reified T> Sequence<T>.toSizedArray(i: Int): Array<T> {
     val iter = iterator()
@@ -103,30 +131,41 @@ inline fun <T, reified R> Array<out T>.mapToArray(transform: (T) -> R): Array<R>
 }
 
 
-inline fun <reified T> Array<out T>.fastPrefixAdd(prefix: T): Array<T> {
-    val result = Array(size + 1) {
-        this[(it + size - 1) % size]
+inline fun <reified T> Array<out T>.fastPrefixAdd(prefix: T): Array<T> =
+    if (isEmpty())
+        arrayOf(prefix)
+    else {
+        val result = Array(size + 1) {
+            this[(it + size - 1) % size]
+        }
+        result[0] = prefix
+        result
     }
-    result[0] = prefix
-    return result
-}
 
 inline fun <T, reified R> Array<out T>.mapAndPrefixAdd(transform: (T) -> R, toAdd: T): Array<R> {
     contract {
         callsInPlace(transform, kind = InvocationKind.AT_LEAST_ONCE)
     }
-    val result = Array(size + 1) { transform(this[(it + size - 1) % size]) }
-    result[0] = transform(toAdd)
-    return result
+    return if (isEmpty()) {
+        arrayOf(transform(toAdd))
+    } else {
+        val result = Array(size + 1) { transform(this[(it + size - 1) % size]) }
+        result[0] = transform(toAdd)
+        result
+    }
 }
 
 inline fun <T, reified R> Array<out T>.mapAndSuffixAdd(transform: (T) -> R, toAdd: T): Array<R> {
     contract {
         callsInPlace(transform, kind = InvocationKind.AT_LEAST_ONCE)
     }
-    val result = Array(size + 1) { transform(this[it % size]) }
-    result[size] = transform(toAdd)
-    return result
+    return if (isEmpty()) {
+        arrayOf(transform(toAdd))
+    } else {
+        val result = Array(size + 1) { transform(this[it % size]) }
+        result[size] = transform(toAdd)
+        result
+    }
 }
 
 
@@ -235,9 +274,3 @@ inline fun <T : Comparable<T>> Collection<T>.copyMutableSortedList(
 ): MutableSortedList<T> =
     map(clone).toMutableSortedListFromPreSorted()
 
-/**
- * If the provided boolean is true, execute the block and return true.
- * Otherwise short-circuits immediately.
- */
-inline infix fun Boolean.andDo(block: () -> Unit): Boolean =
-    this && true.also { block() }
