@@ -7,7 +7,7 @@ import kotlin.experimental.and
 @Suppress("DuplicatedCode")
 val Long.bytes: ByteArray
     get() {
-        val sizeOfByte = Byte.SIZE_BYTES
+        val sizeOfByte = Byte.SIZE_BITS
         val sizeInBytes = Long.SIZE_BYTES / Byte.SIZE_BYTES
         val result = ByteArray(sizeInBytes)
         var l = this
@@ -21,7 +21,7 @@ val Long.bytes: ByteArray
 @Suppress("DuplicatedCode")
 val Int.bytes: ByteArray
     get() {
-        val sizeOfByte = Byte.SIZE_BYTES
+        val sizeOfByte = Byte.SIZE_BITS
         val sizeInBytes = Int.SIZE_BYTES / Byte.SIZE_BYTES
         val result = ByteArray(sizeInBytes)
         var l = this
@@ -53,7 +53,7 @@ val BigDecimal.bytes: ByteArray get() = unscaledValue().toByteArray()
 
 
 fun flattenBytes(byteArrays: Array<ByteArray>, vararg bytes: Byte): ByteArray {
-    val final = ByteArray(byteArrays.sumBy(ByteArray::size) + bytes.size)
+    val final = ByteArray(byteArrays.sumBy { it.size } + bytes.size)
     var into = 0
     byteArrays.forEach {
         it.copyInto(final, into)
@@ -65,18 +65,18 @@ fun flattenBytes(byteArrays: Array<ByteArray>, vararg bytes: Byte): ByteArray {
 
 fun flattenBytes(vararg byteArrays: ByteArray): ByteArray =
     flattenCollectionsAndVarargs(
-        ByteArray(byteArrays.sumBy(ByteArray::size)), null, byteArrays
+        ByteArray(byteArrays.sumBy { it.size }), null, byteArrays
     )
 
 fun flattenBytes(collection: Collection<ByteArray>, vararg byteArrays: ByteArray): ByteArray =
     flattenCollectionsAndVarargs(
-        ByteArray(collection.sumBy(ByteArray::size) + byteArrays.sumBy(ByteArray::size)),
+        ByteArray(collection.sumBy { it.size } + byteArrays.sumBy { it.size }),
         collection.iterator(), byteArrays
     )
 
 fun flattenBytes(collection: Iterable<ByteArray>, vararg byteArrays: ByteArray): ByteArray =
     flattenCollectionsAndVarargs(
-        ByteArray(collection.sumBy(ByteArray::size) + byteArrays.sumBy(ByteArray::size)),
+        ByteArray(collection.sumBy { it.size } + byteArrays.sumBy { it.size }),
         collection.iterator(), byteArrays
     )
 
@@ -84,7 +84,7 @@ fun flattenBytes(collection: Iterable<ByteArray>, vararg byteArrays: ByteArray):
 fun flattenBytes(
     collectionSize: Int, collection: Sequence<ByteArray>, vararg byteArrays: ByteArray,
 ): ByteArray = flattenCollectionsAndVarargs(
-    ByteArray(collectionSize + byteArrays.sumBy(ByteArray::size)),
+    ByteArray(collectionSize + byteArrays.sumBy { it.size }),
     collection.iterator(), byteArrays
 )
 

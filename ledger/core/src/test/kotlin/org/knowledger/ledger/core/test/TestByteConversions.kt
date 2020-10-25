@@ -18,56 +18,33 @@ class TestByteConversions {
         val test33 = 33L
         val test512 = 512L
         val test33564286 = 33564286L
-        val bytes0 = ByteArray(lsize) {
-            0x00
-        }
+        val bytes0 = ByteArray(lsize) { 0x00 }
         val bytes33 = when (lsize) {
             4 -> byteArrayOf(0x00, 0x00, 0x00, 0x21)
-            8 -> byteArrayOf(
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x21
-            )
+            8 -> byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x21)
             16 -> byteArrayOf(
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x21
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x21
             )
-            else -> fail {
-                "Unexpected Long Size: $lsize"
-            }
+            else -> fail { "Unexpected Long Size: $lsize" }
         }
         val bytes512 = when (lsize) {
             4 -> byteArrayOf(0x00, 0x00, 0x02, 0x00)
-            8 -> byteArrayOf(
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x02, 0x00
-            )
+            8 -> byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00)
             16 -> byteArrayOf(
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x02, 0x00
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00
             )
-            else -> fail {
-                "Unexpected Long Size: $lsize"
-            }
+            else -> fail { "Unexpected Long Size: $lsize" }
         }
         val bytes33564286 = when (lsize) {
             4 -> byteArrayOf(0x02, 0x00, 0x26, 0x7E)
-            8 -> byteArrayOf(
-                0x00, 0x00, 0x00, 0x00,
-                0x02, 0x00, 0x26, 0x7E
-            )
+            8 -> byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x26, 0x7E)
             16 -> byteArrayOf(
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x00,
-                0x02, 0x00, 0x26, 0x7E
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x26, 0x7E
             )
-            else -> fail {
-                "Unexpected Long Size: $lsize"
-            }
+            else -> fail { "Unexpected Long Size: $lsize" }
         }
         assertAll {
             assertThat(test0.bytes).containsExactly(*bytes0)
@@ -84,47 +61,24 @@ class TestByteConversions {
         val test33 = 33
         val test512 = 512
         val test64321 = 64321
-        val bytes0 = ByteArray(isize) {
-            0x00
-        }
+        val bytes0 = ByteArray(isize) { 0x00 }
         val bytes33 = when (isize) {
             2 -> byteArrayOf(0x00, 0x21)
-            4 -> byteArrayOf(
-                0x00, 0x00, 0x00, 0x21
-            )
-            8 -> byteArrayOf(
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x00, 0x21
-            )
-            else -> fail {
-                "Unexpected Int Size: $isize"
-            }
+            4 -> byteArrayOf(0x00, 0x00, 0x00, 0x21)
+            8 -> byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x21)
+            else -> fail { "Unexpected Int Size: $isize" }
         }
         val bytes512 = when (isize) {
             2 -> byteArrayOf(0x02, 0x00)
-            4 -> byteArrayOf(
-                0x00, 0x00, 0x02, 0x00
-            )
-            8 -> byteArrayOf(
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0x02, 0x00
-            )
-            else -> fail {
-                "Unexpected Int Size: $isize"
-            }
+            4 -> byteArrayOf(0x00, 0x00, 0x02, 0x00)
+            8 -> byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00)
+            else -> fail { "Unexpected Int Size: $isize" }
         }
         val bytes64321 = when (isize) {
             2 -> byteArrayOf(0xFB.toByte(), 0x41)
-            4 -> byteArrayOf(
-                0x00, 0x00, 0xFB.toByte(), 0x41
-            )
-            8 -> byteArrayOf(
-                0x00, 0x00, 0x00, 0x00,
-                0x00, 0x00, 0xFB.toByte(), 0x41
-            )
-            else -> fail {
-                "Unexpected Int Size: $isize"
-            }
+            4 -> byteArrayOf(0x00, 0x00, 0xFB.toByte(), 0x41)
+            8 -> byteArrayOf(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFB.toByte(), 0x41)
+            else -> fail { "Unexpected Int Size: $isize" }
         }
         assertAll {
             assertThat(test0.bytes).containsExactly(*bytes0)
