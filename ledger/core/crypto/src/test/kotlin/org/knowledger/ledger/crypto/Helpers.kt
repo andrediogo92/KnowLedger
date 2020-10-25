@@ -5,9 +5,9 @@ import assertk.assertions.containsExactly
 import assertk.assertions.isNotEqualTo
 import assertk.assertions.isNotNull
 import assertk.assertions.isTrue
-import org.knowledger.base64.base64Encoded
 import org.knowledger.collections.fastPrefixAdd
 import org.knowledger.collections.mapToArray
+import org.knowledger.encoding.base64.base64Encoded
 import org.knowledger.ledger.crypto.storage.MerkleTree
 import org.knowledger.testing.core.applyHashInPairs
 import org.tinylog.kotlin.Logger

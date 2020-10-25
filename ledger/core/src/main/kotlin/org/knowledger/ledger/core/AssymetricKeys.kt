@@ -3,9 +3,6 @@ package org.knowledger.ledger.core
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.ExperimentalSerializationApi
 import org.knowledger.ledger.core.data.HashSerializable
-import org.knowledger.ledger.core.data.hash.Hash
-import org.knowledger.ledger.core.data.hash.toHexString
-import org.knowledger.ledger.crypto.EncodedKey
 import org.knowledger.ledger.crypto.EncodedPrivateKey
 import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.EncodedSignature
@@ -32,13 +29,4 @@ fun EncodedSignature.verifyECDSASig(publicKey: EncodedPublicKey, data: ByteArray
         initVerify(publicKey.toPublicKey())
         update(data)
         verify(bytes)
-    }
-
-fun EncodedKey.toHexString(): String = bytes.toHexString()
-
-fun EncodedKey.truncatedHexString(size: Int = Hash.TRUNC): String =
-    if (bytes.size > size) {
-        bytes.sliceArray(0 until size).toHexString()
-    } else {
-        bytes.toHexString()
     }

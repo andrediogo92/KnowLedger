@@ -6,8 +6,8 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import org.knowledger.base64.base64Decoded
-import org.knowledger.base64.base64Encoded
+import org.knowledger.encoding.base64.base64Decoded
+import org.knowledger.encoding.base64.base64Encoded
 import org.knowledger.ledger.crypto.EncodedPrivateKey
 
 object EncodedPrivateKeySerializer : KSerializer<EncodedPrivateKey> {

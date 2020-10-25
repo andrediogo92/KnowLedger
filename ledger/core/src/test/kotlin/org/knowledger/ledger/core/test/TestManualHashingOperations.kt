@@ -4,7 +4,7 @@ import assertk.assertThat
 import assertk.assertions.containsExactly
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
-import org.knowledger.base64.base64Encoded
+import org.knowledger.encoding.base64.base64Encoded
 import org.knowledger.ledger.core.flattenBytes
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.testing.core.random
@@ -13,8 +13,8 @@ import org.tinylog.kotlin.Logger
 class TestManualHashingOperations {
     private val hashSize = 16
     private val minBound = 12
-    private val randomHashes = Array(random.randomInt(minBound) + 8) {
-        Hash(random.randomByteArray(hashSize))
+    private val randomHashes = Array(random.nextInt(minBound) + 8) {
+        Hash(random.nextBytes(hashSize))
     }
 
     @Test
@@ -24,14 +24,13 @@ class TestManualHashingOperations {
                 |
                 |Expected: 
                 | 
-                |${randomHashes.joinToString(
-                """
+                |${
+                randomHashes.joinToString(
+                    """
                     |
                     |
                 """.trimMargin()
-            ) {
-                it.bytes.base64Encoded()
-            }
+                ) { it.bytes.base64Encoded() }
             }""".trimMargin()
         }
 
@@ -39,24 +38,12 @@ class TestManualHashingOperations {
             acc + bytes
         }
         val expectedShort = expected.bytes.sliceArray(0 until (minBound / 2 * hashSize))
-        val test = flattenBytes(
-            *randomHashes.map {
-                it.bytes
-            }.toTypedArray()
-        )
+        val test = flattenBytes(*randomHashes.map(Hash::bytes).toTypedArray())
         val test2 = flattenBytes(
-            randomHashes
-                .sliceArray(0 until (minBound / 2 - 1))
-                .map {
-                    it.bytes
-                },
+            randomHashes.sliceArray(0 until (minBound / 2 - 1)).map(Hash::bytes),
             randomHashes[minBound / 2 - 1].bytes
         )
-        val test3 = flattenBytes(
-            randomHashes.map {
-                it.bytes
-            }.toTypedArray()
-        )
+        val test3 = flattenBytes(randomHashes.map(Hash::bytes).toTypedArray())
         assertThat(test.size).isEqualTo(expected.bytes.size)
         assertThat(test2.size).isEqualTo(expectedShort.size)
         assertThat(test3.size).isEqualTo(expected.bytes.size)

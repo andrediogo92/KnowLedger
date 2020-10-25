@@ -26,7 +26,7 @@ class TestMerkleTree {
 
     private val size = 24
     private val base = Array<Hashing>(size) { EmptyHashing() }
-    private val begin7 = random.randomInt(size - 7)
+    private val begin7 = random.nextInt(size - 7)
     private val ts7 = base.sliceArray(begin7 until begin7 + 7)
 
 
@@ -35,7 +35,7 @@ class TestMerkleTree {
         private val primary7 = EmptyHashing()
         private val tree7WithPrimary = factory.create(hashers, primary7, ts7)
 
-        private val begin8 = random.randomInt(size - 8)
+        private val begin8 = random.nextInt(size - 8)
         private val ts8 = base.sliceArray(begin8 until begin8 + 8)
         private val tree8 = factory.create(hashers, ts8)
 
@@ -110,12 +110,12 @@ class TestMerkleTree {
 
     @Nested
     inner class UnbalancedMerkleTree {
-        private val begin5 = random.randomInt(size - 5)
+        private val begin5 = random.nextInt(size - 5)
         private val ts5 = base.sliceArray(begin5 until begin5 + 5)
         private val primary5 = EmptyHashing()
         private val tree5WithPrimary = factory.create(hashers, primary5, ts5)
 
-        private val begin6 = random.randomInt(size - 6)
+        private val begin6 = random.nextInt(size - 6)
         private val ts6 = base.sliceArray(begin6 until begin6 + 6)
         private val tree6 = factory.create(hashers, ts6)
 
@@ -233,7 +233,7 @@ class TestMerkleTree {
 
     @Test
     fun `merkle tree creation with just root`() {
-        val begin = random.randomInt(size - 1)
+        val begin = random.nextInt(size - 1)
 
         val ts = arrayOf(base[begin])
         val tree = factory.create(hashers, ts)

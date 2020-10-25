@@ -1,8 +1,6 @@
 package org.knowledger.ledger.core.data.hash
 
 import org.knowledger.ledger.core.data.ByteEncodable
-import org.knowledger.ledger.core.data.Difficulty
-import java.math.BigInteger
 
 /**
  * Hash symbolizes a **unique identifier** for
@@ -25,9 +23,6 @@ data class Hash(override val bytes: ByteArray) : ByteEncodable {
     override fun hashCode(): Int {
         return bytes.contentHashCode()
     }
-
-    fun toDifficulty(): Difficulty =
-        Difficulty(BigInteger(bytes))
 
     companion object {
         const val TRUNC = 10

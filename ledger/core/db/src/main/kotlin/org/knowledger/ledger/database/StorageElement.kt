@@ -5,8 +5,9 @@ import org.knowledger.ledger.core.data.Payout
 import org.knowledger.ledger.core.data.hash.Hash
 import org.knowledger.ledger.database.adapters.Storable
 
-interface StorageElement :
-    Discardable<StorageElement> {
+interface StorageElement : Cloneable, Discardable<StorageElement> {
+    override fun clone(): StorageElement
+
     val presentProperties: Set<String>
     val schema: String?
     val identity: StorageID

@@ -3,7 +3,7 @@ package org.knowledger.ledger.crypto
 import assertk.assertThat
 import assertk.assertions.containsExactly
 import org.junit.jupiter.api.Test
-import org.knowledger.base64.base64Encoded
+import org.knowledger.encoding.base64.base64Encoded
 import org.knowledger.testing.core.applyHashInPairs
 import org.knowledger.testing.core.defaultHasher
 import org.knowledger.testing.core.random
@@ -13,7 +13,7 @@ import org.tinylog.kotlin.Logger
 class TestHashingPairs {
     private val hashers = defaultHasher
     private val minBound = 12
-    private val randomHashes = Array(random.randomInt(minBound) + 8) { random.randomHash(hashers) }
+    private val randomHashes = Array(random.nextInt(minBound) + 8) { random.randomHash(hashers) }
 
 
     @Test
