@@ -1,15 +1,16 @@
 package org.knowledger.ledger.core.adapters
 
 import kotlinx.serialization.KSerializer
-import org.knowledger.base64.base64Encoded
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.core.tryOrDataUnknownFailure
+import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.crypto.digest.classDigest
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.hash.classDigest
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.err
+import kotlin.reflect.KClass
 
 /**
  * An abstract storage adapter automatically provides a unique hashed
@@ -18,10 +19,9 @@ import org.knowledger.ledger.results.err
  * The hashed id is based on the class name extracted via reflection.
  */
 abstract class AbstractStorageAdapter<T : LedgerData>(
-    val clazz: Class<out T>, hashers: Hashers,
+    val clazz: KClass<out T>, hashers: Hashers,
 ) : StorageAdapter<T> {
-    override val id: String = clazz.classDigest(hashers).base64Encoded()
-
+    override val hash: Hash = clazz.classDigest(hashers)
     abstract val serializer: KSerializer<T>
 
     protected inline fun <T : LedgerData> commonLoad(
