@@ -11,14 +11,14 @@ kotlinDslPluginOptions {
 }
 
 dependencies {
-    val kotlinVersion by extra {
-        "1.4.0"
+    val kotlinVersion: String by extra {
+        "1.4.10"
     }
-//    val dokkaVersion by extra {
-//       "1.4.0-rc"
-//    }
+    compileOnly("org.jetbrains.dokka:dokka-core:$kotlinVersion")
     implementation(kotlin("gradle-plugin", kotlinVersion))
-//    implementation("org.jetbrains.dokka:dokka-gradle-plugin:$dokkaVersion")
+    implementation(kotlin("reflect", kotlinVersion))
+    implementation("org.jetbrains.dokka:dokka-gradle-plugin:$kotlinVersion")
+    // Will apply the plugin to all dokka tasks
     implementation(gradleApi())
     implementation(localGroovy())
 }
