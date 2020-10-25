@@ -1,11 +1,12 @@
 plugins {
     kotlin("jvm")
-    id(Plugins.docs)
+    id(Plugins.base)
 }
 
-docsPlugin {
-    inlineClasses = true
+pluginConfiguration {
+    packageName = "org.knowledger.database.orient"
     module = "ledger/orient"
+    inlineClasses = true
 }
 
 dependencies {

@@ -6,7 +6,7 @@ plugins {
 
 version = "0.1"
 
-basePlugin {
+pluginConfiguration {
     packageName = "org.knowledger.benchmarks"
     module = "benchmarks"
 }

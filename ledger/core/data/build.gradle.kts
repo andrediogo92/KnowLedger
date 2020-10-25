@@ -3,7 +3,7 @@ plugins {
     id(Plugins.serial)
 }
 
-serialPlugin {
+pluginConfiguration {
     packageName = "org.knowledger.ledger.core.data"
     module = "ledger/core/data"
     requiresOptIn = true

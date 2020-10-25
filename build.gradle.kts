@@ -25,8 +25,8 @@ buildscript {
     }
 
     dependencies {
-        classpath(kotlin("noarg", Versions.kotlin))
-        classpath(kotlin("serialization", Versions.kotlin))
+        classpath(kotlin("noarg", Versions.kotlinVersion))
+        classpath(kotlin("serialization", Versions.kotlinVersion))
         classpath(Libs.jmhPlugin)
     }
 
@@ -34,10 +34,10 @@ buildscript {
 
 plugins {
     id("org.jetbrains.kotlin.plugin.noarg") version
-            Versions.kotlin apply
+            Versions.kotlinVersion apply
             false
     id("org.jetbrains.kotlin.plugin.serialization") version
-            Versions.kotlin apply
+            Versions.kotlinVersion apply
             false
 }
 
@@ -57,7 +57,6 @@ allprojects {
             }
 
             content {
-                includeGroup("org.jetbrains.kotlin")
                 includeGroup("org.jetbrains.kotlinx")
                 excludeGroup("com.tilab.jade")
             }

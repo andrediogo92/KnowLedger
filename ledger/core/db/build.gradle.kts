@@ -1,15 +1,15 @@
 plugins {
     kotlin("jvm")
-    id(Plugins.serial)
+    id(Plugins.base)
 }
 
-serialPlugin {
+pluginConfiguration {
     packageName = "org.knowledger.ledger.database"
     module = "ledger/core/db"
 }
 
 dependencies {
     implementation(project(":ledger:core:data"))
-    implementation(project(":base64-extensions"))
+    implementation(project(":encoding-extensions"))
     implementation(project(":results"))
 }

@@ -5,7 +5,7 @@ plugins {
 
 version = "0.1"
 
-serialPlugin {
+pluginConfiguration {
     packageName = "org.knowledger.agent"
     module = "agent"
 }
@@ -13,7 +13,7 @@ serialPlugin {
 dependencies {
     //Project dependencies
     implementation(project(":ledger"))
-    implementation(project(":agent-core"))
+    api(project(":agent:ontologies"))
 
 
     //Regular dependencies

@@ -3,7 +3,7 @@ plugins {
     id(Plugins.serial)
 }
 
-serialPlugin {
+pluginConfiguration {
     packageName = "org.knowledger.ledger.crypto"
     module = "ledger/core/crypto"
     requiresOptIn = true
@@ -12,10 +12,11 @@ serialPlugin {
 }
 
 dependencies {
-    implementation(project(":base64-extensions"))
+    implementation(kotlin("reflect"))
     implementation(project(":collections-extensions"))
-    implementation(project(":ledger:core:kserial"))
+    implementation(project(":encoding-extensions"))
     implementation(project(":ledger:core:data"))
+    implementation(project(":ledger:core:kserial"))
 
     implementation(Libs.bouncyCastle)
 

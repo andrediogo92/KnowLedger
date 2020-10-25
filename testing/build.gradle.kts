@@ -3,7 +3,7 @@ plugins {
     id(Plugins.serial)
 }
 
-serialPlugin {
+pluginConfiguration {
     packageName = "org.knowledger.ledger.testing"
     module = "testing"
     requiresOptIn = true
@@ -11,9 +11,10 @@ serialPlugin {
 }
 
 dependencies {
-    implementation(project(":base64-extensions"))
+    implementation(project(":encoding-extensions"))
     implementation(project(":collections-extensions"))
     implementation(project(":results"))
+    api(project(":ledger:core"))
     implementation(project(":ledger:storage"))
     implementation(Libs.commonsRNG)
 }

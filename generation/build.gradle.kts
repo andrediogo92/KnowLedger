@@ -3,10 +3,11 @@ version = "0.0"
 plugins {
     kotlin("jvm")
     kotlin("kapt")
-    id(Plugins.docs)
+    id(Plugins.base)
 }
 
-docsPlugin {
+pluginConfiguration {
+    packageName = "org.knowledger.generation"
     module = "generation"
 }
 

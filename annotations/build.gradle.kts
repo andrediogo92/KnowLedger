@@ -2,9 +2,10 @@ version = "0.0"
 
 plugins {
     kotlin("jvm")
-    id(Plugins.docs)
+    id(Plugins.base)
 }
 
-docsPlugin {
+pluginConfiguration {
+    packageName = "org.knowledger.annotations"
     module = "annotations"
 }

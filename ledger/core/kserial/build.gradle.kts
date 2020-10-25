@@ -3,7 +3,7 @@ plugins {
     id(Plugins.serial)
 }
 
-serialPlugin {
+pluginConfiguration {
     packageName = "org.knowledger.ledger.core.serial"
     module = "ledger/core/kserial"
     experimentalContracts = true
@@ -11,6 +11,6 @@ serialPlugin {
 
 dependencies {
     implementation(project(":ledger:core:data"))
-    implementation(project(":base64-extensions"))
+    implementation(project(":encoding-extensions"))
     implementation(Libs.datetime)
 }

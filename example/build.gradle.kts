@@ -4,7 +4,7 @@ plugins {
     application
 }
 
-basePlugin {
+pluginConfiguration {
     packageName = "org.knowledger.example"
     module = "example"
 }

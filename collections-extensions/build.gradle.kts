@@ -4,13 +4,13 @@ plugins {
     id(Plugins.jmh)
 }
 
-basePlugin {
+pluginConfiguration {
     module = "collections-extensions"
     experimentalContracts = true
 }
 
 jmh {
-    jmhVersion = "1.24"
+    jmhVersion = "1.25.1"
     resultFormat = "CSV"
     jvmArgs.plusAssign("-Xms1024m")
     jvmArgs.plusAssign("-Xmx2048m")

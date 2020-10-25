@@ -3,15 +3,16 @@ plugins {
     id(Plugins.serial)
 }
 
-serialPlugin {
+pluginConfiguration {
     packageName = "org.knowledger.ledger.core"
     module = "ledger/core"
     requiresOptIn = true
     experimentalOptIn = true
+    inlineClasses = true
 }
 
 dependencies {
-    implementation(project(":base64-extensions"))
+    implementation(project(":encoding-extensions"))
     implementation(project(":collections-extensions"))
     implementation(project(":results"))
     api(project(":ledger:core:crypto"))
