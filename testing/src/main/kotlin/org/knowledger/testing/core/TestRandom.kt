@@ -4,70 +4,84 @@ import org.apache.commons.rng.RestorableUniformRandomProvider
 import org.apache.commons.rng.simple.RandomSource
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
+import kotlin.random.Random
 
 @OptIn(ExperimentalStdlibApi::class)
-class TestRandom {
+class TestRandom : Random() {
     private val r: RestorableUniformRandomProvider =
         RandomSource.create(RandomSource.SPLIT_MIX_64)
 
-    fun randomString(size: Int): String =
-        randomByteArray(size).decodeToString()
+    fun randomString(size: Int): String = nextBytes(size).decodeToString()
 
     fun randomStrings(size: Int): Sequence<String> =
-        generateSequence { randomByteArray(size).decodeToString() }
+        generateSequence { nextBytes(size).decodeToString() }
 
     fun randomHash(hashers: Hashers = defaultHasher): Hash =
-        hashers.applyHash(randomByteArray(hashers.hashSize))
+        hashers.applyHash(nextBytes(hashers.hashSize))
 
-    fun random256Hash(): Hash =
-        Hashers.Haraka256Hasher.applyHash(
-            randomByteArray(Hashers.Haraka256Hasher.hashSize)
-        )
+    fun random256Hash(): Hash = with(Hashers.Haraka256Hasher) {
+        applyHash(nextBytes(hashSize))
+    }
 
-    fun random512Hash(): Hash =
-        Hashers.Haraka512Hasher.applyHash(
-            randomByteArray(Hashers.Haraka512Hasher.hashSize)
-        )
+    fun random512Hash(): Hash = with(Hashers.Haraka512Hasher) {
+        applyHash(nextBytes(hashSize))
+    }
 
     fun randomHashes(hashers: Hashers = defaultHasher): Sequence<Hash> =
         generateSequence { randomHash(hashers) }
 
-    fun random256Hashes(): Sequence<Hash> =
-        generateSequence { random256Hash() }
+    fun random256Hashes(): Sequence<Hash> = generateSequence { random256Hash() }
 
-    fun random512Hashes(): Sequence<Hash> =
-        generateSequence { random512Hash() }
+    fun random512Hashes(): Sequence<Hash> = generateSequence { random512Hash() }
 
-    fun randomDouble(): Double =
-        r.nextDouble()
+    override fun nextBoolean(): Boolean = r.nextBoolean()
 
-    fun randomDoubles(): Sequence<Double> =
-        generateSequence { randomDouble() }
+    override fun nextFloat(): Float = r.nextFloat()
+
+    override fun nextDouble(): Double = r.nextDouble()
+
+    fun randomDoubles(): Sequence<Double> = generateSequence { nextDouble() }
 
     fun randomDoubles(product: (Double) -> Double): Sequence<Double> =
-        generateSequence { product(randomDouble()) }
+        generateSequence { product(nextDouble()) }
 
+    override fun nextInt(): Int = r.nextInt()
 
-    fun randomInt(bound: Int = Int.MAX_VALUE): Int =
-        r.nextInt(bound)
+    override fun nextInt(until: Int): Int = r.nextInt(until)
+
+    override fun nextInt(from: Int, until: Int): Int =
+        r.nextInt(until - from) + from
 
     fun randomInts(bound: Int = Int.MAX_VALUE): Sequence<Int> =
-        generateSequence { randomInt(bound) }
+        generateSequence { nextInt(bound) }
 
 
-    fun randomBytesIntoArray(byteArray: ByteArray) {
-        r.nextBytes(byteArray)
+    override fun nextBytes(size: Int): ByteArray =
+        ByteArray(size).apply(this::nextBytes)
+
+    override fun nextBytes(array: ByteArray): ByteArray =
+        array.apply(r::nextBytes)
+
+    override fun nextBytes(array: ByteArray, fromIndex: Int, toIndex: Int): ByteArray {
+        val randomSlice = nextBytes(ByteArray(toIndex - fromIndex))
+        for (index in fromIndex until toIndex) {
+            array[index] = randomSlice[index - fromIndex]
+        }
+        return array
     }
 
-    fun randomByteArray(size: Int = 0): ByteArray =
-        ByteArray(size).also(::randomBytesIntoArray)
-
     fun randomByteArrays(size: Int = 0): Sequence<ByteArray> =
-        generateSequence { randomByteArray(size) }
+        generateSequence { nextBytes(size) }
 
-    fun randomLong(bound: Long = Long.MAX_VALUE): Long =
-        r.nextLong(bound)
+    override fun nextLong(): Long = r.nextLong()
+
+    override fun nextLong(until: Long): Long = r.nextLong(until)
+
+    override fun nextLong(from: Long, until: Long): Long = r.nextLong(until - from) + from
+
 
     fun randomLongs(bound: Long = Long.MAX_VALUE): Sequence<Long> =
-        generateSequence { randomLong(bound) }
+        generateSequence { nextLong(bound) }
+
+    override fun nextBits(bitCount: Int): Int = r.nextInt() ushr (32 - bitCount)
 }
