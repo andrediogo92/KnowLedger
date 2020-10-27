@@ -1,7 +1,12 @@
 package org.knowledger.ledger.adapters.service
 
-import org.knowledger.ledger.adapters.Loadable
-import org.knowledger.ledger.service.handles.LedgerHandle
-import org.knowledger.ledger.service.handles.builder.LedgerConfig
+import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.results.Outcome
+import org.knowledger.ledger.storage.results.LoadFailure
 
-internal interface HandleLoadable : Loadable<LedgerConfig, LedgerHandle.Failure>
+internal interface HandleLoadable<T> {
+    fun load(
+        ledgerHash: Hash, element: StorageElement, context: LedgerMagicPair,
+    ): Outcome<T, LoadFailure>
+}
