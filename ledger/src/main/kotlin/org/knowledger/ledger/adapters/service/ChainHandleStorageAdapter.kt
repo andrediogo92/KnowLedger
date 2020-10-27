@@ -1,88 +1,73 @@
 package org.knowledger.ledger.adapters.service
 
 import com.github.michaelbull.result.binding
-import com.github.michaelbull.result.mapError
-import org.knowledger.ledger.core.tryOrDataUnknownFailure
+import org.knowledger.ledger.chain.PersistenceContext
+import org.knowledger.ledger.chain.handles.ChainHandle
+import org.knowledger.ledger.chain.solver.StorageState
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.database.StorageType
 import org.knowledger.ledger.database.results.DataFailure
 import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.ok
-import org.knowledger.ledger.service.PersistenceContext
-import org.knowledger.ledger.service.handles.ChainHandle
-import org.knowledger.ledger.service.solver.StorageSolver
-import org.knowledger.ledger.service.solver.pushNewDifficulty
-import org.knowledger.ledger.service.solver.pushNewLinked
-import org.knowledger.ledger.service.solver.pushNewNative
 import org.knowledger.ledger.storage.AdapterIds
-import org.knowledger.ledger.storage.results.LedgerFailure
-import org.knowledger.ledger.storage.results.intoLedger
-import org.knowledger.ledger.storage.results.tryOrLedgerUnknownFailure
+import org.knowledger.ledger.storage.results.LoadFailure
 
 internal class ChainHandleStorageAdapter : ServiceStorageAdapter<ChainHandle> {
-    override val id: String
-        get() = "ChainHandle"
+    override val id: String get() = "ChainHandle"
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "chainId" to StorageType.LINK,
+            "blockPool" to StorageType.LINK,
             "transactionPool" to StorageType.LINK,
             "difficultyTarget" to StorageType.DIFFICULTY,
             "lastRecalc" to StorageType.INTEGER,
-            "currentBlockheight" to StorageType.LONG
+            "currentBlockheight" to StorageType.LONG,
         )
 
-    override fun update(
-        element: ChainHandle, solver: StorageSolver
-    ): Outcome<Unit, DataFailure> = store(element, solver)
+    override fun update(element: ChainHandle, state: StorageState): Outcome<Unit, DataFailure> =
+        store(element, state)
 
-    override fun store(
-        element: ChainHandle, solver: StorageSolver
-    ): Outcome<Unit, DataFailure> =
-        tryOrDataUnknownFailure {
-            with(solver) {
-                pushNewLinked("chainId", element.chainId, AdapterIds.ChainId)
-                pushNewLinked("transactionPool", element.transactionPool, AdapterIds.TransactionPool)
-                pushNewDifficulty("difficultyTarget", element.currentDifficulty)
-                pushNewNative("lastRecalc", element.lastRecalculation)
-                pushNewNative("currentBlockheight", element.currentBlockheight)
-            }.ok()
-        }
+    override fun store(element: ChainHandle, state: StorageState): Outcome<Unit, DataFailure> =
+        with(state) {
+            pushNewLinked("chainId", element.chainId, AdapterIds.ChainId)
+            pushNewLinked("blockPool", element.blockPool, AdapterIds.BlockPool)
+            pushNewLinked("transactionPool", element.transactionPool, AdapterIds.TransactionPool)
+            pushNewDifficulty("difficultyTarget", element.currentDifficulty)
+            pushNewNative("lastRecalc", element.lastRecalculation)
+            pushNewNative("currentBlockheight", element.currentBlockheight)
+        }.ok()
 
     override fun load(
-        ledgerHash: Hash, element: StorageElement,
-        context: PersistenceContext
-    ): Outcome<ChainHandle, LedgerFailure> =
-        tryOrLedgerUnknownFailure {
-            val idElem =
-                element.getLinked("chainId")
+        ledgerHash: Hash, element: StorageElement, context: PersistenceContext,
+    ): Outcome<ChainHandle, LoadFailure> =
+        with(element) {
+            val idElem = getLinked("chainId")
 
-            val transactionPoolElem =
-                element.getLinked("transactionPool")
+            val transactionPoolElem = getLinked("transactionPool")
+            val blockPoolElem = getLinked("blockPool")
 
-            binding<ChainHandle, LedgerFailure> {
-                val chainId = context.chainIdStorageAdapter.load(
-                    ledgerHash, idElem, context
-                ).mapError { it.intoLedger() }.bind()
-                val transactionPool = context.transactionPoolStorageAdapter.load(
-                    ledgerHash, transactionPoolElem, context
-                ).mapError { it.intoLedger() }.bind()
+            binding {
+                val chainId = context.chainIdStorageAdapter.load(ledgerHash, idElem, context).bind()
+                val transactionPool =
+                    context.transactionPoolStorageAdapter
+                        .load(ledgerHash, transactionPoolElem, context)
+                        .bind()
+                val blockPool =
+                    context.blockPoolStorageAdapter.load(ledgerHash, blockPoolElem, context).bind()
 
-                val difficulty =
-                    element.getDifficultyProperty("difficultyTarget")
+                val difficulty = getDifficultyProperty("difficultyTarget")
 
-                val lastRecalc: Int =
-                    element.getStorageProperty("lastRecalc")
+                val lastRecalc: Int = getStorageProperty("lastRecalc")
 
-                val currentBlockheight: Long =
-                    element.getStorageProperty("currentBlockheight")
+                val currentBlockheight: Long = getStorageProperty("currentBlockheight")
 
-
-                ChainHandle(
+                val ch = ChainHandle(
                     context.ledgerInfo, context, chainId, transactionPool,
-                    difficulty, lastRecalc, currentBlockheight
+                    blockPool, difficulty, lastRecalc, currentBlockheight
                 )
+                ch
             }
         }
 }
