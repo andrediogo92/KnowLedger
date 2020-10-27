@@ -1,16 +1,12 @@
-package org.knowledger.ledger.test
+package org.knowledger.ledger.crypto
 
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import org.junit.jupiter.api.Test
-import org.knowledger.base64.base64Decoded
-import org.knowledger.base64.base64Encoded
-import org.knowledger.ledger.core.base.hash.toHexString
-import org.knowledger.ledger.crypto.EncodedPrivateKey
-import org.knowledger.ledger.crypto.EncodedPublicKey
+import org.knowledger.encoding.base16.hexEncoded
+import org.knowledger.encoding.base64.base64Decoded
+import org.knowledger.encoding.base64.base64Encoded
 import org.knowledger.ledger.crypto.service.Identity
-import org.knowledger.ledger.crypto.toPrivateKey
-import org.knowledger.ledger.crypto.toPublicKey
 import org.tinylog.kotlin.Logger
 import java.security.Key
 
@@ -55,8 +51,8 @@ class TestPubKeyCodec {
             pr.base64Encoded()
         )
         //Keys match.
-        assertThat(decpub).isEqualTo(pub)
-        assertThat(decpr).isEqualTo(pr)
+        assertThat(decpub).isEqualTo(pub.toPublicKey())
+        assertThat(decpr).isEqualTo(pr.toPrivateKey())
 
         Logger.debug {
             """
@@ -64,14 +60,14 @@ class TestPubKeyCodec {
                 |  private: $pr
                 |  public: $pub
                 |Hex:
-                |  private: ${pr.encoded.toHexString()}
-                |  public: ${pub.encoded.toHexString()}
+                |  private: ${pr.hexEncoded()}
+                |  public: ${pub.hexEncoded()}
                 |Base64:
                 |  private: $encpr
                 |  public: $encpub
                 |Hex to Base64 to Hex:
-                |  private: ${decpr.encoded.toHexString()}
-                |  public: ${decpub.encoded.toHexString()}
+                |  private: ${decpr.encoded.hexEncoded()}
+                |  public: ${decpub.encoded.hexEncoded()}
                 |Hex to Base64 to Key:
                 |  private: $decpr
                 |  public: $decpub
