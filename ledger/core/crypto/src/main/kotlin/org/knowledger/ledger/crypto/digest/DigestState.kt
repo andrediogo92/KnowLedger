@@ -1,13 +1,14 @@
 package org.knowledger.ledger.crypto.digest
 
 import org.knowledger.collections.forEach
-import org.knowledger.encoding.base64.base64Encoded
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.Hashers
 import org.tinylog.kotlin.Logger
-import kotlin.reflect.KCallable
 import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
 import kotlin.reflect.KProperty
+import kotlin.reflect.KTypeParameter
+import kotlin.reflect.full.isSubclassOf
 
 internal class DigestState(
     private val hashers: Hashers,
@@ -18,14 +19,14 @@ internal class DigestState(
     private val hashSize = hashers.hashSize
 
     fun <T : Any> calculateHash(clazz: KClass<in T>): Hash {
-        val initialState = DigestNode(byteArrayOf(), clazz)
-        initialState.parent = initialState
-        nodes.addLast(initialState)
+        val initialNode = DigestNode(byteArrayOf(), clazz)
+        initialNode.parent = initialNode
+        nodes.addLast(initialNode)
         //Fill up states by breadth first search until all leaves have been resolved.
-        var firstState = nodes[0].state
-        while (firstState == DigestNode.State.FirstPass) {
+        var firstNode = nodes[0].state
+        while (firstNode == DigestNode.State.FirstPass) {
             levelPass(nodes.takeWhile { it.state == DigestNode.State.FirstPass })
-            firstState = nodes[0].state
+            firstNode = nodes[0].state
         }
         while (nodes.size > 1) {
             val temporaryStates = nodes.takeWhile { it.state != DigestNode.State.Composite }
@@ -44,7 +45,7 @@ internal class DigestState(
             compact(hashers.applyHash(builder.toString()))
         } else {
             builder = StringBuilder()
-            builder.append(clazz!!.qualifiedName)
+            builder.appendClassifier(classifier)
             processFiltered(builder, filteredNodes)
             compact(hashers.applyHash(builder.toString()))
         }
@@ -53,13 +54,13 @@ internal class DigestState(
     private fun DigestNode.processFiltered(
         builder: StringBuilder, filteredNodes: List<DigestNode>,
     ) {
-        filteredNodes.forEach { state ->
-            val stateBuilder = if (state.parent != this) {
-                builderMap.getOrPut(state.parent, ::StringBuilder)
+        filteredNodes.forEach { node ->
+            val stateBuilder = if (node.parent != this) {
+                builderMap.getOrPut(node.parent, ::StringBuilder)
             } else {
                 builder
             }
-            stateBuilder.append(state.field.base64Encoded()).append(state.typeHash.base64Encoded())
+            stateBuilder.appendBytes(node.field).appendHash(node.typeHash)
         }
     }
 
@@ -68,47 +69,54 @@ internal class DigestState(
      * expanding into their fields for later compacting.
      */
     private fun levelPass(firstPasses: List<DigestNode>) {
-        firstPasses.forEach { digestState ->
-            val clazz = digestState.clazz!!
-            Logger.debug { "Level Pass :> Current: ${clazz.qualifiedName}" }
-            when (clazz) {
-                //UByteArray::class, UShortArray::class, UIntArray::class, ULongArray::class,
-                Enum::class -> digestState.enumDigest()
-                else -> {
-                    checkPrimitive(clazz, digestState) ||
-                    checkHardcoded(clazz, digestState) ||
-                    checkArrays(clazz, digestState) ||
-                    expandFields(digestState)
+        firstPasses.forEach { node ->
+            when (val classifier = node.classifier) {
+                is KTypeParameter -> {
+                    Logger.debug { "Level Pass on TypeParameter :> Current: ${classifier.name}" }
+                    expandBounds(node, classifier)
+                }
+                is KClass<*> -> {
+                    Logger.debug { "Level Pass on Class :> Current: ${classifier.qualifiedName}" }
+                    node.checkEnum(classifier) || node.checkPrimitive(classifier) ||
+                    node.checkHardcoded(classifier) || node.checkArrays(classifier) ||
+                    expandFields(node, classifier)
                 }
             }
         }
     }
 
 
-    private inline fun checkClass(
-        clazz: KClass<*>, array: Array<KClass<*>>, run: (Int) -> Boolean,
+    private fun DigestNode.checkEnum(clazz: KClass<*>): Boolean {
+        if (clazz.isSubclassOf(Enum::class)) {
+            enumDigest()
+            return true
+        }
+        return false
+    }
+
+
+    private fun DigestNode.checkPrimitive(clazz: KClass<*>): Boolean =
+        checkClass(clazz, primitiveClazzes) { index -> primitiveDigest(index) }
+
+    private fun DigestNode.checkHardcoded(clazz: KClass<*>): Boolean =
+        checkClass(clazz, hardCodedClazzes) { index -> hardcodedDigest(index) }
+
+    private fun DigestNode.checkArrays(clazz: KClass<*>): Boolean =
+        checkClass(clazz, arrayClazzes) { index -> arrayPass(index) }
+
+    private fun checkClass(
+        clazz: KClass<*>, array: Array<KClass<*>>, run: (Int) -> Unit,
     ): Boolean {
         val index = array.binarySearch(clazz, nameComparator)
         //Supplied class may have the same simple name.
         //There's only unique named classes in the used [array].
         //We must then be sure the supplied class is directly equal.
-        return if (index >= 0 && clazz == array[index]) {
+        if (index >= 0 && clazz == array[index]) {
             run(index)
-            true
-        } else {
-            false
+            return true
         }
+        return false
     }
-
-    private fun checkPrimitive(clazz: KClass<*>, digestNode: DigestNode): Boolean =
-        checkClass(clazz, primitiveClazzes) { index -> digestNode.primitiveDigest(index); true }
-
-    private fun checkHardcoded(clazz: KClass<*>, digestNode: DigestNode): Boolean =
-        checkClass(clazz, hardCodedClazzes) { index -> digestNode.hardcodedDigest(index); true }
-
-    private fun checkArrays(clazz: KClass<*>, digestNode: DigestNode): Boolean =
-        checkClass(clazz, arrayClazzes) { index -> digestNode.arrayPass(index); true }
-
 
     private fun DigestNode.arrayPass(componentIndex: Int) {
         val component = primitiveClazzes[componentIndex]
@@ -118,63 +126,90 @@ internal class DigestState(
         nodes.addFirst(digest)
     }
 
-    private fun expandFields(digestNode: DigestNode): Boolean {
-        val clazz = digestNode.clazz!!
+    private fun expandBounds(node: DigestNode, parameter: KTypeParameter) {
+        val bounds = parameter.upperBounds
+        if (bounds.isNotEmpty()) {
+            node.markExpand()
+            bounds.mapNotNull { type ->
+                type.classifier?.let { classifier ->
+                    DigestNode(byteArrayOf(), classifier).also { boundNode ->
+                        boundNode.parent = node
+                    }
+                }
+            }.forEach(nodes::addFirst)
+        } else {
+            node.compact(hashers.applyHash(parameter.name))
+        }
+    }
+
+
+    private fun expandFields(node: DigestNode, clazz: KClass<*>): Boolean {
         if (clazz.members.isEmpty()) {
-            digestNode.emptyDigest()
+            node.emptyDigest()
             return true
         }
 
-        digestNode.markExpand()
-        clazz.members
+        node.markExpand()
+        clazz.members.asSequence()
             .filterIsInstance<KProperty<*>>()
-            .sortedBy(KCallable<*>::name)
-            .partition { (it.returnType.classifier as KClass<*>) != digestNode.clazz }
+            .map { Pair(it, it.returnType.classifier) }
+            .partition { (it.second as? KClass<*>) != node.classifier }
             .forEach(
-                { field -> expandWithArguments(field, nodes, digestNode) },
-                { cycle ->
-                    val digest = DigestNode(
-                        cycle.name.toByteArray(), cycle.returnType.classifier as KClass<*>,
-                        DigestNode.State.Cycle, hardCodedHashes.last()(hashSize)
-                    )
-                    nodes.addFirst(digest)
+                { (field, returnType) ->
+                    expandWithArguments(field, returnType, node)
+                },
+                { (cycle, returnType) ->
+                    expandCycle(cycle, returnType as KClass<*>, node)
                 })
         return true
     }
 
-    private fun expandWithArguments(
-        field: KProperty<*>, nodes: ArrayDeque<DigestNode>, digestNode: DigestNode,
+    private fun expandCycle(
+        cycle: KProperty<*>, returnType: KClass<*>, digestNode: DigestNode,
     ) {
-        val clazz = field.returnType.classifier as KClass<*>
-        val types = field.returnType.arguments
-            .mapNotNull { (it.type?.classifier) }
-            .filterIsInstance(KClass::class.java)
-            .sortedBy { it.simpleName ?: it.toString() }
-            .toTypedArray()
-        val nodeForField: DigestNode
-        val statesForArguments: List<DigestNode>
-        if (types.isNotEmpty()) {
-            nodeForField = DigestNode(
-                field.name.toByteArray(), clazz, DigestNode.State.FirstPass, Hash.emptyHash, types
-            )
-            nodeForField.parent = digestNode
-            statesForArguments = types.map {
-                val digest = DigestNode(ByteArray(0), it)
-                digest.parent = nodeForField
-                digest
+        val digest = DigestNode(
+            cycle.name.toByteArray(), returnType,
+            DigestNode.State.Cycle, hardCodedHashes.last()(hashSize)
+        )
+        digest.parent = digestNode
+        nodes.addFirst(digest)
+    }
+
+    private fun expandWithArguments(
+        field: KProperty<*>, returnType: KClassifier?, digestNode: DigestNode,
+    ) {
+        when (returnType) {
+            is KProperty<*> -> toString()
+            is KClass<*> -> {
+                val types = field.returnType.arguments
+                    .mapNotNull { (it.type?.classifier) }
+                    .toTypedArray()
+                val nodeForField: DigestNode
+                val statesForArguments: List<DigestNode>
+                if (types.isNotEmpty()) {
+                    nodeForField = DigestNode(
+                        field.name.toByteArray(), returnType, DigestNode.State.FirstPass,
+                        Hash.emptyHash, types
+                    )
+                    nodeForField.parent = digestNode
+                    statesForArguments = types.map {
+                        val digest = DigestNode(ByteArray(0), it)
+                        digest.parent = nodeForField
+                        digest
+                    }
+                } else {
+                    nodeForField = DigestNode(field.name.toByteArray(), returnType)
+                    nodeForField.parent = digestNode
+                    statesForArguments = emptyList()
+                }
+                nodes.addFirst(nodeForField)
+                statesForArguments.forEach(nodes::addFirst)
             }
-        } else {
-            nodeForField = DigestNode(field.name.toByteArray(), clazz)
-            nodeForField.parent = digestNode
-            statesForArguments = emptyList()
         }
-        nodes.addFirst(nodeForField)
-        statesForArguments.forEach(nodes::addFirst)
     }
 
     private fun DigestNode.emptyDigest(): DigestNode = apply {
-        val kClass = clazz!!
-        clazz = null
+        val kClass = classifier as KClass<*>
         compact(hashers.applyHash(kClass.qualifiedName!!))
     }
 
@@ -182,13 +217,12 @@ internal class DigestState(
         interning: InterningEnum, digest: () -> Hash,
     ): DigestNode = apply {
         val hash = interningMap.getOrPut(interning, digest)
-        clazz = null
         compact(hash)
     }
 
     private fun DigestNode.enumDigest(): DigestNode =
         calculateDigest(InterningEnum.ENUM) {
-            val kClass = clazz!!
+            val kClass = classifier as KClass<*>
             hashers.applyHash(
                 "${kClass.qualifiedName ?: ""}${kClass.members.joinToString { it.name }}"
             )

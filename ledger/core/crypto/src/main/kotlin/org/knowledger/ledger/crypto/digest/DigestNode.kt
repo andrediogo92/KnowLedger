@@ -1,13 +1,13 @@
 package org.knowledger.ledger.crypto.digest
 
 import org.knowledger.ledger.crypto.Hash
-import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
 
 internal data class DigestNode(
-    var field: ByteArray, var clazz: KClass<*>?,
+    var field: ByteArray, var classifier: KClassifier,
     var state: State = State.FirstPass,
     var typeHash: Hash = Hash.emptyHash,
-    var params: Array<KClass<*>>? = null,
+    var params: Array<KClassifier>? = null,
 ) {
     lateinit var parent: DigestNode
 
@@ -28,6 +28,7 @@ internal data class DigestNode(
         state = State.Processed
     }
 
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -35,7 +36,7 @@ internal data class DigestNode(
         other as DigestNode
 
         if (!field.contentEquals(other.field)) return false
-        if (clazz != other.clazz) return false
+        if (classifier != other.classifier) return false
         if (state != other.state) return false
         if (typeHash != other.typeHash) return false
         if (params != null) {
@@ -48,7 +49,7 @@ internal data class DigestNode(
 
     override fun hashCode(): Int {
         var result = field.contentHashCode()
-        result = 31 * result + clazz.hashCode()
+        result = 31 * result + classifier.hashCode()
         result = 31 * result + state.hashCode()
         result = 31 * result + typeHash.hashCode()
         result = 31 * result + (params?.contentHashCode() ?: 0)

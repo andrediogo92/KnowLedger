@@ -1,11 +1,14 @@
 package org.knowledger.ledger.crypto.digest
 
+import org.knowledger.encoding.base64.base64Encoded
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.Hashers
 import java.math.BigDecimal
 import java.math.BigInteger
 import java.security.MessageDigest
 import kotlin.reflect.KClass
+import kotlin.reflect.KClassifier
+import kotlin.reflect.KTypeParameter
 
 internal val nameComparator = Comparator<KClass<*>> { o1, o2 ->
     o1.simpleName!!.compareTo(o2.simpleName!!)
@@ -99,6 +102,18 @@ private fun digestString(size: Int): Hash =
 
 private fun digestCycle(size: Int): Hash = Hash(ByteArray(size) { 0x7F })
 
+internal fun StringBuilder.appendBytes(byteArray: ByteArray): StringBuilder =
+    append(byteArray.base64Encoded())
+
+internal fun StringBuilder.appendHash(hash: Hash): StringBuilder =
+    appendBytes(hash.bytes)
+
+internal fun StringBuilder.appendClassifier(classifier: KClassifier): StringBuilder =
+    when (classifier) {
+        is KTypeParameter -> append(classifier.name)
+        is KClass<*> -> append(classifier.qualifiedName)
+        else -> throw ClassCastException(classifier.toString())
+    }
 
 fun <T : Any> T.classDigest(hashers: Hashers): SchemaHash =
     this::class.classDigest(hashers)
