@@ -17,6 +17,7 @@ object Versions {
     const val jUnitRunner = "1.7.0"
     const val kotlinVersion = "1.4.10"
     const val koin = "2.1.6"
+    const val kotlinIO = "0.1.16"
     const val kotlinPoet = "1.7.2"
     const val kotlinResult = "1.1.9"
     const val orientDB = "3.1.2"
@@ -40,7 +41,7 @@ object Libs {
     const val dokkaPlugin = "org.jetbrains.dokka:dokka-gradle-plugin:${Versions.dokka}"
 
     const val eclipsePaho =
-        "org.eclipse.paho:org.eclipse.paho.client.mqttv5:${Versions.eclipsePaho}"
+        "org.eclipse.paho:org.eclipse.paho.mqttv5.client:${Versions.eclipsePaho}"
 
     val jade = listOf(
         "com.tilab.jade:jade:${Versions.jade}",
@@ -62,6 +63,10 @@ object Libs {
 
     const val koin = "org.koin:koin-core:${Versions.koin}"
 
+    /** Useless until it fully implements Buffers API.
+    const val kotlinIO = "org.jetbrains.kotlinx:kotlinx-io:${Versions.kotlinIO}"
+    const val kotlinIOJVM = "org.jetbrains.kotlinx:kotlinx-io-jvm:${Versions.kotlinIO}"
+     */
     const val kotlinPoet = "com.squareup:kotlinpoet:${Versions.kotlinPoet}"
 
     const val kotlinResult = "com.michael-bull.kotlin-result:kotlin-result:${Versions.kotlinResult}"
