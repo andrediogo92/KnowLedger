@@ -16,7 +16,6 @@ import org.knowledger.ledger.storage.config.chainid.ChainId
 import org.knowledger.ledger.storage.transaction.ImmutableTransaction
 import org.knowledger.ledger.storage.transaction.output.ImmutableTransactionOutput
 import org.knowledger.ledger.storage.witness.ImmutableWitness
-import java.security.PublicKey
 
 interface ChainBuilder {
     val chainHash: Hash
@@ -24,52 +23,43 @@ interface ChainBuilder {
     val chainId: ChainId
 
     fun block(
-        transactions: SortedList<ImmutableTransaction>,
-        coinbase: ImmutableCoinbase, blockHeader: ImmutableBlockHeader,
-        merkleTree: ImmutableMerkleTree
+        transactions: SortedList<ImmutableTransaction>, coinbase: ImmutableCoinbase,
+        blockHeader: ImmutableBlockHeader, merkleTree: ImmutableMerkleTree,
     ): ImmutableBlock
 
     fun blockheader(
-        previousHash: Hash, merkleRoot: Hash,
-        hash: Hash, seconds: Long, nonce: Long
+        previousHash: Hash, merkleRoot: Hash, hash: Hash, seconds: Long, nonce: Long,
     ): ImmutableBlockHeader
 
     fun coinbase(
-        header: ImmutableCoinbaseHeader,
-        witnesses: SortedList<ImmutableWitness>,
-        merkleTree: ImmutableMerkleTree
+        header: ImmutableCoinbaseHeader, witnesses: SortedList<ImmutableWitness>,
+        merkleTree: ImmutableMerkleTree,
     ): ImmutableCoinbase
 
     fun coinbaseHeader(
-        hash: Hash, payout: Payout,
-        merkleRoot: Hash, difficulty: Difficulty,
-        blockheight: Long, extraNonce: Long
+        hash: Hash, payout: Payout, merkleRoot: Hash,
+        difficulty: Difficulty, blockheight: Long, extraNonce: Long,
     ): ImmutableCoinbaseHeader
 
     fun merkletree(
-        collapsedTree: List<Hash>, levelIndex: List<Int>
+        collapsedTree: List<Hash>, levelIndex: List<Int>,
     ): ImmutableMerkleTree
 
     fun transaction(
-        publicKey: PublicKey, physicalData: PhysicalData,
-        signature: ByteArray, hash: Hash
+        publicKey: EncodedPublicKey, physicalData: PhysicalData, signature: ByteArray, hash: Hash,
     ): ImmutableTransaction
 
-    fun transaction(
-        data: PhysicalData
-    ): ImmutableTransaction
+    fun transaction(data: PhysicalData): ImmutableTransaction
 
     fun transactionOutput(
-        payout: Payout, newIndex: Int,
-        newTransaction: Hash, previousBlock: Hash,
-        previousIndex: Int, previousTransaction: Hash
+        payout: Payout, newIndex: Int, newTransaction: Hash, previousBlock: Hash,
+        previousIndex: Int, previousTransaction: Hash,
     ): ImmutableTransactionOutput
 
     fun witness(
         transactionOutputs: SortedList<ImmutableTransactionOutput>,
         previousWitnessIndex: Int, prevCoinbase: Hash,
-        publicKey: EncodedPublicKey, hash: Hash,
-        payout: Payout
+        publicKey: EncodedPublicKey, hash: Hash, payout: Payout,
     ): ImmutableWitness
 
     fun data(bytes: ByteArray): LedgerData
