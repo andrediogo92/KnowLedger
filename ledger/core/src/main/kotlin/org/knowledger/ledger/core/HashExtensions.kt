@@ -3,8 +3,8 @@ package org.knowledger.ledger.core
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.ExperimentalSerializationApi
-import org.knowledger.encoding.base32.base32Decoded
-import org.knowledger.encoding.base32.base32Encoded
+import org.knowledger.encoding.base64.base64Decoded
+import org.knowledger.encoding.base64.base64Encoded
 import org.knowledger.encoding.trimBaseNPadding
 import org.knowledger.ledger.core.adapters.Tag
 import org.knowledger.ledger.core.data.Difficulty
@@ -35,10 +35,10 @@ fun Hash.toDifficulty(): Difficulty =
     Difficulty(BigInteger(bytes))
 
 fun Hash.toTag(): Tag =
-    Tag(base32Encoded().trimBaseNPadding())
+    Tag(base64Encoded().trimBaseNPadding())
 
 fun Tag.toHash(): Hash =
-    Hash(id.base32Decoded())
+    Hash(id.base64Decoded())
 
 fun Difficulty.toHash(): Hash =
     Hash(bytes)

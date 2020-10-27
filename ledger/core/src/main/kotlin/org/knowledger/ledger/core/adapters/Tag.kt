@@ -1,6 +1,6 @@
 package org.knowledger.ledger.core.adapters
 
-import org.knowledger.encoding.base32.Base32String
+import org.knowledger.encoding.base64.Base64String
 import org.knowledger.ledger.core.data.LedgerData
 import org.knowledger.ledger.crypto.Hash
 
@@ -9,4 +9,4 @@ import org.knowledger.ledger.crypto.Hash
  * Used to uniquely identify [LedgerData] schemas
  * for database use.
  */
-inline class Tag(val id: Base32String)
+inline class Tag(val id: Base64String)
