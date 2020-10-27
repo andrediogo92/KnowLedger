@@ -2,6 +2,7 @@ package org.knowledger.ledger.storage.config.chainid.factory
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.ExperimentalSerializationApi
+import org.knowledger.ledger.core.adapters.Tag
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
 import org.knowledger.ledger.storage.BlockParams
@@ -18,16 +19,17 @@ internal class StorageAwareChainIdFactory(
         StorageAwareChainIdImpl(chainId)
 
     override fun create(
-        hash: Hash, ledgerHash: Hash, tag: Hash,
+        hash: Hash, ledgerHash: Hash, tag: Tag, rawTag: Hash,
         blockParams: BlockParams, coinbaseParams: CoinbaseParams,
     ): StorageAwareChainIdImpl =
-        createSA(factory.create(hash, ledgerHash, tag, blockParams, coinbaseParams))
+        createSA(factory.create(hash, ledgerHash, tag, rawTag, blockParams, coinbaseParams))
 
     override fun create(
-        ledgerHash: Hash, tag: Hash, hasher: Hashers, encoder: BinaryFormat,
+        ledgerHash: Hash, tag: Tag, rawTag: Hash, hasher: Hashers, encoder: BinaryFormat,
         blockParams: BlockParams, coinbaseParams: CoinbaseParams,
-    ): StorageAwareChainIdImpl =
-        createSA(factory.create(ledgerHash, tag, hasher, encoder, blockParams, coinbaseParams))
+    ): StorageAwareChainIdImpl = createSA(
+        factory.create(ledgerHash, tag, rawTag, hasher, encoder, blockParams, coinbaseParams)
+    )
 
     override fun create(other: ChainId): StorageAwareChainIdImpl =
         createSA(factory.create(other))

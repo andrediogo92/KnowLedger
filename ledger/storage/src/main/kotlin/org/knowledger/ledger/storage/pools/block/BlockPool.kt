@@ -1,7 +1,7 @@
 package org.knowledger.ledger.storage.pools.block
 
 import org.knowledger.collections.SortedList
-import org.knowledger.collections.searchBy
+import org.knowledger.collections.searchAndGet
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.storage.ChainId
 import org.knowledger.ledger.storage.LedgerContract
@@ -19,5 +19,5 @@ interface BlockPool : LedgerContract {
 
 
     operator fun get(hash: Hash): MutableBlock? =
-        blocks.searchBy(hash) { it.blockHeader.hash }
+        blocks.searchAndGet(hash) { it.blockHeader.hash }
 }

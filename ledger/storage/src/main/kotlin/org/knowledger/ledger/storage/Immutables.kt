@@ -28,7 +28,7 @@ fun BlockParams.immutableCopy(): ImmutableBlockParams =
     ImmutableBlockParams(blockLength, blockMemorySize)
 
 fun ChainId.immutableCopy(): ImmutableChainId =
-    ImmutableChainId(hash, ledgerHash, tag, blockParams, coinbaseParams)
+    ImmutableChainId(hash, ledgerHash, tag, rawTag, blockParams, coinbaseParams)
 
 fun Coinbase.immutableCopy(): ImmutableCoinbase = ImmutableCoinbase(
     coinbaseHeader.immutableCopy(), merkleTree.immutableCopy(),

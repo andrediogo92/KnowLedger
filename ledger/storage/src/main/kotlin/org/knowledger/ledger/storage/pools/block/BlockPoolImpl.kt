@@ -11,6 +11,7 @@ import org.knowledger.ledger.storage.AdapterIds
 import org.knowledger.ledger.storage.ChainId
 import org.knowledger.ledger.storage.MutableBlock
 import org.knowledger.ledger.storage.MutableBlockHeader
+import org.knowledger.ledger.storage.cache.BooleanLocking
 import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 import org.knowledger.ledger.storage.results.BlockFailure
@@ -19,6 +20,7 @@ internal data class BlockPoolImpl(
     override val chainId: ChainId,
     override val mutableBlocks: MutableSortedList<MutableBlock>,
 ) : StorageAwareBlockPool {
+    override val lock: BooleanLocking = BooleanLocking()
     override var id: StorageElement? = null
     override val invalidated: Array<StoragePairs<*>> =
         arrayOf(StoragePairs.LinkedList<MutableBlock>("blocks", AdapterIds.Block))

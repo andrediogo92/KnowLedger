@@ -2,6 +2,7 @@ package org.knowledger.ledger.storage.config.chainid.factory
 
 import kotlinx.serialization.BinaryFormat
 import kotlinx.serialization.ExperimentalSerializationApi
+import org.knowledger.ledger.core.adapters.Tag
 import org.knowledger.ledger.core.calculateHash
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.crypto.hash.Hashers
@@ -14,26 +15,28 @@ import org.knowledger.ledger.storage.config.chainid.ImmutableChainId
 @OptIn(ExperimentalSerializationApi::class)
 internal class ChainIdFactoryImpl : ChainIdFactory {
     private fun generateChainHandleHash(
-        ledgerHash: Hash, tag: Hash, hasher: Hashers, encoder: BinaryFormat,
+        ledgerHash: Hash, tag: Tag, rawTag: Hash, hasher: Hashers, encoder: BinaryFormat,
         blockParams: BlockParams, coinbaseParams: CoinbaseParams,
-    ): Hash = ChainIdBuilder(ledgerHash, tag, blockParams, coinbaseParams)
+    ): Hash = ChainIdBuilder(ledgerHash, tag, rawTag, blockParams, coinbaseParams)
         .calculateHash(hasher, encoder)
 
     override fun create(
-        hash: Hash, ledgerHash: Hash, tag: Hash,
+        hash: Hash, ledgerHash: Hash, tag: Tag, rawTag: Hash,
         blockParams: BlockParams, coinbaseParams: CoinbaseParams,
     ): ImmutableChainId =
-        ImmutableChainId(hash, ledgerHash, tag, blockParams, coinbaseParams)
+        ImmutableChainId(hash, ledgerHash, tag, rawTag, blockParams, coinbaseParams)
 
     override fun create(
-        ledgerHash: Hash, tag: Hash, hasher: Hashers, encoder: BinaryFormat,
+        ledgerHash: Hash, tag: Tag, rawTag: Hash, hasher: Hashers, encoder: BinaryFormat,
         blockParams: BlockParams, coinbaseParams: CoinbaseParams,
     ): ImmutableChainId = create(
-        generateChainHandleHash(ledgerHash, tag, hasher, encoder, blockParams, coinbaseParams),
-        ledgerHash, tag, blockParams, coinbaseParams
+        generateChainHandleHash(
+            ledgerHash, tag, rawTag, hasher,
+            encoder, blockParams, coinbaseParams
+        ), ledgerHash, tag, rawTag, blockParams, coinbaseParams
     )
 
     override fun create(other: ChainId): ImmutableChainId =
-        with(other) { create(hash, ledgerHash, tag, blockParams, coinbaseParams) }
+        with(other) { create(hash, ledgerHash, tag, rawTag, blockParams, coinbaseParams) }
 
 }

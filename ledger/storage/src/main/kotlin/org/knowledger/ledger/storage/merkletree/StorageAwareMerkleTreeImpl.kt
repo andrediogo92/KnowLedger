@@ -3,18 +3,21 @@ package org.knowledger.ledger.storage.merkletree
 import org.knowledger.ledger.crypto.Hashing
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.storage.MutableMerkleTree
+import org.knowledger.ledger.storage.cache.BooleanLocking
+import org.knowledger.ledger.storage.cache.Locking
 import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 
 internal data class StorageAwareMerkleTreeImpl(
     override val merkleTree: MutableMerkleTree,
 ) : MutableMerkleTree by merkleTree, StorageAwareMerkleTree {
+    override val lock: Locking = BooleanLocking()
+    override var id: StorageElement? = null
     override val invalidated: Array<StoragePairs<*>> = arrayOf(
         StoragePairs.HashList("collapsedTree"),
         StoragePairs.Native("levelIndexes")
     )
 
-    override var id: StorageElement? = null
 
     override fun buildFromPrimary(primary: Hashing) {
         merkleTree.buildFromPrimary(primary)

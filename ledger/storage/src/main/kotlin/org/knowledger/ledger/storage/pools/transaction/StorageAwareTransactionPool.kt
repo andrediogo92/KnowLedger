@@ -4,13 +4,17 @@ import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.storage.AdapterIds
 import org.knowledger.ledger.storage.MutableTransaction
+import org.knowledger.ledger.storage.MutableTransactionPool
+import org.knowledger.ledger.storage.cache.BooleanLocking
+import org.knowledger.ledger.storage.cache.Locking
 import org.knowledger.ledger.storage.cache.StorageAware
 import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 
 internal data class StorageAwareTransactionPool(
-    internal val transactionPool: TransactionPoolImpl,
+    internal val transactionPool: MutableTransactionPool,
 ) : StorageAware, MutableTransactionPool by transactionPool {
+    override val lock: Locking = BooleanLocking()
     override val invalidated: Array<StoragePairs<*>> = arrayOf(
         StoragePairs.LinkedList<PoolTransaction>("transactions", AdapterIds.PoolTransaction)
     )

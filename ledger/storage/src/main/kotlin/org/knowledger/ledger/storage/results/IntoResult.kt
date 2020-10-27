@@ -18,8 +18,7 @@ fun LoadFailure.intoLedger(): LedgerFailure =
             LedgerFailure.NonExistentData(failable.cause)
         is LoadFailure.UnrecognizedDataType,
         is LoadFailure.DuplicatedTransaction,
-        ->
-            failable.propagate(LedgerFailure::Propagated)
+        -> failable.propagate(LedgerFailure::Propagated)
         is LoadFailure.Propagated ->
             LedgerFailure.Propagated(
                 "LoadFailure -> ${failable.pointOfFailure}", failable.inner
@@ -86,7 +85,7 @@ fun QueryFailure.intoLoad(): LoadFailure =
             LoadFailure.NonExistentData(failable.cause)
         is QueryFailure.Propagated ->
             LoadFailure.Propagated(
-                "UnknownFailure -> ${failable.pointOfFailure}", failable
+                "QueryFailure -> ${failable.pointOfFailure}", failable
             )
     }
 

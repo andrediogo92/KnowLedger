@@ -11,10 +11,12 @@ interface TransactionPool : LedgerContract {
     val transactions: SortedList<PoolTransaction>
     val chainId: ChainId
     val notInBlock: SortedList<MutableTransaction>
-        get() = transactions.filter { !it.inBlock }.mapSorted(PoolTransaction::transaction)
+        get() = transactions.filterNot(PoolTransaction::inBlock)
+            .mapSorted(PoolTransaction::transaction)
 
     val inBlock: SortedList<MutableTransaction>
-        get() = transactions.filter { it.inBlock }.mapSorted(PoolTransaction::transaction)
+        get() = transactions.filter(PoolTransaction::inBlock)
+            .mapSorted(PoolTransaction::transaction)
 
     val firstNotInBlock: MutableTransaction? get() = notInBlock.firstOrNull()
 

@@ -1,11 +1,14 @@
 package org.knowledger.ledger.storage.transaction.output
 
 import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.storage.cache.BooleanLocking
+import org.knowledger.ledger.storage.cache.Locking
 import org.knowledger.ledger.storage.cache.StoragePairs
 
 internal data class StorageAwareTransactionOutputImpl(
     override val transactionOutput: TransactionOutput,
 ) : TransactionOutput by transactionOutput, StorageAwareTransactionOutput {
+    override val lock: Locking = BooleanLocking()
     override var id: StorageElement? = null
     override val invalidated: Array<StoragePairs<*>> = emptyArray()
 

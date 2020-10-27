@@ -1,4 +1,4 @@
-@file:UseSerializers(HashSerializer::class, PayoutSerializer::class)
+@file:UseSerializers(HashSerializer::class, PayoutSerializer::class, SortedListSerializer::class)
 
 package org.knowledger.ledger.storage.witness
 
@@ -12,6 +12,7 @@ import org.knowledger.ledger.crypto.EncodedPublicKey
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.storage.Payout
 import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.storage.serial.SortedListSerializer
 import org.knowledger.ledger.storage.transaction.output.ImmutableTransactionOutput
 
 @Serializable

@@ -3,6 +3,8 @@ package org.knowledger.ledger.storage.witness
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.storage.AdapterIds
 import org.knowledger.ledger.storage.TransactionOutput
+import org.knowledger.ledger.storage.cache.BooleanLocking
+import org.knowledger.ledger.storage.cache.Locking
 import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 
@@ -10,6 +12,7 @@ import org.knowledger.ledger.storage.cache.replaceUnchecked
 internal class StorageAwareWitnessImpl(
     override val witness: MutableHashedWitness
 ) : MutableHashedWitness by witness, StorageAwareWitness {
+    override val lock: Locking = BooleanLocking()
     override var id: StorageElement? = null
     override val invalidated: Array<StoragePairs<*>> = arrayOf(
         StoragePairs.LinkedHash("hash"),

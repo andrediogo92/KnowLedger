@@ -1,6 +1,6 @@
 package org.knowledger.ledger.storage.results
 
-import org.knowledger.base64.base64Encoded
+import org.knowledger.encoding.base64.base64Encoded
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.results.Failable
 import org.knowledger.ledger.results.Failure

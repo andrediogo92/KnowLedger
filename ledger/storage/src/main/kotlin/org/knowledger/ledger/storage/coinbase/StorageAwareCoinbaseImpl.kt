@@ -5,12 +5,15 @@ import org.knowledger.ledger.storage.AdapterIds
 import org.knowledger.ledger.storage.MutableCoinbaseHeader
 import org.knowledger.ledger.storage.MutableMerkleTree
 import org.knowledger.ledger.storage.MutableWitness
+import org.knowledger.ledger.storage.cache.BooleanLocking
+import org.knowledger.ledger.storage.cache.Locking
 import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 
 internal class StorageAwareCoinbaseImpl(
     override val coinbase: MutableCoinbase,
 ) : StorageAwareCoinbase, MutableCoinbase by coinbase {
+    override val lock: Locking = BooleanLocking()
     override var id: StorageElement? = null
     override val invalidated: Array<StoragePairs<*>> = arrayOf(
         StoragePairs.Linked<MutableCoinbaseHeader>("coinbaseHeader", AdapterIds.CoinbaseHeader),

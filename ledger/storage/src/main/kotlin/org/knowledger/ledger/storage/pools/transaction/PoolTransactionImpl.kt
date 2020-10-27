@@ -3,12 +3,14 @@ package org.knowledger.ledger.storage.pools.transaction
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.storage.AdapterIds
 import org.knowledger.ledger.storage.MutableTransaction
+import org.knowledger.ledger.storage.cache.BooleanLocking
 import org.knowledger.ledger.storage.cache.StoragePairs
 
 internal class PoolTransactionImpl(
     override val transaction: MutableTransaction,
     override val inBlock: Boolean,
 ) : StorageAwarePoolTransaction {
+    override val lock: BooleanLocking = BooleanLocking()
     override var id: StorageElement? = null
     override val invalidated: Array<StoragePairs<*>> = arrayOf(
         StoragePairs.Linked<MutableTransaction>("transaction", AdapterIds.Transaction),

@@ -4,12 +4,15 @@ import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.StorageElement
 import org.knowledger.ledger.storage.Difficulty
 import org.knowledger.ledger.storage.Payout
+import org.knowledger.ledger.storage.cache.BooleanLocking
+import org.knowledger.ledger.storage.cache.Locking
 import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 
 internal class StorageAwareCoinbaseHeaderImpl(
     override val coinbaseHeader: MutableHashedCoinbaseHeader,
 ) : MutableHashedCoinbaseHeader by coinbaseHeader, StorageAwareCoinbaseHeader {
+    override val lock: Locking = BooleanLocking()
     override var id: StorageElement? = null
     override val invalidated: Array<StoragePairs<*>> = arrayOf(
         StoragePairs.LinkedHash("hash"),

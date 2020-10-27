@@ -1,8 +1,8 @@
 package org.knowledger.ledger.storage.config.coinbase.factory
 
 import org.knowledger.ledger.crypto.Hash
+import org.knowledger.ledger.crypto.digest.classDigest
 import org.knowledger.ledger.crypto.hash.Hashers
-import org.knowledger.ledger.crypto.hash.classDigest
 import org.knowledger.ledger.storage.CloningFactory
 import org.knowledger.ledger.storage.CoinbaseParams
 import org.knowledger.ledger.storage.DefaultDiff

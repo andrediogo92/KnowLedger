@@ -25,7 +25,7 @@ internal class StorageAwareBlockFactory(
     override fun create(
         chainHash: Hash, previousHash: Hash, blockParams: BlockParams,
         coinbaseParams: CoinbaseParams, hashers: Hashers, encoder: BinaryFormat,
-    ): MutableBlock = createSA(
+    ): StorageAwareBlockImpl = createSA(
         blockFactory.create(
             chainHash, previousHash, blockParams, coinbaseParams, hashers, encoder
         )

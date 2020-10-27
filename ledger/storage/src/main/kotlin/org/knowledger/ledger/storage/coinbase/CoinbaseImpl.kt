@@ -3,7 +3,7 @@ package org.knowledger.ledger.storage.coinbase
 import org.knowledger.collections.MutableSortedList
 import org.knowledger.collections.SortedList
 import org.knowledger.collections.mutableSortedListOf
-import org.knowledger.ledger.core.data.truncatedHexString
+import org.knowledger.encoding.base64.base64Encoded
 import org.knowledger.ledger.storage.DataFormula
 import org.knowledger.ledger.storage.MutableCoinbaseHeader
 import org.knowledger.ledger.storage.MutableMerkleTree
@@ -33,7 +33,7 @@ internal class CoinbaseImpl(
             _witnesses.indexed(index, _witnesses.size)
         } else {
             Logger.error {
-                "Witness ${witness.hash.truncatedHexString()} already exists in coinbase"
+                "Witness ${witness.hash.base64Encoded()} already exists in coinbase"
             }
         }
     }

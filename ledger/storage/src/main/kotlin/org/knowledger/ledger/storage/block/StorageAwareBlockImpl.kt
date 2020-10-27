@@ -7,12 +7,14 @@ import org.knowledger.ledger.storage.MutableBlockHeader
 import org.knowledger.ledger.storage.MutableCoinbase
 import org.knowledger.ledger.storage.MutableMerkleTree
 import org.knowledger.ledger.storage.MutableTransaction
+import org.knowledger.ledger.storage.cache.BooleanLocking
 import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 
 internal class StorageAwareBlockImpl(
     override val block: MutableBlock,
 ) : MutableBlock by block, StorageAwareBlock {
+    override val lock: BooleanLocking = BooleanLocking()
     override var id: StorageElement? = null
     override val invalidated: Array<StoragePairs<*>> = arrayOf(
         StoragePairs.Linked<MutableBlockHeader>("blockHeader", AdapterIds.BlockHeader),

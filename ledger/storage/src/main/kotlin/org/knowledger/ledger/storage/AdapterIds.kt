@@ -4,6 +4,7 @@ enum class AdapterIds {
     Block,
     BlockHeader,
     BlockParams,
+    BlockPool,
     ChainId,
     ChainHandle,
     Coinbase,

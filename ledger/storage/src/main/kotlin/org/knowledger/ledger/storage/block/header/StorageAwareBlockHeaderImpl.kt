@@ -2,20 +2,21 @@ package org.knowledger.ledger.storage.block.header
 
 import org.knowledger.ledger.crypto.Hash
 import org.knowledger.ledger.database.StorageElement
+import org.knowledger.ledger.storage.cache.BooleanLocking
 import org.knowledger.ledger.storage.cache.StoragePairs
 import org.knowledger.ledger.storage.cache.replaceUnchecked
 
 internal class StorageAwareBlockHeaderImpl(
     override val blockHeader: MutableHashedBlockHeader,
 ) : MutableHashedBlockHeader by blockHeader, StorageAwareBlockHeader {
+    override val lock: BooleanLocking = BooleanLocking()
+    override var id: StorageElement? = null
     override val invalidated: Array<StoragePairs<*>> = arrayOf(
         StoragePairs.LinkedHash("hash"),
         StoragePairs.LinkedHash("merkleRoot"),
         StoragePairs.Native("nonce"),
         StoragePairs.Native("seconds")
     )
-
-    override var id: StorageElement? = null
 
     override fun updateHash(hash: Hash) {
         blockHeader.updateHash(hash)

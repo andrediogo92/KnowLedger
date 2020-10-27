@@ -1,11 +1,15 @@
+@file:UseSerializers(SortedListSerializer::class)
+
 package org.knowledger.ledger.storage.coinbase
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 import org.knowledger.collections.SortedList
 import org.knowledger.ledger.crypto.storage.ImmutableMerkleTree
 import org.knowledger.ledger.storage.Witness
 import org.knowledger.ledger.storage.coinbase.header.ImmutableCoinbaseHeader
+import org.knowledger.ledger.storage.serial.SortedListSerializer
 import org.knowledger.ledger.storage.witness.ImmutableWitness
 
 @Serializable

@@ -24,6 +24,7 @@ import org.knowledger.ledger.storage.pools.block.BlockPoolFactory
 import org.knowledger.ledger.storage.pools.block.BlockPoolFactoryImpl
 import org.knowledger.ledger.storage.pools.transaction.factory.PoolTransactionFactory
 import org.knowledger.ledger.storage.pools.transaction.factory.PoolTransactionFactoryImpl
+import org.knowledger.ledger.storage.pools.transaction.factory.StorageAwareTransactionPoolFactory
 import org.knowledger.ledger.storage.pools.transaction.factory.TransactionPoolFactory
 import org.knowledger.ledger.storage.pools.transaction.factory.TransactionPoolFactoryImpl
 import org.knowledger.ledger.storage.transaction.factory.StorageAwareTransactionFactory
@@ -72,5 +73,5 @@ internal class StorageAwareFactories : Factories {
     override val poolTransactionFactory: PoolTransactionFactory =
         PoolTransactionFactoryImpl()
     override val transactionPoolFactory: TransactionPoolFactory =
-        TransactionPoolFactoryImpl(poolTransactionFactory)
+        StorageAwareTransactionPoolFactory(TransactionPoolFactoryImpl(poolTransactionFactory))
 }
