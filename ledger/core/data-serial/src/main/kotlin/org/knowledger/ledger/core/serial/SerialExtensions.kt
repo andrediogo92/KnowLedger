@@ -10,7 +10,7 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 inline fun <T, R : T> DeserializationStrategy<T>.compositeDecode(
-    decoder: Decoder, decode: CompositeDecoder.() -> R
+    decoder: Decoder, decode: CompositeDecoder.() -> R,
 ): R {
     contract {
         callsInPlace(decode, InvocationKind.EXACTLY_ONCE)
@@ -23,7 +23,7 @@ inline fun <T, R : T> DeserializationStrategy<T>.compositeDecode(
 }
 
 inline fun <T> SerializationStrategy<T>.compositeEncode(
-    encoder: Encoder, encode: CompositeEncoder.() -> Unit
+    encoder: Encoder, encode: CompositeEncoder.() -> Unit,
 ) {
     contract {
         callsInPlace(encode, InvocationKind.EXACTLY_ONCE)

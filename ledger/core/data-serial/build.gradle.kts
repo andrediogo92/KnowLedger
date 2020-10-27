@@ -5,7 +5,7 @@ plugins {
 
 pluginConfiguration {
     packageName = "org.knowledger.ledger.core.serial"
-    module = "ledger/core/kserial"
+    module = "ledger/core/data-serial"
     experimentalContracts = true
 }
 

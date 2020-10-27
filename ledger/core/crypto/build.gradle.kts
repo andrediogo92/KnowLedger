@@ -16,7 +16,7 @@ dependencies {
     implementation(project(":collections-extensions"))
     implementation(project(":encoding-extensions"))
     implementation(project(":ledger:core:data"))
-    implementation(project(":ledger:core:kserial"))
+    implementation(project(":ledger:core:data-serial"))
 
     implementation(Libs.bouncyCastle)
 
