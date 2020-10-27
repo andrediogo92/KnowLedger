@@ -55,7 +55,7 @@ class TestSortedList {
         fun `random Inserts`() {
             val randoms: List<Int> = random
                 .randomInts()
-                .take(random.randomInt(3000))
+                .take(random.nextInt(3000))
                 .toList()
             randomList.addAll(randoms)
             assertThat(

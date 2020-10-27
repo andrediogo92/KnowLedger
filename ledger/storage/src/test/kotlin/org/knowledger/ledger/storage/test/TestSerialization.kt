@@ -62,7 +62,7 @@ class TestSerialization {
 
             @BeforeEach
             fun startup() {
-                transaction = testTransactions[random.randomInt(testSize)].immutableCopy()
+                transaction = testTransactions[random.nextInt(testSize)].immutableCopy()
             }
 
             @Test
