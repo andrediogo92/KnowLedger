@@ -1,23 +1,19 @@
 package org.knowledger.ledger.mining
 
-import org.knowledger.ledger.storage.BlockHeader
-import org.knowledger.ledger.storage.NonceRegen
+import org.knowledger.ledger.storage.MutableBlockHeader
 
 sealed class BlockState {
     data class BlockReady(
-        val full: Boolean,
-        internal val header: BlockHeader
+        val full: Boolean, internal val header: MutableBlockHeader,
     ) : BlockState() {
-        val hashId
-            get() = header.hash
-        val merkleRoot
-            get() = header.merkleRoot
+        val hashId get() = header.hash
+        val merkleRoot get() = header.merkleRoot
 
         fun attemptMine(): MiningState =
             if (header.nonce == Long.MAX_VALUE) {
                 MiningState.Refresh
             } else {
-                (header as NonceRegen).newNonce()
+                header.newNonce()
                 MiningState.Attempted
             }
     }
@@ -25,7 +21,6 @@ sealed class BlockState {
     object BlockNotReady : BlockState()
 
     object BlockFailure : BlockState() {
-        override fun toString(): String =
-            "Transaction does not verify"
+        override fun toString(): String = "Transaction does not verify"
     }
 }
