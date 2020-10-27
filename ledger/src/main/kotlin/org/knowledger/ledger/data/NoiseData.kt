@@ -3,6 +3,7 @@
 package org.knowledger.ledger.data
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
@@ -30,14 +31,13 @@ import java.math.BigDecimal
 @Serializable
 @SerialName("NoiseData")
 data class NoiseData(
-    val noiseLevel: BigDecimal,
-    val peakOrBase: BigDecimal,
-    val unit: NoiseUnit
+    val noiseLevel: BigDecimal, val peakOrBase: BigDecimal, val unit: NoiseUnit,
 ) : LedgerData {
     override fun clone(): NoiseData = copy()
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(serializer(), this)
+        encoder.encodeToByteArray(serializer(), this)
 
     override fun calculateDiff(previous: SelfInterval): BigDecimal =
         when (previous) {

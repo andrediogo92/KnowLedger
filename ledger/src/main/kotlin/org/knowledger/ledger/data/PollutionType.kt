@@ -2,9 +2,7 @@ package org.knowledger.ledger.data
 
 import org.knowledger.ledger.core.data.PhysicalUnit
 
-enum class PollutionType(
-    val description: String
-) : PhysicalUnit {
+enum class PollutionType(val description: String) : PhysicalUnit {
     PM25("Particulate Matter 2.5"),
     PM10("Particulate Matter 10"),
     BC("Black Carbon"),

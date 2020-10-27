@@ -3,6 +3,7 @@
 package org.knowledger.ledger.data
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
@@ -21,14 +22,12 @@ import java.math.BigDecimal
  */
 @Serializable
 @SerialName("TemperatureData")
-data class TemperatureData(
-    val temperature: BigDecimal,
-    val unit: TemperatureUnit
-) : LedgerData {
+data class TemperatureData(val temperature: BigDecimal, val unit: TemperatureUnit) : LedgerData {
     override fun clone(): TemperatureData = copy()
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(serializer(), this)
+        encoder.encodeToByteArray(serializer(), this)
 
     override fun calculateDiff(previous: SelfInterval): BigDecimal =
         when (previous) {
@@ -42,12 +41,8 @@ data class TemperatureData(
         }
 
 
-    private fun calculateDiffTemp(
-        previous: TemperatureData
-    ): BigDecimal {
-        val oldT = previous.unit.convertTo(
-            previous.temperature, TemperatureUnit.Celsius
-        )
+    private fun calculateDiffTemp(previous: TemperatureData): BigDecimal {
+        val oldT = previous.unit.convertTo(previous.temperature, TemperatureUnit.Celsius)
         return unit.convertTo(temperature, TemperatureUnit.Celsius)
             .subtract(oldT)
             .divide(oldT, GLOBALCONTEXT)

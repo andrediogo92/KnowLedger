@@ -13,36 +13,28 @@ import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.err
 import org.knowledger.ledger.results.ok
 import org.knowledger.ledger.storage.LedgerData
+import java.math.BigDecimal
 
-class HumidityDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<HumidityData>(
-    HumidityData::class.java, hasher
-) {
-    override val serializer: KSerializer<HumidityData>
-        get() = HumidityData.serializer()
+class HumidityDataStorageAdapter(hashers: Hashers) :
+    AbstractStorageAdapter<HumidityData>(HumidityData::class, hashers) {
+    override val serializer: KSerializer<HumidityData> get() = HumidityData.serializer()
 
     override val properties: Map<String, StorageType>
-        get() = mapOf(
-            "humidity" to StorageType.DECIMAL,
-            "unit" to StorageType.INTEGER
-        )
+        get() = mapOf("humidity" to StorageType.DECIMAL, "unit" to StorageType.INTEGER)
 
-    override fun store(
-        toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement = (toStore as HumidityData).let {
-        session.newInstance(id)
-            .setStorageProperty("humidity", it.humidity)
-            .setStorageProperty(
-                "unit", when (it.unit) {
-                    HumidityUnit.GramsByKilograms -> HumidityUnit.GramsByKilograms.ordinal
-                    HumidityUnit.KilogramsByKilograms -> HumidityUnit.KilogramsByKilograms.ordinal
-                    HumidityUnit.Relative -> HumidityUnit.Relative.ordinal
-                }
-            )
-    }
+    override fun store(toStore: LedgerData, session: NewInstanceSession): StorageElement =
+        (toStore as HumidityData).let { humidityData ->
+            val unit = when (humidityData.unit) {
+                HumidityUnit.GramsByKilograms -> HumidityUnit.GramsByKilograms.ordinal
+                HumidityUnit.KilogramsByKilograms -> HumidityUnit.KilogramsByKilograms.ordinal
+                HumidityUnit.Relative -> HumidityUnit.Relative.ordinal
+            }
+            session.newInstance(id)
+                .setStorageProperty("humidity", humidityData.humidity)
+                .setStorageProperty("unit", unit)
+        }
 
-    override fun load(
-        element: StorageElement
-    ): Outcome<HumidityData, DataFailure> =
+    override fun load(element: StorageElement): Outcome<HumidityData, DataFailure> =
         commonLoad(element, id) {
             val prop = getStorageProperty<Int>("unit")
             val unit = when (prop) {
@@ -51,15 +43,9 @@ class HumidityDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<Humid
                 HumidityUnit.Relative.ordinal -> HumidityUnit.Relative
                 else -> null
             }
-            if (unit == null) {
-                DataFailure.UnrecognizedUnit(
-                    "HUnit is not one of the expected: $prop"
-                ).err()
-            } else {
-                HumidityData(
-                    getStorageProperty("humidity"), unit
-                ).ok()
-            }
+            val humidity = getStorageProperty<BigDecimal>("humidity")
+            unit?.let { unit1 -> HumidityData(humidity, unit1).ok() }
+            ?: DataFailure.UnrecognizedUnit("HUnit is not one of the expected: $prop").err()
         }
 
 }

@@ -13,25 +13,17 @@ import org.knowledger.ledger.results.ok
 import org.knowledger.ledger.serial.DummyDataSerializer
 import org.knowledger.ledger.storage.LedgerData
 
-internal class DummyDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<DummyData>(
-    DummyData::class.java, hasher
-) {
-    override val serializer: KSerializer<DummyData>
-        get() = DummyDataSerializer
+internal class DummyDataStorageAdapter(hashers: Hashers) :
+    AbstractStorageAdapter<DummyData>(DummyData::class, hashers) {
+    override val serializer: KSerializer<DummyData> get() = DummyDataSerializer
 
     override val properties: Map<String, StorageType>
-        get() = mapOf(
-            "origin" to StorageType.INTEGER
-        )
+        get() = mapOf("origin" to StorageType.INTEGER)
 
-    override fun store(
-        toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement = session.newInstance(id)
-        .setStorageProperty("origin", 0xCC.toByte())
+    override fun store(toStore: LedgerData, session: NewInstanceSession): StorageElement =
+        session.newInstance(id).setStorageProperty("origin", 0xCC.toByte())
 
 
-    override fun load(
-        element: StorageElement
-    ): Outcome<DummyData, DataFailure> =
+    override fun load(element: StorageElement): Outcome<DummyData, DataFailure> =
         commonLoad(element, id) { DummyData.ok() }
 }

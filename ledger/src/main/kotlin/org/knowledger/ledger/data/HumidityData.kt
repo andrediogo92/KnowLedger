@@ -3,6 +3,7 @@
 package org.knowledger.ledger.data
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
@@ -22,14 +23,12 @@ import java.math.BigDecimal
  */
 @Serializable
 @SerialName("HumidityData")
-data class HumidityData(
-    val humidity: BigDecimal,
-    val unit: HumidityUnit
-) : LedgerData {
+data class HumidityData(val humidity: BigDecimal, val unit: HumidityUnit) : LedgerData {
     override fun clone(): HumidityData = copy()
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(serializer(), this)
+        encoder.encodeToByteArray(serializer(), this)
 
     override fun calculateDiff(previous: SelfInterval): BigDecimal =
         when (previous) {
@@ -49,12 +48,8 @@ data class HumidityData(
             newH = humidity
             oldH = previous.humidity
         } else {
-            newH = unit.convertTo(
-                humidity, HumidityUnit.KilogramsByKilograms
-            )
-            oldH = previous.unit.convertTo(
-                humidity, HumidityUnit.KilogramsByKilograms
-            )
+            newH = unit.convertTo(humidity, HumidityUnit.KilogramsByKilograms)
+            oldH = previous.unit.convertTo(humidity, HumidityUnit.KilogramsByKilograms)
         }
         return newH.subtract(oldH).divide(oldH, GLOBALCONTEXT)
     }

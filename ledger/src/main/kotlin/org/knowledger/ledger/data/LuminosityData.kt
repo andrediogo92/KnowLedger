@@ -1,7 +1,9 @@
 @file:UseSerializers(BigDecimalSerializer::class)
+
 package org.knowledger.ledger.data
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.UseSerializers
@@ -20,14 +22,12 @@ import java.math.BigDecimal
  */
 @Serializable
 @SerialName("LuminosityData")
-data class LuminosityData(
-    val luminosity: BigDecimal,
-    val unit: LuminosityUnit
-) : LedgerData {
+data class LuminosityData(val luminosity: BigDecimal, val unit: LuminosityUnit) : LedgerData {
     override fun clone(): LuminosityData = copy()
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(serializer(), this)
+        encoder.encodeToByteArray(serializer(), this)
 
     override fun calculateDiff(previous: SelfInterval): BigDecimal =
         when (previous) {
@@ -41,6 +41,5 @@ data class LuminosityData(
         }
 
     private fun calculateDiffLum(previous: LuminosityData): BigDecimal =
-        luminosity.subtract(previous.luminosity)
-            .divide(previous.luminosity, GLOBALCONTEXT)
+        luminosity.subtract(previous.luminosity).divide(previous.luminosity, GLOBALCONTEXT)
 }

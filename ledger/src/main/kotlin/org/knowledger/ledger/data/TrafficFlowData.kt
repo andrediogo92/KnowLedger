@@ -2,6 +2,7 @@ package org.knowledger.ledger.data
 
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.knowledger.ledger.storage.LedgerData
@@ -26,11 +27,11 @@ data class TrafficFlowData(
     val confidence: Double,   //Measure of the quality of the provided travel time and speed
     val realtimeRatio: Double,   //The ratio between live and the historical value used to provide the response
     val city: String = "TBD",
-    val citySeqNum: Int = 1
+    val citySeqNum: Int = 1,
 ) : LedgerData {
     //Indicates the road type
     val functionalRoadClassDescription: String =
-        when (this.functionalRoadClass) {
+        when (functionalRoadClass) {
             "FRC0" -> "Motorway"
             "FRC1" -> "Major Road"
             "FRC2" -> "Other Major Road"
@@ -38,30 +39,27 @@ data class TrafficFlowData(
             "FRC4" -> "Local Connecting Road"
             "FRC5" -> "Local High Importance Road"
             "FRC6" -> "Local Road"
-            else -> {
-                "Unknown Road"
-            }
+            else -> "Unknown Road"
         }
 
     override fun clone(): TrafficFlowData = copy()
 
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(serializer(), this)
+        encoder.encodeToByteArray(serializer(), this)
 
 
-    override fun calculateDiff(previous: SelfInterval): BigDecimal {
-        return if (previous is TrafficFlowData) {
-            calculateDiffTraffic(previous)
-        } else {
-            throw InvalidClassException(
+    override fun calculateDiff(previous: SelfInterval): BigDecimal =
+        when (previous) {
+            is TrafficFlowData -> calculateDiffTraffic(previous)
+            else -> throw InvalidClassException(
                 """SelfInterval supplied is:
-                    |   ${previous.javaClass.name},
-                    |   not ${this::class.java.name}
+                |   ${previous.javaClass.name},
+                |   not ${this::class.java.name}
                 """.trimMargin()
             )
         }
-    }
 
     private fun calculateDiffTraffic(previous: TrafficFlowData): BigDecimal {
         return BigDecimal.ONE

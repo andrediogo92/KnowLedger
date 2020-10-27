@@ -13,36 +13,28 @@ import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.err
 import org.knowledger.ledger.results.ok
 import org.knowledger.ledger.storage.LedgerData
+import java.math.BigDecimal
 
-class LuminosityDataAdapter(hasher: Hashers) : AbstractStorageAdapter<LuminosityData>(
-    LuminosityData::class.java, hasher
-) {
-    override val serializer: KSerializer<LuminosityData>
-        get() = LuminosityData.serializer()
+class LuminosityDataAdapter(hashers: Hashers) :
+    AbstractStorageAdapter<LuminosityData>(LuminosityData::class, hashers) {
+    override val serializer: KSerializer<LuminosityData> get() = LuminosityData.serializer()
 
 
     override val properties: Map<String, StorageType>
-        get() = mapOf(
-            "luminosity" to StorageType.DECIMAL,
-            "unit" to StorageType.INTEGER
-        )
+        get() = mapOf("luminosity" to StorageType.DECIMAL, "unit" to StorageType.INTEGER)
 
-    override fun store(
-        toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement = (toStore as LuminosityData).let {
-        session.newInstance(id)
-            .setStorageProperty("luminosity", it.luminosity)
-            .setStorageProperty(
-                "unit", when (it.unit) {
-                    LuminosityUnit.Lumens -> LuminosityUnit.Lumens.ordinal
-                    LuminosityUnit.Lux -> LuminosityUnit.Lux.ordinal
-                }
-            )
-    }
+    override fun store(toStore: LedgerData, session: NewInstanceSession): StorageElement =
+        (toStore as LuminosityData).let { luminosityData ->
+            val unit = when (luminosityData.unit) {
+                LuminosityUnit.Lumens -> LuminosityUnit.Lumens.ordinal
+                LuminosityUnit.Lux -> LuminosityUnit.Lux.ordinal
+            }
+            session.newInstance(id)
+                .setStorageProperty("luminosity", luminosityData.luminosity)
+                .setStorageProperty("unit", unit)
+        }
 
-    override fun load(
-        element: StorageElement
-    ): Outcome<LuminosityData, DataFailure> =
+    override fun load(element: StorageElement): Outcome<LuminosityData, DataFailure> =
         commonLoad(element, id) {
             val prop = getStorageProperty<Int>("unit")
             val unit = when (prop) {
@@ -50,14 +42,8 @@ class LuminosityDataAdapter(hasher: Hashers) : AbstractStorageAdapter<Luminosity
                 LuminosityUnit.Lux.ordinal -> LuminosityUnit.Lux
                 else -> null
             }
-            if (unit == null) {
-                DataFailure.UnrecognizedUnit(
-                    "LUnit is not one of the expected: $prop"
-                ).err()
-            } else {
-                LuminosityData(
-                    getStorageProperty("luminosity"), unit
-                ).ok()
-            }
+            val luminosity = getStorageProperty<BigDecimal>("luminosity")
+            unit?.let { unit1 -> LuminosityData(luminosity, unit1).ok() }
+            ?: DataFailure.UnrecognizedUnit("LUnit is not one of the expected: $prop").err()
         }
 }

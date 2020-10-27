@@ -1,6 +1,7 @@
 package org.knowledger.ledger.data
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.knowledger.ledger.storage.LedgerData
@@ -47,76 +48,55 @@ data class TrafficIncidentData(
     //The road number/s affected by the incident. Multiple road numbers will delimited by slashes.
     val affectedRoads: String,
     val city: String = "TBD",
-    val citySeqNum: Int = 1
+    val citySeqNum: Int = 1,
 ) : LedgerData {
     //The category description associated with this incident.
     val incidentCategoryDesc: String =
         when (incidentCategory) {
-            IncidentCategory.Cluster.ordinal ->
-                IncidentCategory.Cluster.name
-            IncidentCategory.Detour.ordinal ->
-                IncidentCategory.Detour.name
-            IncidentCategory.Flooding.ordinal ->
-                IncidentCategory.Flooding.name
-            IncidentCategory.Wind.ordinal ->
-                IncidentCategory.Wind.name
-            IncidentCategory.RoadWorks.ordinal ->
-                IncidentCategory.RoadWorks.name
-            IncidentCategory.RoadClosed.ordinal ->
-                IncidentCategory.RoadClosed.name
-            IncidentCategory.LaneClosed.ordinal ->
-                IncidentCategory.LaneClosed.name
-            IncidentCategory.Jam.ordinal ->
-                IncidentCategory.Jam.name
-            IncidentCategory.Ice.ordinal ->
-                IncidentCategory.Ice.name
-            IncidentCategory.Rain.ordinal ->
-                IncidentCategory.Rain.name
-            IncidentCategory.DangerousConditions.ordinal ->
-                IncidentCategory.DangerousConditions.name
-            IncidentCategory.Fog.ordinal ->
-                IncidentCategory.Fog.name
-            IncidentCategory.Accident.ordinal ->
-                IncidentCategory.Accident.name
-            else ->
-                IncidentCategory.Unknown.name
+            IncidentCategory.Cluster.ordinal -> IncidentCategory.Cluster.name
+            IncidentCategory.Detour.ordinal -> IncidentCategory.Detour.name
+            IncidentCategory.Flooding.ordinal -> IncidentCategory.Flooding.name
+            IncidentCategory.Wind.ordinal -> IncidentCategory.Wind.name
+            IncidentCategory.RoadWorks.ordinal -> IncidentCategory.RoadWorks.name
+            IncidentCategory.RoadClosed.ordinal -> IncidentCategory.RoadClosed.name
+            IncidentCategory.LaneClosed.ordinal -> IncidentCategory.LaneClosed.name
+            IncidentCategory.Jam.ordinal -> IncidentCategory.Jam.name
+            IncidentCategory.Ice.ordinal -> IncidentCategory.Ice.name
+            IncidentCategory.Rain.ordinal -> IncidentCategory.Rain.name
+            IncidentCategory.DangerousConditions.ordinal -> IncidentCategory.DangerousConditions.name
+            IncidentCategory.Fog.ordinal -> IncidentCategory.Fog.name
+            IncidentCategory.Accident.ordinal -> IncidentCategory.Accident.name
+            else -> IncidentCategory.Unknown.name
         }
 
     //The magnitude of delay description associated with the incident.
     val magnitudeOfDelayDescription: String =
         when (magnitudeOfDelay) {
-            MagnitudeDelay.Undefined.ordinal ->
-                MagnitudeDelay.Undefined.name
-            MagnitudeDelay.Major.ordinal ->
-                MagnitudeDelay.Major.name
-            MagnitudeDelay.Moderate.ordinal ->
-                MagnitudeDelay.Moderate.name
-            MagnitudeDelay.Minor.ordinal ->
-                MagnitudeDelay.Minor.name
-            else -> {
-                MagnitudeDelay.UnknownDelay.name
-            }
+            MagnitudeDelay.Undefined.ordinal -> MagnitudeDelay.Undefined.name
+            MagnitudeDelay.Major.ordinal -> MagnitudeDelay.Major.name
+            MagnitudeDelay.Moderate.ordinal -> MagnitudeDelay.Moderate.name
+            MagnitudeDelay.Minor.ordinal -> MagnitudeDelay.Minor.name
+            else -> MagnitudeDelay.UnknownDelay.name
         }
 
     override fun clone(): TrafficIncidentData = copy()
 
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(serializer(), this)
+        encoder.encodeToByteArray(serializer(), this)
 
 
-    override fun calculateDiff(previous: SelfInterval): BigDecimal {
-        return if (previous is TrafficIncidentData) {
-            calculateDiffTraffic(previous)
-        } else {
-            throw InvalidClassException(
+    override fun calculateDiff(previous: SelfInterval): BigDecimal =
+        when (previous) {
+            is TrafficIncidentData -> calculateDiffTraffic(previous)
+            else -> throw InvalidClassException(
                 """SelfInterval supplied is:
-                    |   ${previous.javaClass.name},
-                    |   not ${this::class.java.name}
+                |   ${previous.javaClass.name},
+                |   not ${this::class.java.name}
                 """.trimMargin()
             )
         }
-    }
 
     private fun calculateDiffTraffic(previous: TrafficIncidentData): BigDecimal {
         return BigDecimal.ONE

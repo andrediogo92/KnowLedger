@@ -12,11 +12,9 @@ import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.ok
 import org.knowledger.ledger.storage.LedgerData
 
-class TrafficIncidentDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<TrafficIncidentData>(
-    TrafficIncidentData::class.java, hasher
-) {
-    override val serializer: KSerializer<TrafficIncidentData>
-        get() = TrafficIncidentData.serializer()
+class TrafficIncidentDataStorageAdapter(hashers: Hashers) :
+    AbstractStorageAdapter<TrafficIncidentData>(TrafficIncidentData::class, hashers) {
+    override val serializer: KSerializer<TrafficIncidentData> get() = TrafficIncidentData.serializer()
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
@@ -38,32 +36,29 @@ class TrafficIncidentDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapte
             "citySeqNum" to StorageType.INTEGER
         )
 
-    override fun store(
-        toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement = (toStore as TrafficIncidentData).let {
-        session.newInstance(id)
-            .setStorageProperty("trafficModelId", it.trafficModelId)
-            .setStorageProperty("id", it.id)
-            .setStorageProperty("iconLat", it.iconLat)
-            .setStorageProperty("iconLon", it.iconLon)
-            .setStorageProperty("incidentCategory", it.incidentCategory)
-            .setStorageProperty("magnitudeOfDelay", it.magnitudeOfDelay)
-            .setStorageProperty("clusterSize", it.clusterSize)
-            .setStorageProperty("description", it.description)
-            .setStorageProperty("causeOfAccident", it.causeOfAccident)
-            .setStorageProperty("from", it.from)
-            .setStorageProperty("to", it.to)
-            .setStorageProperty("length", it.length)
-            .setStorageProperty("delayInSeconds", it.delayInSeconds)
-            .setStorageProperty("affectedRoads", it.affectedRoads)
-            .setStorageProperty("city", it.city)
-            .setStorageProperty("citySeqNum", it.citySeqNum)
-    }
+    override fun store(toStore: LedgerData, session: NewInstanceSession): StorageElement =
+        (toStore as TrafficIncidentData).let { trafficIncidentData ->
+            session.newInstance(id)
+                .setStorageProperty("trafficModelId", trafficIncidentData.trafficModelId)
+                .setStorageProperty("id", trafficIncidentData.id)
+                .setStorageProperty("iconLat", trafficIncidentData.iconLat)
+                .setStorageProperty("iconLon", trafficIncidentData.iconLon)
+                .setStorageProperty("incidentCategory", trafficIncidentData.incidentCategory)
+                .setStorageProperty("magnitudeOfDelay", trafficIncidentData.magnitudeOfDelay)
+                .setStorageProperty("clusterSize", trafficIncidentData.clusterSize)
+                .setStorageProperty("description", trafficIncidentData.description)
+                .setStorageProperty("causeOfAccident", trafficIncidentData.causeOfAccident)
+                .setStorageProperty("from", trafficIncidentData.from)
+                .setStorageProperty("to", trafficIncidentData.to)
+                .setStorageProperty("length", trafficIncidentData.length)
+                .setStorageProperty("delayInSeconds", trafficIncidentData.delayInSeconds)
+                .setStorageProperty("affectedRoads", trafficIncidentData.affectedRoads)
+                .setStorageProperty("city", trafficIncidentData.city)
+                .setStorageProperty("citySeqNum", trafficIncidentData.citySeqNum)
+        }
 
 
-    override fun load(
-        element: StorageElement
-    ): Outcome<TrafficIncidentData, DataFailure> =
+    override fun load(element: StorageElement): Outcome<TrafficIncidentData, DataFailure> =
         commonLoad(element, id) {
             TrafficIncidentData(
                 getStorageProperty("trafficModelId"),

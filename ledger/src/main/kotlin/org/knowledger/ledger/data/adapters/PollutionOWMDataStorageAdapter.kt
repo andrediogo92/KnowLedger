@@ -14,51 +14,45 @@ import org.knowledger.ledger.results.err
 import org.knowledger.ledger.results.ok
 import org.knowledger.ledger.storage.LedgerData
 
-class PollutionOWMDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<PollutionOWMData>(
-    PollutionOWMData::class.java, hasher
-) {
-    override val serializer: KSerializer<PollutionOWMData>
-        get() = PollutionOWMData.serializer()
+class PollutionOWMDataStorageAdapter(hashers: Hashers) :
+    AbstractStorageAdapter<PollutionOWMData>(PollutionOWMData::class, hashers) {
+    override val serializer: KSerializer<PollutionOWMData> get() = PollutionOWMData.serializer()
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
             "unit" to StorageType.STRING,
             "parameter" to StorageType.INTEGER,
             "value" to StorageType.DOUBLE,
-            "value" to StorageType.LISTEMBEDDED,
+            "data" to StorageType.LISTEMBEDDED,
             "city" to StorageType.STRING,
             "citySeqNum" to StorageType.STRING
         )
 
-    override fun store(
-        toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement = (toStore as PollutionOWMData).let {
-        session.newInstance(id)
-            .setStorageProperty(
-                "parameter", when (it.parameter) {
-                    PollutionType.O3 -> PollutionType.O3.ordinal
-                    PollutionType.UV -> PollutionType.UV.ordinal
-                    PollutionType.CO -> PollutionType.CO.ordinal
-                    PollutionType.SO2 -> PollutionType.SO2.ordinal
-                    PollutionType.NO2 -> PollutionType.NO2.ordinal
-                    PollutionType.NA -> PollutionType.NA.ordinal
-                    else -> Int.MAX_VALUE
-                }
-            )
-            .setStorageProperty("value", it.value)
-            .setStorageProperty("unit", it.unit)
-            .setStorageProperty("city", it.city)
-            .setStorageProperty("value", emptyList<List<Double>>())
-            .setStorageProperty("citySeqNum", it.citySeqNum)
-    }
+    override fun store(toStore: LedgerData, session: NewInstanceSession): StorageElement =
+        (toStore as PollutionOWMData).let { pollutionOWMData ->
+            val parameter = when (pollutionOWMData.parameter) {
+                PollutionType.O3 -> PollutionType.O3.ordinal
+                PollutionType.UV -> PollutionType.UV.ordinal
+                PollutionType.CO -> PollutionType.CO.ordinal
+                PollutionType.SO2 -> PollutionType.SO2.ordinal
+                PollutionType.NO2 -> PollutionType.NO2.ordinal
+                PollutionType.NA -> PollutionType.NA.ordinal
+                else -> Int.MAX_VALUE
+            }
+            session.newInstance(id)
+                .setStorageProperty("parameter", parameter)
+                .setStorageProperty("value", pollutionOWMData.value)
+                .setStorageProperty("unit", pollutionOWMData.unit)
+                .setStorageProperty("city", pollutionOWMData.city)
+                .setStorageProperty("data", emptyList<List<Double>>())
+                .setStorageProperty("citySeqNum", pollutionOWMData.citySeqNum)
+        }
 
 
-    override fun load(
-        element: StorageElement
-    ): Outcome<PollutionOWMData, DataFailure> =
+    override fun load(element: StorageElement): Outcome<PollutionOWMData, DataFailure> =
         commonLoad(element, id) {
             val prop = getStorageProperty<Int>("parameter")
-            val param = when (prop) {
+            val parameter = when (prop) {
                 PollutionType.O3.ordinal -> PollutionType.O3
                 PollutionType.UV.ordinal -> PollutionType.UV
                 PollutionType.CO.ordinal -> PollutionType.CO
@@ -67,18 +61,15 @@ class PollutionOWMDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<P
                 PollutionType.NA.ordinal -> PollutionType.NA
                 else -> null
             }
-            if (param == null) {
-                DataFailure.UnrecognizedUnit(
-                    "Parameter is not one of the expected types: $prop"
-                ).err()
-            } else {
-                PollutionOWMData(
-                    getStorageProperty("unit"), param,
-                    getStorageProperty("value"),
-                    getStorageProperty("value"),
-                    getStorageProperty("city"),
-                    getStorageProperty("citySeqNum")
-                ).ok()
-            }
+            val unit = getStorageProperty<String>("unit")
+            val value = getStorageProperty<Double>("value")
+            val data = getStorageProperty<List<List<Double>>>("value")
+            val city = getStorageProperty<String>("city")
+            val citySeqNum = getStorageProperty<Int>("citySeqNum")
+            parameter?.let {
+                PollutionOWMData(unit, parameter, value, data, city, citySeqNum).ok()
+            } ?: DataFailure.UnrecognizedUnit(
+                "Parameter is not one of the expected types: $prop"
+            ).err()
         }
 }

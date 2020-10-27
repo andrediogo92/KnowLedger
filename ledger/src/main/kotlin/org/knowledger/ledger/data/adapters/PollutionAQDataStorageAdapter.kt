@@ -14,11 +14,9 @@ import org.knowledger.ledger.results.err
 import org.knowledger.ledger.results.ok
 import org.knowledger.ledger.storage.LedgerData
 
-class PollutionAQDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<PollutionAQData>(
-    PollutionAQData::class.java, hasher
-) {
-    override val serializer: KSerializer<PollutionAQData>
-        get() = PollutionAQData.serializer()
+class PollutionAQDataStorageAdapter(hashers: Hashers) :
+    AbstractStorageAdapter<PollutionAQData>(PollutionAQData::class, hashers) {
+    override val serializer: KSerializer<PollutionAQData> get() = PollutionAQData.serializer()
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
@@ -31,38 +29,35 @@ class PollutionAQDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<Po
             "citySeqNum" to StorageType.INTEGER
         )
 
-    override fun store(
-        toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement = (toStore as PollutionAQData).let {
-        session.newInstance(id)
-            .setStorageProperty("lastUpdated", it.lastUpdated)
-            .setStorageProperty("unit", it.unit)
-            //Byte encode the enum.
-            .setStorageProperty(
-                "parameter", when (it.parameter) {
-                    PollutionType.PM25 -> PollutionType.PM25.ordinal
-                    PollutionType.PM10 -> PollutionType.PM10.ordinal
-                    PollutionType.SO2 -> PollutionType.SO2.ordinal
-                    PollutionType.NO2 -> PollutionType.NO2.ordinal
-                    PollutionType.O3 -> PollutionType.O3.ordinal
-                        PollutionType.CO -> PollutionType.CO.ordinal
-                        PollutionType.BC -> PollutionType.BC.ordinal
-                        PollutionType.NA -> PollutionType.NA.ordinal
-                        else -> Int.MAX_VALUE
-                    }
-                ).setStorageProperty("value", it.value)
-                .setStorageProperty("sourceName", it.sourceName)
-                .setStorageProperty("city", it.city)
-                .setStorageProperty("citySeqNum", it.citySeqNum)
+    override fun store(toStore: LedgerData, session: NewInstanceSession): StorageElement =
+        (toStore as PollutionAQData).let { pollutionData ->
+            val parameter = when (pollutionData.parameter) {
+                PollutionType.PM25 -> PollutionType.PM25.ordinal
+                PollutionType.PM10 -> PollutionType.PM10.ordinal
+                PollutionType.SO2 -> PollutionType.SO2.ordinal
+                PollutionType.NO2 -> PollutionType.NO2.ordinal
+                PollutionType.O3 -> PollutionType.O3.ordinal
+                PollutionType.CO -> PollutionType.CO.ordinal
+                PollutionType.BC -> PollutionType.BC.ordinal
+                PollutionType.NA -> PollutionType.NA.ordinal
+                else -> Int.MAX_VALUE
+            }
+            session.newInstance(id)
+                .setStorageProperty("lastUpdated", pollutionData.lastUpdated)
+                .setStorageProperty("unit", pollutionData.unit)
+                //Byte encode the enum.
+                .setStorageProperty("parameter", parameter)
+                .setStorageProperty("value", pollutionData.value)
+                .setStorageProperty("sourceName", pollutionData.sourceName)
+                .setStorageProperty("city", pollutionData.city)
+                .setStorageProperty("citySeqNum", pollutionData.citySeqNum)
         }
 
 
-    override fun load(
-        element: StorageElement
-    ): Outcome<PollutionAQData, DataFailure> =
+    override fun load(element: StorageElement): Outcome<PollutionAQData, DataFailure> =
         commonLoad(element, id) {
             val prop = getStorageProperty<Int>("parameter")
-            val param = when (prop) {
+            val parameter = when (prop) {
                 PollutionType.PM25.ordinal -> PollutionType.PM25
                 PollutionType.PM10.ordinal -> PollutionType.PM10
                 PollutionType.SO2.ordinal -> PollutionType.SO2
@@ -73,20 +68,18 @@ class PollutionAQDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<Po
                 PollutionType.NA.ordinal -> PollutionType.NA
                 else -> null
             }
-            if (param == null) {
-                DataFailure.UnrecognizedUnit(
-                    "Parameter is not one of the expected types: $prop"
-                ).err()
-            } else {
-                PollutionAQData(
-                    getStorageProperty("lastUpdated"),
-                    getStorageProperty("unit"), param,
-                    getStorageProperty("value"),
-                    getStorageProperty("sourceName"),
-                    getStorageProperty("city"),
-                    getStorageProperty("citySeqNum")
-                ).ok()
-            }
+            val lastUpdated = getStorageProperty<String>("lastUpdated")
+            val unit = getStorageProperty<String>("unit")
+            val value = getStorageProperty<Double>("value")
+            val sourceName = getStorageProperty<String>("sourceName")
+            val city = getStorageProperty<String>("city")
+            val citySeqNum = getStorageProperty<Int>("citySeqNum")
+            parameter?.let {
+                PollutionAQData(lastUpdated, unit, parameter, value, sourceName, city,
+                                citySeqNum).ok()
+            } ?: DataFailure.UnrecognizedUnit(
+                "Parameter is not one of the expected types: $prop"
+            ).err()
         }
 
 }

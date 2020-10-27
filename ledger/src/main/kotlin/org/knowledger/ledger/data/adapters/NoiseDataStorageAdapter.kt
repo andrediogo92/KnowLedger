@@ -13,12 +13,11 @@ import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.err
 import org.knowledger.ledger.results.ok
 import org.knowledger.ledger.storage.LedgerData
+import java.math.BigDecimal
 
-class NoiseDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<NoiseData>(
-    NoiseData::class.java, hasher
-) {
-    override val serializer: KSerializer<NoiseData>
-        get() = NoiseData.serializer()
+class NoiseDataStorageAdapter(hashers: Hashers) :
+    AbstractStorageAdapter<NoiseData>(NoiseData::class, hashers) {
+    override val serializer: KSerializer<NoiseData> get() = NoiseData.serializer()
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
@@ -27,24 +26,20 @@ class NoiseDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<NoiseDat
             "unit" to StorageType.INTEGER
         )
 
-    override fun store(
-        toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement = (toStore as NoiseData).let {
-        session.newInstance(id)
-            .setStorageProperty("noiseLevel", it.noiseLevel)
-            .setStorageProperty("peakOrBase", it.peakOrBase)
-            .setStorageProperty(
-                "unit", when (it.unit) {
-                    NoiseUnit.dBSPL -> NoiseUnit.dBSPL.ordinal.toByte()
-                    NoiseUnit.Rms -> NoiseUnit.Rms.ordinal.toByte()
-                }
-            )
-    }
+    override fun store(toStore: LedgerData, session: NewInstanceSession): StorageElement =
+        (toStore as NoiseData).let { noiseData ->
+            val unit = when (noiseData.unit) {
+                NoiseUnit.dBSPL -> NoiseUnit.dBSPL.ordinal.toByte()
+                NoiseUnit.Rms -> NoiseUnit.Rms.ordinal.toByte()
+            }
+            session.newInstance(id)
+                .setStorageProperty("noiseLevel", noiseData.noiseLevel)
+                .setStorageProperty("peakOrBase", noiseData.peakOrBase)
+                .setStorageProperty("unit", unit)
+        }
 
 
-    override fun load(
-        element: StorageElement
-    ): Outcome<NoiseData, DataFailure> =
+    override fun load(element: StorageElement): Outcome<NoiseData, DataFailure> =
         commonLoad(element, id) {
             val prop = getStorageProperty<Int>("unit")
             val unit = when (prop) {
@@ -52,17 +47,10 @@ class NoiseDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<NoiseDat
                 NoiseUnit.Rms.ordinal -> NoiseUnit.Rms
                 else -> null
             }
-            if (unit == null) {
-                DataFailure.UnrecognizedUnit(
-                    "Unit is not one of the expected: $prop"
-                ).err()
-            } else {
-                NoiseData(
-                    getStorageProperty("noiseLevel"),
-                    getStorageProperty("peakOrBase"),
-                    unit
-                ).ok()
-            }
+            val noiseLevel = getStorageProperty<BigDecimal>("noiseLevel")
+            val peakOrBase = getStorageProperty<BigDecimal>("peakOrBase")
+            unit?.let { unit1 -> NoiseData(noiseLevel, peakOrBase, unit1).ok() }
+            ?: DataFailure.UnrecognizedUnit("Unit is not one of the expected: $prop").err()
         }
 
 }

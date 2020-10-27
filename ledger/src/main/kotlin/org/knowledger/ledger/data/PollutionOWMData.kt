@@ -1,6 +1,7 @@
 package org.knowledger.ledger.data
 
 import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.knowledger.ledger.storage.LedgerData
@@ -17,10 +18,9 @@ data class PollutionOWMData(
     val value: Double,
     var data: List<List<Double>>,
     val city: String = "",
-    val citySeqNum: Int = 1
+    val citySeqNum: Int = 1,
 ) : LedgerData {
-    val parameterDescription: String =
-        parameter.description
+    val parameterDescription: String = parameter.description
 
     //mean of Value/Precision
     //Value
@@ -47,9 +47,8 @@ data class PollutionOWMData(
 
 
     constructor(
-        unit: String, parameter: String,
-        value: Double, data: List<List<Double>>,
-        city: String = "", citySeqNum: Int = 1
+        unit: String, parameter: String, value: Double,
+        data: List<List<Double>>, city: String = "", citySeqNum: Int = 1,
     ) : this(
         unit, when (parameter) {
             "O3" -> PollutionType.O3
@@ -62,30 +61,27 @@ data class PollutionOWMData(
             "O3", "UV" -> value
             else -> -99.0
         }, when (parameter) {
-            "CO", "SO2", "NO2" -> data.map {
-                it.toList()
-            }.toList()
+            "CO", "SO2", "NO2" -> data.map(List<Double>::toList).toList()
             else -> emptyList()
         }, city, citySeqNum
     )
 
     override fun clone(): PollutionOWMData = copy()
 
+    @OptIn(ExperimentalSerializationApi::class)
     override fun serialize(encoder: BinaryFormat): ByteArray =
-        encoder.dump(serializer(), this)
+        encoder.encodeToByteArray(serializer(), this)
 
-    override fun calculateDiff(previous: SelfInterval): BigDecimal {
-        return if (previous is PollutionOWMData) {
-            calculateDiffPollution(previous)
-        } else {
-            throw InvalidClassException(
+    override fun calculateDiff(previous: SelfInterval): BigDecimal =
+        when (previous) {
+            is PollutionOWMData -> calculateDiffPollution(previous)
+            else -> throw InvalidClassException(
                 """SelfInterval supplied is:
-                    |   ${previous.javaClass.name},
-                    |   not ${this::class.java.name}
+                |   ${previous.javaClass.name},
+                |   not ${this::class.java.name}
                 """.trimMargin()
             )
         }
-    }
 
     private fun calculateDiffPollution(previous: PollutionOWMData): BigDecimal {
         return BigDecimal.ONE

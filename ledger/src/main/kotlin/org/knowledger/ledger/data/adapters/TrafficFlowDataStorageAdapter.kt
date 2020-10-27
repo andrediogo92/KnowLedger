@@ -12,11 +12,9 @@ import org.knowledger.ledger.results.Outcome
 import org.knowledger.ledger.results.ok
 import org.knowledger.ledger.storage.LedgerData
 
-class TrafficFlowDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<TrafficFlowData>(
-    TrafficFlowData::class.java, hasher
-) {
-    override val serializer: KSerializer<TrafficFlowData>
-        get() = TrafficFlowData.serializer()
+class TrafficFlowDataStorageAdapter(hashers: Hashers) :
+    AbstractStorageAdapter<TrafficFlowData>(TrafficFlowData::class, hashers) {
+    override val serializer: KSerializer<TrafficFlowData> get() = TrafficFlowData.serializer()
 
     override val properties: Map<String, StorageType>
         get() = mapOf(
@@ -31,24 +29,21 @@ class TrafficFlowDataStorageAdapter(hasher: Hashers) : AbstractStorageAdapter<Tr
             "citySeqNum" to StorageType.INTEGER
         )
 
-    override fun store(
-        toStore: LedgerData, session: NewInstanceSession
-    ): StorageElement = (toStore as TrafficFlowData).let {
-        session.newInstance(id)
-            .setStorageProperty("functionalRoadClass", it.functionalRoadClass)
-            .setStorageProperty("currentSpeed", it.currentSpeed)
-            .setStorageProperty("freeFlowSpeed", it.freeFlowSpeed)
-            .setStorageProperty("currentTravelTime", it.currentTravelTime)
-            .setStorageProperty("freeFlowTravelTime", it.freeFlowTravelTime)
-            .setStorageProperty("confidence", it.confidence)
-            .setStorageProperty("realtimeRatio", it.realtimeRatio)
-            .setStorageProperty("city", it.city)
-            .setStorageProperty("citySeqNum", it.citySeqNum)
-    }
+    override fun store(toStore: LedgerData, session: NewInstanceSession): StorageElement =
+        (toStore as TrafficFlowData).let { trafficFlowData ->
+            session.newInstance(id)
+                .setStorageProperty("functionalRoadClass", trafficFlowData.functionalRoadClass)
+                .setStorageProperty("currentSpeed", trafficFlowData.currentSpeed)
+                .setStorageProperty("freeFlowSpeed", trafficFlowData.freeFlowSpeed)
+                .setStorageProperty("currentTravelTime", trafficFlowData.currentTravelTime)
+                .setStorageProperty("freeFlowTravelTime", trafficFlowData.freeFlowTravelTime)
+                .setStorageProperty("confidence", trafficFlowData.confidence)
+                .setStorageProperty("realtimeRatio", trafficFlowData.realtimeRatio)
+                .setStorageProperty("city", trafficFlowData.city)
+                .setStorageProperty("citySeqNum", trafficFlowData.citySeqNum)
+        }
 
-    override fun load(
-        element: StorageElement
-    ): Outcome<TrafficFlowData, DataFailure> =
+    override fun load(element: StorageElement): Outcome<TrafficFlowData, DataFailure> =
         commonLoad(element, id) {
             TrafficFlowData(
                 getStorageProperty("functionalRoadClass"),
