@@ -1,16 +1,16 @@
 package org.knowledger.ledger.serial
 
-import kotlinx.serialization.Decoder
-import kotlinx.serialization.Encoder
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.PrimitiveDescriptor
-import kotlinx.serialization.PrimitiveKind
-import kotlinx.serialization.SerialDescriptor
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import org.knowledger.ledger.data.DummyData
 
 internal object DummyDataSerializer : KSerializer<DummyData> {
     override val descriptor: SerialDescriptor =
-        PrimitiveDescriptor("DummyData", PrimitiveKind.BYTE)
+        PrimitiveSerialDescriptor("DummyData", PrimitiveKind.BYTE)
 
     override fun deserialize(decoder: Decoder): DummyData =
         DummyData.also {

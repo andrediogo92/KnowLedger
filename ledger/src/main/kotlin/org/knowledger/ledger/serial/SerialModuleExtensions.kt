@@ -1,20 +1,18 @@
 package org.knowledger.ledger.serial
 
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.modules.SerialModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.overwriteWith
+import kotlinx.serialization.modules.polymorphic
 import org.knowledger.collections.mapToArray
-import org.knowledger.ledger.core.data.DefaultDiff
-import org.knowledger.ledger.crypto.serial.DefaultDataFormulaSerializer
+import org.knowledger.ledger.crypto.data.DefaultDiff
 import org.knowledger.ledger.data.DummyData
 import org.knowledger.ledger.storage.DataFormula
 import org.knowledger.ledger.storage.LedgerData
 import kotlin.reflect.KClass
 
-fun <T> Array<T>.serial(): Array<String> where T : SerialEnum,
-                                               T : Enum<T> =
-    mapToArray { it.serialName }
+fun <T> Array<T>.serial(): Array<String> where T : SerialEnum, T : Enum<T> =
+    mapToArray(SerialEnum::serialName)
 
 fun <T> Array<T>.lowercase(): Array<String> where T : Enum<T> =
     mapToArray { it.name.toLowerCase() }
@@ -23,11 +21,11 @@ interface SerialEnum {
     val serialName: String
 }
 
-val baseModule: SerialModule = SerializersModule {}
+val baseModule: SerializersModule = SerializersModule {}
 
-internal fun SerialModule.withLedger(
-    types: Array<out DataSerializerPair<*>>
-): SerialModule =
+internal fun SerializersModule.withLedger(
+    types: Array<out DataSerializerPair<*>>,
+): SerializersModule =
     overwriteWith(SerializersModule {
         polymorphic(LedgerData::class) {
             types.forEach {
@@ -35,25 +33,25 @@ internal fun SerialModule.withLedger(
                 //construction of properties with correct LedgerData upper
                 //type bound.
                 @Suppress("UNCHECKED_CAST")
-                (it.clazz as KClass<Any>) with (it.serializer as KSerializer<Any>)
+                subclass(it.clazz as KClass<LedgerData>, it.serializer as KSerializer<LedgerData>)
             }
-            DummyData::class with DummyDataSerializer
+            subclass(DummyData::class, DummyDataSerializer)
         }
     })
 
-internal fun SerialModule.withDataFormulas(
-    types: Array<out FormulaSerializerPair<*>>
-): SerialModule =
+internal fun SerializersModule.withDataFormulas(
+    types: Array<out FormulaSerializerPair<*>>,
+): SerializersModule =
     overwriteWith(SerializersModule {
-        polymorphic(DataFormula::class) {
+        polymorphic(DataFormula::class, null) {
             types.forEach {
                 //this is a valid cast because serializer pair classes force
                 //construction of properties with correct LedgerData upper
                 //type bound.
                 @Suppress("UNCHECKED_CAST")
-                (it.clazz as KClass<Any>) with (it.serializer as KSerializer<Any>)
+                subclass(it.clazz as KClass<DataFormula>, it.serializer as KSerializer<DataFormula>)
             }
-            DefaultDiff::class with DefaultDataFormulaSerializer
+            subclass(DefaultDiff::class, DefaultDiff.serializer())
         }
     })
 
