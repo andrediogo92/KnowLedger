@@ -14,7 +14,7 @@ import org.openjdk.jmh.annotations.TearDown
 import org.tinylog.kotlin.Logger
 
 @State(Scope.Benchmark)
-open class LargeSignatureState : BaseState() {
+open class SignatureState : BaseState() {
     var resultSize: Double = 0.0
     private val stringFactor = 32
     private val smallSize = 20

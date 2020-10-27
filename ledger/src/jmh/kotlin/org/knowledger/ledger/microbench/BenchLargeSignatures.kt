@@ -22,30 +22,29 @@ import java.util.concurrent.TimeUnit
 @OutputTimeUnit(TimeUnit.SECONDS)
 @Fork(1)
 open class BenchLargeSignatures {
+    private fun runWith(state: SignatureState, transactions: Sequence<Transaction>) {
+        state.resultSize += consumeSignatures(transactions)
+            .map { it.signature.bytes.size }
+            .average()
+    }
+
     private fun consumeSignatures(
-        sequence: Sequence<Transaction>
-    ): Iterable<Transaction> =
-        sequence.take(20).asIterable()
+        sequence: Sequence<Transaction>,
+    ): Iterable<Transaction> = sequence.take(20).asIterable()
 
     @Benchmark
-    fun smallSignatures(state: LargeSignatureState) {
-        state.resultSize += consumeSignatures(state.smallSequence)
-            .map { it.signature.bytes.size }
-            .average()
+    fun smallSignatures(state: SignatureState) {
+        runWith(state, state.smallSequence)
     }
 
     @Benchmark
-    fun mediumSignatures(state: LargeSignatureState) {
-        state.resultSize += consumeSignatures(state.mediumSequence)
-            .map { it.signature.bytes.size }
-            .average()
+    fun mediumSignatures(state: SignatureState) {
+        runWith(state, state.mediumSequence)
     }
 
     @Benchmark
-    fun largeSignatures(state: LargeSignatureState) {
-        state.resultSize += consumeSignatures(state.largeSequence)
-            .map { it.signature.bytes.size }
-            .average()
+    fun largeSignatures(state: SignatureState) {
+        runWith(state, state.largeSequence)
     }
 }
 
